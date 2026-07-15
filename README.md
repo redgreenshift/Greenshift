@@ -2,16 +2,17 @@
 
 A high-performance visualization engine with 4D graphing capabilities.
 
-Greenshift was designed to achieve the speed of Geiss without resorting to assembly, while surpassing the expandability of G-Force. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations via user-defined mathematical expressions.
+Greenshift was designed to achieve the speed of Geiss without resorting to assembly, and attempted to outdo G-Force with smooth transitions between effects. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations via user-defined mathematical expressions.
 
 Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient Winamp visualization plugin.
 
 ## Key Features
 
 * **4D Function Graphing:** Supports $y(x, z, t)$ where the third parameter is time, allowing for dynamic spatial-temporal visualizations.
-* **Mathematical Expressions:** Fully supports complex mathematical expressions, including hyperbolic trigonometric functions.
+* **Mathematical Expressions:** Supports complex mathematical expressions, including hyperbolic trigonometric functions.
+* **Dynamic Expression Engine:** Allows for an infinite range of behaviors via user-defined formulas from external text files, evaluated in real-time without needing to recompile.
 * **Color Space Support:** Built-in support for RGB, HSV, HLS, and CMY palettes.
-* **Efficient Rendering:** Designed to maintain high framerates while calculating delta fields in real-time.
+* **Efficient Rendering:** Designed to maintain high framerates when switching between pre-calculated delta fields.
 
 ## Controls (Hotkeys)
 
@@ -25,7 +26,7 @@ Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was ada
 ## Known Information
 
 ### The Name "Greenshift"
-The name was inspired by a technical quirk during development. When programming in 16-bit color (5 bits Red, 6 bits Green, 5 bits Blue), the extra bit for green means that rounding errors can cause colors to shift towards the green end of the spectrum—a phenomenon known as "Greenshift."
+The name was inspired by a technical quirk discovered during development. When working in 16-bit color (5 bits Red, 6 bits Green, 5 bits Blue), repeatedly averaging the color channels of adjacent pixels leads to precision loss. Because green has one more bit of precision, it stays brighter slightly longer—causing a shift toward the green "end" of the spectrum. I dubbed this phenomenon "greenshift," and the name has stuck ever since.
 
 ## Getting Started
 
@@ -45,6 +46,12 @@ Greenshift is distributed in the hope that it will be useful, but WITHOUT ANY WA
 You should have received a copy of the GNU General Public License along with this program; see LICENSE.
 
 Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See `MersenneTwister.h` and `licenses/LGPL-2.1-or-later.txt` for details.
+
+## Acknowledgements - An expression of thanks or a token of appreciation
+
+* [Mersenne Twister](http://www.math.keio.ac.jp/~matumoto/emt.html) - A 623-Dimensionally Equidistributed Uniform Pseudo-Random Number Generator
+* [Flex](http://ftp.ost.eltele.no/pub/gnu/) - fast lexical analyser generator
+* [LEMON](http://www.hwaci.com/sw/lemon/) - parser generator
 
 ---
 
