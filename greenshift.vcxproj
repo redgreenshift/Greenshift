@@ -195,7 +195,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>d:\MyProjects\expressionconsole\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.exe</OutputFile>
+      <OutputFile>.\expressionconsole\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.exe</OutputFile>
       <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -231,7 +231,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <OutputFile>.\Debug\expressionconsole.exe</OutputFile>
+      <OutputFile>.\Debug\greenshift.exe</OutputFile>
       <AdditionalDependencies>ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
