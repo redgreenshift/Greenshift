@@ -9,8 +9,8 @@ Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was ada
 ## Key Features
 
 * **4D Function Graphing:** Supports $y(x, z, t)$ where the third parameter is time, allowing for dynamic spatial-temporal visualizations.
-* **Mathematical Expressions:** Supports complex mathematical expressions, including hyperbolic trigonometric functions.
-* **Dynamic Expression Engine:** Allows for an infinite range of behaviors via user-defined formulas from external text files, evaluated in real-time without needing to recompile.
+* **Mathematically Rich Syntax:** Supports complex mathematical expressions, including hyperbolic trigonometric functions.
+* **Dynamic Expression Engine:** Allows for an infinite range of behaviors via user-defined formulas in external text files, evaluated in real-time without needing to recompile.
 * **Color Space Support:** Built-in support for RGB, HSV, HLS, and CMY palettes.
 * **Efficient Rendering:** Designed to maintain high framerates when switching between pre-calculated delta fields.
 
