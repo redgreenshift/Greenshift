@@ -29,7 +29,7 @@
 #include "TweenThread.h"
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 //HighResolutionTimer hrTweenTimer;
 #endif
 
@@ -153,7 +153,7 @@ error_t TweenThread::ScheduleTween( const DWORD dwFrames,
         return ERR_THREADBUSY;
     else
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 //        hrTweenTimer.Start();
 #endif
 
@@ -224,7 +224,7 @@ void    *TweenThread::GetFrame( void )
         }
         else  /* thread's done calculating */
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 //            float nSeconds;
 //            hrTimer.Stop();
 

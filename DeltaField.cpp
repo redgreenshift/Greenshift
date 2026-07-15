@@ -186,7 +186,7 @@ error_t    DeltaField::Initialize( MyDictionary<char*> *inDeltaConfig,
                                 &m_dictValues,
                                 inGlobals );
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     if( err != 0 )
     {
         DumpToFile( "error.txt", ErrorString(err), "\n" );  /* REMOVE THIS */

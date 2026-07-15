@@ -25,7 +25,7 @@
  * this is a toggle so I can put an insane amount of debugging code
  * and not have to toggle each individually using comments
  */
-#define EXTREME_DEBUGGING 1
+#define EXTREME_DEBUGGING 0
 
 
 /****************************************************************************
@@ -630,13 +630,13 @@ static inline void long_sqrt_rounded( const long lValue, long *outValue )
 #endif
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 #define DebugMessage    ProjectGreenshiftDebugMessageBox
 #else
 #define DebugMessage(a,b,c)    /* nothing */
 #endif
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 
 #include <stdio.h>
 #include <windows.h>
@@ -650,7 +650,7 @@ static void    ProjectGreenshiftDebugMessageBox( const char *aString, value_t aN
 
 #endif
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 
 //#ifndef UNDEFINED
 

@@ -88,13 +88,11 @@ VectorGraphic::~VectorGraphic()
  ****************************************************************************/
 void    VectorGraphic::Reset( void )
 {
-#ifndef EXTREME_DEBUGGING
-    Evaluate_A_Vars();
-#else
     error_t err;
 
     err = Evaluate_A_Vars();
 
+#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", ErrorString( err ), "\n" );

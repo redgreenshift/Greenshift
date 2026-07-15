@@ -33,7 +33,7 @@
 #include "MyDictionary.h"
 //#include "ContiguousAlignedMemoryAllocator.h"
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 #include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
 #endif
 
@@ -294,7 +294,7 @@ public:
             + dwParametricFunctionPointerTableSize;
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         dwAllocationSize += 10;  /**/
 #endif
 
@@ -382,7 +382,7 @@ public:
         }
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "getting ready to compile the Phase Functions", "\n" );
 #endif
@@ -404,7 +404,7 @@ public:
 
                 if( err != SUCCESS )
                 {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
                     DumpToFile( "error.txt", ">>> Phase Function : " );
                     DumpToFile( "error.txt", inConfig->GetValue("NAME", "" ), " <<<\n" );
                     DumpToFile( "error.txt", ErrorString(err), " <<<\n" );
@@ -419,7 +419,7 @@ public:
         }
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "compiled the Phase Functions", "\n" );
 
@@ -457,9 +457,9 @@ public:
             + dwPhaseFunctionTableSize + dwParametricFunctionPointerTableSize ];
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( NumDimensions() == 1 )
-        DumpToFile( "error.txt", "about to compile the other functions", "\n" );
+            DumpToFile( "error.txt", "about to compile the other functions", "\n" );
 #endif
 
         /*
@@ -489,7 +489,7 @@ public:
 
                 if( err != SUCCESS )
                 {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
                     DumpToFile( "error.txt", ">>> Phase Function : " );
                     DumpToFile( "error.txt", inConfig->GetValue("NAME", "" ), " <<<\n" );
                     DumpToFile( "error.txt", ErrorString(err), " <<<\n" );
@@ -503,7 +503,7 @@ public:
             }
         }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "compiled the other functions", "\n" );
 
@@ -514,7 +514,7 @@ public:
     };
 
 
-#ifndef EXTREME_DEBUGGING
+#if !EXTREME_DEBUGGING
 /****************************************************************************
  *
  * EvaluatePhase - 
@@ -618,7 +618,7 @@ public:
  ****************************************************************************/
     value_t    EvaluateFunction( const DWORD dwFunction, const DWORD dwDimension )
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         Expression  ***pppE;
         Expression  **ppE;
         Expression  *pE;
@@ -627,7 +627,7 @@ public:
 
         if( dwFunction < NumFunctions() && dwDimension < NumDimensions() )
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
             pppE = m_pFunctions;
 
             ppE = pppE[dwFunction];
@@ -644,7 +644,7 @@ public:
         }
         else
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
             DumpToFile("error.txt", "invalid dimensions?  in PhaseFunction. Evaluate Function", "\n");
 #endif
             return 0.0f;

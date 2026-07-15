@@ -246,7 +246,7 @@ value_t Greenshift::GetWaveformData( const value_t nValue )
 }
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 
     DWORD getWindowBitDepth( void ) {
         DWORD    bpp;
@@ -324,7 +324,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
 
 #endif
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 //    int version = SendMessage(m_hParentWindow,WM_WA_IPC,0,IPC_GETVERSION);
 
     DumpToFile( "error.txt", "Entering Greenshift::Initialize()", "\n" );
@@ -398,19 +398,19 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
             return err;
     }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "About to LoadConfigs.", "\n" );
 #endif
     if( (err = LoadConfigs()) != SUCCESS )
     {
         return err;
     }
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "### Configs successfully loaded.", "\n" );
 #endif
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "-=- Start Compiling DeltaFields.", "\n" );
 #endif
     err = m_dfMetaDeltaField.Initialize( m_pDeltaFieldConfigs,
@@ -418,7 +418,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
                                          &m_dMainConfig, &m_dGlobals );
     if( err != SUCCESS )
         return err;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "### DeltaFields successfully compiled.", "\n" );
     DumpToFile( "error.txt", "-=- Start Compiling WaveShapes.", "\n" );
 #endif
@@ -428,7 +428,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
                                         &m_dMainConfig, &m_dGlobals );
     if( err != SUCCESS )
         return err;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "### WaveShapes successfully compiled.", "\n" );
     DumpToFile( "error.txt", "-=- Start Compiling Particles.", "\n" );
 #endif
@@ -437,7 +437,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
                                        &m_dMainConfig, &m_dGlobals );
     if( err != SUCCESS )
         return err;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "### Successfully Compiled Particles.", "\n" );
     DumpToFile( "error.txt", "-=- Start Compiling Palettes.", "\n" );
 #endif
@@ -446,7 +446,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
                                       &m_dMainConfig, &m_dGlobals );
 
 
-/*#ifdef EXTREME_DEBUGGING
+/*#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
@@ -458,7 +458,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
     if( err != SUCCESS )
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "### Successfully Compiled Palettes.", "\n" );
 #endif
 
@@ -480,7 +480,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
     ChangeDisplaySettings( NULL, CDS_TEST );
     /**/
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "#################### About to create the WindowDevice", "\n" );
 #endif
 
@@ -496,7 +496,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
         m_pWindowDevice = NULL;
         return err;
     }
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Successfully created the WindowDevice.", "\n" );
     DumpToFile( "error.txt", "About to create the BitCanvas.", "\n" );
 #endif
@@ -511,7 +511,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
         m_pBitCanvas = NULL;
         return err;
     }
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Successfully created the BitCanvas.", "\n" );
 #endif
 
@@ -520,7 +520,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
     //however, it *would* be in the delta field file
     //deltaFieldData.SetValue( "edgeWrap", "1" );
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Leaving Greenshift::Initialize()", "\n" );
 #endif
 
@@ -546,7 +546,7 @@ error_t    Greenshift::LoadConfigs( void )
     int     index;
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Entering Greenshift::LoadConfigs()", "\n" );
 #endif
 
@@ -651,7 +651,7 @@ error_t    Greenshift::LoadConfigs( void )
     else
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 #ifdef UNDEFINED
     m_dAlias.DebugDumpContents("error.txt");
     m_dConstant.DebugDumpContents("error.txt");
@@ -716,7 +716,7 @@ error_t    Greenshift::LoadConfigs( void )
         delete[] pArray;
     }/**/
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     m_dGlobals.DebugDumpContents("error.txt");
 #endif
 
@@ -727,7 +727,7 @@ error_t    Greenshift::LoadConfigs( void )
     if( NumDeltaFields() < 1 || NumWaveShapes() < 1
         || NumParticles() < 1 || NumPalettes() < 1 )
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt",
             "ERROR: Must have at least one of each type of config to run.\n" );
 #endif
@@ -782,7 +782,7 @@ error_t    Greenshift::LoadConfigs( void )
         m_dwDesiredMSecondsPerFrame -= 2;
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Leaving Greenshift::LoadConfigs()", "\n" );
 #endif
 

@@ -76,7 +76,7 @@ error_t    MetaDeltaField::InitializeDerived(
     for( i = 0; i < m_dwNumConfigs; i++ )
         if( (err = m_pDeltaFields[i].Initialize( &m_pConfigs[i], inGlobals )) != SUCCESS )
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
@@ -96,7 +96,7 @@ error_t    MetaDeltaField::InitializeDerived(
                 return err;
         }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Begin Compile DeltaField interval and tween", "\n" );
 #endif
 
@@ -109,7 +109,7 @@ error_t    MetaDeltaField::InitializeDerived(
     )
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Success Compile DeltaField interval and tween", "\n" );
 #endif
 

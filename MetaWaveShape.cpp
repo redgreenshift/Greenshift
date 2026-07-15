@@ -91,7 +91,7 @@ error_t    MetaWaveShape::InitializeDerived(
     for( i = 0; i < m_dwNumConfigs; i++ )
         if( (err = m_pWaveShapes[i].Initialize( &m_pConfigs[i], &m_dValues, inGlobals )) != SUCCESS )
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
@@ -113,7 +113,7 @@ error_t    MetaWaveShape::InitializeDerived(
 
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Begin Compiling WaveShape interval and tween", "\n" );
 #endif
        
@@ -126,7 +126,7 @@ error_t    MetaWaveShape::InitializeDerived(
     )
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Success Compiling WaveShape interval and tween", "\n" );
 #endif
 

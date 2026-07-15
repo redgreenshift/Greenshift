@@ -99,7 +99,7 @@ error_t    MetaParticle::InitializeDerived(
     for( i = 0; i < m_dwNumConfigs; i++ )
         if( (err = m_pParticles[i].Initialize( &m_pConfigs[i], &m_dValues, inGlobals )) != SUCCESS )
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
@@ -119,7 +119,7 @@ error_t    MetaParticle::InitializeDerived(
         }
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Begin Compiling Particle Interval lifetime and probability", "\n" );
 #endif
 
@@ -138,7 +138,7 @@ error_t    MetaParticle::InitializeDerived(
     )
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Success Compiling Particle Interval lifetime and probability", "\n" );
 #endif
 

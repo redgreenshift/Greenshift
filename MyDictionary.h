@@ -457,7 +457,7 @@ protected:
 
 
 public:
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 /****************************************************************************
  *
  * DebugDumpContents - quick way to see what's in the MyDictionary

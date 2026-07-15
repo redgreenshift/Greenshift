@@ -640,7 +640,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
     DWORD               dwAdditionalOptions  = 0;
     LPDIRECTDRAWCLIPPER pClipper;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt", "Beginning initialization of the display.", "\n" );
 #endif
 
@@ -658,7 +658,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
 //    if( hRet != DD_OK )
 //        return hRet;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "about to create the DirectDraw 7 object", "\n" );
 #endif
     /*
@@ -669,7 +669,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
         hRet = DirectDrawCreateEx(NULL, (void **)PGetDD(), IID_IDirectDraw7, NULL);
 //        if( hRet != DD_OK )
 //            return hRet;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet == DD_OK )
             DumpToFile( "error.txt", "created the DirectDraw 7 object", "\n" );
         else
@@ -698,7 +698,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
         hRet = GetDD()->SetCooperativeLevel( GetWindow(), CoopLevel() );
 //    if( hRet != DD_OK )
 //        return hRet;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
@@ -725,7 +725,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
                 hRet = GetDD()->SetDisplayMode( Width(), Height(), 24, dwDefaultRefreshRate, dwAdditionalOptions );
 //                if( hRet != DD_OK )
 //                    return hRet;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
@@ -751,7 +751,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
 //    if (hRet != DD_OK)
 //      return hRet;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
@@ -775,7 +775,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
 //        if(hRet != DD_OK)
 //            return hRet;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
@@ -873,7 +873,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
 
     }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt", "about to create the display surface", "\n" );
 #endif
 
@@ -884,7 +884,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
 //    if(hRet != DD_OK)
 //        return hRet;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
@@ -965,7 +965,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
             ape[i].peFlags = (BYTE) 0;
         }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt", "about to set the palette", "\n" );
 #endif
 
@@ -991,7 +991,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
             hRet = GetPrimary()->SetPalette( GetPalette() );
 //        if( hRet != DD_OK )
 //            return hRet;
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( hRet != DD_OK )
             DumpToFile( "error.txt", "successfully set the palette", "\n" );
         else
@@ -1010,7 +1010,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
     UnlockDX();
     LeaveCS();
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt", "Finished initializing the display.", "\n" );
 #endif
 

@@ -76,7 +76,7 @@ int init(struct winampVisModule *this_mod)
 
     if( greenshift != NULL )
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         error_t err;
 
         greenshift->SetParentWindow( this_mod->hwndParent );
@@ -116,7 +116,7 @@ int render(struct winampVisModule *this_mod)
 
     if( greenshift != NULL )
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         error_t err;
 
         DumpToFile( "error.txt", "About to set sound data.", "\n" );

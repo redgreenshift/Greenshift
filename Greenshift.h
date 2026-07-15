@@ -47,10 +47,10 @@
 #define VIS_TITLE "Greenshift"
 #define VIS_VER "v0.4b"
 
-#ifndef EXTREME_DEBUGGING
-#define VIS_VERSION VIS_VER
-#else
+#if EXTREME_DEBUGGING
 #define VIS_VERSION VIS_VER " - DEBUG VERSION"
+#else
+#define VIS_VERSION VIS_VER
 #endif
 
 #ifndef SOUND_DATA_LENGTH

@@ -285,7 +285,7 @@ char    *FilingClerk::GetFirstFile( const char *strFileMask )
     }
     else
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "error.txt",
             "ERROR: couldn't find any files matching the search string.\n\t");
         DumpToFile( "error.txt", strFile, "\n" );
@@ -1107,7 +1107,7 @@ error_t    FilingClerk::GetData( char *id, MyDictionary<char*> *outMyDictionary,
      */
     if( (err = OpenFile( m_strFile )) != SUCCESS )
     {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( err != SUCCESS )
         {
             DumpToFile( "error.txt",

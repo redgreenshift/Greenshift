@@ -34,7 +34,7 @@
 //#include <fstream.h>
 #include <io.h>
 #include <stdlib.h> /* for tolower and _MAX_PATH */
-//#include <ctype.h>  /* for tolower */
+#include <ctype.h>  /* for tolower */
 #include <stdio.h>  /* for FILE access */
 
 #define WINDOWS_PATH_DELIMITER  "\\"

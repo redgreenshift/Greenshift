@@ -42,7 +42,7 @@ DWORD WINAPI ThreadedEntityThreadProc( LPVOID lpVoid )
         return 1;
 }
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 #include <ddraw.h>
 #include "DXError.h"
 #endif
@@ -64,7 +64,7 @@ int    ThreadedEntity::BaseThreadProcedure( void *pData )
         m_bBusy        = true;   /* no longer accepting work */
     LeaveCS();
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         if( iRet != SUCCESS )
         {
             DumpToFile( "error.txt", "Not sure which, but one of the following two errors occured:", "\n" );

@@ -80,7 +80,7 @@ error_t    MetaPalette::InitializeDerived(
     for( i = 0; i < m_dwNumConfigs; i++ )
         if( (err = m_pPalettes[i].Initialize( &m_pConfigs[i], inGlobals )) != SUCCESS )
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", ErrorString(err), "\n" );
@@ -103,7 +103,7 @@ error_t    MetaPalette::InitializeDerived(
         }
 
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Begin Compiling Palette interval and tween", "\n" );
 #endif
 
@@ -116,7 +116,7 @@ error_t    MetaPalette::InitializeDerived(
     )
         return err;
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Success Compiling Palette interval and tween", "\n" );
 #endif
 
