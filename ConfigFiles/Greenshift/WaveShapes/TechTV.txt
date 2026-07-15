@@ -1,0 +1,88 @@
+/*  Tech TV logo  */
+
+ ConB=1,
+ Aspc=1,
+ Pen="1",
+ LWdt="2",
+ Stps = 100,
+
+A0="  2*pi",
+A1="0.5*pi",
+
+//Endpoints for "blobs"
+  B0="0.5+ 0.2*cos(-A1)",
+  B1="0.3+ 0.2*sin(-A1)",
+
+  B2="0.5+ 0.2*cos(A0*0.75-A1)",
+  B3="0.3+ 0.2*sin(A0*0.75-A1)",
+
+  B4="      0.2*cos(A1)",
+  B5="-.15+ 0.2*sin(A1)",
+
+  B6="      0.2*cos(A0*0.75+A1)",
+  B7="-.15+ 0.2*sin(A0*0.75+A1)",
+
+//cris cross
+  B8="(B0+B4)*0.5+0.2",
+  B9="(B1+B5)*0.5",
+
+
+  C0="A0*s",
+  C1="0.1*mag(s)",
+//  C1="0.1*(mag(s)-0.5)",
+  C2="0.2*cos(C0)+C1",
+  C3="0.2*sin(C0)+C1",
+
+/*
+  un-optimized equations for a circle
+  X="0.2*cos(two_pi*s)+ 0.1*mag(s)",
+  Y="0.2*sin(two_pi*s)+ 0.1*mag(s)",
+*/
+
+
+
+
+//Big surrounding circle
+  X0="0.85*cos(C0)+ C1",
+  Y0="0.85*sin(C0)+ C1",
+
+//Top left circle
+  X1="-.5+ C2",
+  Y1="0.3+ C3",
+
+//Top middle circle
+  X2="     C2",
+  Y2="0.3+ C3",
+
+//Blobs
+  //Top right circle
+  X3="0.5+ 0.2*cos(C0*0.75-A1)+ C1",
+  Y3="0.3+ 0.2*sin(C0*0.75-A1)+ C1",
+
+  //Middle circle
+  X4="      0.2*cos(C0*0.75+A1)+ C1",
+  Y4="-.15+ 0.2*sin(C0*0.75+A1)+ C1",
+
+
+//Bottom circle
+  X5="     C2",
+  Y5="-.6+ C3",
+
+/*
+X6="B0 + (B4-B0)*s + C1",
+Y6="B1 + (B5-B1)*s + C1",
+X7="B2 + (B6-B2)*s + C1",
+Y7="B3 + (B7-B3)*s + C1",
+*/
+
+  C4="(1-s)^2",
+  C5="(1-s)*s",
+  C6="s*s",
+
+//Bezier curve
+  X6="B0*C4 + B8*C5 + B6*C6 + C1",
+  Y6="B1*C4 + B9*C5 + B7*C6 + C1",
+  X7="B2*C4 + B8*C5 + B4*C6 + C1",
+  Y7="B3*C4 + B9*C5 + B5*C6 + C1",
+
+Vers=100

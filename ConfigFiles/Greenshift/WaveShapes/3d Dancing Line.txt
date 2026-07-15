@@ -1,0 +1,19 @@
+/*  3d Dancing Line  */
+
+B0   = "t*pi*0.1",
+C0   = "B0*(s+1)",
+C1   = "sin(C0)",
+
+X0   = "C1",
+Y0   = "C1 * cos(C0)",
+Z0   = "BASS*8",
+
+Stps = 100,
+
+ConB = 1,
+
+LWdt = "1+7*mag(s)",
+Pen  = "0.5 + 0.5 * mag(s)",
+
+Vers = 100
+

@@ -1,0 +1,22 @@
+/*  Magic Carpet  */
+
+Mode = "FourD",
+
+/* commenting out so the default values from settings.txt are used
+POV  = "5",
+
+rotation_order = "yxz",
+x_rotation     = "-0.125*pi", //"-pi/8",
+y_rotation     = "pi/4",
+z_rotation     = "0",
+/**/
+
+Y0   = "0.5 * sin(x+t) + 0.125 * (fft(wrap(z))+mag(wrap(x)))",
+
+//Stps = 25,
+ConB = 1,
+
+Pen  = "0.5 + 0.5 * mag(s)",
+
+Vers = 100
+

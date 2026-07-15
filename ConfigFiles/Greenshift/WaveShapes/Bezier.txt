@@ -1,0 +1,53 @@
+/*  3 point Bezier curve  */
+
+ ConB=1,
+ Aspc=1,
+ Pen="1",
+ LWdt="1",
+ Stps = 100,
+
+A0="  2*pi",
+A1="0.5*pi",
+
+/*
+  un-optimized equations for a circle
+  X="0.2*cos(two_pi*s)+ 0.1*mag(s)",
+  Y="0.2*sin(two_pi*s)+ 0.1*mag(s)",
+*/
+
+//Endpoints for "blobs"
+  B0="-.75+ 0.2*cos(pi*t)-BASS",
+  B1="-.3+ 0.5*sin(pi*t)",
+
+  B2="-.25+ 0.7*cos(A0*0.75*t-A1)",
+  B3="0.6+ 0.2*sin(A0*0.75*t-A1)+BASS",
+
+  B4="0.25+ 0.2*cos(A0*t)",
+  B5="-.15+ 0.5*sin(A0*t)-BASS",
+
+  B6="0.75 + 0.2*cos(A0*0.75*t+A1)+BASS",
+  B7="0.15+ 0.2*sin(A0*0.75*t+A1)",
+
+//cris cross
+  B8="(B0+B4)*0.5+0.2",
+  B9="(B1+B5)*0.5",
+
+
+  C0="0",
+  C1="0.2*mag(s)",
+  C2="0",
+  C3="0",
+
+
+  C4="(1-s)^3",
+  C5="(1-s)^2*s",
+  C6="(1-s)*s*s",
+  C7="s*s*s",
+
+//Bezier curve
+  X0="B0*C4 + B2*C5 + B4*C6 + B6*C7 + C1",
+  Y0="B1*C4 + B3*C5 + B5*C6 + B7*C7 + C1",
+//  X1="B0*C4 + B2*C5 + B4*C6 + B6*C1",
+//  Y1="B1*C4 + B3*C5 + B5*C6 + B7*C1",
+
+Vers=100

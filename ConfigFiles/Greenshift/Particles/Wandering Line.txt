@@ -1,0 +1,14 @@
+/*  Wandering Line  */
+
+B0   = "t*pi*2/10",
+
+X0   = "sin(B0*s) * cos(B0*s)",
+Y0   = "sin(B0*s)",
+
+Stps = 2,
+ConB = 1,
+
+Pen  = "0.9",
+
+Vers = 100
+

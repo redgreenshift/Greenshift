@@ -1,0 +1,11 @@
+/*  Dancing Lines  */
+
+
+X0   = "sin(t*pi*(s+1)/10)",
+Y0   = "sin(t*pi*(s+1)/10) * cos(t*pi*(s+1)/10)",
+Stps = 3,
+ConB = 1,
+Pen  = "124*(1-fft(s)) + 240*256*(1-fft(s)) + 127*256^2*(1-fft(s))",
+
+Vers = 100
+

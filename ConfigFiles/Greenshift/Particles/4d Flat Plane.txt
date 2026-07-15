@@ -1,0 +1,19 @@
+/*  Flat Plane  */
+
+Mode = "FourD",
+
+POV  = "5",
+
+rotation_order = "zxy",
+x_rotation     = "t",
+y_rotation     = "t",
+z_rotation     = "t",
+
+
+Y0   = "0",
+//Stps = 30,
+ConB = 0,
+Pen  = "1",
+
+Vers = 100
+

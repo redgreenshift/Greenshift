@@ -1,0 +1,20 @@
+/*  4d Trig  */
+
+Mode = "FourD",
+
+//POV  = "5",
+
+//B0   = "wrap(t/2)*pi",
+B0   = "wrap(t*0.5)*pi",
+
+Y0   = "sin(B0*x) * cos(B0*z)",
+//Y0   = "sin(wrap(t/2)*pi*x) * cos(wrap(t/2)*pi*z)",
+
+//Stps = 30,
+ConB = 0,
+LWdt = "2",
+
+Pen  = "0.5 + 0.5 * mag(s)",
+
+Vers = 100
+

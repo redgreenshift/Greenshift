@@ -1,0 +1,21 @@
+/*  Rotating Color Plane  */
+
+Mode = "FourD",
+
+POV  = "5",
+
+rotation_order = "yxz",
+x_rotation     = "-0.125 * pi", //"-pi/8",
+y_rotation     = "0.5 * t",
+z_rotation     = "0",
+
+
+Y0   = "0",
+
+//Stps = 25,
+ConB = 1,
+
+Pen  = "0.5 + 0.5 * mag(s)",
+
+Vers=100
+

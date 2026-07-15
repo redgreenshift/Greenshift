@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug Console|Win32">
+      <Configuration>Debug Console</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug Windows|Win32">
+      <Configuration>Debug Windows</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Console|Win32">
+      <Configuration>Release Console</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Windows DLL|Win32">
+      <Configuration>Release Windows DLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Windows with Debug Info|Win32">
+      <Configuration>Release Windows with Debug Info</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release Windows|Win32">
+      <Configuration>Release Windows</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <SccProjectName />
+    <SccLocalPath />
+    <ProjectGuid>{1B579917-1157-4C9C-AC16-809727B4098A}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Console|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Console|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release Console|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug Console|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.Cpp.UpgradeFromVC60.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">
+    <OutDir>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">
+    <OutDir>.\expressionconsole___Win32_Debug_Windows\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Debug_Windows\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">
+    <OutDir>.\expressionconsole___Win32_Release_Windows_DLL\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Release_Windows_DLL\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">
+    <OutDir>.\expressionconsole___Win32_Release_Windows\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Release_Windows\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug Console|Win32'">
+    <OutDir>.\expressionconsole___Win32_Debug_Console\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Debug_Console\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release Console|Win32'">
+    <OutDir>.\expressionconsole___Win32_Release_Console\</OutDir>
+    <IntDir>.\expressionconsole___Win32_Release_Console\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</ProgramDataBaseFileName>
+      <AdditionalOptions> /GM </AdditionalOptions>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>d:\MyProjects\expressionconsole\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.exe</OutputFile>
+      <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;EG_WIN;EG_WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Debug\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Debug\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\Debug\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Debug\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>.\Debug\expressionconsole.exe</OutputFile>
+      <AdditionalDependencies>ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;EG_WIN;EG_WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Debug_Windows\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Debug_Windows\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Debug_Windows\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Debug_Windows\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Debug_Windows\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Debug_Windows\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Release_Windows_DLL\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Release_Windows_DLL\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Release_Windows_DLL\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows_DLL\</ProgramDataBaseFileName>
+      <AdditionalOptions> /GM </AdditionalOptions>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_DLL\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Release_Windows_DLL\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <LinkDLL>true</LinkDLL>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>c:\progra~1\winamp\plugins\vis_greenshift.dll</OutputFile>
+      <ImportLibrary>.\expressionconsole___Win32_Release_Windows_DLL\vis_greenshift.lib</ImportLibrary>
+      <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Release_Windows\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Release_Windows\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Release_Windows\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows\</ProgramDataBaseFileName>
+      <AdditionalOptions> /GM </AdditionalOptions>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Release_Windows\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Release_Windows\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug Console|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <Optimization>Disabled</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;EG_WIN;EG_WIN32;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Debug_Console\</AssemblerListingLocation>
+      <BrowseInformation>true</BrowseInformation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Debug_Console\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Debug_Console\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Debug_Console\</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Debug_Console\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Debug_Console\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>.\expressionconsole___Win32_Debug_Console\expressionconsole.exe</OutputFile>
+      <AdditionalDependencies>ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release Console|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\expressionconsole___Win32_Release_Console\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Release_Console\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\expressionconsole___Win32_Release_Console\</ObjectFileName>
+      <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Console\</ProgramDataBaseFileName>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\expressionconsole___Win32_Release_Console\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\expressionconsole___Win32_Release_Console\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SubSystem>Console</SubSystem>
+      <OutputFile>.\expressionconsole___Win32_Release_Console\expressionconsole.exe</OutputFile>
+      <AdditionalDependencies>ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <Optimization>MaxSpeed</Optimization>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <PrecompiledHeaderOutputFile>.\Release\expressionconsole.pch</PrecompiledHeaderOutputFile>
+      <ObjectFileName>.\Release\</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
+    </ClCompile>
+    <Midl>
+      <TypeLibraryName>.\Release\expressionconsole.tlb</TypeLibraryName>
+    </Midl>
+    <ResourceCompile>
+      <Culture>0x0409</Culture>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Bscmake>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <OutputFile>.\Release\expressionconsole.bsc</OutputFile>
+    </Bscmake>
+    <Link>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SubSystem>Windows</SubSystem>
+      <OutputFile>.\Release\expressionconsole.exe</OutputFile>
+      <AdditionalDependencies>ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="BitCanvas.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="DeltaField.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="DeltaTween.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="detect.c">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="Expression.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="FilingClerk.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="GForceFunctions.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="Greenshift.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="GreenshiftWinamp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Console|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Console|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="main2.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="MetaConfig.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="MetaDeltaField.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="MetaPalette.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="MetaParticle.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="MetaWaveShape.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="Palette.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="Particle.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="PhaseFunction.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="ThreadedEntity.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="TweenThread.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="VectorGraphic.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="WindowDevice.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="WindowDeviceDX.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="WindowDeviceOpenGL.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug Windows|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">true</ExcludedFromBuild>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="adetect.h" />
+    <ClInclude Include="Association.h" />
+    <ClInclude Include="BitCanvas.h" />
+    <ClInclude Include="CollectionsAbstract.h" />
+    <ClInclude Include="ContiguousAlignedMemoryAllocator.h" />
+    <ClInclude Include="DeltaField.h" />
+    <ClInclude Include="DeltaTween.h" />
+    <ClInclude Include="MyDictionary.h" />
+    <ClInclude Include="DXError.h" />
+    <ClInclude Include="Expression.h" />
+    <ClInclude Include="FilingClerk.h" />
+    <ClInclude Include="frontend.h" />
+    <ClInclude Include="GForceFunctions.h" />
+    <ClInclude Include="Greenshift.h" />
+    <ClInclude Include="GreenshiftWinamp.h" />
+    <ClInclude Include="HighResolutionTimer.h" />
+    <ClInclude Include="Interval.h" />
+    <ClInclude Include="MetaConfig.h" />
+    <ClInclude Include="MetaDeltaField.h" />
+    <ClInclude Include="MetaPalette.h" />
+    <ClInclude Include="MetaParticle.h" />
+    <ClInclude Include="MetaWaveShape.h" />
+    <ClInclude Include="Palette.h" />
+    <ClInclude Include="Particle.h" />
+    <ClInclude Include="PhaseFunction.h" />
+    <ClInclude Include="PointRotation.h" />
+    <ClInclude Include="Project Greenshift.h" />
+    <ClInclude Include="ThreadedEntity.h" />
+    <ClInclude Include="TweenThread.h" />
+    <ClInclude Include="VectorGraphic.h" />
+    <ClInclude Include="Vis.h" />
+    <ClInclude Include="WindowDevice.h" />
+    <ClInclude Include="WindowDeviceDX.h" />
+    <ClInclude Include="WindowDeviceOpenGL.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="settings.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
