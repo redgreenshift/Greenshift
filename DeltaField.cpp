@@ -137,7 +137,13 @@ error_t    DeltaField::Initialize( MyDictionary<char*> *inDeltaConfig,
 
 
     deltaVersion = (value_t)atof(inDeltaConfig->GetValue( "Version", "100" )) / 100.0f;
-    m_bEdgeWrap  = (atof(inDeltaConfig->GetValue( "EdgeWrap", "0" )) == 0) ? false : true;
+    m_bEdgeWrap  =
+        Expression::Evaluate(inDeltaConfig->GetValue( "EdgeWrap", "0" ), 0.0f, NULL, inGlobals )
+        ? false : true;
+//    m_bEdgeWrap  = (atof(inDeltaConfig->GetValue( "EdgeWrap", "0" )) == 0) ? false : true;
+    m_bZoom =
+      (Expression::Evaluate(inDeltaConfig->GetValue( "Zoom", "0" ), 0.0f, NULL, inGlobals ) == 0.0f)
+      ? false : true;
 
     /*
      * get the displacement factor, default to 1
@@ -174,8 +180,8 @@ error_t    DeltaField::Initialize( MyDictionary<char*> *inDeltaConfig,
     }
     else
     {
-        err = ERR_NOTFOUND;
-        return ERR_NOTFOUND;
+        err = ERR_NOTDELTAFIELD;
+        return ERR_NOTDELTAFIELD;
     }
 
     if( err == SUCCESS )

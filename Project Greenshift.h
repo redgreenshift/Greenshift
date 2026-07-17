@@ -27,6 +27,7 @@
  */
 #define EXTREME_DEBUGGING 0
 
+#define HIDE_INIT_TRACE 1
 
 /****************************************************************************
  *
@@ -122,10 +123,28 @@
 
 #define max(x, y)    (((x) > (y)) ? (x) : (y))
 #define min(x, y)    (((x) < (y)) ? (x) : (y))
+//max(max(x,y),z) /* expands to */ ((x>y)?x:y) > z?(x>y)?x:y):z
+//evaluating 3 conditionals if x or y are picked, and 2 if z is picked
+//this should be reduced
+#define max3(x, y, z)    (((x)>(y)) ? \
+                         (((x)>(z)) ? (x) : (z)) : \
+                         (((y)>(z)) ? (y) : (z)))
+#define min3(x, y, z)    (((x)<(y)) ? \
+                         (((x)<(z)) ? (x) : (z)) : \
+                         (((y)<(z)) ? (y) : (z)))
 
-#define SAFE_FREE( buf ) {if( (buf) != NULL ) { free( buf ); buf = NULL; }}
-#define SAFE_DELETE( buf ) {if( (buf) != NULL ) { delete( buf ); buf = NULL; }}
+
+
+#define SAFE_FREE( buf )         {if( (buf) != NULL ) { free( buf ); buf = NULL; }}
+#define SAFE_DELETE( buf )       {if( (buf) != NULL ) { delete( buf ); buf = NULL; }}
 #define SAFE_DELETE_ARRAY( buf ) {if( (buf) != NULL ) { delete[]( buf ); buf = NULL; }}
+#define SAFE_DELETE_ARRAY_OF_POINTERS( buf, len )   \
+    {   \
+        for(int sdaopIndex=0; sdaopIndex < len; sdaopIndex++)   \
+        {   \
+            SAFE_DELETE_ARRAY( (buf) [sdaopIndex] );\
+        }   \
+    }
 
 
 #define LCLIP( longNum )    ( ( (long)(longNum) > 0L ) ? (long)(longNum) : 1L )
@@ -784,6 +803,7 @@ enum {
     ERR_THREADBUSY,         /* ThreadedEntity */
     ERR_PALETTE,            /* Palette */
     ERR_UNKNOWNPALETTETYPE, /* Palette */
+    ERR_NOTDELTAFIELD,      /* DeltaField */
 //    ERR_SUBCLASS_RESPONSIBILITY,    /* Expression */
     ERR_SHOULD_NOT_IMPLEMENT,/* Expression */
     ERR_COMPILE,            /* Expression */
@@ -882,7 +902,7 @@ enum {
         case ERR_ALREADYDEPENDENT:
             return "already a dependent of the model";
         case ERR_NOTFOUND:
-            return "var not found in MyDictionary";
+            return "var not found in dictionary";
         case ERR_WINDOWDEVICE:
             return "error creating the window device";
         case ERR_BITCANVAS:
@@ -895,6 +915,8 @@ enum {
             return "error creating a palette";
         case ERR_UNKNOWNPALETTETYPE:
             return "unable to determine the type of palette";
+        case ERR_NOTDELTAFIELD:
+            return "config file is not a delta field";
 //        case ERR_SUBCLASS_RESPONSIBILITY:
 //            return "subclass responsibility";
         case ERR_SHOULD_NOT_IMPLEMENT:

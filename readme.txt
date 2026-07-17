@@ -1,6 +1,6 @@
 /****************************************************************************\
  *
- * Welcome to Greenshift v0.4b.  Copyright (c) 2001-2026 Jared Ivey
+ * Welcome to Greenshift v0.4.2b.  Copyright (c) 2001-2026 Jared Ivey
  *
 \****************************************************************************/
 
@@ -45,6 +45,33 @@ visualization came up with the name Greenshift.
 /****************************************************************************/
 /****************************************************************************/
 
+ System Requirements
+ FAQ
+ For Future Development
+ Known Issues
+ Revision History
+ Contact Info
+ Acknowledgements
+
+/****************************************************************************/
+/****************************************************************************/
+
+/****************************************************************************\
+ *
+ * System Requirements
+ *
+\****************************************************************************/
+
+ Winamp
+ DirectX 7
+
+
+/****************************************************************************\
+ *
+ * FAQ
+ *
+\****************************************************************************/
+
 0.  What are the hotkeys?!
 1.  Greenshift looks an awful lot like G-Force,
     are you sure you didn't just copy it?
@@ -56,14 +83,7 @@ visualization came up with the name Greenshift.
 6.  I thought you said you developed Greenshift in an attempt
     to outdo Geiss.  What happened to that?
 7.  What?  No idea what a green shift is.
-
-
-
-/****************************************************************************\
- *
- * FAQ
- *
-\****************************************************************************/
+-----------------------------------------
 
 0.  What are the hotkeys?!
 
@@ -73,7 +93,7 @@ Esc = close Greenshift
 Alt+Enter = toggle fullscreen
 double clicking inside the window also toggles fullscreen.
 The maximize button maximizes the window, it does not make it fullscreen.
-------
+----------
 
 1.  Greenshift looks an awful lot like G-Force,
     are you sure you didn't just copy it?
@@ -162,6 +182,7 @@ I was programming late at night, frustrated with this "greenshift" effect, and c
 If you run greenshift in 16 bit color, I mean the calculated bit depth, then you'll see what I'm talking about.
 ----------
 
+
 /****************************************************************************\
  *
  * For Future Development
@@ -170,11 +191,21 @@ If you run greenshift in 16 bit color, I mean the calculated bit depth, then you
 
  - Particle tweening
  - expression symbolic derivatives
- - some sort of scripting
+ - scripting language
+ - revamp the config file parser
+ - revamp the expression parser
+ - conditional ?: operator (expression parser must be revamped to allow)
+ - macro-like subexpressions
+ - optional terminating ;
+ - user defined functions
  - 2D to 4D wave shape tweening
  - 4D to 2D wave shape tweening
  - 4D to 4D wave shape tweening
+ - 3D acceleration
+ - problem configs log file
 
+2026-07-17 NOTE: These sections are very old, and may be very inaccurate.
+I will need to revisit my ideas and see what I actually want to implement.
 
 
 /****************************************************************************\
@@ -183,20 +214,52 @@ If you run greenshift in 16 bit color, I mean the calculated bit depth, then you
  *
 \****************************************************************************/
 
+ - the overlay color key is a 32 bit integer, first evaluated as a 32 bit float.
+ - hardware stretching in fullscreen looks blocky.  Needs anti-aliasing.
+ - debug info text is huge when image is stretched.
+ - particles and waveshapes seem larger than before... because they are.
+      I haven't yet determined if the old or new method of drawing is correct.
  - mouse sometimes stays hidden even after moved inside the window
- - particles and waveshapes ignore aspect, and always use 1:1
  - overlay mode is only known to work on Voodoo3 cards
  - overlay mode only works in 16 bit color
- - Vers variable is ignored
  - Flow or DispFactor variable is ignored
  - some config comments are NOT commented out, and so may not work properly
       example:  Juliaish
- - evaluation of A#-D# vars for palettes may not be entirely correct.
  - line/dot drawing are not 100% correct, and could use more optimization
  - FFTT calculation is not correct.
  - BASS is also not correct, because it's based on the FFTT data.
 
 
+
+/****************************************************************************\
+ *
+ * In The Works
+ *
+\****************************************************************************/
+
+ - atan needs an atan2 counterpart to better account for division by zero
+ - revamp the config file parser
+ - revamp the expression parser
+ - conditional ?: operator (expression parser must be revamped to allow)
+ - credits section
+ - PrintString for the conditional operator
+
+temp vars
+looping constructs
+assignment operator
+auto create for undefined variables
+rebinding for undefined variables?
+symbolic differentiation
+macros
+symbolic differentiation
+factorial?
+
+bitwise and boolean operators?
+
+solve an equality for a variable?
+
+2026-07-17 NOTE: These sections are very old, and may be very inaccurate.
+I will need to revisit my ideas and see what I actually want to implement.
 
 
 /****************************************************************************\
@@ -209,12 +272,59 @@ Final:
 ------
 2001 / ?? / ?? - ??:??
 v1.0
-  - Hopefully I'll release the Final version soon.
+  - I'll post Greenshift to the Winamp site when I reach v1.0
+  - 2026-07-17 NOTE: The above note is from long ago, and I may never reach v1.0.
+    Leaving the above note for posterity. It's not a promise.
 
-
-Beta:
+  Beta:
 ------
-2001 / 07 / ?? - ??:??
+
+2026 / 07 / 17 - ??:??
+  - Publish the v0.4.2b changes
+
+
+2026 / 07 / 15 - 01:36
+  - v0.4.0b was published to GitHub. Revision history is now tracked in the GitHub repository.  This is the first public release of Greenshift since 2001.
+  - I think I lost the edits for v0.4.1b to v0.4.2b, as I only have the notes of what I added, but that code does not seem to be present.
+  - I found a backup that contains v0.4.1b and v0.4.2b, so I want to merge those changes in before publishing.
+  - NOTE: All the "planned" and "in the works" features were thought of long ago, and so do not accurately represent what work I actually plan to do.
+          Once I merge in the "latest" changes (i.e. v0.4.2b), I need to assess the current state of the project,
+          and then decide what I'm actually going to work on.
+          I'm leaving most of the comments in this file for posterity.
+
+2001 / 12 / ?? - ??:??
+v0.4.2b
+  - Added:   Line width is scaled.  LWdt now represents 1/640th of the width of the screen
+  - Added:   WaveShapes aspect is tweened
+  - Added:   Revamped expression parser.  It's now MUCH easier to maintain.  Much easier to extend.
+             - Flex and Lemon
+flex - fast lexical analyzer generator
+LEMON - parser generator
+(2026-07-17 NOTE: The expression parser update was the one big piece I did not merge into the modern/2026 release, therefore
+            the conditional operator and relational operators will *not* function until the parser is updated)
+  - Added:   Conditional operator:  (boolean-expression)?(if-true):(if-false)
+  - Added:   Relational operators: == != > >= < <=
+
+
+
+2001 / 07 / 24 - 18:24
+v0.4.1b
+  - Added:   "cheap trick" hardware stretching in fullscreen
+  - Added:   aspect ratio for particles and waveshapes
+  - Fixed:   debug info is now drawn relative to the edge of the screen
+  - Changed: variable names in the settings file
+  - Added:   many settings variables now allow expressions involving variables
+  - Changed: the default deltafield_interval is 0
+  - Added:   "Zoom" variable for DFs.  default is 0.
+       if 0, both (-1,1) intervals fit entirely on the screen.
+       if 1, one interval fits on screen, while the ends of the other hang off
+  - Fixed:   error that removed the letter W from all expressions
+  - Fixed:   delta tween error.  tween was skipped, if DF interval set too low
+  - Changed: DF prerender should be slightly faster
+  - Fixed:   .MAP files now work again
+
+
+2001 / 07 / 07 - 18:17
 v0.4b
   - Added: delta field aspect tweening
   - Fixed: A[] vars are no longer re-evaluated for each instance
@@ -305,8 +415,12 @@ Pre-Release:
 2001-05-09-20:40  hooked to Winamp for the first time
 
 
-Contact Info:
--------------
+
+/****************************************************************************\
+ *
+ * Contact Info:
+ * -------------
+\****************************************************************************/
 
   Jared Ivey
 

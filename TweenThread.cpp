@@ -146,11 +146,12 @@ error_t TweenThread::ScheduleTween( const DWORD dwFrames,
                                     void *pObject1,
                                     void *pObject2 )
 {
+    error_t err = SUCCESS;
     /*
      * add to delta queue
      */
     if( IsBusy() )
-        return ERR_THREADBUSY;
+        err = ERR_THREADBUSY;
     else
     {
 #if EXTREME_DEBUGGING
@@ -161,6 +162,10 @@ error_t TweenThread::ScheduleTween( const DWORD dwFrames,
          * SOMETHING is deadlocking, so it's better safe than sorry
          */
         EnterCS();
+        if( m_dwState != 0 )
+            err = ERR_THREADBUSY;
+        else
+        {
             m_dwState                    = 1;  /* tween when ready */
             m_dwNumPlainFramesThreadside = 1;
             m_pObject2                   = pObject2;
@@ -168,12 +173,14 @@ error_t TweenThread::ScheduleTween( const DWORD dwFrames,
             m_dwNumTweenFramesThreadside = (dwFrames == 0)
                                             ? m_dwDefaultFrames : dwFrames;
             m_pObject1                   = pObject1;
+        }
         LeaveCS();
 
-        Resume();  /* wake up the thread so it can do some work */
+        if( err == SUCCESS )
+            Resume();  /* wake up the thread so it can do some work */
     }
 
-    return SUCCESS;
+    return err;
 }
 
 
@@ -187,7 +194,13 @@ error_t TweenThread::ScheduleTween( const DWORD dwFrames,
  ****************************************************************************/
 void    *TweenThread::GetFrame( void )
 {
-    switch( m_dwState )
+    DWORD state;
+
+    EnterCS();
+    state = m_dwState;
+    LeaveCS();
+
+    switch( state )
     {
     case 0:
 
@@ -250,7 +263,9 @@ void    *TweenThread::GetFrame( void )
             SwapPointers( &m_pTweenFrames, &m_pTweenFramesThreadside );
         }
 
+        EnterCS();
         m_dwState = 2;
+        LeaveCS();
         /* FALLTHROUGH */
 
     case 2:
@@ -264,7 +279,9 @@ void    *TweenThread::GetFrame( void )
         if( m_dwCurrentFrame < m_dwNumTweenFrames )
             return m_pTweenFrames[ m_dwCurrentFrame++ ];
 
+        EnterCS();
         m_dwState        = 0;
+        LeaveCS();
         m_dwCurrentFrame = 1; /*
                               * the fallthrough does frame 0,
                               * so let frame 1 go next
@@ -293,7 +310,10 @@ void    *TweenThread::GetFrame( void )
  ****************************************************************************/
 int    TweenThread::ThreadProcedure( void *pData )
 {
-    int        nWorkToDo;
+    int        nWorkToDo;  // number of frames to calculate
+                           // 0 = no work
+                           // 1 = don't tween, just prerender a single frame, isn't used
+                           // 2 = prerender the final frame, and then tween the current and final frames
 
     while( true )
     {

@@ -48,11 +48,23 @@ public:
                             const value_t destY,
                             value_t *deltaX,
                             value_t *deltaY );
-    value_t     GetAspect( void )    { return m_nAspect; };
+    value_t     GetAspect( void )    { return m_nAspect;   };
     bool        GetEdgeWrap( void )  { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
+    bool        GetZoom( void )      { return m_bZoom;     };
 
     error_t     Initialize( MyDictionary<char*> *inDeltaConfig,
                             MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals );
+
+#if EXTREME_DEBUGGING
+    void DebugDump(const char * strFile)
+    {
+        DumpToFile(strFile, (m_bIsPolar?"polar":"cartesian"), "\n");
+        DumpToFile(strFile, m_pSource1->PrintString(), "\n");
+        DumpToFile(strFile, m_pSource2->PrintString(), "\n");
+
+/*        m_pfValues.DebugDump();*/
+    };
+#endif
 
 private:
     value_t                 m_nX;
@@ -69,6 +81,7 @@ private:
 
     bool                    m_bIsPolar;
     bool                    m_bEdgeWrap;
+    bool                    m_bZoom;
 };
 
 

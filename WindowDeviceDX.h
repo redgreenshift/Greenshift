@@ -43,6 +43,20 @@
 class WindowDeviceDX : public WindowDevice
 {
 public:
+    void *GetPixelMemory(void)
+    {
+        static DDSURFACEDESC2 ddsd;
+        if( GetBack()->Lock(NULL, &ddsd, DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL)
+          != DD_OK )
+            return NULL;
+
+        return &ddsd;
+    };
+    void ReleasePixelMemory(void)
+    {
+        GetBack()->Unlock(NULL);
+    };
+    void DumpCaps(void);
                          WindowDeviceDX();    /* constructor */
     virtual             ~WindowDeviceDX();    /* destructor */
 

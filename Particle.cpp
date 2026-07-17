@@ -43,6 +43,8 @@ Particle::Particle()
     m_nLifetime       = 0.0f;
     m_nID             = 0.0f;
     m_nDrawingTime    = 0.0f;
+    m_nAspect         = 0.0f;
+    m_bZoom           = false;
 
     /*
      * Particle keeps track of:
@@ -106,7 +108,8 @@ error_t    Particle::Initialize( MyDictionary<char*> *inConfig,
                               MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals )
 {
     error_t err;
-    DWORD    dwID;
+    DWORD   dwID;
+//    value_t nDefaultAspect = 1.0f;
 
 
     /*
@@ -134,6 +137,22 @@ error_t    Particle::Initialize( MyDictionary<char*> *inConfig,
         m_dwNumInstances = (DWORD)floor(m_nNumInstances);
 
     m_nNumInstances = (value_t)m_dwNumInstances;
+
+
+//    nDefaultAspect = Expression::Evaluate("default_aspect", 1.0f, inValues, inGlobals);
+//    nDefaultAspect = 0.0f;
+
+    m_nAspect = (value_t)Expression::Evaluate( inConfig->GetValue("Aspect"),
+                            0.0f, &m_dValues, inGlobals );
+
+    if( m_nAspect < 0.0f )
+        m_nAspect = 0.0f;
+
+//    if( m_nAspect == 0.0f )
+//        m_nAspect = nDefaultAspect;
+
+    m_bZoom = (Expression::Evaluate( inConfig->GetValue("Zoom"),
+        0.0f, &m_dValues, inGlobals ) == 0.0f) ? false : true;
 
 
     /*

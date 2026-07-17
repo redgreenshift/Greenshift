@@ -19,11 +19,11 @@
 //#ifdef _DLL
 
 /*
- * varsion to reduce the size of the executable file
+ * version to reduce the size of the executable file
  */
 static char* DXError(HRESULT error)
 {
-    return "";
+    return "DXError commented out";
 }
 #else
 static char* DXError(HRESULT error)

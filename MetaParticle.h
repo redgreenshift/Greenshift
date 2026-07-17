@@ -64,6 +64,8 @@ protected:
     value_t             *m_pLastX;
     value_t             *m_pLastY;
 
+//    char                m_strDefaultAspect[32];
+
     bool                m_bTweening;
     bool                m_bConnected;
 

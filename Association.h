@@ -42,7 +42,7 @@
  *
  * I represent a pair of associated objects
  * --a key and a value. My instances can serve
- * as entries in a MyDictionary.
+ * as entries in a dictionary.
  *
  ****************************************************************************/
 template<class ValueType>

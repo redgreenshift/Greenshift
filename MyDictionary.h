@@ -351,7 +351,7 @@ public:
             return SUCCESS;
         else
         {
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
             DumpToFile( "error.txt", (char*)inKey, "<--?!\n" );
 #endif
             return ERR_NOTFOUND;

@@ -69,7 +69,7 @@ public:
     inline PIXELMAP *GetPixelMap( void )    { return (PIXELMAP*)GetFrame(); };
 
 protected:
-    void            SetAspect( value_t nAspect );
+    void            SetAspect( value_t nAspect, const bool bZoom );
     virtual void    PrerenderFrames( const DWORD dwFrames,
                                      void **pFrames,
                                      void *pObject1,
@@ -82,7 +82,7 @@ protected:
                                      void *pFrame,
                                      void *pObject1 );
 
-    inline DWORD    ConvertToScreen( const value_t nPhysicalValue,
+    inline long    ConvertToScreen( const value_t nPhysicalValue,
                              const long nHalfDimension,
                              const long nDimension,
                              const DWORD nBoundsType );

@@ -115,7 +115,7 @@ private:
 
     DWORD           m_dwState;
                 /*
-                 * 0 = loop on delta 1
+                 * 0 = loop on delta 1, ready to schedule tween
                  * 1 = loop on delta 1, tween when ready (also swap d1 and d2)
                  * 2 = tween once then return to state 0
                  *

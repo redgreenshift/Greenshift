@@ -66,6 +66,15 @@ WindowDevice::WindowDevice()
 
     m_hParentWindow     = NULL;
 
+    m_dwWindowWidth      = 0;
+    m_dwWindowHeight     = 0;
+    m_dwFullscreenWidth  = 0;
+    m_dwFullscreenHeight = 0;
+
+    m_nWidth  = m_nWindowWidth  = m_nFullscreenWidth  = 640;
+    m_nHeight = m_nWindowHeight = m_nFullscreenHeight = 480;
+    m_nBitDepth = 8;
+
     /*
      * initialize the class description structure
      */
@@ -108,40 +117,82 @@ WindowDevice::~WindowDevice()
  *
  ****************************************************************************/
 error_t    WindowDevice::Initialize( const char *strWindowTitle,
-                                     const DWORD dwWidth,
-                                     const DWORD dwHeight,
-                                     const DWORD dwBitDepth,
-                                     const DWORD dwFlags,
-                                     const DWORD dwColorKey,
                                      const HINSTANCE hInstance,
                                      const WNDPROC hDefWindowProc,
                                      const HWND hParentWindow,
-                                     MyDictionary<char*> *inConfig )
+                                     MyDictionary<char*> *inConfig,
+                                     MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
+                                     MyDictionary<value_t*> *inValues)
 {
     error_t err = SUCCESS;
 
-    if( inConfig != NULL )
-    {
+    if( inConfig == NULL )
+        return ERR_NULL;
 
-        m_bShowFramerate = (
-                            atol( inConfig->GetValue( "show_framerate", "0" ) 
-                            ) == 1 ) ? true : false;
-        m_bShowDebug     = (
-                            atol( inConfig->GetValue( "show_debug_info", "0" ) 
-                            ) == 1 ) ? true : false;
+    if( inValues != NULL )
+    {
+        inValues->SetValue("screen_depth",  &m_nBitDepth);
+        inValues->SetValue("buffer_width",  &m_nWidth);
+        inValues->SetValue("buffer_height", &m_nHeight);
+        inValues->SetValue("window_width",  &m_nWindowWidth);
+        inValues->SetValue("window_height", &m_nWindowHeight);
+        inValues->SetValue("screen_width",  &m_nFullscreenWidth);
+        inValues->SetValue("screen_height", &m_nFullscreenHeight);
     }
 
-    m_hParentWindow = hParentWindow;
-//    m_hParentWindow = NULL;
+    m_hParentWindow     = hParentWindow;
 
     strcpy( m_strWindowTitle, strWindowTitle );
 
-    m_dwWidth    = dwWidth;
-    m_dwHeight   = dwHeight;
-    m_dwBitDepth = dwBitDepth;
-    m_dwFlags    = dwFlags;
-    m_dwOverlayColorKey = dwColorKey;
+    m_dwBitDepth = (DWORD)Expression::Evaluate(inConfig->GetValue("screen_depth" ), m_nBitDepth, inValues, inGlobals );
+    m_nBitDepth  = (value_t)m_dwBitDepth;
+    m_dwWidth    = (DWORD)Expression::Evaluate(inConfig->GetValue("buffer_width" ), m_nWidth, inValues, inGlobals );
+    m_nWidth     = (value_t)m_dwWidth;
+    m_dwHeight   = (DWORD)Expression::Evaluate(inConfig->GetValue("buffer_height"), m_nHeight, inValues, inGlobals );
+    m_nHeight    = (value_t)m_dwHeight;
 
+    m_dwFlags    = WD_DIRECTX;  /* DirectX is default, need to allow OpenGL */
+    m_dwFlags   |= (Expression::Evaluate(inConfig->GetValue("fullscreen"),
+        0, NULL, inGlobals) != 0) ? WD_FULLSCREEN : WD_DEFAULT;
+    m_dwFlags   |= (Expression::Evaluate(inConfig->GetValue("overlay_mode"),
+        0, NULL, inGlobals) != 0) ? WD_OVERLAY : WD_DEFAULT;
+    m_dwOverlayColorKey = (DWORD)Expression::Evaluate(
+                   inConfig->GetValue( "overlay_color_key" ), 0, inValues, inGlobals );
+
+
+
+    m_bShowFramerate = (
+                        atol( inConfig->GetValue( "show_framerate", "0" ) 
+                        ) != 0 ) ? true : false;
+    m_bShowDebug     = (
+                        atol( inConfig->GetValue( "show_debug_info", "0" ) 
+                        ) != 0 ) ? true : false;
+
+    m_dwWindowWidth  = (DWORD)Expression::Evaluate(inConfig->GetValue( "window_width"),  m_nWindowWidth, inValues, inGlobals );
+    m_nWindowWidth   = (value_t)m_dwWindowWidth;
+    m_dwWindowHeight = (DWORD)Expression::Evaluate(inConfig->GetValue( "window_height"), m_nWindowHeight, inValues, inGlobals );
+    m_nWindowHeight  = (value_t)m_dwWindowHeight;
+    m_dwFullscreenWidth  = (DWORD)Expression::Evaluate(inConfig->GetValue( "screen_width"),  m_nFullscreenWidth, inValues, inGlobals );
+    m_nFullscreenWidth   = (value_t)m_dwFullscreenWidth;
+    m_dwFullscreenHeight = (DWORD)Expression::Evaluate(inConfig->GetValue( "screen_height"), m_nFullscreenHeight, inValues, inGlobals );
+    m_nFullscreenHeight  = (value_t)m_dwFullscreenHeight;
+
+
+    if( m_dwFullscreenWidth == 0 )
+        m_dwFullscreenWidth = m_dwWidth;
+
+    if( m_dwFullscreenHeight == 0 )
+        m_dwFullscreenHeight = m_dwHeight;
+
+    if( m_dwWindowWidth == 0 )
+        m_dwWindowWidth = m_dwWidth;
+
+    if( m_dwWindowHeight == 0 )
+        m_dwWindowHeight = m_dwHeight;
+
+
+
+    //////
     if( hDefWindowProc != NULL )
         m_hDefWindowProc       = hDefWindowProc;/* whoo hoo!  it's working! */
     else
@@ -199,9 +250,9 @@ int        WindowDevice::ThreadProcedure( void *pData )
 {
     BOOL    hRet;
     BOOL    bQuit = FALSE;
-    MSG        msg;
+    MSG     msg;
     RECT    hRect;
-    error_t    err = SUCCESS;
+    error_t err = SUCCESS;
 
     /* lock as early as I can so I can perform initialization */
     EnterCS();
@@ -212,8 +263,8 @@ int        WindowDevice::ThreadProcedure( void *pData )
 
         hRect.left   = 0;
         hRect.top    = 0;
-        hRect.right  = Width();
-        hRect.bottom = Height();
+        hRect.right  = WindowWidth();
+        hRect.bottom = WindowHeight();
 
 
         if( ! AdjustWindowRectEx( &hRect, Style(), false, StyleEx() ) )
@@ -351,8 +402,8 @@ error_t    WindowDevice::UpdateWindowProperties(void)
 
     hRect.left   = 0;
     hRect.top    = 0;
-    hRect.right  = Width();
-    hRect.bottom = Height();
+    hRect.right  = WindowWidth();
+    hRect.bottom = WindowHeight();
 
 
     /*
@@ -607,6 +658,25 @@ error_t    WindowDevice::Print(const int x, const int y, const char *string, con
 error_t    WindowDevice::PrintPrivate(const int x, const int y, const char *string, const COLORREF dwColor )
 {
     HDC        hdc;
+    int xValue;
+    int yValue;
+
+
+    if( x == -1 || x == -2 )
+        xValue = Width() / 2;
+    else
+    if( x < 0 )
+        xValue = Width() + x;
+    else
+        xValue = x;
+
+    if( y == -1 )
+        yValue = Height() / 2;
+    else
+    if( y < 0 )
+        yValue = Height() + y;
+    else
+        yValue = y;
 
     EnterCS();
 
@@ -620,15 +690,15 @@ error_t    WindowDevice::PrintPrivate(const int x, const int y, const char *stri
     //        GetClientRect(m_hWindow, &rc);
     //        GetTextExtentPoint(hdc, string, lstrlen(string), &size);
     //        TextOut(hdc, (rc.right - size.cx) / 2, (rc.bottom - size.cy) / 2,
-            if( x == -1 )
+            if( x == -2 )
             {
                 SetTextAlign( hdc, TA_CENTER );
-                TextOut( hdc, Width() / 2, y, string, strlen(string) );
+                TextOut( hdc, xValue, yValue, string, strlen(string) );
                 SetTextAlign( hdc, TA_LEFT );
             }
             else
             {
-                TextOut( hdc, x, y, string, strlen(string) );
+                TextOut( hdc, xValue, yValue, string, strlen(string) );
             }
 
 
@@ -646,15 +716,15 @@ error_t    WindowDevice::PrintPrivate(const int x, const int y, const char *stri
     //        GetClientRect(m_hWindow, &rc);
     //        GetTextExtentPoint(hdc, string, lstrlen(string), &size);
     //        TextOut(hdc, (rc.right - size.cx) / 2, (rc.bottom - size.cy) / 2,
-            if( x == -1 )
+            if( x == -2 )
             {
                 SetTextAlign( hdc, TA_CENTER );
-                TextOut( hdc, Width() / 2, y, string, strlen(string) );
+                TextOut( hdc, xValue, yValue, string, strlen(string) );
                 SetTextAlign( hdc, TA_LEFT );
             }
             else
             {
-                TextOut( hdc, x, y, string, strlen(string) );
+                TextOut( hdc, xValue, yValue, string, strlen(string) );
             }
 
 
@@ -1061,6 +1131,7 @@ LRESULT CALLBACK WindowDeviceWindowProcedure(HWND hWindow,
 
 /* The New function needs to see the subclasses so it can create them */
 #include "WindowDeviceDX.h"
+//#include "WindowDeviceDX5.h"
 //#include "WindowDeviceOpenGL.h"
 
 
@@ -1073,32 +1144,21 @@ error_t     WindowDevice::New( const HINSTANCE hInstance,
                                WindowDevice** outWindowDevice,
                                const char *strWindowTitle,
                                MyDictionary<char*> *inConfig,
+                               MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
+                               MyDictionary<value_t*> *inValues,
+
                                const HWND hParentWindow,
-                               const WNDPROC hWindowMsgHandler )
+                               const WNDPROC hWindowMsgHandler)
 {
-    DWORD    dwBitDepth;
     DWORD    dwFlags;
-    DWORD    dwColorKey;
-    DWORD    dwWidth;
-    DWORD    dwHeight;
 
     if( outWindowDevice == NULL
         || strWindowTitle == NULL
         || inConfig == NULL )
         return ERR_NULL;
 
-    dwBitDepth = LCLIP( atol( inConfig->GetValue("fullscreen_depth", "8") ) );
 
     dwFlags    = WD_DIRECTX;  /* DirectX is default, need to allow OpenGL */
-    dwFlags   |= atol( inConfig->GetValue( "fullscreen", "0" ) )
-                    ? WD_FULLSCREEN : WD_DEFAULT;
-    dwFlags   |= atol( inConfig->GetValue( "overlay_mode", "0" ) )
-                    ? WD_OVERLAY : WD_DEFAULT;
-    dwColorKey = (DWORD)Expression::Evaluate(
-                   inConfig->GetValue( "overlay_color_key" ), 0, NULL, NULL );
-
-    dwWidth    = atol( inConfig->GetValue( "display_width",  "640" ));
-    dwHeight   = atol( inConfig->GetValue( "display_height", "480" ));
 
 //    if( dwFlags & WD_OPENGL )
 //        (*outWindowDevice) = new WindowDeviceOpenGL;
@@ -1114,15 +1174,12 @@ error_t     WindowDevice::New( const HINSTANCE hInstance,
 
 
     return (*outWindowDevice)->Initialize(strWindowTitle,
-                                            dwWidth,
-                                            dwHeight,
-                                            dwBitDepth,
-                                            dwFlags,
-                                            dwColorKey,
                                             hInstance,
                                             hWindowMsgHandler,
                                             hParentWindow,
-                                            inConfig );
+                                            inConfig,
+                                            inGlobals,
+                                            inValues );
 }
 
 

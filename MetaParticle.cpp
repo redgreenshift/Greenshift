@@ -102,9 +102,9 @@ error_t    MetaParticle::InitializeDerived(
 #if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
-        DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- BEGIN DICTIONARY DUMP -=-", "\n" );
         m_pConfigs[i].DebugDumpContents( "error.txt" );
-        DumpToFile( "error.txt", "-=- END MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- END DICTIONARY DUMP -=-", "\n" );
     }
 #endif
             if( i > 0 )
@@ -356,6 +356,7 @@ DWORD    MetaParticle::CountParticles( void )
  ****************************************************************************/
 MetaParticleAbstract::MetaParticleAbstract()
 {
+//    strcpy(m_strDefaultAspect, "1.0");
     m_nNumParticles  = 0.0f;
     m_nStep          = 0.0f;
     m_nX             = 0.0f;
@@ -406,7 +407,7 @@ void    MetaParticleAbstract::Get( const value_t nPercent,
 //        m_pCurrent->HackGet4d(dwInstance, dwFunction, m_nX, m_nZ, outX, outY, outLineWidth, outColor );
 //    else
 //        m_pCurrent->HackGet(dwInstance, dwFunction, outX, outY, outLineWidth, outColor );
-    value_t    x1, y1, lw1, c1;
+    value_t x1, y1, lw1, c1;
     value_t x2, y2, lw2, c2;
 //    value_t lnPercent = nPercent;
 //    char    *strName = m_pConfigs[m_dwCurrent].GetValue( "NAME" );
@@ -471,16 +472,16 @@ void    MetaParticleAbstract::GetNums( DWORD *outInstances, DWORD *outFunctions,
 //    }
 //    else
     {
-        dwInstances2 = m_pNext->GetNumInstances();
-        dwFunctions2 = m_pNext->GetNumFunctions();
-        dwSteps2     = m_pNext->GetNumSteps();
+        dwInstances2  = m_pNext->GetNumInstances();
+        dwFunctions2  = m_pNext->GetNumFunctions();
+        dwSteps2      = m_pNext->GetNumSteps();
         *outInstances = max( dwInstances, dwInstances2 );
         *outFunctions = max( dwFunctions, dwFunctions2 );
 //        *outSteps     = max( dwSteps, dwSteps2 );
 //        *outInstances = dwInstances * (1.0f - m_nPercent) + m_nPercent * dwInstances2;
 //        *outFunctions = dwFunctions * (1.0f - m_nPercent) + m_nPercent * dwFunctions2;
-        *outSteps     = dwSteps     * (1.0f - m_nPercent) + m_nPercent * dwSteps2;
-//        *outSteps     = dwSteps     + (dwSteps2 - dwSteps) * m_nPercent;
+//        *outSteps     = dwSteps     * (1.0f - m_nPercent) + m_nPercent * dwSteps2;
+        *outSteps     = dwSteps     + (dwSteps2 - dwSteps) * m_nPercent;
         if( m_nPercent > 0.5f )
             m_bConnected = m_pNext->GetConnected();
     }
@@ -509,7 +510,22 @@ void    MetaParticleAbstract::DrawParametric( BitCanvas *pBitCanvas )
     value_t y;
     value_t line_width;
     value_t color;
+//    value_t aspect;
 
+
+    /* it's going to have a little jump at the end of the tween
+       until I decide how to resolve the 0 aspect thing
+     */
+//    pBitCanvas->SetDrawingAspect( m_pCurrent->GetAspect(), m_pCurrent->GetZoom() );
+//    aspect = m_pCurrent->GetAspect();
+//    if( aspect == 0.0f )
+//        DumpToFile("error.txt", "zero aspect", "\n");
+
+    if( ! m_bTweening )
+        pBitCanvas->SetDrawingAspect( m_pCurrent->GetAspect(), m_pCurrent->GetZoom() );
+    else
+        pBitCanvas->SetDrawingAspect( m_pCurrent->GetAspect(), m_pCurrent->GetZoom(),
+                  m_pNext->GetAspect(), m_pNext->GetZoom(), m_nPercent );
 
         for( i = 0; i < m_dwNumInstances; i++ )
         {
@@ -568,6 +584,10 @@ void    MetaParticleAbstract::Draw4d( BitCanvas *pBitCanvas )
     value_t line_width;
     value_t color;
 
+    /* it's going to have a little jump at the end of the tween
+       until I decide how to resolve the 0 aspect thing
+     */
+    pBitCanvas->SetDrawingAspect( m_pCurrent->GetAspect(), m_pCurrent->GetZoom() );
 
     for( i = 0; i < m_dwNumInstances; i++ )
     {

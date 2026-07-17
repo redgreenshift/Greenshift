@@ -50,6 +50,98 @@ unsigned char cWaveformData[2][SOUND_DATA_LENGTH];
 #endif
 
 #include "MersenneTwister.h"
+#define HIDE_FROM_WINDOWS
+//#include "..\\..\\cs\\cs4451a\\cs4451a\\cs4451_a1.c"
+
+//#define CS4451a_project_3 // I don't even remember why I used code from a college project.... it was to test an algorithm. JRDV: Clean this up
+
+#ifdef CS4451a_project_3
+    BitCanvas    *gpBitCanvas = NULL;
+    BYTE         grColor = 0xff;
+    BYTE         ggColor = 0xff;
+    BYTE         gbColor = 0xff;
+#undef WINMAIN
+#undef WINMAIN2
+#define WINMAIN        WinMain1
+#define WINMAIN2    WinMain2
+#define glBegin(ignore)   /* ignore, assume GL_POINTS */
+#define glEnd()     /* ignore */
+#define glColor3b(r,g,b)   grColor = r; ggColor = g; gbColor = b;
+#define glColor3f(r,g,b)   grColor = (BYTE)((r)*255); ggColor = (BYTE)((g)*255); gbColor = (BYTE)((b)*255);
+#define glVertex2i(x, y)    gpBitCanvas->BlahPutPixel((x), vpd-(y)-1, grColor, ggColor, gbColor);
+/*    GLvoid glVertex2i(GLint x, GLint y)
+    {
+        DWORD r=0xff, g=0xff, b=0xff;
+        gpBitCanvas->BlahPutPixel(x, vpd-y-1, r, g, b);
+    }
+    */
+#include "..\\..\\cs\\cs4451a\\p3\\cs4451_a3.c"
+
+int PASCAL WinMain(HINSTANCE hInstance,
+        HINSTANCE hPrevInstance,
+        LPSTR lpCmdLine,
+        int nCmdShow)
+{
+    error_t err = 0;
+
+    WindowDevice *window_device;
+    Dictionary<char *> dConfig;
+    FILE    *datafile;
+
+    dConfig.SetValue("screen_depth", "32");
+    dConfig.SetValue("canvas_depth", "32");
+    dConfig.SetValue("buffer_width", "800");
+    dConfig.SetValue("buffer_height", "600");
+    dConfig.SetValue("canvas_width", "512");
+    dConfig.SetValue("canvas_height", "512");
+    dConfig.SetValue("canvas_aspect", "1");
+    dConfig.SetValue("window_width", "800");
+    dConfig.SetValue("window_height", "600");
+    dConfig.SetValue("screen_width", "800");
+    dConfig.SetValue("screen_height", "600");
+    dConfig.SetValue("show_debug_info", "0");
+    dConfig.SetValue("show_framerate", "0");
+    dConfig.SetValue("fullscreen", "0");
+    dConfig.SetValue("maximum_frames", "22");
+    dConfig.SetValue("default_frames", "22");
+    dConfig.SetValue("tween_repeat", "4");
+    dConfig.SetValue("plain_repeat", "1");
+    dConfig.SetValue("overlay_mode", "0");
+    dConfig.SetValue("overlay_color_key", "0");
+
+    WindowDevice::New(hInstance, &window_device, "CS4451_a3 - Ray Tracer", &dConfig, NULL, NULL, NULL );
+    BitCanvas::New(&gpBitCanvas, &dConfig, NULL, NULL );
+
+
+
+//    DumpToFile("error.txt", "blah?!asd: ", read_file( fopen( "d:\\cs\\cs4451a\\cs4451a\\testdata", "r" ) ) );
+    vpd = 512;
+//    datafile = fopen( "d:\\cs\\cs4451a\\p3\\testdata", "r" );
+    datafile = fopen( "d:\\cs\\cs4451a\\p3\\input4", "r" );
+    init_scene( datafile );
+    fclose(datafile);
+
+//    DumpToFile( "error.txt", "vpd: ", vpd );
+//    DumpToFile( "error.txt", "numSpheres: ", numSpheres );
+
+
+//glVertex2i
+//call draw()
+    while( window_device != NULL
+        && window_device->IsActive() )
+    {
+        draw_scene();
+
+          gpBitCanvas->FlipBuffers();
+          window_device->Flip( gpBitCanvas );
+    }
+
+    return 0;
+}
+
+#endif  /* CS4451a_project_3 */
+/*****************************/
+
 
 int PASCAL WINMAIN(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -57,7 +149,9 @@ int PASCAL WINMAIN(HINSTANCE hInstance,
         int nCmdShow)
 {
     error_t err = 0;
-    int i;
+//    int i;
+    DWORD i;
+//    DWORD j;
     const value_t    pi = 3.14159265358979323846264338327950288419716939937510582097494f;
     value_t
         angularFrequency = 0.0625f,
@@ -113,13 +207,123 @@ int PASCAL WINMAIN(HINSTANCE hInstance,
     // 3.1415927410125732
     // 3.1415926535897931
 
+#ifdef HIDE_TIMER
+    HighResolutionTimer hrTimer;
+    value_t the_time = 1.0f;
+//    value_t increment = 1.0f / (0xFFFFF + 1);
+    long increment = 7;
+    long t_time = 2;
+    long r = rand();
+    long s = rand();
+//    float r = rand();
+//    float s = rand();
+    
 
-//    return 0;
+    hrTimer.Start();
+//    for( j = 0; j < 149147; j++ )
+//    for( j = 0; j < 0xFFFFFFFF; j++ )
+    for( i = 0; i < 0xFFFFF; i++ )
+    {
+//        the_time += 2.0f;
+//        t_time++;
 
-    /*****************************/
+//        the_time += increment;
+
+        t_time += increment;
+
+//        the_time = i * increment;
+//        the_time = (i + 1.0f) * increment;
+
+//        t_time = r + (s-r) * t_time;  // integer multiply
+
+//        the_time = r + (s - r) * the_time; // float multiply
+
+//        the_time = r + (s - r) / the_time; // float divide
+
+//        t_time = r + (s-r) / t_time;       // integer divide
+//        t_time = r + (s-r) % t_time;       // integer mod
+
+//        the_time = r + fmod((s - r), the_time);  // fmod
+
+    }
+    the_time = hrTimer.Milliseconds();
+
+#if EXTREME_DEBUGGING
+    DumpToFile("error.txt", "time = ", the_time, "\n");
+#endif
+
+    return 0; // JRDV: NOTE: I'm not sure WHY I put this in v0.4.1b, other than I probably forgot that the "test harness" bailed out, but now it's fine in v0.4.2b with HIDE_TIMER
+#endif
+
+/*****************************/
+
+#ifdef CS4451a_project_3
+    dConfig.SetValue("screen_depth", "32");
+    dConfig.SetValue("canvas_depth", "32");
+    dConfig.SetValue("buffer_width", "640");
+    dConfig.SetValue("buffer_height", "480");
+    dConfig.SetValue("canvas_width", "400");
+    dConfig.SetValue("canvas_height", "400");
+    dConfig.SetValue("canvas_aspect", "1");
+    dConfig.SetValue("window_width", "640");
+    dConfig.SetValue("window_height", "480");
+    dConfig.SetValue("screen_width", "640");
+    dConfig.SetValue("screen_height", "480");
+    dConfig.SetValue("show_debug_info", "0");
+    dConfig.SetValue("show_framerate", "0");
+    dConfig.SetValue("fullscreen", "0");
+    dConfig.SetValue("maximum_frames", "22");
+    dConfig.SetValue("default_frames", "22");
+    dConfig.SetValue("tween_repeat", "4");
+    dConfig.SetValue("plain_repeat", "1");
+    dConfig.SetValue("overlay_mode", "0");
+    dConfig.SetValue("overlay_color_key", "0");
+
+    WindowDevice::New(hInstance, &window_device, "CS4451_a1 - Ray Tracer", &dConfig, NULL, NULL, NULL );
+    BitCanvas::New(&bit_canvas, &dConfig, NULL, NULL );
+
+//    DDSURFACEDESC2 *ddsd;
+//    DWORD *surface;
+//    DWORD width, height, format;
 
 
-    err = gGreenshift.Initialize( hInstance ); // TODO: JRDV: This is failing because I forgot to make a copy of the settings file... need to extract on a Windows 98 VM or something...
+//    DumpToFile("error.txt", "blah?!asd: ", read_file( fopen( "d:\\cs\\cs4451a\\cs4451a\\testdata", "r" ) ) );
+    vpd = 400;
+    init_scene( fopen( "d:\\cs\\cs4451a\\cs4451a\\testdata", "r" ) );
+//    read_file( stdin );
+
+//    DumpToFile( "error.txt", "vpd: ", vpd );
+//    DumpToFile( "error.txt", "numSpheres: ", numSpheres );
+
+
+
+    while( window_device != NULL
+        && window_device->IsActive() )
+    {
+          for(y=0; y<vpd; y++) {
+            for(x=0; x<vpd; x++) {
+              shade_pixel(&fr, &fg, &fb, x, y);
+              r = (DWORD)(fr * 255.0);
+              g = (DWORD)(fg * 255.0);
+              b = (DWORD)(fb * 255.0);
+
+              bit_canvas->BlahPutPixel(x, vpd-y-1, r, g, b);
+//              bit_canvas->BlahPutPixel(x, y, r, g, b);
+            }
+          }
+
+
+          bit_canvas->FlipBuffers();
+          window_device->Flip( bit_canvas );
+    }
+
+    return 0;
+#endif // #ifdef CS4451a_project_3
+
+
+
+
+    err = gGreenshift.Initialize( hInstance );
     if( err != SUCCESS )
     {
         outFile = fopen( "error.txt", "a" );
@@ -210,7 +414,7 @@ int PASCAL WINMAIN2(HINSTANCE hInstance,
     dConfig.SetValue( "fullscreen_depth", "8" );
     dConfig.SetValue( "calculated_depth", "8" );
 
-    if( BitCanvas::New( &bitCanvas, &dConfig ) == SUCCESS )
+    if( BitCanvas::New( &bitCanvas, &dConfig, NULL, NULL ) == SUCCESS )
     {
 //        bitCanvas->DoDelta( (PIXELMAP*)NULL );
 //        bitCanvas->CopyTo( NULL, 640, 480, 640*2, 1 );

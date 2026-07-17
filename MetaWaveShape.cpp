@@ -70,12 +70,22 @@ error_t    MetaWaveShape::InitializeDerived(
                             MyDictionary<char*> *inMainConfig,
                             MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals )
 {
-    DWORD    i;
-    error_t    err;
+    DWORD   i;
+    error_t err;
+
+//    value_t  nDefaultAspect;
 
     m_pWaveShapes = new WaveShape[ m_dwNumConfigs ];
     if( m_pWaveShapes == NULL )
         return ERR_MALLOC;
+
+
+//    nDefaultAspect = Expression::Evaluate("canvas_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
+//    nDefaultAspect = Expression::Evaluate("default_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
+
+//    sprintf( m_strDefaultAspect, "%f", nDefaultAspect );
+
+
 
     /*
      * set variables
@@ -94,9 +104,9 @@ error_t    MetaWaveShape::InitializeDerived(
 #if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
-        DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- BEGIN DICTIONARY DUMP -=-", "\n" );
         m_pConfigs[i].DebugDumpContents( "error.txt" );
-        DumpToFile( "error.txt", "-=- END MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- END DICTIONARY DUMP -=-", "\n" );
     }
 #endif
        

@@ -47,12 +47,6 @@ You should have received a copy of the GNU General Public License along with thi
 
 Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See `MersenneTwister.h` and `licenses/LGPL-2.1-or-later.txt` for details.
 
-## Acknowledgements - An expression of thanks or a token of appreciation
-
-* [Mersenne Twister](http://www.math.keio.ac.jp/~matumoto/emt.html) - A 623-Dimensionally Equidistributed Uniform Pseudo-Random Number Generator
-* [Flex](http://ftp.ost.eltele.no/pub/gnu/) - fast lexical analyser generator
-* [LEMON](http://www.hwaci.com/sw/lemon/) - parser generator
-
 ---
 
 ## Contact & Links

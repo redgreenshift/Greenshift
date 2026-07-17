@@ -201,6 +201,10 @@ error_t        Palette::Initialize( MyDictionary<char*> *pConfig,
     }
 
 
+    if( m_nPaletteType == PALETTE_UNKNOWN )
+        m_nPaletteType = PALETTE_STATIC_COLOR_MAP;
+
+
 
 
     switch(m_nPaletteType)
@@ -208,16 +212,24 @@ error_t        Palette::Initialize( MyDictionary<char*> *pConfig,
     case PALETTE_STATIC_COLOR_MAP:
         for( i = 0;  i < PALETTE_SIZE; i++ )
         {
+            char *rVal, *gVal, *bVal;
+
             sprintf( strIDRed,   "r%d", i );
             sprintf( strIDGreen, "g%d", i );
             sprintf( strIDBlue,  "b%d", i );
+                    rVal = pConfig->GetValue( strIDRed );
+                    gVal = pConfig->GetValue( strIDGreen );
+                    bVal = pConfig->GetValue( strIDBlue );
+            if( rVal == NULL || gVal == NULL || bVal == NULL )
+                return ERR_UNKNOWNPALETTETYPE;
             SetPaletteEntry( i,
-                RGB(
-                    atol( pConfig->GetValue( strIDRed,   "0" ) ),
-                    atol( pConfig->GetValue( strIDGreen, "0") ),
-                    atol( pConfig->GetValue( strIDBlue,  "0") )
-                    )
-                );
+                RGB( atol( rVal ), atol( gVal ), atol( bVal ) ) );
+//                RGB(
+//                    atol( pConfig->GetValue( strIDRed,   "0" ) ),
+//                    atol( pConfig->GetValue( strIDGreen, "0") ),
+//                    atol( pConfig->GetValue( strIDBlue,  "0") )
+//                    )
+//                );
         }
 
         return SUCCESS;

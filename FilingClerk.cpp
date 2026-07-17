@@ -666,6 +666,15 @@ error_t FilingClerk::LoadConfig( MyDictionary<char*> **ppConfig,
             {
                 err = GetData( strFile, &pTmpConfig[nConfig] );
 
+/*
+#if EXTREME_DEBUGGING
+#define DICT_DUMP_FILE "configdump.txt"
+				DumpToFile(DICT_DUMP_FILE, "\n-----------------------\nNAME: ");
+				DumpToFile(DICT_DUMP_FILE, strFile, "\n");
+				pTmpConfig[nConfig].DebugDumpContents(DICT_DUMP_FILE);
+#endif
+*/
+
                 if( err == SUCCESS )
                     err = pTmpConfig[nConfig].SetValue(
                                             "NAME", strdup(strFile) );
@@ -985,6 +994,14 @@ error_t FilingClerk::GetColorMap( char *id, MyDictionary<char*> *outMyDictionary
                 token = tokEND;  /* exit! */
                 break;
             }
+
+            {
+                int blah = atoi(strToken);
+                if(blah == 0 && strToken[0] != '0')
+                    break;  /* ignore non numbers */
+            }
+
+
 
             switch( state )
             {

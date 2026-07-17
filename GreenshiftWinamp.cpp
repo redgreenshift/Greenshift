@@ -76,14 +76,12 @@ int init(struct winampVisModule *this_mod)
 
     if( greenshift != NULL )
     {
+#if EXTREME_DEBUGGING
         error_t err;
 
         greenshift->SetParentWindow( this_mod->hwndParent );
-#if EXTREME_DEBUGGING
         DumpToFile( "error.txt", "About to Initialize Greenshift.", "\n" );
-#endif
         err = greenshift->Initialize( this_mod->hDllInstance );
-#if EXTREME_DEBUGGING
         if( err == SUCCESS )
             DumpToFile("error.txt", "Greenshift successfully Initialized.\n");
         else
@@ -92,8 +90,11 @@ int init(struct winampVisModule *this_mod)
                 "An ERROR occured while initializing Greenshift!", "\n" );
             DumpToFile( "error.txt", ErrorString( err ), "\n" );
         }
-#endif
         return err;
+#else
+        greenshift->SetParentWindow( this_mod->hwndParent );
+        return greenshift->Initialize( this_mod->hDllInstance );
+#endif
     }
     else
         return -1;
@@ -115,42 +116,43 @@ int render(struct winampVisModule *this_mod)
 
     if( greenshift != NULL )
     {
+#if EXTREME_DEBUGGING
         error_t err;
 
-#if EXTREME_DEBUGGING
-        DumpToFile( "error.txt", "About to set sound data.", "\n" );
-#endif
+//        DumpToFile( "error.txt", "About to set sound data.", "\n" );
         err = greenshift->SetSoundData( this_mod->waveformNch,
                                   this_mod->waveformData,
                                   this_mod->spectrumNch,
                                   this_mod->spectrumData );
-#if EXTREME_DEBUGGING
-        if( err == SUCCESS )
-            DumpToFile( "error.txt", "Successfully set sound data.", "\n" );
-        else
+        if( err != SUCCESS )
         {
             DumpToFile( "error.txt", "ERROR: ", "" );
             DumpToFile( "error.txt", ErrorString( err ), "\n" );
         }
-#endif
+//        else
+//            DumpToFile( "error.txt", "Successfully set sound data.", "\n" );
 
-#if EXTREME_DEBUGGING
         if( err == SUCCESS )
         {
-            DumpToFile( "error.txt", "About to render frame.", "\n" );
-#endif
+//            DumpToFile( "error.txt", "About to render frame.", "\n" );
             err = greenshift->Render();
-#if EXTREME_DEBUGGING
-            if( err == SUCCESS )
-                DumpToFile("error.txt", "Successfully rendered the frame.\n");
-            else
+            if( err != SUCCESS )
             {
                 DumpToFile( "error.txt", "ERROR: ", "" );
                 DumpToFile( "error.txt", ErrorString( err ), "\n" );
             }
+//            else
+//                DumpToFile("error.txt", "Successfully rendered the frame.\n");
         }
-#endif
         return err;
+#else
+        greenshift->SetSoundData( this_mod->waveformNch,
+                                  this_mod->waveformData,
+                                  this_mod->spectrumNch,
+                                  this_mod->spectrumData );
+
+        return greenshift->Render();
+#endif
     }
     else
         return -1;

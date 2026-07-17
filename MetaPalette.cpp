@@ -84,9 +84,9 @@ error_t    MetaPalette::InitializeDerived(
     if( err != SUCCESS )
     {
         DumpToFile( "error.txt", ErrorString(err), "\n" );
-        DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- BEGIN DICTIONARY DUMP -=-", "\n" );
         m_pConfigs[i].DebugDumpContents( "error.txt" );
-        DumpToFile( "error.txt", "-=- END MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- END DICTIONARY DUMP -=-", "\n" );
     }
 #endif
 

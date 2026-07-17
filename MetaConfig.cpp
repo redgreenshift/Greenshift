@@ -116,15 +116,15 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
             y = 40;
             break;
         case 3: /* nothing */
-            x = 350;
+            x = -1;
             y = 0;
             break;
         case 4: /* palette */
-            x = 320;
+            x = -1;
             y = 20;
             break;
         case 5: /* palette */
-            x = 320;
+            x = -1;
             y = 40;
             break;
 /*        case 6: // unused
@@ -137,27 +137,27 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
             break;/**/
         case 8:  /* deltafield */
             x = 0;
-            y = 420;
+            y = -60;
             break;
         case 9:  /* waveshape */
             x = 0;
-            y = 440;
+            y = -40;
             break;
         case 10: /* particle */
             x = 0;
-            y = 460;
+            y = -20;
             break;
         case 11: /* palette */
-            x = 320;
-            y = 420;
+            x = -1;
+            y = -60;
             break;
         case 12: /* palette */
-            x = 320;
-            y = 440;
+            x = -1;
+            y = -40;
             break;
         case 13: /* palette */
-            x = 320;
-            y = 460;
+            x = -1;
+            y = -20;
             break;
 /*        case 6: // unused
             x = 320;
@@ -181,7 +181,7 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
 
 #else
 
-
+#ifdef UNDEFINED
 /****************************************************************************
  *
  * DisplayString
@@ -280,6 +280,110 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
     else
         return ERR_NULL;
 }
+
+#else
+
+/****************************************************************************
+ *
+ * DisplayString
+ *
+ ****************************************************************************/
+error_t    MetaConfig::DisplayString( const int position, const char *strName, const char *string, WindowDevice *pWindowDevice )
+{
+    char strPrintString[256];
+    int x;
+    int y;
+
+    if( strName != NULL && string != NULL && pWindowDevice != NULL )
+    {
+        strcpy( strPrintString, strName );
+        if( strlen(strName) > 0 )
+            strcat( strPrintString, " : " );
+        strcat( strPrintString, string );
+
+        while( strlen(strPrintString) < 200 )
+            strcat( strPrintString, " " );
+
+        switch(position)
+        {
+        case 0:  /* deltafield */
+            x = 60;
+            y = 0;
+            break;
+        case 1:  /* waveshape */
+            x = 0;
+            y = 17;
+            break;
+        case 2: /* particle */
+            x = 0;
+            y = 34;
+            break;
+        case 3: /* nothing */
+            x = -1; // 350
+            y = 0;
+            break;
+        case 4: /* palette */
+            x = -1; // 320
+            y = 17;
+            break;
+        case 5: /* palette */
+            x = -1;
+            y = 34;
+            break;
+/*        case 6: // unused
+            x = 320;
+            y = 40;
+            break;
+        case 7: // unused
+            x = 320;
+            y = 60;
+            break;/**/
+        case 8:  /* deltafield */
+            x = 0;
+            y = -50;
+            break;
+        case 9:  /* waveshape */
+            x = 0;
+            y = -33;
+            break;
+        case 10: /* particle */
+            x = 0;
+            y = -16;
+            break;
+        case 11: /* palette */
+            x = -1;
+            y = -50;
+            break;
+        case 12: /* palette */
+            x = -1;
+            y = -33;
+            break;
+        case 13: /* palette */
+            x = -1;
+            y = -16;
+            break;
+/*        case 6: // unused
+            x = 320;
+            y = 460;
+            break;
+        case 7: // unused
+            x = 320;
+            y = 460;
+            break;/**/
+        default:
+            x = 0;
+            y = 0;
+            break;
+        }
+
+        return pWindowDevice->Print( x, y, strPrintString );
+    }
+    else
+        return ERR_NULL;
+}
+
+#endif
+
 
 #endif
 

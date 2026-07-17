@@ -380,7 +380,7 @@ HRESULT    WindowDeviceOpenGL::OnFlip( void )
     ClientToScreen(GetWindow(), (POINT*)&dstRect.right);
 */
 
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
 /****************************************************************************
  *
  * Update - 

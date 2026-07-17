@@ -108,8 +108,8 @@
 //#define DECAY32 * 0xFFFFFE >> 26
 
 
-#define COPYTO_HEIGHT_LOOP for( DWORD j = m_nBufferHeight; j != 0; j-- )
-#define COPYTO_WIDTH_LOOP  for( DWORD i = m_nBufferWidth;  i != 0; i-- )
+#define COPYTO_HEIGHT_LOOP for( DWORD j = m_dwBufferHeight; j != 0; j-- )
+#define COPYTO_WIDTH_LOOP  for( DWORD i = m_dwBufferWidth;  i != 0; i-- )
 
 /****************************************************************************
  *
@@ -280,6 +280,86 @@ DECAY256( 255 )
  ****************************************************************************/
 class BitCanvas
 {
+private:
+    value_t     m_nDrawingAspect;
+    value_t     m_nWidthFactor;
+    value_t     m_nHeightFactor;
+//    value_t     m_nWidthFactorInverse;
+//    value_t     m_nHeightFactorInverse;
+
+//    value_t     m_nWidthOffset;
+//    value_t     m_nHeightOffset;
+
+
+public:
+void    SetDrawingAspect( value_t nAspect, const bool bZoom, const value_t nAspect2, const bool bZoom2, const value_t nPercent )
+{
+    const value_t        nWidth  = (value_t)BufferWidth();
+    const value_t        nHeight = (value_t)BufferHeight();
+    const value_t        nBufferAspect = nWidth / nHeight;
+    const value_t nAs = nAspect == 0.0f ? nBufferAspect : nAspect;
+    const value_t nAs2 = nAspect2 == 0.0f ? nBufferAspect : nAspect2;
+
+    SetDrawingAspect( nAs + (nAs2 - nAs) * nPercent, nPercent < 0.5f ? bZoom : bZoom2 );
+}
+void    SetDrawingAspect( value_t nAspect, const bool bZoom )
+{
+    const value_t        nWidth  = (value_t)BufferWidth();
+    const value_t        nHeight = (value_t)BufferHeight();
+    const value_t        nBlah   = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
+
+    // nAspect is a term with units   width/height
+    // so to compare screenwidth and screen height, you have to convert the units to match
+    // screenwidth/aspect == screenheight
+
+
+    if( nAspect == 0.0f )
+        nAspect = nWidth / nHeight;
+
+
+                /* Jared's way            */   /*     Andy's way            */
+    if( bZoom ? (nAspect > nWidth / nHeight) : ( nAspect <= nWidth / nHeight )  )
+    {
+        m_nWidthFactor  = 0.5f * nHeight * nAspect;
+        m_nHeightFactor = 0.5f * nHeight;
+    }
+    else
+    {
+        m_nWidthFactor  = 0.5f * nWidth;
+        m_nHeightFactor = 0.5f * nWidth / nAspect;
+    }
+
+
+
+/*
+    m_visibleX.SetBounds( 0.0f, (value_t)(BufferWidth()  - 1) );
+    m_visibleY.SetBounds( 0.0f, (value_t)(BufferHeight() - 1) );
+//    m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+//    m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+
+//    /*
+//     * why is this right again?  I need to verify its correctness.
+//     *
+//     * It's wrong, it should be based on SCREEN dimensions and aspect
+//     * /
+    m_logicalX.SetBounds( -(value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
+                           (value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
+    m_logicalY.SetBounds( -(value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
+                           (value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
+/**/
+    m_logicalX.SetBounds( -(value_t)BufferWidth()  / nAspect / nBlah,
+                           (value_t)BufferWidth()  / nAspect / nBlah );
+    m_logicalY.SetBounds( -(value_t)BufferHeight() / nAspect / nBlah,
+                           (value_t)BufferHeight() / nAspect / nBlah );
+}
+
+
+
+
+
+
+
+
 public:
     void    FramerateWarning( void )
     {
@@ -308,7 +388,9 @@ public:
                      * instance creation
                      */
     static error_t  New( BitCanvas **outBitCanvas,
-                         MyDictionary<char*> *inConfig );
+                         MyDictionary<char*> *inConfig,
+                         MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
+                         MyDictionary<value_t*> *inValues );
 
     error_t         Initialize( void );
 
@@ -322,9 +404,9 @@ public:
                      *
                      * see above comment for corresponding variable
                      */
-    inline DWORD    BufferWidth( void )     { return m_nBufferWidth; };
-    inline DWORD    BufferHeight( void )    { return m_nBufferHeight; };
-    inline DWORD    BitDepth( void )        { return m_nBitDepth; };
+    inline DWORD    BufferWidth( void )     { return m_dwBufferWidth; };
+    inline DWORD    BufferHeight( void )    { return m_dwBufferHeight; };
+    inline DWORD    BitDepth( void )        { return m_dwBitDepth; };
 
                     /*
                      * swap the buffer pointers
@@ -360,14 +442,14 @@ protected:
                               const DWORD   dwPitch )
 //                              const DWORD   dwPixelFormat )
     {
-        static const DWORD dwBufferDWORDPitch  = m_nBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
+        static const DWORD dwBufferDWORDPitch  = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
         const DWORD dwSurfaceDWORDPitch = dwPitch / sizeof(DWORD);
         const DWORD dwDeadSpace  = dwSurfaceDWORDPitch - dwBufferDWORDPitch;
         DWORD    *lpSurface2 = (DWORD*)lpSurface;
         DWORD    *lpBuffer   = m_pReadBuffer32;
 
 
-        for( DWORD j = m_nBufferHeight;  j != 0;  j-- )
+        for( DWORD j = m_dwBufferHeight;  j != 0;  j-- )
         {
 //            for( i = 0;  i < dwBufferDWORDPitch;  i++ )
             for( DWORD i = dwBufferDWORDPitch; i != 0; i-- )
@@ -391,7 +473,7 @@ public:
                               const value_t y1,
                               const value_t x2,
                               const value_t y2,
-                              const value_t line_width,
+                              const value_t line_width_parameter,
                               const value_t color );
     void            DrawDot( const value_t x,
                              const value_t y,
@@ -446,8 +528,17 @@ public:
 
 
     /*
-     *
+     * TODO: JRDV: Why did I define BlahPutPixel? there is a comment "hack for graphics project"
+     * AHA! That was for CS4451a_project_3, so this was intended to be temporary, and I can clean it up
      */
+    inline void     BlahPutPixel(const long x, const long y,
+                                     const DWORD r, const DWORD g, const DWORD b)
+    {
+        const DWORD    pixelOffset = BufferWidth() * y + x;
+
+        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth() )
+            BlahPutPixel( pixelOffset, r, g, b );
+    };
     inline void     PutPixel(const long x, const long y,
                                      const BYTE color)
     {
@@ -461,8 +552,15 @@ public:
     {
         const DWORD    pixelOffset = BufferWidth() * y + x;
 
+//        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
         if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth() )
-            PutPixel( pixelOffset, pixel_width, color );
+        {
+            const long wid = pixel_width - (long)BufferWidth() + x;
+            if( wid <= 0 )
+                PutPixel( pixelOffset, pixel_width, color );
+            else
+                PutPixel( pixelOffset, (WORD)wid - 1, color );
+        }
     };
     inline DWORD    GetPixel(const long x, const long y);
 
@@ -482,6 +580,10 @@ protected:
     inline virtual DWORD    GetPixel(const DWORD pixelOffset ) = 0;
     inline virtual void     PutPixel(const DWORD pixelOffset,
                                      const BYTE color) = 0;
+    inline virtual void     BlahPutPixel(const DWORD pixelOffset,
+                                     const DWORD r,
+                                     const DWORD g,
+                                     const DWORD b) = 0;
     inline virtual void     PutPixel(const DWORD pixelOffset,
                                      const WORD pixel_width,
                                      const BYTE color ) = 0;
@@ -606,16 +708,16 @@ private:
 
 protected:
 
-    const DWORD     m_nBitDepth;    /* number of bits per pixel
+    const DWORD     m_dwBitDepth;    /* number of bits per pixel
                                      */
 protected:
-    const DWORD     m_nBufferWidth; /* the width in pixels
+    const DWORD     m_dwBufferWidth; /* the width in pixels
                                      * of ReadOnlyBuffer and WriteOnlyBuffer
                                      */
-    const DWORD     m_nBufferHeight;/* the height in pixels
+    const DWORD     m_dwBufferHeight;/* the height in pixels
                                      * of ReadOnlyBuffer and WriteOnlyBuffer
                                      */
-    const DWORD     m_nCacheLength; /* the number of DWORD's allocated past
+    const DWORD     m_dwCacheLength; /* the number of DWORD's allocated past
                                      * the end of the buffer.  The extra
                                      * space is used to cache the first line
                                      * of pixels.
@@ -623,8 +725,14 @@ protected:
                                     /* Width * Height + CacheLength should
                                      * also be an even multiple of DQWORD
                                      */
-    const DWORD     m_nBufferByteLength;
-    const DWORD     m_nBufferLength;
+    const DWORD     m_dwBufferByteLength;
+    const DWORD     m_dwBufferLength;
+
+    const DWORD     m_dwHalfWidth;
+    const DWORD     m_dwHalfHeight;
+
+    const value_t   m_nLineWidthFactor;
+
 
     union {
         void        *m_pWriteOnlyBuffer;/* the frame currently being drawn
@@ -676,7 +784,14 @@ protected:
     DWORD           GetPixel(const DWORD pixelOffset );
     void            PutPixel(const DWORD pixelOffset, const BYTE color);
     void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
-
+    void     BlahPutPixel(const DWORD pixelOffset,
+                                     const DWORD r,
+                                     const DWORD g,
+                                     const DWORD b)
+    {   /* hack for graphics project */
+        m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32( r, g, b );
+    };
+    
     void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
     void            DoDelta_x86( const PIXELMAP *lpTransitionTable );
     void            DoDelta_MMX( const PIXELMAP *lpTransitionTable );
@@ -698,6 +813,13 @@ protected:
     DWORD           GetPixel(const DWORD pixelOffset );
     void            PutPixel(const DWORD pixelOffset, const BYTE color);
     void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
+    void     BlahPutPixel(const DWORD pixelOffset,
+                                     const DWORD r,
+                                     const DWORD g,
+                                     const DWORD b)
+    {
+        m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16( r, g, b );
+    };
 
     void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
     void            DoDelta_x86( const PIXELMAP *lpTransitionTable );
@@ -720,6 +842,15 @@ protected:
     DWORD           GetPixel(const DWORD pixelOffset );
     void            PutPixel(const DWORD pixelOffset, const BYTE color);
     void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
+    void     BlahPutPixel(const DWORD pixelOffset,
+                                     const DWORD r,
+                                     const DWORD g,
+                                     const DWORD b)
+    {
+        m_pWriteBuffer32[pixelOffset] = RGB32( r, g, b );
+//        m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
+//        DumpToFile( "error.txt", "blah!", "");
+    };
 
     void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
 #ifdef USE_MMX_INTRINSICS

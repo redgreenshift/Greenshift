@@ -61,6 +61,8 @@ WindowDeviceDX::WindowDeviceDX()
  ****************************************************************************/
 WindowDeviceDX::~WindowDeviceDX()
 {
+//    DumpCaps();
+
     if( GetDD() != NULL )
     {
         ReleaseAllObjects();
@@ -83,7 +85,7 @@ HRESULT    WindowDeviceDX::Blit( void )
     HRESULT hRet  = DD_OK;
     HRESULT hRet2 = DD_OK;
     DDSURFACEDESC2  ddsd;
-    HDC        hDC;
+//    HDC        hDC;
 
     ZeroMemory(&ddsd, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -183,12 +185,14 @@ HRESULT    WindowDeviceDX::OnFlip( void )
             hRet = GetPrimary()->Blt( NULL, GetBack(), &srcRect, DDBLT_DONOTWAIT , NULL);
 #else
             hRet = GetPrimary()->Blt( NULL, GetBack(), &srcRect, DDBLT_WAIT, NULL);
+//            hRet = GetPrimary()->AlphaBlt( NULL, GetBack(), &srcRect, DDBLT_WAIT, NULL);
 #endif
         else
 #ifdef NO_WAIT
             hRet = GetPrimary()->Blt( &dstRect, GetBack(), &srcRect, DDBLT_DONOTWAIT , NULL);
 #else
             hRet = GetPrimary()->Blt( &dstRect, GetBack(), &srcRect, DDBLT_WAIT, NULL);
+//            hRet = GetPrimary()->AlphaBlt( &dstRect, GetBack(), &srcRect, DDBLT_WAIT, NULL);
 #endif
     }// while( hRet == DDERR_SURFACELOST );
 
@@ -598,7 +602,7 @@ error_t    WindowDeviceDX::CheckDeviceCapabilities( void )
     DWORD    dwMinOverlayStretch;
     DWORD    dwMaxOverlayStretch;
     */
-#ifdef EXTREME_DEBUGGING
+#if EXTREME_DEBUGGING
         DumpToFile( "overlaycaps.txt", "DDCAPS_OVERLAY ", m_ddDriverCaps.dwCaps & DDCAPS_OVERLAY, "\n");
         DumpToFile( "overlaycaps.txt", "DDCAPS_3D ", m_ddDriverCaps.dwCaps & DDCAPS_3D, "\n");
         DumpToFile( "overlaycaps.txt", "dwVidMemTotal ", m_ddDriverCaps.dwVidMemTotal, "\n");
@@ -716,13 +720,14 @@ error_t    WindowDeviceDX::InitDisplay( void )
         /*
          * set screen mode before creating the surfaces
          */
-        hRet = GetDD()->SetDisplayMode( Width(), Height(), BitDepth(), dwDefaultRefreshRate, dwAdditionalOptions );
+        hRet = GetDD()->SetDisplayMode( FullscreenWidth(), FullscreenHeight(), BitDepth(), dwDefaultRefreshRate, dwAdditionalOptions );
+//        hRet = GetDD()->SetDisplayMode( Width(), Height(), BitDepth(), dwDefaultRefreshRate, dwAdditionalOptions );
         if( hRet != DD_OK )
         {
             if( BitDepth() == 32 ) /* should actually check the capabilities of the display */
             {
                 /*m_dwBitDepth = 24;  /* only tries 24 bit if 32 bit fails */
-                hRet = GetDD()->SetDisplayMode( Width(), Height(), 24, dwDefaultRefreshRate, dwAdditionalOptions );
+                hRet = GetDD()->SetDisplayMode( FullscreenWidth(), FullscreenHeight(), 24, dwDefaultRefreshRate, dwAdditionalOptions );
 //                if( hRet != DD_OK )
 //                    return hRet;
 #if EXTREME_DEBUGGING
@@ -767,7 +772,7 @@ error_t    WindowDeviceDX::InitDisplay( void )
         ddsdMask.dwSize         = sizeof(ddsdMask);
         ddsdMask.dwFlags        = DDSD_CAPS;
     //    ddsdMask.ddsCaps.dwCaps    = DDSCAPS_PRIMARYSURFACE;
-        ddsdMask.ddsCaps.dwCaps    = DDSCAPS_PRIMARYSURFACE | DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+        ddsdMask.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
 
 
         //create the primary surface
@@ -820,9 +825,9 @@ error_t    WindowDeviceDX::InitDisplay( void )
 
     if( ShouldFlip() )
     {
-        ddsd.dwFlags        |= DDSD_BACKBUFFERCOUNT;
+        ddsd.dwFlags          |= DDSD_BACKBUFFERCOUNT;
         ddsd.dwBackBufferCount = 1;
-        ddsd.ddsCaps.dwCaps    |= DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+        ddsd.ddsCaps.dwCaps   |= DDSCAPS_COMPLEX | DDSCAPS_FLIP;
 
     }
 
@@ -851,6 +856,8 @@ error_t    WindowDeviceDX::InitDisplay( void )
 
 
         ddsd.dwFlags          |= DDSD_WIDTH | DDSD_HEIGHT;
+//        ddsd.dwWidth           = FullscreenWidth();
+//        ddsd.dwHeight          = FullscreenHeight();
         ddsd.dwWidth           = Width();
         ddsd.dwHeight          = Height();
 
@@ -1118,7 +1125,8 @@ void WindowDeviceDX::ReleaseAllSurfaces( void )
 
     /*****/
 #ifdef UNDEFINED
-
+void WindowDeviceDX::DumpCaps(void)
+{
     DDCAPS    driverCaps;
     DDCAPS    helCaps;
     ZeroMemory(&driverCaps, sizeof(driverCaps));
@@ -1156,10 +1164,18 @@ void WindowDeviceDX::ReleaseAllSurfaces( void )
         DumpToFile( "overlaycaps.txt", "dwMinOverlayStretch ", driverCaps.dwMinOverlayStretch / 1000.0, "\n");
         DumpToFile( "overlaycaps.txt", "dwMaxOverlayStretch ", driverCaps.dwMaxOverlayStretch / 1000.0, "\n");
 
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTARITHSTRETCHY ", driverCaps.dwCaps & DDFXCAPS_BLTARITHSTRETCHY, "\n");
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTARITHSTRETCHYN ", driverCaps.dwCaps & DDFXCAPS_BLTARITHSTRETCHYN, "\n");
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTFILTER ", driverCaps.dwCaps & DDFXCAPS_BLTFILTER, "\n");
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTARITHSTRETCHY ", helCaps.dwCaps & DDFXCAPS_BLTARITHSTRETCHY, "\n");
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTARITHSTRETCHYN ", helCaps.dwCaps & DDFXCAPS_BLTARITHSTRETCHYN, "\n");
+        DumpToFile( "overlaycaps.txt", "DDFXCAPS_BLTFILTER ", helCaps.dwCaps & DDFXCAPS_BLTFILTER, "\n");
+
+ 
     
     
     }
-
+}
 #endif
     /*****/
 
@@ -1208,28 +1224,32 @@ error_t    WindowDeviceDX::UpdateOverlayProperties( void  )
     if( ! GetMode(WD_OVERLAY) )
         return SUCCESS;
 
-    GetClientRect(GetWindow(), &dstRect);
-    ClientToScreen(GetWindow(), (POINT*)&dstRect.left);
-    ClientToScreen(GetWindow(), (POINT*)&dstRect.right);
 
     srcRect.left   = 0;
     srcRect.top    = 0;
     srcRect.right  = Width();
     srcRect.bottom = Height();
+    if( GetMode(WD_FULLSCREEN) )
+    {
+        dstRect.left   = 0;
+        dstRect.top    = 0;
+        dstRect.right  = FullscreenWidth();
+        dstRect.bottom = FullscreenHeight();
+    }
+    else
+    {
+        GetClientRect(GetWindow(), &dstRect);
+        ClientToScreen(GetWindow(), (POINT*)&dstRect.left);
+        ClientToScreen(GetWindow(), (POINT*)&dstRect.right);
+    }
 
 
     
     if( GetPrimary() != NULL && GetMask() != NULL )
     {
 #ifdef UNDEFINED
-        if( GetMode(WD_FULLSCREEN) )
-        hRet = GetPrimary()->UpdateOverlay( &srcRect, GetMask(), &srcRect, DDOVER_SHOW, NULL );
-        else
         hRet = GetPrimary()->UpdateOverlay( &srcRect, GetMask(), &dstRect, DDOVER_SHOW, NULL );
 #else
-        if( GetMode(WD_FULLSCREEN) )
-        hRet = GetPrimary()->UpdateOverlay( &srcRect, GetMask(), &srcRect, DDOVER_SHOW | DDOVER_KEYDESTOVERRIDE, PGetFX() );
-        else
         hRet = GetPrimary()->UpdateOverlay( &srcRect, GetMask(), &dstRect, DDOVER_SHOW | DDOVER_KEYDESTOVERRIDE, PGetFX() );
 #endif
 

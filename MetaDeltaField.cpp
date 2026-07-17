@@ -74,14 +74,28 @@ error_t    MetaDeltaField::InitializeDerived(
         return ERR_MALLOC;
 
     for( i = 0; i < m_dwNumConfigs; i++ )
+    {
         if( (err = m_pDeltaFields[i].Initialize( &m_pConfigs[i], inGlobals )) != SUCCESS )
         {
 #if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
-        DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
-        m_pConfigs[i].DebugDumpContents( "error.txt" );
-        DumpToFile( "error.txt", "-=- END MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "ERROR: ", ErrorString(err) );
+        if( err != ERR_NOTDELTAFIELD )
+        {
+            DumpToFile( "error.txt", "\n-=- BEGIN DICTIONARY DUMP -=-", "\n" );
+            m_pConfigs[i].DebugDumpContents( "error.txt" );
+            DumpToFile( "error.txt", "-=- END DICTIONARY DUMP -=-", "\n" );
+        }
+        else
+        {
+            char *name = m_pConfigs[i].GetValue("Name");
+            DumpToFile( "error.txt", "\n", "Filename: " );
+            if(name != NULL)
+                DumpToFile( "error.txt", name, "\n" );
+
+        }
+
     }
 #endif
 
@@ -95,11 +109,26 @@ error_t    MetaDeltaField::InitializeDerived(
                 (err = m_pDeltaFields[i].Initialize( &m_pConfigs[i], inGlobals )) != SUCCESS )/**/
                 return err;
         }
+#if EXTREME_DEBUGGING
+#define CONFIG_DUMP_FILE "configdump.txt"
+            DumpToFile(CONFIG_DUMP_FILE, "\n--------------------------------\nNAME: " );
+            DumpToFile(CONFIG_DUMP_FILE, m_pConfigs[i].GetValue("NAME", "error: <unknown config name>"), "\n" );
+            m_pDeltaFields[i].DebugDump(CONFIG_DUMP_FILE);
+#endif
+    }
 
 #if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "Begin Compile DeltaField interval and tween", "\n" );
 #endif
-
+    
+    /* circumvent problems that occur when the interval time is zero */
+    if( inMainConfig->GetValue( "deltafield_interval" ) != NULL
+     && strcmp( inMainConfig->GetValue( "deltafield_interval" ), "0" ) == 0 )
+    {
+        inMainConfig->SetValue( "deltafield_interval", "0.1" );
+    }
+    
+    /* set timing expressions */
     if( (err = Expression::Compile(
                 inMainConfig->GetValue( "deltafield_interval" ),
                 &m_pIntervalTime, NULL, inGlobals )) != SUCCESS
@@ -198,7 +227,8 @@ error_t    MetaDeltaField::UpdateDerived( BitCanvas *pBitCanvas )
              * update the interval
              */
             m_nInterval = m_pIntervalTime->Evaluate(); // TODO: JRDV: Hmm, if we always set this to zero, then we constantly change, but we do want some sort of delay between effects.  I think this worked 20 years ago because of how long it took to calculate
-            m_nInterval = 10.0f; // JRDV: *shrug* hard coded 10 seconds seems to work well enough now... perhaps revisit later, but it's a fine quick fix :)
+            if (m_nInterval <= 0.0f)
+                m_nInterval = 10.0f; // JRDV: *shrug* hard coded 10 seconds seems to work well enough now... perhaps revisit later, but it's a fine quick fix :)
             m_hrInterval.Start();
     }
 

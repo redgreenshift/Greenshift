@@ -72,6 +72,7 @@ Greenshift::Greenshift()
     m_hParentWindow      = NULL;
     m_pWindowDevice      = NULL;
     m_pBitCanvas         = NULL;
+    m_pValues            = NULL;
 
     m_nSecondsPerFrame   = 0.0f;    /* initialize to something */
     m_nFramesPerSecond   = 1000.0f;    /* keep code from releasing all
@@ -303,6 +304,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
         { ED_VARIABLE,  "w",          0, &m_nFrequency }, /* for FFTT */
         { ED_CONSTANT,  "Parametric", VG_PARAMETRIC, NULL },
         { ED_CONSTANT,  "FourD",      VG_4D, NULL },
+        { ED_CONSTANT,  "default_aspect", 640.0f / 380.0f, NULL },
 
 
         { ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
@@ -316,7 +318,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
 #ifdef FORMAT_OF_LOGFILE_HEADER
 
 /************************************************************/
- * Greenshift v0.4b - DEBUG VERSION Thu Jun 28 09:01:12 2001
+ * Greenshift v0.4.2b - DEBUG VERSION Thu Jun 28 09:01:12 2001
  *
  * Desktop bit depth: 32
  * Winamp version: 2.06
@@ -449,9 +451,9 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
 /*#if EXTREME_DEBUGGING
     if( err != SUCCESS )
     {
-        DumpToFile( "error.txt", "-=- BEGIN MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- BEGIN DICTIONARY DUMP -=-", "\n" );
         this->DebugDumpContents( "error.txt" );
-        DumpToFile( "error.txt", "-=- END MyDictionary DUMP -=-", "\n" );
+        DumpToFile( "error.txt", "-=- END DICTIONARY DUMP -=-", "\n" );
     }
 #endif/**/
 
@@ -480,6 +482,37 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
     ChangeDisplaySettings( NULL, CDS_TEST );
     /**/
 
+    {
+        Association<char*>    **pMainConfig;
+        DWORD   dwSize;
+
+        if( (err = m_dMainConfig.AsArray(&pMainConfig, &dwSize)) == SUCCESS
+         && (m_pValues = new value_t[dwSize]) != NULL )
+        {
+            for( i = 0; i < dwSize; i++ )
+            {
+                    char *variable   = pMainConfig[i]->GetKey();
+                    char *expression = pMainConfig[i]->GetValue();
+//                    value_t *value   = (value_t*)malloc(sizeof(*value));
+
+//                    if(value==NULL)
+//                        return ERR_MALLOC;
+
+                    /* this is where the NUM_PARTICLES isn't found while evaluating */
+//                    *value = Expression::Evaluate(expression,
+                    m_pValues[i] = Expression::Evaluate(expression,
+                        (value_t)atol(expression), &m_dValues, &m_dGlobals);
+
+                    err = m_dValues.SetValue(variable, &m_pValues[i]);
+                    if( err != SUCCESS )
+                        return err;
+            }
+        }
+    }
+
+
+
+
 #if EXTREME_DEBUGGING
     DumpToFile( "error.txt", "#################### About to create the WindowDevice", "\n" );
 #endif
@@ -489,7 +522,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
      */
     err = WindowDevice::New( m_hInstance, &m_pWindowDevice,
                             VIS_TITLE " " VIS_VERSION ", by Jared Ivey",
-                            &m_dMainConfig, m_hParentWindow );
+                            &m_dMainConfig, &m_dGlobals, &m_dValues, m_hParentWindow );
 
     if( err != SUCCESS )
     {
@@ -504,7 +537,7 @@ error_t    Greenshift::Initialize( HINSTANCE hInstance )
     /*
      * Create the BitCanvas
      */
-    err = BitCanvas::New( &m_pBitCanvas, &m_dMainConfig );
+    err = BitCanvas::New( &m_pBitCanvas, &m_dMainConfig, &m_dGlobals, &m_dValues );
 
     if( err != SUCCESS )
     {
@@ -717,7 +750,9 @@ error_t    Greenshift::LoadConfigs( void )
     }/**/
 
 #if EXTREME_DEBUGGING
+#ifndef HIDE_INIT_TRACE
     m_dGlobals.DebugDumpContents("error.txt");
+#endif
 #endif
 
 
@@ -1100,6 +1135,9 @@ void    Greenshift::Shutdown( void )
 
 
     SAFE_DELETE( m_pFFTTransform        );
+
+    m_dValues.WipeContents();
+    SAFE_DELETE_ARRAY(m_pValues);
 }
 
 

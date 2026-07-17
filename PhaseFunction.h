@@ -383,8 +383,10 @@ public:
 
 
 #if EXTREME_DEBUGGING
+#ifndef HIDE_INIT_TRACE
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "getting ready to compile the Phase Functions", "\n" );
+#endif
 #endif
 
         /*
@@ -420,9 +422,10 @@ public:
 
 
 #if EXTREME_DEBUGGING
+#ifndef HIDE_INIT_TRACE
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "compiled the Phase Functions", "\n" );
-
+#endif
 #endif
 
 
@@ -458,8 +461,10 @@ public:
 
 
 #if EXTREME_DEBUGGING
+#ifndef HIDE_INIT_TRACE
         if( NumDimensions() == 1 )
-            DumpToFile( "error.txt", "about to compile the other functions", "\n" );
+        DumpToFile( "error.txt", "about to compile the other functions", "\n" );
+#endif
 #endif
 
         /*
@@ -504,10 +509,12 @@ public:
         }
 
 #if EXTREME_DEBUGGING
+#ifndef HIDE_INIT_TRACE
         if( NumDimensions() == 1 )
         DumpToFile( "error.txt", "compiled the other functions", "\n" );
 
         DumpToFile( "error.txt", "returning SUCCESS", "\n" );
+#endif
 #endif
 
         return SUCCESS;
@@ -670,8 +677,8 @@ public:
                 SourcePF.m_pPhases[dwPhase].pValues[i];
         }
 
+        return SUCCESS;
     };
-
 
 
 

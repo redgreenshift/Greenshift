@@ -59,6 +59,8 @@ protected:
 
 public:
     inline value_t      DrawingTime( void ) { return m_nDrawingTime; };
+    inline value_t      GetAspect( void )   { return m_nAspect; };
+    inline bool         GetZoom( void )     { return m_bZoom; };
 
     bool    Expired( void ) {return m_nLifetime < m_hrRunningTime.Seconds();};
 
@@ -125,6 +127,9 @@ protected:
     value_t                 m_nTime;        /* the t var */
     value_t                 m_nLifetime;    /* the END_TIME var */
     value_t                 m_nDrawingTime; /* time taken to draw one frame */
+
+    value_t                 m_nAspect;
+    bool                    m_bZoom;
 
 
 //    PhaseFunction           m_pfValues;

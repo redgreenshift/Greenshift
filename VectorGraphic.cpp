@@ -311,7 +311,7 @@ void    VectorGraphic::DrawFrameOn( Graph * lpGraph )
             Draw3dFrameOn( lpGraph );
             break;
         default:
-    #ifdef EXTREME_DEBUGGING
+    #if EXTREME_DEBUGGING
             DumpToFile("error.txt", "invalid dimension", "\n");
     #endif
             break;

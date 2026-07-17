@@ -79,6 +79,14 @@ LRESULT CALLBACK WindowDeviceWindowProcedure(HWND hWindow,
 class WindowDevice : public ThreadedEntity
 {
 public:
+    virtual void *GetPixelMemory(void) = 0; /* hack for graphics class */
+    virtual void ReleasePixelMemory(void) = 0; /* hack for graphics class */
+private:
+    value_t     m_nWidth, m_nHeight, m_nBitDepth,
+                m_nWindowWidth, m_nWindowHeight,
+                m_nFullscreenWidth, m_nFullscreenHeight;
+
+public:
                          WindowDevice();
     virtual             ~WindowDevice();
 
@@ -105,19 +113,18 @@ public:
                          WindowDevice** outWindowDevice,
                          const char *strWindowTitle,
                          MyDictionary<char*>    *inConfig,
-                         const HWND hParentWindow = NULL,
-                         const WNDPROC hDefWindowProc = DefWindowProc );
+                         MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
+                         MyDictionary<value_t*>  *inValues,
+                         const HWND hParentWindow,
+                         const WNDPROC hDefWindowProc = DefWindowProc);
 
     error_t Initialize( const char *strWindowTitle,
-                        const DWORD dwWidth,
-                        const DWORD dwHeight,
-                        const DWORD dwBitDepth,
-                        const DWORD dwFlags,
-                        const DWORD dwColorKey,
                         const HINSTANCE hInstance,
                         const WNDPROC hWindowMsgHandler,
                         const HWND hParentWindow,
-                        MyDictionary<char*> *inConfig );
+                        MyDictionary<char*> *inConfig,
+                        MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
+                        MyDictionary<value_t*> *inValues);
 
     void                Resize( void );  /* called upon WM_SIZE */
     void                Move( void );    /* called upon WM_MOVE */
@@ -149,6 +156,10 @@ protected:
      */
     inline DWORD        Width( void )           { return m_dwWidth; };
     inline DWORD        Height( void )          { return m_dwHeight; };
+    inline DWORD        WindowWidth( void )     { return m_dwWindowWidth; };
+    inline DWORD        WindowHeight( void )    { return m_dwWindowHeight; };
+    inline DWORD        FullscreenWidth( void ) { return m_dwFullscreenWidth; };
+    inline DWORD        FullscreenHeight( void ){ return m_dwFullscreenHeight; };
     inline DWORD        BitDepth( void )        { return m_dwBitDepth; };
     inline DWORD        ColorKey( void )        { return m_dwOverlayColorKey; };
     inline BitCanvas    *GetBitCanvas( void )   { return m_pBitCanvas; };
@@ -206,6 +217,12 @@ private:
     DWORD               m_dwBitDepth;   /* current display bit depth      */
     DWORD               m_dwFlags;      /* storage for various attributes */
     DWORD               m_dwOverlayColorKey;
+
+    DWORD               m_dwFullscreenWidth;
+    DWORD               m_dwFullscreenHeight;
+    DWORD               m_dwWindowWidth;
+    DWORD               m_dwWindowHeight;
+
 protected:
     BitCanvas           *m_pBitCanvas;    /* the entity that draws on me  */
 

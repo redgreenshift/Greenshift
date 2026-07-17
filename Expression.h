@@ -225,7 +225,7 @@ typedef value_t(*pNoaryFunctionEx_t)(void*);
 typedef value_t(*pUnaryFunction_t)(value_t);
 typedef value_t(*pUnaryFunctionEx_t)(value_t, void*);
 typedef value_t(*pBinaryFunction_t)(value_t, value_t);
-typedef value_t(*pBinaryFunctionEx_t)(value_t, value_t,void*);
+typedef value_t(*pBinaryFunctionEx_t)(value_t, value_t, void*);
 
 
 typedef struct tagEXPRESSIONDESCRIPTION
@@ -263,7 +263,7 @@ typedef struct tagEXPRESSIONDESCRIPTION
  *
  ****************************************************************************
  ****************************************************************************/
-class Expression  
+class Expression
 {
 public:
             Expression();    /* constructor */
@@ -360,6 +360,7 @@ public:
     virtual bool    Match( char *inString, int *outMatchedLength ); /* just the RegularExpression classes */
 #endif
 
+    // JRDV(REVIEW): return should be const
     virtual char    *Operator(void) = 0;    /* returns the string
                                              * representation for the operation
                                              * it performs, NULL otherwise

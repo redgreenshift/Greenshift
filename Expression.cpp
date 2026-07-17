@@ -1047,7 +1047,7 @@ EXPRESSION_BINARY_PARTIAL(And)
 
 /*
  *pre:    this is a valid Expression (shouldn't be possible to create an invalid)
- *post:    returns a string representation of the expression that could be used
+ *post:   returns a string representation of the expression that could be used
  *        to create a new identical expression
  *    or    a string stating an error occured (prolly should change this)
  *
@@ -1136,6 +1136,9 @@ char *ExpressionConstant::PrintString( char * inStr, int &nLength )
      * convert num to string, and count the number of characters
      */
     sprintf( buffer, "%g%n", ConstantValue(), &nCount );
+    // TODO: JRDV: %n format specifier is disabled, need to change this code before re-enabling EXTREME_DEBUGGING
+    // Consider using the following after merging v0.4.2b
+    //nCount = snprintf(buffer, _countof(buffer), "%g", ConstantValue());
 
     nLength += nCount;
 
@@ -2025,7 +2028,7 @@ Expression::parsingLogic_t *Expression::ParsingLogic(void)
  *pre:    inString has whitespace removed
  *pre:    inMyDictionary is not NULL
  *pre:    inLength contains the length of inString
- *pre:    you don't care what heppens to characters inString[0..inLength]
+ *pre:    you don't care what happens to characters inString[0..inLength]
  *
  *post:    if SUCCESS is returned, *outExpression points to a valid Expression
  *post:    inString is destroyed    (should be freed, if you allocated it)
@@ -2257,7 +2260,7 @@ error_t Expression::Compile(char *inString,
                 }    /* if */
                 break;
             } /* switch */
-        }    /* for */
+        }    /* for Reverse traversal loop */
     }    /* for Precedence loop */
 
 
