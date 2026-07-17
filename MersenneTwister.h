@@ -51,7 +51,6 @@
 #include <limits.h>
 #include <iostream>
 
-using namespace std;
 
 class MTRand {
 // Data
@@ -96,8 +95,8 @@ public:
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
-	friend ostream& operator<<( ostream& os, const MTRand& mtrand );
-	friend istream& operator>>( istream& is, MTRand& mtrand );
+	friend std::ostream& operator<<( std::ostream& os, const MTRand& mtrand );
+	friend std::istream& operator>>( std::istream& is, MTRand& mtrand );
 
 protected:
 	void reload();
@@ -289,7 +288,7 @@ inline void MTRand::load( uint32 *const loadArray )
 }
 
 
-inline ostream& operator<<( ostream& os, const MTRand& mtrand )
+inline std::ostream& operator<<( std::ostream& os, const MTRand& mtrand )
 {
 	register const MTRand::uint32 *s = mtrand.state;
 	register int i = mtrand.N;
@@ -298,7 +297,7 @@ inline ostream& operator<<( ostream& os, const MTRand& mtrand )
 }
 
 
-inline istream& operator>>( istream& is, MTRand& mtrand )
+inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 {
 	register MTRand::uint32 *s = mtrand.state;
 	register int i = mtrand.N;
