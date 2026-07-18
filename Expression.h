@@ -269,7 +269,6 @@ public:
             Expression();    /* constructor */
     virtual ~Expression();
 
-
     /* Unary */
     error_t Sqrt    (                           Expression **outExpression );
     error_t Sqr     (                           Expression **outExpression );
@@ -300,6 +299,17 @@ public:
     error_t Div     ( Expression *inExpression, Expression **outExpression );
     error_t Mod     ( Expression *inExpression, Expression **outExpression );
     error_t Power   ( Expression *inExpression, Expression **outExpression );
+
+    /* Relational */
+    error_t  Equality           (Expression *op2, Expression**);
+    error_t  NonEquality        (Expression *op2, Expression**);
+    error_t  GreaterThan        (Expression *op2, Expression**);
+    error_t  GreaterThanOrEqual (Expression *op2, Expression**);
+    error_t  LessThan           (Expression *op2, Expression**);
+    error_t  LessThanOrEqual    (Expression *op2, Expression**);
+
+    /* Ternary Operations */
+    error_t  Conditional(Expression* op2, Expression* op3, Expression**outExpression);
 
 #ifdef REGULAR_EXPRESSION
     error_t Star    (                           Expression **outExpression );
@@ -397,6 +407,7 @@ protected:
          * all of the "NewOperation" functions must have the same prototype
          * so that pointers to functions can be used
          ********************************************************************/
+    /* Scalar */
     static error_t  NewConstant (const value_t,              Expression **);
     static error_t  NewUserDefined(EXPRESSIONDESCRIPTION*,   Expression*, Expression **);
     static error_t  NewVariable (char *,       value_t *,    Expression **);
@@ -431,6 +442,17 @@ protected:
     static error_t  NewDiv      (Expression *, Expression *, Expression **);
     static error_t  NewMod      (Expression *, Expression *, Expression **);
     static error_t  NewPower    (Expression *, Expression *, Expression **);
+
+    /* Relational */
+    static error_t  NewEquality(Expression*, Expression*, Expression**);
+    static error_t  NewNonEquality(Expression*, Expression*, Expression**);
+    static error_t  NewGreaterThan(Expression*, Expression*, Expression**);
+    static error_t  NewGreaterThanOrEqual(Expression*, Expression*, Expression**);
+    static error_t  NewLessThan(Expression*, Expression*, Expression**);
+    static error_t  NewLessThanOrEqual(Expression*, Expression*, Expression**);
+
+    /* Ternary */
+    static error_t  NewConditional(Expression*, Expression*, Expression*, Expression**);
 
 #ifdef REGULAR_EXPRESSION
     static error_t  NewSymbol   (const long,                 Expression **);
@@ -625,6 +647,14 @@ public:
     virtual ~ExpressionExponential();
 };
 
+class ExpressionRelational : public ExpressionBinary
+{
+public:
+            ExpressionRelational(  Expression *inExpression1,
+                                    Expression *inExpression2 );
+    virtual ~ExpressionRelational();
+};
+
 class ExpressionList : public ExpressionBinary
 {
 public:
@@ -632,7 +662,6 @@ public:
                             Expression *inExpression2 );
     virtual ~ExpressionList();
 };
-
 
 
 
@@ -658,7 +687,8 @@ protected:
     inline Expression *    ThirdTerm( void )    { return m_pTernaryTerm3; };
 public:
                 ExpressionTernary(  Expression *inExpression1,
-                                    Expression *inExpression2 );
+                                    Expression *inExpression2,
+                                    Expression *inExpression3);
     virtual     ~ExpressionTernary();
 
     char        *PrintString( char * inStr, int &nLength );
@@ -1096,6 +1126,107 @@ class ExpressionComma : public ExpressionList
 public:
     ExpressionComma (Expression *inExpression1, Expression *inExpression2)
         : ExpressionList (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+
+
+
+
+class ExpressionEquality : public ExpressionRelational
+{
+public:
+    ExpressionEquality (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+class ExpressionNonEquality : public ExpressionRelational
+{
+public:
+    ExpressionNonEquality (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+
+class ExpressionGreaterThan : public ExpressionRelational
+{
+public:
+    ExpressionGreaterThan (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+
+class ExpressionGreaterThanOrEqual : public ExpressionRelational
+{
+public:
+    ExpressionGreaterThanOrEqual (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+class ExpressionLessThan : public ExpressionRelational
+{
+public:
+    ExpressionLessThan (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+
+class ExpressionLessThanOrEqual : public ExpressionRelational
+{
+public:
+    ExpressionLessThanOrEqual (Expression *inExpression1, Expression *inExpression2)
+        : ExpressionRelational (inExpression1, inExpression2) {};
+    char        *Operator(void);
+    value_t     Evaluate(void);
+    error_t     Copy(Expression **outExpression);
+    error_t     PartialSimplification(  value_t *inValue,
+                                        Expression **outExpression);
+};
+
+
+
+
+/****************************************************************************
+ *
+ * ExpressionConditional
+ *
+ ****************************************************************************/
+class ExpressionConditional : public ExpressionTernary
+{
+private:
+    Expression      *m_pCondition; /* WHAT is this for again? */
+public:
+    ExpressionConditional (Expression *inExpression1, Expression *inExpression2, Expression *inExpression3)
+        : ExpressionTernary (inExpression1, inExpression2, inExpression3) {};
     char        *Operator(void);
     value_t     Evaluate(void);
     error_t     Copy(Expression **outExpression);

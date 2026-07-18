@@ -156,6 +156,28 @@ ExpressionBinary::~ExpressionBinary()
 }
 
 
+/****************************************************************************
+ *
+ * ExpressionTernary
+ *
+ ****************************************************************************/
+ExpressionTernary::ExpressionTernary(Expression* inExpression1,
+                                     Expression* inExpression2,
+                                     Expression* inExpression3)
+    : m_pTernaryTerm1(inExpression1),
+    m_pTernaryTerm2(inExpression2),
+    m_pTernaryTerm3(inExpression3)
+{
+}
+
+ExpressionTernary::~ExpressionTernary()
+{
+    delete ThirdTerm();
+    delete SecondTerm();
+    delete FirstTerm();
+}
+
+
 
 
 /****************************************************************************
@@ -202,6 +224,20 @@ ExpressionExponential::~ExpressionExponential()
 {
 }
 
+
+/****************************************************************************
+ *
+ * ExpressionRelational
+ *
+ ****************************************************************************/
+ExpressionRelational::ExpressionRelational( Expression *inExpression1,
+                                            Expression *inExpression2 )
+    : ExpressionBinary( inExpression1, inExpression2 )
+{
+}
+ExpressionRelational::~ExpressionRelational()
+{
+}
 
 /****************************************************************************
  *
@@ -302,6 +338,10 @@ bool    ExpressionUnary::IsConstantExpression( void )    {
 bool    ExpressionBinary::IsConstantExpression( void )    {
         return    FirstTerm()->IsConstantExpression() &&
                 SecondTerm()->IsConstantExpression();    }
+bool    ExpressionTernary::IsConstantExpression( void )    {
+        return    FirstTerm()->IsConstantExpression() &&
+                SecondTerm()->IsConstantExpression()  &&
+                ThirdTerm()->IsConstantExpression();    }
 
 #ifdef REGULAR_EXPRESSION
 bool    ExpressionSymbol  ::IsConstantExpression(void)    {   return true;   }
@@ -328,6 +368,12 @@ bool    ExpressionBinary::IsConstantExpression(value_t *inValue)
             SecondTerm()->IsConstantExpression(inValue);
 }
 
+bool    ExpressionTernary::IsConstantExpression(value_t *inValue)
+{
+    return    FirstTerm()->IsConstantExpression(inValue) &&
+            SecondTerm()->IsConstantExpression(inValue)  &&
+            ThirdTerm()->IsConstantExpression(inValue);
+}
 
 
 
@@ -336,11 +382,20 @@ int    ExpressionUnary::Size( void )    {  return 1 + UnaryTerm()->Size();  }
 int    ExpressionBinary::Size( void )   {
     return 1 + FirstTerm()->Size() + SecondTerm()->Size();
 }
+int    ExpressionTernary::Size( void )   {
+    return 1 + FirstTerm()->Size() + SecondTerm()->Size() + ThirdTerm()->Size();
+}
 
 int    ExpressionValue::Depth( void )   {  return 1;    }
 int    ExpressionUnary::Depth( void )   {  return 1 + UnaryTerm()->Depth(); }
 int    ExpressionBinary::Depth( void )  {
     return 1 + max( FirstTerm()->Depth(), SecondTerm()->Depth() );
+}
+int    ExpressionTernary::Depth( void )  {
+    int d1 = FirstTerm()->Depth();
+    int d2 = SecondTerm()->Depth();
+    int d3 = ThirdTerm()->Depth();
+    return 1 + max3( d1, d2, d3 );
 }
 
 
@@ -604,6 +659,39 @@ value_t ExpressionComma    ::Evaluate(void)
 }
 
 
+value_t ExpressionConditional::Evaluate(void)
+{
+    return (FirstTerm()->Evaluate() != 0) ?
+        SecondTerm()->Evaluate() : ThirdTerm()->Evaluate();
+}
+
+
+value_t ExpressionEquality::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() == SecondTerm()->Evaluate();
+}
+value_t ExpressionNonEquality::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() != SecondTerm()->Evaluate();
+}
+value_t ExpressionGreaterThan::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() > SecondTerm()->Evaluate();
+}
+value_t ExpressionGreaterThanOrEqual::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() >= SecondTerm()->Evaluate();
+}
+value_t ExpressionLessThan::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() < SecondTerm()->Evaluate();
+}
+value_t ExpressionLessThanOrEqual::Evaluate(void)
+{
+    return FirstTerm()->Evaluate() <= SecondTerm()->Evaluate();
+}
+
+
 
 #ifdef REGULAR_EXPRESSION
 value_t ExpressionStar        ::Evaluate(void)
@@ -689,7 +777,7 @@ error_t    Expression    ::OperationName    (Expression **outExpression)\
     return New##OperationName    (this, NULL, outExpression);\
 }
 
-/* pre:        inExpression is valid
+/* pre:     inExpression is valid
  * post:    outExpression is the sum of this and inExpression
  * post:    inExpression is invalid (should not be used in other expressions,
  *            copies are ok)
@@ -699,6 +787,18 @@ error_t    Expression    ::OperationName    (Expression *inExpression,\
                                      Expression **outExpression)\
 {\
     return New##OperationName    (this, inExpression, outExpression);\
+}
+
+ /* pre:     inExpression2, inExpression3 are valid
+  * post:    outExpression is the sum of this and inExpression
+  * post:    inExpression is invalid (should not be used in other expressions,
+  *            copies are ok)
+  */
+#define EXPRESSION_TERNARY_MATH_OPERATION(OperationName)    \
+error_t    Expression    ::OperationName    (Expression *inExpression2, Expression *inExpression3,\
+                                     Expression **outExpression)\
+{\
+    return New##OperationName    (this, inExpression2, inExpression3, outExpression);\
 }
 
 
@@ -730,6 +830,15 @@ EXPRESSION_BINARY_MATH_OPERATION(Div)
 EXPRESSION_BINARY_MATH_OPERATION(Mod)
 EXPRESSION_BINARY_MATH_OPERATION(Power)
 
+EXPRESSION_BINARY_MATH_OPERATION(Equality)
+EXPRESSION_BINARY_MATH_OPERATION(NonEquality)
+EXPRESSION_BINARY_MATH_OPERATION(GreaterThan)
+EXPRESSION_BINARY_MATH_OPERATION(GreaterThanOrEqual)
+EXPRESSION_BINARY_MATH_OPERATION(LessThan)
+EXPRESSION_BINARY_MATH_OPERATION(LessThanOrEqual)
+
+EXPRESSION_TERNARY_MATH_OPERATION(Conditional)
+
 #ifdef REGULAR_EXPRESSION
 EXPRESSION_UNARY__MATH_OPERATION(Star)
 EXPRESSION_BINARY_MATH_OPERATION(Or)
@@ -755,6 +864,7 @@ error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
     else\
         return err;\
 }
+
 #define EXPRESSION_BINARY_COPY(OperationName)    \
 error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 {\
@@ -770,6 +880,23 @@ error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
         return max(err1, err2);\
 }
 
+#define EXPRESSION_TERNARY_COPY(OperationName)    \
+error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
+{\
+    Expression *term1;\
+    Expression *term2;\
+    Expression *term3;\
+    error_t err1 = 0;\
+    error_t err2 = 0;\
+    error_t err3 = 0;\
+\
+    if( (err1 = FirstTerm()->Copy(&term1)) == SUCCESS &&\
+        (err2 = SecondTerm()->Copy(&term2)) == SUCCESS &&\
+        (err3 = ThirdTerm()->Copy(&term3)) == SUCCESS)\
+        return New##OperationName ( term1, term2, term3, outExpression );\
+    else\
+        return max3(err1, err2, err3);\
+}
 
 
 error_t    ExpressionConstant        ::Copy(Expression **outExpression)
@@ -829,6 +956,15 @@ EXPRESSION_BINARY_COPY(Mult)
 EXPRESSION_BINARY_COPY(Div)
 EXPRESSION_BINARY_COPY(Mod)
 EXPRESSION_BINARY_COPY(Power)
+
+EXPRESSION_BINARY_COPY(Equality)
+EXPRESSION_BINARY_COPY(NonEquality)
+EXPRESSION_BINARY_COPY(GreaterThan)
+EXPRESSION_BINARY_COPY(GreaterThanOrEqual)
+EXPRESSION_BINARY_COPY(LessThan)
+EXPRESSION_BINARY_COPY(LessThanOrEqual)
+
+EXPRESSION_TERNARY_COPY(Conditional)
 
 #ifdef REGULAR_EXPRESSION
 EXPRESSION_UNARY__COPY(Star)
@@ -932,6 +1068,27 @@ error_t Expression##OperationName    ::PartialSimplification\
         return max( err1, err2 );\
 }
 
+#define EXPRESSION_TERNARY_PARTIAL(OperationName) \
+error_t Expression##OperationName    ::PartialSimplification\
+    (value_t *inValue, Expression **outExpression)\
+{\
+    Expression *term1, *term2, *term3;\
+    error_t err1 = 0;\
+    error_t err2 = 0;\
+    error_t err3 = 0;\
+\
+    if( this->IsConstantExpression(inValue) )\
+        return NewConstant( this->Evaluate(), outExpression );\
+    else if( ( err1 = FirstTerm()->PartialSimplification(inValue, &term1)\
+             ) == SUCCESS\
+        &&     ( err2 = SecondTerm()->PartialSimplification(inValue, &term2)\
+             ) == SUCCESS\
+        &&     ( err3 = ThirdTerm()->PartialSimplification(inValue, &term3)\
+             ) == SUCCESS )\
+        return New##OperationName(term1, term2, term3, outExpression);\
+    else\
+        return max3( err1, err2, err3 );\
+}
 
 EXPRESSION_UNARY__PARTIAL(Sqrt)
 EXPRESSION_UNARY__PARTIAL(Sqr)
@@ -961,6 +1118,15 @@ EXPRESSION_BINARY_PARTIAL(Mod)
 EXPRESSION_BINARY_PARTIAL(Power)
 EXPRESSION_BINARY_PARTIAL(Comma)
 
+EXPRESSION_BINARY_PARTIAL(Equality)
+EXPRESSION_BINARY_PARTIAL(NonEquality)
+EXPRESSION_BINARY_PARTIAL(GreaterThan)
+EXPRESSION_BINARY_PARTIAL(GreaterThanOrEqual)
+EXPRESSION_BINARY_PARTIAL(LessThan)
+EXPRESSION_BINARY_PARTIAL(LessThanOrEqual)
+
+EXPRESSION_TERNARY_PARTIAL(Conditional)
+
 #ifdef REGULAR_EXPRESSION
 EXPRESSION_UNARY__PARTIAL(Star)
 EXPRESSION_BINARY_PARTIAL(Or)
@@ -981,15 +1147,17 @@ EXPRESSION_BINARY_PARTIAL(And)
  ****************************************************************************
  ****************************************************************************/
 
-         /* default has no operator */
+    /* default has no operator -- Scalar */
     char *ExpressionValue   ::Operator(void)    { return NULL; };
 
+    /* Unary */
     char *ExpressionSqrt    ::Operator(void)    { return "sqrt"; };
     char *ExpressionSqr     ::Operator(void)    { return "sqr"; };
     char *ExpressionLog10   ::Operator(void)    { return "log10"; };
     char *ExpressionLn      ::Operator(void)    { return "log"; };
     char *ExpressionExp     ::Operator(void)    { return "exp"; };
 
+    /* Trigonometric */
     char *ExpressionCos     ::Operator(void)    { return "cos"; };
     char *ExpressionSin     ::Operator(void)    { return "sin"; };
     char *ExpressionTan     ::Operator(void)    { return "tan"; };
@@ -997,6 +1165,7 @@ EXPRESSION_BINARY_PARTIAL(And)
     char *ExpressionArcSin  ::Operator(void)    { return "asin"; };
     char *ExpressionArcTan  ::Operator(void)    { return "atan"; };
 
+    /* Hyperbolic Trig */
     char *ExpressionCosh    ::Operator(void)    { return "cosh"; };
     char *ExpressionSinh    ::Operator(void)    { return "sinh"; };
     char *ExpressionTanh    ::Operator(void)    { return "tanh"; };
@@ -1004,6 +1173,7 @@ EXPRESSION_BINARY_PARTIAL(And)
     char *ExpressionArcSinh ::Operator(void)    { return "asinh"; };
     char *ExpressionArcTanh ::Operator(void)    { return "atanh"; };
 
+    /* Binary */
     char *ExpressionAdd     ::Operator(void)    { return "+"; };
     char *ExpressionSub     ::Operator(void)    { return "-"; };
     char *ExpressionMult    ::Operator(void)    { return "*"; };
@@ -1011,6 +1181,18 @@ EXPRESSION_BINARY_PARTIAL(And)
     char *ExpressionMod     ::Operator(void)    { return "%"; };
     char *ExpressionPower   ::Operator(void)    { return "^"; };
     char *ExpressionComma   ::Operator(void)    { return ","; };
+
+    /* Relational */
+    char *ExpressionEquality     ::Operator(void)    { return "=="; };
+    char *ExpressionNonEquality  ::Operator(void)    { return "!="; };
+    char *ExpressionGreaterThan  ::Operator(void)    { return ">";  };
+    char *ExpressionGreaterThanOrEqual ::Operator(void)    { return ">="; };
+    char *ExpressionLessThan      ::Operator(void)    { return "<";  };
+    char *ExpressionLessThanOrEqual ::Operator(void)    { return "<="; };
+
+    /* Ternary */
+    char* ExpressionConditional::Operator(void) { return "?:"; }; /* JRDV: WRONG! */
+
 #ifdef REGULAR_EXPRESSION
     char *ExpressionStar    ::Operator(void)    { return "#"; };
     char *ExpressionOr      ::Operator(void)    { return "|"; };
@@ -1135,10 +1317,7 @@ char *ExpressionConstant::PrintString( char * inStr, int &nLength )
     /*
      * convert num to string, and count the number of characters
      */
-    sprintf( buffer, "%g%n", ConstantValue(), &nCount );
-    // TODO: JRDV: %n format specifier is disabled, need to change this code before re-enabling EXTREME_DEBUGGING
-    // Consider using the following after merging v0.4.2b
-    //nCount = snprintf(buffer, _countof(buffer), "%g", ConstantValue());
+    nCount = snprintf(buffer, _countof(buffer), "%g", ConstantValue());
 
     nLength += nCount;
 
@@ -1174,7 +1353,7 @@ char *ExpressionSymbol::PrintString( char * inStr, int &nLength )
     /*
      * convert num to string, and count the number of characters
      */
-    sprintf( buffer, "%c%n", SymbolValue(), &nCount );
+    nCount = snprintf(buffer, _countof(buffer), "%c", SymbolValue());
 
     nLength += nCount;
 
@@ -1287,16 +1466,19 @@ char *ExpressionBinary::PrintString( char * inStr, int &nLength )
  *these are the ONLY full references to the class names ANYWHERE in the code
  */
 
+/* Scalar */
 #define NEW_CONSTANT(value)         (new ExpressionConstant(value))
 #define NEW_USERDEFINED(desc, exp1) (new ExpressionUserDefined(desc, exp1))
 #define NEW_VARIABLE(name, value)   (new ExpressionVariable(name, value))
 
+/* Unary */
 #define NEW_SQRT(exp1)              (new ExpressionSqrt(exp1))
 #define NEW_SQR(exp1)               (new ExpressionSqr(exp1))
 #define NEW_LOG10(exp1)             (new ExpressionLog10(exp1))
 #define NEW_LN(exp1)                (new ExpressionLn(exp1))
 #define NEW_EXP(exp1)               (new ExpressionExp(exp1))
 
+/* Trigonometric */
 #define NEW_SIN(exp1)               (new ExpressionSin(exp1))
 #define NEW_COS(exp1)               (new ExpressionCos(exp1))
 #define NEW_TAN(exp1)               (new ExpressionTan(exp1))
@@ -1304,6 +1486,7 @@ char *ExpressionBinary::PrintString( char * inStr, int &nLength )
 #define NEW_ARCSIN(exp1)            (new ExpressionArcSin(exp1))
 #define NEW_ARCTAN(exp1)            (new ExpressionArcTan(exp1))
 
+/* Hyperbolic Trig */
 #define NEW_COSH(exp1)              (new ExpressionCosh(exp1))
 #define NEW_SINH(exp1)              (new ExpressionSinh(exp1))
 #define NEW_TANH(exp1)              (new ExpressionTanh(exp1))
@@ -1311,6 +1494,7 @@ char *ExpressionBinary::PrintString( char * inStr, int &nLength )
 #define NEW_ARCSINH(exp1)           (new ExpressionArcSinh(exp1))
 #define NEW_ARCTANH(exp1)           (new ExpressionArcTanh(exp1))
 
+/* Binary */
 #define NEW_ADD(exp1, exp2)         (new ExpressionAdd(exp1, exp2))
 #define NEW_SUB(exp1, exp2)         (new ExpressionSub(exp1, exp2))
 #define NEW_MULT(exp1, exp2)        (new ExpressionMult(exp1, exp2))
@@ -1318,6 +1502,18 @@ char *ExpressionBinary::PrintString( char * inStr, int &nLength )
 #define NEW_MOD(exp1, exp2)         (new ExpressionMod(exp1, exp2))
 #define NEW_POWER(exp1, exp2)       (new ExpressionPower(exp1, exp2))
 #define NEW_COMMA(exp1, exp2)       (new ExpressionComma(exp1, exp2))
+
+/* Relational */
+#define NEW_EQUALITY(exp1, exp2)    (new ExpressionEquality(exp1, exp2))
+#define NEW_NONEQUALITY(exp1, exp2) (new ExpressionNonEquality(exp1, exp2))
+#define NEW_GREATERTHAN(exp1, exp2) (new ExpressionGreaterThan(exp1, exp2))
+#define NEW_GTOREQUAL(exp1, exp2)   (new ExpressionGreaterThanOrEqual(exp1, exp2))
+#define NEW_LESSTHAN(exp1, exp2)    (new ExpressionLessThan(exp1, exp2))
+#define NEW_LTOREQUAL(exp1, exp2)   (new ExpressionLessThanOrEqual(exp1, exp2))
+
+/* Ternary */
+#define NEW_CONDITIONAL(exp1, exp2, exp3) (new ExpressionConditional(exp1, exp2, exp3))
+
 /* Regular Expression */
 #ifdef REGULAR_EXPRESSION
 #define NEW_SYMBOL(value)           (new ExpressionSymbol(value))
@@ -1622,6 +1818,80 @@ error_t     Expression::NewComma(Expression *inExpression1,
     else
         return ERR_COMMA;
 }
+
+
+error_t     Expression::NewEquality(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_EQUALITY(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+error_t     Expression::NewNonEquality(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_NONEQUALITY(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+error_t     Expression::NewGreaterThan(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_GREATERTHAN(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+error_t     Expression::NewGreaterThanOrEqual(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_GTOREQUAL(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+error_t     Expression::NewLessThan(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_LESSTHAN(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+error_t     Expression::NewLessThanOrEqual(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_LTOREQUAL(inExpression1, inExpression2) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
+
+error_t     Expression::NewConditional(Expression *inExpression1,
+                                 Expression *inExpression2,
+                                 Expression *inExpression3,
+                                 Expression **outExpression)
+{
+    if( ( *outExpression = NEW_CONDITIONAL(inExpression1, inExpression2, inExpression3) ) != NULL )
+        return SUCCESS;
+    else
+        return ERR_RELATIONAL;
+}
+
 
 
 #ifdef REGULAR_EXPRESSION
