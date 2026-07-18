@@ -1446,6 +1446,47 @@ char *ExpressionBinary::PrintString( char * inStr, int &nLength )
     return NULL;
 }
 
+char * ExpressionTernary::PrintString( char* inStr, int& nLength )
+{
+    char *strTerm1, *strTerm2, * strTerm3;
+    char *tmpStr;
+    int nCount; /* additional space required just for
+                 * the current operation *not* including
+                 * the additional space needed for children
+                 */
+
+    /* left & right parens + length of operator */
+    nCount = 2 + 2; // strlen(Operator());
+
+    nLength += nCount;
+
+    /* make space for current operation and parens */
+    if( ( tmpStr = (char *)realloc( inStr, nLength ) ) != NULL )
+    {
+        strTerm1 = strcat( tmpStr, "(" );
+
+        if( ( tmpStr = FirstTerm()->PrintString( strTerm1, nLength ) ) != NULL )
+        {
+            strTerm2 = strcat( tmpStr, "?"); // TODO: need to refactor Operator(), or use a format string.
+
+            if( ( tmpStr = SecondTerm()->PrintString( strTerm2, nLength ) ) != NULL )
+            {
+                strTerm3 = strcat(tmpStr, ":"); // TODO: need to refactor Operator(), or use a format string.
+
+                if ((tmpStr = ThirdTerm()->PrintString(strTerm3, nLength)) != NULL)
+                {
+                    return strcat(tmpStr, ")");
+                }
+            }
+        }
+    }
+    else
+        /* realloc failure, free the memory and get out */
+        free( inStr );
+
+    /* else, something bad happened */
+    return NULL;
+}
 
 
 
