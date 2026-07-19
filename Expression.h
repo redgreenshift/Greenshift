@@ -92,11 +92,11 @@
   | |
   | +-ExpressionTrascendental
   |   |
-  |   +-ExpressionExp
+  |   +-ExpressionExp (base-e)
   |   |
-  |   +-ExpressionLn
+  |   +-ExpressionLn (base-e)
   |   |
-  |   +-ExpressionLog
+  |   +-ExpressionLog10
   |   |
   |   +-ExpressionSqr
   |   |
@@ -869,7 +869,7 @@ public:
 		Expression** outExpression);
 };
 
-
+// natral log (base-e)
 class ExpressionLn : public ExpressionUnary
 {
 public:
@@ -883,6 +883,7 @@ public:
 		Expression** outExpression);
 };
 
+// base-e exponential function of x,
 class ExpressionExp : public ExpressionUnary
 {
 public:

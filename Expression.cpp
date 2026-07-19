@@ -2305,13 +2305,13 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 #endif
 
 		// Relational
-		//BINARY("==", Equality),
-		//BINARY("!=", NonEquality),
-		//BINARY(">", GreaterThan),
-		//BINARY(">=", GreaterThan),
-		//BINARY("<", LessThan),
-		//BINARY("<=", LessThanOrEqual),
-		//{NULL, },
+		BINARY("==", Equality),
+		BINARY("!=", NonEquality),
+		BINARY(">=", GreaterThanOrEqual), // Matching is greedy, therefore the longer match must appear first in the list (i.e. ">=" before ">")
+		BINARY(">", GreaterThan),
+		BINARY("<=", LessThanOrEqual),
+		BINARY("<", LessThan),
+		{NULL, },
 
 		// Additive
 		BINARY("+", Add),
