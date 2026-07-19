@@ -1610,7 +1610,7 @@ error_t Expression::NewVariable(char* inName,
 	value_t* inValue,
 	Expression** outExpression)
 {
-	char* tmpName;
+	char* tmpName = nullptr;
 
 	if ((tmpName = strdup(inName)) != NULL &&
 		(*outExpression = NEW_VARIABLE(tmpName, inValue)) != NULL)
@@ -2420,14 +2420,14 @@ error_t Expression::Compile(char* inString,
 								 */
 	error_t err1 = SUCCESS;     /* error value associated with creating *term1
 								 */
-	char* strTerm1;             /* points to the first character in the string
+	char* strTerm1 = nullptr;   /* points to the first character in the string
 								 * to parse for the first operand subexpression
 								 */
 	Expression* term2 = NULL;   /* temporary holder for the second operand
 								 */
 	error_t err2 = SUCCESS;     /* error value associated with creating *term2
 								 */
-	char* strTerm2;             /* points to the first character in the string
+	char* strTerm2 = nullptr;   /* points to the first character in the string
 								 * to parse for the second operand subexpression
 								 */
 

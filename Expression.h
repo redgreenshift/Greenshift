@@ -809,7 +809,7 @@ public:
 class ExpressionUserDefined : public ExpressionUnary
 {
 protected:
-	char* m_strName;
+	char* m_strName = nullptr;
 	EXPRESSIONDESCRIPTION   m_edExpressionDescription;
 public:
 	ExpressionUserDefined(EXPRESSIONDESCRIPTION* pExpDescription,
@@ -1265,7 +1265,7 @@ public:
 class ExpressionConditional : public ExpressionTernary
 {
 private:
-	Expression* m_pCondition; /* WHAT is this for again? */
+	Expression* m_pCondition = nullptr; /* WHAT is this for again? */
 public:
 	ExpressionConditional(Expression* inExpression1, Expression* inExpression2, Expression* inExpression3)
 		: ExpressionTernary(inExpression1, inExpression2, inExpression3) {
