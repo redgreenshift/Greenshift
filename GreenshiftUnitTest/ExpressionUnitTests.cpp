@@ -1,9 +1,5 @@
 #include "pch.h"
-// 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
-// Extremely unlikely to cause a problem. It's more portable to leave it alone,
-// and long term I'd like to move to std::string anyway. Let's just disable this warning.
-#define _CRT_NONSTDC_NO_DEPRECATE
-
+#include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
 #include "..\Expression.h"
 #include "..\Expression.cpp"

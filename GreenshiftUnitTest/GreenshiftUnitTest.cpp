@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

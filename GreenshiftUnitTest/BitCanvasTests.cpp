@@ -1,5 +1,8 @@
 #include "pch.h"
+#include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
+#include "..\MyDictionary.h"
+#include "..\Expression.h"
 //#include "..\BitCanvas.h"
 //#include "..\BitCanvas.cpp"
 
