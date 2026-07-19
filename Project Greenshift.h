@@ -21,14 +21,6 @@
 #ifndef __Project_Greenshift_H__
 #define __Project_Greenshift_H__
 
- /*
-  * this is a toggle so I can put an insane amount of debugging code
-  * and not have to toggle each individually using comments
-  */
-#define EXTREME_DEBUGGING 0
-
-#define HIDE_INIT_TRACE 1
-
   /****************************************************************************
    *
    * Project Greenshift, the common include file.
@@ -91,10 +83,21 @@
 	//#define USE_FAST_BLIT 1
 	//#define USE_FLIP 1
 
+ /*
+  * this is a toggle so I can put an insane amount of debugging code
+  * and not have to toggle each individually using comments
+  */
+#define EXTREME_DEBUGGING 0
+
+#define HIDE_INIT_TRACE 1
 
 	//#define USE_FASTER_LINE_DRAW
 #define USE_TIMER_TO_HIDE_MOUSE
 
+// 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+// Extremely unlikely to cause a problem. It's more portable to leave it alone,
+// and long term I'd like to move to std::string anyway. Let's just disable this warning.
+#define _CRT_NONSTDC_NO_DEPRECATE
 
 /*
  * signal for Expression to use a union to store members
