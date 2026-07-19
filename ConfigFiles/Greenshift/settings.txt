@@ -108,7 +108,11 @@ canvas_depth  = "8",  /* number of bits to render the vis */
  */
 //buffer_width  = "1024", buffer_height = "768",
 //buffer_width  = "800",  buffer_height = "600",
-buffer_width  = "640",  buffer_height = "480",
+//buffer_width  = "640",  buffer_height = "480",
+//buffer_width  = "1280",  buffer_height = "960", // double (TOO SLOW?)
+//buffer_width  = "1216",  buffer_height = "912", // 1.9x
+//buffer_width  = "1120",  buffer_height = "840", // 1.75x (OK)
+buffer_width  = "960",  buffer_height = "720", // 1.5x
 
 
 
@@ -174,6 +178,9 @@ screen_width    = "buffer_width", screen_height = "buffer_height",
  *         remove the slowest particle
  */
 //max_framerate  = "1033",  /* desired sustained framerate */
+//max_framerate  = "72",  /* desired sustained framerate */
+//max_framerate  = "60",  /* desired sustained framerate */
+//max_framerate  = "47",  /* desired sustained framerate */
 max_framerate  = "42",  /* desired sustained framerate */
 //max_framerate  = "33",    /* desired sustained framerate */
 min_framerate  = "14",  /* if the framerate drops below min_framerate,

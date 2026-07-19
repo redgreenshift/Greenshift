@@ -154,13 +154,13 @@ Yup, it's only for the Windows platform right now.  I don't have a Mac, nor do I
 
 5.  Ok, so if you didn't copy G-Force, why did you write Greenshift?
 
-The *original* reason for developing Greenshift is to graph 4 dimensional functions, and I started coding it just before I found out about the existence of G-Force. I just got sidetracked on this visualization thing, and then integrated the 4D stuff into the visualization itself. :P
+The *original* reason for developing Greenshift is to graph 4 dimensional functions (cartesian and polar), and I started coding it just before I found out about the existence of G-Force. I just got sidetracked on this visualization thing, and then integrated the 4D stuff into the visualization itself. :P
 
-Last Summer (2000), I designed the 4D stuff in Squeak (the SmallTalk programming language).  Then, last Fall, decided to port it to C++ to make a screensaver.  And then thought about everything I would be writing to accomplish this, and realized it wouldn't take much more to make a Winamp visualization out of it.
+Last Summer (2000), I designed the 4D stuff in Squeak (the SmallTalk 80 programming language).  Then, last Fall, decided to port it to C++ to make a screensaver.  And then thought about everything I would be writing to accomplish this, and realized it wouldn't take much more to make a Winamp visualization out of it.
 
-In November (2000), I was looking for some winamp visualization source code so I could see how to go about doing that stuff, when I came across G-Force v1.1.6. I was shocked!  Someone had already done exactly what I was planning to do... write a Winamp vis that used expressions defined in external files... AND make it open source.  I almost dropped the project right then and there, since someone else had already done it, but I'm glad I didn't, because I have learned so much from making Greenshift.
+In November (2000), I was looking for some winamp visualization source code so I could see how to go about doing that stuff, when I came across G-Force v1.1.6. I was shocked!  Someone had already done exactly what I was planning to do... write a Winamp vis that used expressions defined in external files... AND make it open source. I stopped for ~2 months, discouraged that someone else had implemented what I envisioned, and was working to design. I almost dropped the project right then and there, since someone else had already done it, but I'm glad I didn't, because I have learned so much from making Greenshift.
 
-The point is, I started designing Greenshift before I knew G-Force existed.  So it's more than just a recode... Andy and I had the same idea independently.  I have been designing Greenshift for 4 years, and coded it in the last 6 months.
+The point is, I started designing Greenshift long *before* I knew G-Force existed.  So it's not a recode... Andy and I had the *same* rough idea *independently*.  I had been designing Greenshift for 4 years until I learned enough programming to implement it (and had the free time ;-), and coded it in the last 6 months (2001).
 ----------
 
 6.  I thought you said you developed Greenshift in an attempt
@@ -177,9 +177,9 @@ It's what happens when you do all calculation in 16 bit color.  Greenshift was o
 
 Ok, to explain the 16 bit thing... try dividing 16 by 3, for the RGB components.  You can't, right?!  Well, 5 bits are for red, 5 for blue, and 6 for green.  When you average the color components of 4 adjacent pixels (anti-aliasing) and one of the components has one more bit than the others, that component tends to have less of a roundoff error, and therefore stays brighter slightly longer.  Thus a greenshift occurs.  All of the colors tend to shift toward the green "end" of the spectrum!
 
-I was programming late at night, frustrated with this "greenshift" effect, and couldn't figure out why it was occuring, and then the 5-6-5 bit thing hit me.  I was also frustrated because I couldn't come up with a good name.  Nothing sounded right.  I had tons of comments all over my code complaining about this weird greenshift effect and then started thinking, "ya know, I like that name" and it's been called that since.
+I was programming late at night, frustrated with this "greenshift" bug, and couldn't figure out why it was occuring, and then the 5-6-5 bit thing hit me.  I was also frustrated because I couldn't come up with a good name.  Nothing sounded right.  I had tons of comments all over my code complaining about this weird greenshift effect and then started thinking, "ya know, I like that name" and it's been called that since.
 
-If you run greenshift in 16 bit color, I mean the calculated bit depth, then you'll see what I'm talking about.
+If you run greenshift in 16 bit color, I mean the calculated bit depth, then you'll see what I'm talking about. It's a natural consequence of using 16 bit (565 color).
 ----------
 
 
@@ -204,6 +204,8 @@ If you run greenshift in 16 bit color, I mean the calculated bit depth, then you
  - 3D acceleration
  - problem configs log file
 
+2026-07-17 NOTE: These sections are very old, and may be very inaccurate.
+I will need to revisit my ideas and see what I actually want to implement.
 
 
 /****************************************************************************\
@@ -256,6 +258,10 @@ bitwise and boolean operators?
 
 solve an equality for a variable?
 
+2026-07-17 NOTE: These sections are very old, and may be very inaccurate.
+I will need to revisit my ideas and see what I actually want to implement.
+
+
 /****************************************************************************\
  *
  * Revision History
@@ -264,13 +270,28 @@ solve an equality for a variable?
 
 Final:
 ------
-200? / ?? / ?? - ??:??
+2001 / ?? / ?? - ??:??
 v1.0
   - I'll post Greenshift to the Winamp site when I reach v1.0
-
+  - 2026-07-17 NOTE: The above note is from long ago, and I may never reach v1.0.
+    Leaving the above note for posterity. It's not a promise.
 
 Beta:
 ------
+
+2026 / 07 / 17 - 16:43
+  - Publish the v0.4.2b changes
+
+
+2026 / 07 / 15 - 01:36
+  - v0.4.0b was published to GitHub. Revision history is now tracked in the GitHub repository.  This is the first public release of Greenshift since 2001.
+  - I think I lost the edits for v0.4.1b to v0.4.2b, as I only have the notes of what I added, but that code does not seem to be present.
+  - I found a backup that contains v0.4.1b and v0.4.2b, so I want to merge those changes in before publishing.
+  - NOTE: All the "planned" and "in the works" features were thought of long ago, and so do not accurately represent what work I actually plan to do.
+          Once I merge in the "latest" changes (i.e. v0.4.2b), I need to assess the current state of the project,
+          and then decide what I'm actually going to work on.
+          I'm leaving most of the comments in this file for posterity.
+
 2001 / 12 / ?? - ??:??
 v0.4.2b
   - Added:   Line width is scaled.  LWdt now represents 1/640th of the width of the screen
@@ -279,6 +300,8 @@ v0.4.2b
              - Flex and Lemon
 flex - fast lexical analyzer generator
 LEMON - parser generator
+(2026-07-17 NOTE: The expression parser update was the one big piece I did not merge into the modern/2026 release, therefore
+            the conditional operator and relational operators will *not* function until the parser is updated)
   - Added:   Conditional operator:  (boolean-expression)?(if-true):(if-false)
   - Added:   Relational operators: == != > >= < <=
 
@@ -404,14 +427,3 @@ Pre-Release:
   https://github.com/redgreenshift/greenshift
 
 
-/****************************************************************************\
- *
- * Acknowledgements - An expression of thanks or a token of appreciation
- *
-\****************************************************************************/
-
-Mersenne Twister Random Number Generator
-Flex - fast lexical analyser generator
-       http://ftp.ost.eltele.no/pub/gnu/
-LEMON - parser generator
-        http://www.hwaci.com/sw/lemon/

@@ -2272,19 +2272,32 @@ Expression::parsingLogic_t *Expression::ParsingLogic(void)
         BINARY("|", Or),                                {NULL, },
         BINARY("&", And),                               {NULL, },
         UNARY("#", Star),                               {NULL, },
+        {NULL, },
 #endif
+
+        // Relational
+        //BINARY("==", Equality),
+        //BINARY("!=", NonEquality),
+        //BINARY(">", GreaterThan),
+        //BINARY(">=", GreaterThan),
+        //BINARY("<", LessThan),
+        //BINARY("<=", LessThanOrEqual),
+        //{NULL, },
+
+        // Additive
         BINARY( "+", Add ),
         BINARY( "-", Sub ),
         {NULL, },
 
+        // Multiplicative
         BINARY( "*", Mult ),
         BINARY( "/", Div  ),
         BINARY( "%", Mod  ),
         {NULL, },
 
+        // Exponentiation
         BINARY( "^", Power ),
         {NULL, },
-
 
         /* the parser now checks to make sure the beginning of the token is found,
          * so the order of tan vs. arctan doesn't matter...
@@ -2308,7 +2321,6 @@ Expression::parsingLogic_t *Expression::ParsingLogic(void)
         UNARY( "asin",  ArcSin  ),
         UNARY( "atan",  ArcTan  ),
         {NULL, },
-
 
         /* NULL terminator */
 
