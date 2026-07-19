@@ -42,6 +42,7 @@
 #include <malloc.h> /* for PrintString */
 #include <stdio.h>  /* for sprintf() */
 #include <ctype.h>
+#include <memory>
 
 //#define REGULAR_EXPRESSION
 
@@ -488,6 +489,10 @@ public:
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 	static error_t  Compile(const char* inString,
 		Expression** outExpression,
+		MyDictionary<value_t*>* inValues,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
+	static error_t  Compile(const char* inString,
+		std::shared_ptr<Expression>& outExpression,
 		MyDictionary<value_t*>* inValues,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 

@@ -20,20 +20,18 @@ namespace GreenshiftUnitTest
 			value_t const fExpected = 3.14159;
 
 			MyDictionary<value_t*> dictEmpty;
-			Expression* myExpression;
+			std::shared_ptr<Expression> spExpression;
 
-			if ((err = Expression::Compile(original.c_str(), &myExpression, &dictEmpty, nullptr/*globals*/)) == SUCCESS)
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dictEmpty, nullptr/*globals*/)) == SUCCESS)
 			{
-				const char* pszResult = myExpression->PrintString();
+				const char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
-				value_t fResult = myExpression->Evaluate();
+				value_t fResult = spExpression->Evaluate();
 				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
-
-			delete myExpression;
 		}
 
 		TEST_METHOD(TestExpressionVariable)
@@ -46,15 +44,11 @@ namespace GreenshiftUnitTest
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-			Expression * myExpression;
 
 			dict.SetValue("x", &x);
 
-			if ((err = Expression::Compile(original.c_str(), &myExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
-				spExpression.reset(myExpression);
-				myExpression = nullptr;
-
 				const char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
@@ -73,22 +67,21 @@ namespace GreenshiftUnitTest
 			value_t const fExpected = 1.2;
 
 			MyDictionary<value_t*> dict;
-			Expression* myExpression;
+			std::shared_ptr<Expression> spExpression;
 
 			dict.SetValue("x", &x);
 			dict.SetValue("y", &y);
 
-			if ((err = Expression::Compile(original.c_str(), &myExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
-				const char* pszResult = myExpression->PrintString();
+				const char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
-				const value_t fResult = myExpression->Evaluate();
+				const value_t fResult = spExpression->Evaluate();
 				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
-			delete myExpression;
 		}
 
 		TEST_METHOD(TestExpressionSub)
@@ -100,22 +93,21 @@ namespace GreenshiftUnitTest
 			value_t const fExpected = -0.8;
 
 			MyDictionary<value_t*> dict;
-			Expression* myExpression;
+			std::shared_ptr<Expression> spExpression;
 
 			dict.SetValue("x", &x);
 			dict.SetValue("y", &y);
 
-			if ((err = Expression::Compile(original.c_str(), &myExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
-				const char* pszResult = myExpression->PrintString();
+				const char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
-				const value_t fResult = myExpression->Evaluate();
+				const value_t fResult = spExpression->Evaluate();
 				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
-			delete myExpression;
 		}
 
 		TEST_METHOD(TestExpressionMult)
@@ -127,22 +119,22 @@ namespace GreenshiftUnitTest
 			value_t const fExpected = 42;
 
 			MyDictionary<value_t*> dict;
-			Expression* myExpression;
+			std::shared_ptr<Expression> spExpression;
 
 			dict.SetValue("x", &x);
 			dict.SetValue("y", &y);
 
-			if ((err = Expression::Compile(original.c_str(), &myExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
-				const char* pszResult = myExpression->PrintString();
+				const char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
-				const value_t fResult = myExpression->Evaluate();
+				const value_t fResult = spExpression->Evaluate();
 				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
-			delete myExpression;
 		}
+
 	};
 }

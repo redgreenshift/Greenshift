@@ -2032,6 +2032,24 @@ value_t Expression::Evaluate(const char* inString,
  * strip out the whitespace before compiling
  ****************************************************************************/
 error_t Expression::Compile(const char* inString,
+	std::shared_ptr<Expression>& outExpression,
+	MyDictionary<value_t*>* inValues,
+	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
+{
+	Expression* myExpression;
+
+	error_t err = Expression::Compile(inString,
+		&myExpression,
+		inValues,
+		inGlobals);
+
+	if (err == SUCCESS)
+		outExpression.reset(myExpression);
+
+	return err;
+}
+
+error_t Expression::Compile(const char* inString,
 	Expression** outExpression,
 	MyDictionary<value_t*>* inValues,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
