@@ -2280,20 +2280,20 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 		{NULL, },
 //        TERNARY("?\0:", Conditional),                   {NULL, },
 #ifdef REGULAR_EXPRESSION
-        BINARY("|", Or),                                {NULL, },
-        BINARY("&", And),                               {NULL, },
-        UNARY("#", Star),                               {NULL, },
-        {NULL, },
+		BINARY("|", Or),                                {NULL, },
+		BINARY("&", And),                               {NULL, },
+		UNARY("#", Star),                               {NULL, },
+		{NULL, },
 #endif
 
-        // Relational
-        //BINARY("==", Equality),
-        //BINARY("!=", NonEquality),
-        //BINARY(">", GreaterThan),
-        //BINARY(">=", GreaterThan),
-        //BINARY("<", LessThan),
-        //BINARY("<=", LessThanOrEqual),
-        //{NULL, },
+		// Relational
+		//BINARY("==", Equality),
+		//BINARY("!=", NonEquality),
+		//BINARY(">", GreaterThan),
+		//BINARY(">=", GreaterThan),
+		//BINARY("<", LessThan),
+		//BINARY("<=", LessThanOrEqual),
+		//{NULL, },
 
 		// Additive
 		BINARY("+", Add),
