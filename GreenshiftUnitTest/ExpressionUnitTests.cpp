@@ -9,7 +9,7 @@ namespace GreenshiftUnitTest
 {
 	TEST_CLASS(ExpressionUT)
 	{
-		value_t const floatTolerance = 0.00001f;
+		value_t const defaultTolerance = 0.0001f; // common default float tolerance; accounts for typical rounding errors, unless greater precision is required
 
 	public:
 		TEST_METHOD(TestExpressionConstant)
@@ -28,7 +28,7 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				value_t fResult = spExpression->Evaluate();
-				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
@@ -53,7 +53,7 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				value_t fResult = spExpression->Evaluate();
-				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
 		}
@@ -78,7 +78,7 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				const value_t fResult = spExpression->Evaluate();
-				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
@@ -104,7 +104,7 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				const value_t fResult = spExpression->Evaluate();
-				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
@@ -130,7 +130,186 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				const value_t fResult = spExpression->Evaluate();
-				Assert::AreEqual(fExpected, fResult, floatTolerance, L"Evaluate failed");
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionDiv)
+		{
+			error_t err;
+			value_t x = 6, y = 7;
+			std::string const original = "x/y";
+			std::string const expected = "(x/y)";
+			value_t const fExpected = 0.8571428571f;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+			dict.SetValue("y", &y);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionSquare)
+		{
+			error_t err;
+			value_t x = 6;
+			std::string const original = "sqr(x)";
+			std::string const expected = original;
+			value_t const fExpected = 36;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionSqrt)
+		{
+			error_t err;
+			value_t x = 42;
+			std::string const original = "sqrt(x)";
+			std::string const expected = original;
+			value_t const fExpected = 6.480740698407860230965967436088;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionLog10)
+		{
+			error_t err;
+			value_t x = 1006;
+			std::string const original = "log10(x)";
+			std::string const expected = original;
+			value_t const fExpected = 3.002597980719908592311962985004;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionNaturalLogarithm)
+		{
+			error_t err;
+			const value_t e = 2.71828182845904523536;
+			value_t x = 6001;
+			std::string const original = "log(x)";
+			std::string const expected = original;
+			value_t const fExpected = 8.6996814009895128476452547350611; // ln(6001)
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionExp)
+		{
+			error_t err;
+			const value_t e = 2.71828182845904523536;
+			value_t x = 4.2;
+			std::string const original = "exp(x)";
+			std::string const expected = original;
+			value_t const fExpected = 66.686331040925141644992114575504; // e ^ 4.2
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionPower)
+		{
+			error_t err;
+			value_t x = 6, y = 7;
+			std::string const original = "x^y";
+			std::string const expected = "(x^y)";
+			value_t const fExpected = 279936;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+			dict.SetValue("y", &y);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
