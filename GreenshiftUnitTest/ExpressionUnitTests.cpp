@@ -17,6 +17,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionValue
 		*/
+
 		TEST_METHOD(TestExpressionConstant)
 		{
 			error_t err;
@@ -66,6 +67,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionAdditive
 		*/
+
 		TEST_METHOD(TestExpressionAdd)
 		{
 			error_t err;
@@ -121,6 +123,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionMultiplicative
 		*/
+
 		TEST_METHOD(TestExpressionMult)
 		{
 			error_t err;
@@ -176,6 +179,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionExponential
 		*/
+
 		TEST_METHOD(TestExpressionPower)
 		{
 			error_t err;
@@ -205,6 +209,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionTrascendental
 		*/
+
 		TEST_METHOD(TestExpressionSquare)
 		{
 			error_t err;
@@ -335,6 +340,7 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		* ExpressionTrigonometric
 		*/
+
 		TEST_METHOD(TestExpressionSin)
 		{
 			error_t err;
@@ -952,5 +958,74 @@ namespace GreenshiftUnitTest
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
 		}
 
+		/********************************************************************
+		 * Complex Compound Expressions
+		 */
+
+		TEST_METHOD(TestComplexExpression)
+		{
+			error_t err;
+			value_t w = 2;
+			value_t x = 1000;
+			value_t y = 10;
+			value_t z = 5;
+			std::string const original = "x+y*z^w";
+			std::string const expected = "(x+(y*(z^w)))";
+			value_t const fExpected = 1250;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("w", &w);
+			dict.SetValue("x", &x);
+			dict.SetValue("y", &y);
+			dict.SetValue("z", &z);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				const char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		/********************************************************************
+		* PartialSimplification
+		*/
+
+		TEST_METHOD(TestExpressionSimplify)
+		{
+			error_t err;
+			value_t x = 1;
+			value_t y = 7;
+			std::string const original = "y + sin(x+1)";
+			std::string const expected = "(y+0.909297)";
+			value_t const fExpected = 7.909297f;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+			dict.SetValue("y", &y);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				Expression* myExpressionSimplified;
+				err = spExpression->PartialSimplification(&x, &myExpressionSimplified);
+				Assert::IsTrue(err == SUCCESS, L"PartialSimplification failed");
+				const char* pszResultSimplified = myExpressionSimplified->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResultSimplified, L"PrintString failed");
+
+				value_t fResult = myExpressionSimplified->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+				delete myExpressionSimplified;
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
 	};
 }

@@ -388,6 +388,18 @@ public:
 											 * current values
 											 */
 
+	/// <summary>
+	/// Simplifies the expression tree by treating the provided variable as a constant
+	/// and collapsing resulting constant subexpressions.
+	/// </summary>
+	/// <param name="inValue">
+	/// A pointer to the target variable instance used for substitution; it is used to
+	/// identify which variable to fix, and what value to lock in when folding constant
+	/// subexpressions.
+	/// </param>
+	/// <param name="outExpression">
+	/// The potentially simplified expression tree output.
+	/// </param>
 	virtual error_t PartialSimplification(
 		value_t* inValue,
 		Expression** outExpression) = 0;
