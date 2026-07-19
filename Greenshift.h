@@ -181,13 +181,5 @@ protected:
 };
 
 
-
-#ifdef UNDEFINED_DEFAULT_CONFIG
-
-#endif
-
-
-
-
 #endif  /* _Greenshift_H_ */
 

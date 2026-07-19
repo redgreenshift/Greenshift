@@ -124,6 +124,12 @@
   |   |
   |   +-ExpressionComma
   |
+  |
+  +-ExpressionTernary
+  | |
+  | +-ExpressionConditional
+  |
+  |
   +-ExpressionUserDefined
   |
   +-RegularExpression
