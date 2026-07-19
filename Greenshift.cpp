@@ -484,7 +484,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 
 	{
 		Association<char*>** pMainConfig;
-		DWORD   dwSize;
+		DWORD   dwSize = 0;
 
 		if ((err = m_dMainConfig.AsArray(&pMainConfig, &dwSize)) == SUCCESS
 			&& (m_pValues = new value_t[dwSize]) != NULL)
