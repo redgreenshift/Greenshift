@@ -1,4 +1,9 @@
 #include "pch.h"
+// 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+// Extremely unlikely to cause a problem. It's more portable to leave it alone,
+// and long term I'd like to move to std::string anyway. Let's just disable this warning.
+#define _CRT_NONSTDC_NO_DEPRECATE
+
 #include "CppUnitTest.h"
 #include "..\Expression.h"
 #include "..\Expression.cpp"
@@ -21,7 +26,7 @@ namespace GreenshiftUnitTest
 			error_t err;
 			std::string const original = "3.14159";
 			std::string const& expected = original;
-			value_t const fExpected = 3.14159;
+			value_t const fExpected = 3.14159f;
 
 			MyDictionary<value_t*> dictEmpty;
 			std::shared_ptr<Expression> spExpression;
@@ -41,10 +46,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionVariable)
 		{
 			error_t err;
-			value_t x = 5.4;
+			value_t x = 5.4f;
 			std::string const original = "x";
 			std::string const& expected = original;
-			value_t const fExpected = 5.4;
+			value_t const fExpected = 5.4f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -68,10 +73,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionAdd)
 		{
 			error_t err;
-			value_t x = 0.2, y = 1.0;
+			value_t x = 0.2f, y = 1.0f;
 			std::string const original = "x+y";
 			std::string const expected = "(x+y)";
-			value_t const fExpected = 1.2;
+			value_t const fExpected = 1.2f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -94,10 +99,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionSub)
 		{
 			error_t err;
-			value_t x = 0.2, y = 1.0;
+			value_t x = 0.2f, y = 1.0f;
 			std::string const original = "x-y";
 			std::string const expected = "(x-y)";
-			value_t const fExpected = -0.8;
+			value_t const fExpected = -0.8f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -235,7 +240,7 @@ namespace GreenshiftUnitTest
 			value_t x = 42;
 			std::string const original = "sqrt(x)";
 			std::string const expected = original;
-			value_t const fExpected = 6.480740698407860230965967436088;
+			value_t const fExpected = 6.480740698407860230965967436088f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -260,7 +265,7 @@ namespace GreenshiftUnitTest
 			value_t x = 1006;
 			std::string const original = "log10(x)";
 			std::string const expected = original;
-			value_t const fExpected = 3.002597980719908592311962985004;
+			value_t const fExpected = 3.002597980719908592311962985004f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -282,11 +287,11 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionNaturalLogarithm)
 		{
 			error_t err;
-			const value_t e = 2.71828182845904523536;
+			const value_t e = 2.71828182845904523536f;
 			value_t x = 6001;
 			std::string const original = "log(x)";
 			std::string const expected = original;
-			value_t const fExpected = 8.6996814009895128476452547350611; // ln(6001)
+			value_t const fExpected = 8.6996814009895128476452547350611f; // ln(6001)
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -308,11 +313,11 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionExp)
 		{
 			error_t err;
-			const value_t e = 2.71828182845904523536;
-			value_t x = 4.2;
+			const value_t e = 2.71828182845904523536f;
+			value_t x = 4.2f;
 			std::string const original = "exp(x)";
 			std::string const expected = original;
-			value_t const fExpected = 66.686331040925141644992114575504; // e ^ 4.2
+			value_t const fExpected = 66.686331040925141644992114575504f; // e ^ 4.2
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -337,10 +342,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionSin)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "sin(x)";
 			std::string const expected = original;
-			value_t const fExpected = -0.871576;
+			value_t const fExpected = -0.871576f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -362,10 +367,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionCos)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "cos(x)";
 			std::string const expected = original;
-			value_t const fExpected = -0.490261;
+			value_t const fExpected = -0.490261f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -387,10 +392,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionTan)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "tan(x)";
 			std::string const expected = original;
-			value_t const fExpected = 1.77778;
+			value_t const fExpected = 1.77778f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -412,10 +417,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcSin)
 		{
 			error_t err;
-			value_t x = 0.2;
+			value_t x = 0.2f;
 			std::string const original = "asin(x)";
 			std::string const expected = original;
-			value_t const fExpected = 0.201358;
+			value_t const fExpected = 0.201358f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -437,10 +442,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcCos)
 		{
 			error_t err;
-			value_t x = 0.2;
+			value_t x = 0.2f;
 			std::string const original = "acos(x)";
 			std::string const expected = original;
-			value_t const fExpected = 1.36944;
+			value_t const fExpected = 1.36944f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -462,10 +467,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcTan)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "atan(x)";
 			std::string const expected = original;
-			value_t const fExpected = 1.33705;
+			value_t const fExpected = 1.33705f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -491,10 +496,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionSinh)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "sinh(x)";
 			std::string const expected = original;
-			value_t const fExpected = 33.3357;
+			value_t const fExpected = 33.3357f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -516,10 +521,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionCosh)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "cosh(x)";
 			std::string const expected = original;
-			value_t const fExpected = 33.3507;
+			value_t const fExpected = 33.3507f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -541,10 +546,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionTanh)
 		{
 			error_t err;
-			value_t x = 4.2;
+			value_t x = 4.2f;
 			std::string const original = "tanh(x)";
 			std::string const expected = original;
-			value_t const fExpected = 0.99955;
+			value_t const fExpected = 0.99955f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -566,10 +571,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcSinh)
 		{
 			error_t err;
-			value_t x = 0.2;
+			value_t x = 0.2f;
 			std::string const original = "asinh(x)";
 			std::string const expected = original;
-			value_t const fExpected = 0.19869;
+			value_t const fExpected = 0.19869f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -591,7 +596,7 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcCosh)
 		{
 			error_t err;
-			value_t x = 3.762196;
+			value_t x = 3.762196f;
 			std::string const original = "acosh(x)";
 			std::string const expected = original;
 			value_t const fExpected = 2;
@@ -616,10 +621,10 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionArcTanh)
 		{
 			error_t err;
-			value_t x = 0.761594;
+			value_t x = 0.761594f;
 			std::string const original = "atanh(x)";
 			std::string const expected = original;
-			value_t const fExpected = 1.0;
+			value_t const fExpected = 1.0f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -734,15 +739,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionGreaterThanTrue)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 > 1";
 			std::string const expected = "(2>1)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -759,15 +761,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionGreaterThanFalse)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "1 > 2";
 			std::string const expected = "(1>2)";
 			value_t const fExpected = 0;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -784,15 +783,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionGreaterThanOrEqualTrue1)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 >= 1";
 			std::string const expected = "(2>=1)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -809,15 +805,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionGreaterThanOrEqualTrue2)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 >= 2";
 			std::string const expected = "(2>=2)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -834,15 +827,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionGreaterThanOrEqualFalse)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "1 >= 2";
 			std::string const expected = "(1>=2)";
 			value_t const fExpected = 0;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -859,15 +849,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionLessThanTrue)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "1 < 2";
 			std::string const expected = "(1<2)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -884,15 +871,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionLessThanFalse)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 < 1";
 			std::string const expected = "(2<1)";
 			value_t const fExpected = 0;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -909,15 +893,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionLessThanOrEqualTrue1)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "1 <= 2";
 			std::string const expected = "(1<=2)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -934,15 +915,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionLessThanOrEqualTrue2)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 <= 2";
 			std::string const expected = "(2<=2)";
 			value_t const fExpected = 1;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
@@ -959,15 +937,12 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionLessThanOrEqualFalse)
 		{
 			error_t err;
-			value_t x = 4.2;
 			std::string const original = "2 <= 1";
 			std::string const expected = "(2<=1)";
 			value_t const fExpected = 0;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
-
-			dict.SetValue("x", &x);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
