@@ -838,6 +838,7 @@ enum {
     ERR_MOD,                /* Expression */
     ERR_POW,                /* Expression */
     ERR_COMMA,              /* Expression */
+    ERR_RELATIONAL,         /* Expression JRDV: Either extend or rewrite */
     ERR_OR,                 /* Expression */
     ERR_AND,                /* Expression */
     ERR_STAR,               /* Expression */
