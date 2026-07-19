@@ -226,9 +226,7 @@ error_t    MetaDeltaField::UpdateDerived( BitCanvas *pBitCanvas )
             /*
              * update the interval
              */
-            m_nInterval = m_pIntervalTime->Evaluate(); // TODO: JRDV: Hmm, if we always set this to zero, then we constantly change, but we do want some sort of delay between effects.  I think this worked 20 years ago because of how long it took to calculate
-            if (m_nInterval <= 0.0f)
-                m_nInterval = 10.0f; // JRDV: *shrug* hard coded 10 seconds seems to work well enough now... perhaps revisit later, but it's a fine quick fix :)
+            m_nInterval = m_pIntervalTime->Evaluate();
             m_hrInterval.Start();
     }
 

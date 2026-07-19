@@ -235,7 +235,7 @@ FFTT="0.5 * log( 0.00390625 * x * ( 1.3 + w ) + 1 )",
     */
 particle_probability = ".04/((NUM_PARTICLES+1)^1.55)",
 
-deltafield_interval  = "0",           /* constantly render the next DF      */
+deltafield_interval  = " 7+rand( 8)", /* small delay before next DF         */
 waveshape_interval   = "13+rand(11)", /* time before WS starts tweening     */
 particle_lifetime    = " 6+rand(18)", /* time a particle is visible         */
 particle_interval    = "1",     /* time between particle probability checks */
@@ -289,7 +289,7 @@ palette_tween        = " 3+rand(18)", /* seconds taken to morph palettes    */
 /* add a slash to the beginning of this line to see a "cheap trick"
 max_framerate   = 1033,
 show_debug_info = 0,
-screen_depth    = 16,   
+screen_depth    = 16,
 canvas_depth    = 8,
 
 screen_width  = 640,
@@ -305,7 +305,7 @@ buffer_height = "screen_height/2",
 /* add a slash to the beginning of this line to see a "cheap trick"
 max_framerate   = 1033,
 show_debug_info = 0,
-screen_depth    = 16,   
+screen_depth    = 16,
 canvas_depth    = 8,
 
 screen_width  = 640,
@@ -323,7 +323,7 @@ buffer_height = 240,
 /* add a slash to the beginning of this line to see a "cheap trick"
 max_framerate   = 64,
 show_debug_info = 0,
-screen_depth    = 16,   
+screen_depth    = 16,
 canvas_depth    = 8,
 
 screen_width  = 800,
