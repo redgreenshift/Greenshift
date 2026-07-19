@@ -20,18 +20,18 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * FilingClerk - handles all file access
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * FilingClerk - handles all file access
+  *
+  ****************************************************************************/
 
 #ifndef _FilingClerk_H_
 #define _FilingClerk_H_
 
 #include "MyDictionary.h"
 #include <malloc.h>
-//#include <fstream.h>
+  //#include <fstream.h>
 #include <io.h>
 #include <stdlib.h> /* for tolower and _MAX_PATH */
 #include <ctype.h>  /* for tolower */
@@ -119,103 +119,105 @@ typedef int token_t;
 class FilingClerk
 {
 public:
-                FilingClerk();
-                ~FilingClerk();
+	FilingClerk();
+	~FilingClerk();
 
-    error_t     SetRoot( char *strFolder ); /* base directory */
-    error_t     SetFolder( char *strFolder ); /* specific section */
-    
-    /*
-     * load config files
-     */
-    error_t     LoadConfig( MyDictionary<char*> **ppConfig, DWORD *inoutNumAllocated );
-    error_t     LoadColorMaps( MyDictionary<char*> **ppConfig, DWORD *inoutNumAllocated );
-    error_t     GetData( char *id, MyDictionary<char*> *outMyDictionary, MyDictionary<MyDictionary<char*>*> *outExtra = NULL );
-    error_t     GetColorMap( char *id, MyDictionary<char*> *outMyDictionary );
+	error_t     SetRoot(char* strFolder); /* base directory */
+	error_t     SetFolder(char* strFolder); /* specific section */
+
+	/*
+	 * load config files
+	 */
+	error_t     LoadConfig(MyDictionary<char*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     LoadColorMaps(MyDictionary<char*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     GetData(char* id, MyDictionary<char*>* outMyDictionary, MyDictionary<MyDictionary<char*>*>* outExtra = NULL);
+	error_t     GetColorMap(char* id, MyDictionary<char*>* outMyDictionary);
 
 protected:
-    char    *m_strRoot;      /* main folder currently working in */
-    char    *m_strFolder;    /* subfolder currently working in */
-    char    *m_strFile;      /* full path to file currently working with */
-    FILE    *m_pFile;        /* file pointer */
+	char* m_strRoot;      /* main folder currently working in */
+	char* m_strFolder;    /* subfolder currently working in */
+	char* m_strFile;      /* full path to file currently working with */
+	FILE* m_pFile;        /* file pointer */
 
-    char    *m_pTokenBuffer; /* storage for recent matched token of input */
-    int     m_nBufferLength; /* length of space allocated for token buffer */
-    int     m_nUsedLength;   /* length of used space in token buffer */
+	char* m_pTokenBuffer; /* storage for recent matched token of input */
+	int     m_nBufferLength; /* length of space allocated for token buffer */
+	int     m_nUsedLength;   /* length of used space in token buffer */
 
-    _finddata_t     m_wFindData;
-    long            m_hFindHandle;
+	_finddata_t     m_wFindData;
+	long            m_hFindHandle;
 
-    /**** Tokenization ****/
-    enum {    tokEND = EOF, /* single character tokens are their ASCII value */
-            tokSTRING = 256, tokID, tokNUMBER, tokCOMMENT, tokHEADER};
+	/**** Tokenization ****/
+	enum {
+		tokEND = EOF, /* single character tokens are their ASCII value */
+		tokSTRING = 256, tokID, tokNUMBER, tokCOMMENT, tokHEADER
+	};
 
-    token_t     GetToken( void );//char **tokenString );
-    int         GetChar( void );
-    int         UnGetChar( int c );
-    int         PeekChar( void );
+	token_t     GetToken(void);//char **tokenString );
+	int         GetChar(void);
+	int         UnGetChar(int c);
+	int         PeekChar(void);
 
-    error_t     ClearBuffer( void );
-    char        *TokenBuffer( void );
-    /******/
-
-
-    error_t     OpenFile( const char *strFileName, const char *strAccess = "rb" );
-    int         CloseFile( void );
+	error_t     ClearBuffer(void);
+	char* TokenBuffer(void);
+	/******/
 
 
-    bool        EndsIn(const char *inString, const char *inMatchString)
-    {
-        bool bMatched;
-        int  iStr, iMat;
-
-        /*
-         * NULL check
-         */
-        if( inString == NULL || inMatchString == NULL )
-            return false;
-
-        /*
-         * determine both string lengths
-         */
-        iStr = strlen( inString );
-        iMat = strlen( inMatchString );
-
-        /*
-         * a atring cannot end in something larger than itself
-         */
-        if( iStr < iMat )
-            return false;
-
-        /*
-         * since inString is longer (or equal) in length,
-         * we shall loop over the last iMat chars in both strings
-         */
-        iStr = iStr - iMat;
-        iMat = iMat - iMat;
-
-        bMatched = true;
-
-        while( bMatched && inString[iStr] != '\0' )
-        {
-            if( tolower(inString[iStr++]) == tolower(inMatchString[iMat++]) )
-                bMatched = true;
-            else
-                bMatched = false;
-        }
-
-        return bMatched;
-    };
+	error_t     OpenFile(const char* strFileName, const char* strAccess = "rb");
+	int         CloseFile(void);
 
 
+	bool        EndsIn(const char* inString, const char* inMatchString)
+	{
+		bool bMatched;
+		int  iStr, iMat;
+
+		/*
+		 * NULL check
+		 */
+		if (inString == NULL || inMatchString == NULL)
+			return false;
+
+		/*
+		 * determine both string lengths
+		 */
+		iStr = strlen(inString);
+		iMat = strlen(inMatchString);
+
+		/*
+		 * a atring cannot end in something larger than itself
+		 */
+		if (iStr < iMat)
+			return false;
+
+		/*
+		 * since inString is longer (or equal) in length,
+		 * we shall loop over the last iMat chars in both strings
+		 */
+		iStr = iStr - iMat;
+		iMat = iMat - iMat;
+
+		bMatched = true;
+
+		while (bMatched && inString[iStr] != '\0')
+		{
+			if (tolower(inString[iStr++]) == tolower(inMatchString[iMat++]))
+				bMatched = true;
+			else
+				bMatched = false;
+		}
+
+		return bMatched;
+	};
 
 
-    /*
-     * File Searching
-     */
-    char        *GetFirstFile( const char *strFileMask );
-    char        *GetNextFile( void );
-    char        *EndSearch( void );
+
+
+	/*
+	 * File Searching
+	 */
+	char* GetFirstFile(const char* strFileMask);
+	char* GetNextFile(void);
+	char* EndSearch(void);
 };
 
 

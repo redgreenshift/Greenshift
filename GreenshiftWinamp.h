@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * Association - set of associations of two objects
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * Association - set of associations of two objects
+  *
+  ****************************************************************************/
 
 #ifndef _GreenshiftWinamp_H_
 #define _GreenshiftWinamp_H_
@@ -41,20 +41,20 @@
 
 
 Greenshift      gVisGreenshift; /* the global Greenshift instance...
-                                 * should allocate dynamically
-                                 * rather than use a global
-                                 */
+								 * should allocate dynamically
+								 * rather than use a global
+								 */
 
 
 
-// returns a winampVisModule when requested. Used in hdr, below
-winampVisModule *getModule(int which);
+								 // returns a winampVisModule when requested. Used in hdr, below
+winampVisModule* getModule(int which);
 
 // "member" functions
-void config(struct winampVisModule *this_mod); // configuration dialog
-int  init(struct winampVisModule *this_mod);   // initialization for module
-int  render(struct winampVisModule *this_mod); // rendering for module 1
-void quit(struct winampVisModule *this_mod);   // deinitialization for module
+void config(struct winampVisModule* this_mod); // configuration dialog
+int  init(struct winampVisModule* this_mod);   // initialization for module
+int  render(struct winampVisModule* this_mod); // rendering for module 1
+void quit(struct winampVisModule* this_mod);   // deinitialization for module
 
 
 
@@ -73,23 +73,23 @@ winampVisHeader hdr = { VIS_HDRVER, TITLE, getModule };
 // first module (oscilliscope)
 winampVisModule modMain =
 {
-    TITLE,
-    NULL,    // hwndParent
-    NULL,    // hDllInstance
-    44100,        // sRate  ////what value goes here?!
-    2,        // nCh
-//    25,        // latencyMS
-    0,      // latencyMS
-    0,        // delayMS
-    2,        // spectrumNch
-    2,        // waveformNch
-    { 0, },    // spectrumData
-    { 0, },    // waveformData
-    config,
-    init,
-    render, 
-    quit,
-    &gVisGreenshift
+	TITLE,
+	NULL,    // hwndParent
+	NULL,    // hDllInstance
+	44100,        // sRate  ////what value goes here?!
+	2,        // nCh
+	//    25,        // latencyMS
+		0,      // latencyMS
+		0,        // delayMS
+		2,        // spectrumNch
+		2,        // waveformNch
+		{ 0, },    // spectrumData
+		{ 0, },    // waveformData
+		config,
+		init,
+		render,
+		quit,
+		&gVisGreenshift
 };
 
 

@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * WindowDeviceOpenGL - OpenGL specific WindowDevice
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * WindowDeviceOpenGL - OpenGL specific WindowDevice
+  *
+  ****************************************************************************/
 
 #if 0 // Disabling OpenGL because I think it doesn't work since I really need a pointer to video memory
 
@@ -32,13 +32,13 @@
 
 
 
-// Enable OpenGL
+  // Enable OpenGL
 
-VOID EnableOpenGL( HWND hWnd, HDC * hDC, HGLRC * hRC );
+VOID EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC);
 
 // Disable OpenGL
 
-VOID DisableOpenGL( HWND hWnd, HDC hDC, HGLRC hRC );
+VOID DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC);
 
 /*
  * Note! Recently it was pointed out to me that under some OpenGL ICDs
@@ -48,15 +48,15 @@ VOID DisableOpenGL( HWND hWnd, HDC hDC, HGLRC hRC );
  * corrected this in the GLSAMPLE program given at the end.
  */
 
-/****************************************************************************
- *
- * WindowDeviceOpenGL - constructor
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * WindowDeviceOpenGL - constructor
+  *
+  ****************************************************************************/
 WindowDeviceOpenGL::WindowDeviceOpenGL()
 {
-    m_hDC   = NULL;
-    m_hGLRC = NULL;
+	m_hDC = NULL;
+	m_hGLRC = NULL;
 }
 
 
@@ -67,7 +67,7 @@ WindowDeviceOpenGL::WindowDeviceOpenGL()
  ****************************************************************************/
 WindowDeviceOpenGL::~WindowDeviceOpenGL()
 {
-    ::DisableOpenGL(GetWindow(), m_hDC, m_hGLRC );
+	::DisableOpenGL(GetWindow(), m_hDC, m_hGLRC);
 }
 
 
@@ -79,18 +79,18 @@ WindowDeviceOpenGL::~WindowDeviceOpenGL()
  */
 
 
-/****************************************************************************
- *
- * EnableDisplay - called from the ThreadProcedure
- *
- ****************************************************************************/
-error_t    WindowDeviceOpenGL::InitDisplay( void )
+ /****************************************************************************
+  *
+  * EnableDisplay - called from the ThreadProcedure
+  *
+  ****************************************************************************/
+error_t    WindowDeviceOpenGL::InitDisplay(void)
 {
-    error_t    err = SUCCESS;
+	error_t    err = SUCCESS;
 
-    ::EnableOpenGL( GetWindow(), &m_hDC, &m_hGLRC );
+	::EnableOpenGL(GetWindow(), &m_hDC, &m_hGLRC);
 
-    return err;
+	return err;
 }
 
 
@@ -99,13 +99,13 @@ error_t    WindowDeviceOpenGL::InitDisplay( void )
  * DisableDisplay - called from the ThreadProcedure
  *
  ****************************************************************************/
-error_t    WindowDeviceOpenGL::DisableDisplay( void )
+error_t    WindowDeviceOpenGL::DisableDisplay(void)
 {
-    error_t    err = SUCCESS;
+	error_t    err = SUCCESS;
 
-    ::DisableOpenGL( GetWindow(), m_hDC, m_hGLRC );
+	::DisableOpenGL(GetWindow(), m_hDC, m_hGLRC);
 
-    return err;
+	return err;
 }
 
 
@@ -114,9 +114,9 @@ error_t    WindowDeviceOpenGL::DisableDisplay( void )
  * GetPFD
  *
  ****************************************************************************/
-PIXELFORMATDESCRIPTOR    WindowDeviceOpenGL::GetPFD( void )
+PIXELFORMATDESCRIPTOR    WindowDeviceOpenGL::GetPFD(void)
 {
-    return m_pfdPixelFormat;
+	return m_pfdPixelFormat;
 }
 
 /****************************************************************************
@@ -124,9 +124,9 @@ PIXELFORMATDESCRIPTOR    WindowDeviceOpenGL::GetPFD( void )
  * PGetPFD
  *
  ****************************************************************************/
-PIXELFORMATDESCRIPTOR    *WindowDeviceOpenGL::PGetPFD( void )
+PIXELFORMATDESCRIPTOR* WindowDeviceOpenGL::PGetPFD(void)
 {
-    return &m_pfdPixelFormat;
+	return &m_pfdPixelFormat;
 }
 
 
@@ -136,9 +136,9 @@ PIXELFORMATDESCRIPTOR    *WindowDeviceOpenGL::PGetPFD( void )
  * GetRC
  *
  ****************************************************************************/
-HGLRC    WindowDeviceOpenGL::GetRC( void )
+HGLRC    WindowDeviceOpenGL::GetRC(void)
 {
-    return m_hGLRC;
+	return m_hGLRC;
 }
 
 /****************************************************************************
@@ -146,9 +146,9 @@ HGLRC    WindowDeviceOpenGL::GetRC( void )
  * PGetRC
  *
  ****************************************************************************/
-HGLRC    *WindowDeviceOpenGL::PGetRC( void )
+HGLRC* WindowDeviceOpenGL::PGetRC(void)
 {
-    return &m_hGLRC;
+	return &m_hGLRC;
 }
 
 /****************************************************************************
@@ -156,11 +156,11 @@ HGLRC    *WindowDeviceOpenGL::PGetRC( void )
  * ReleaseRC
  *
  ****************************************************************************/
-HRESULT    WindowDeviceOpenGL::ReleaseRC( HGLRC hRC, HDC hDC )
+HRESULT    WindowDeviceOpenGL::ReleaseRC(HGLRC hRC, HDC hDC)
 {
-  wglMakeCurrent( NULL, NULL );
-  wglDeleteContext( hRC );
-  return ReleaseDC( hDC );
+	wglMakeCurrent(NULL, NULL);
+	wglDeleteContext(hRC);
+	return ReleaseDC(hDC);
 }
 
 
@@ -169,12 +169,12 @@ HRESULT    WindowDeviceOpenGL::ReleaseRC( HGLRC hRC, HDC hDC )
  * GetDC
  *
  ****************************************************************************/
-HRESULT    WindowDeviceOpenGL::GetDC( HDC *pHDC )
+HRESULT    WindowDeviceOpenGL::GetDC(HDC* pHDC)
 {
-//    DumpToFile("error.txt", glGetError(), "\n" );
-//    *pHDC = ::GetDC( GetWindow() );
-    *pHDC = m_hDC;
-    return SUCCESS;
+	//    DumpToFile("error.txt", glGetError(), "\n" );
+	//    *pHDC = ::GetDC( GetWindow() );
+	*pHDC = m_hDC;
+	return SUCCESS;
 }
 
 
@@ -183,10 +183,10 @@ HRESULT    WindowDeviceOpenGL::GetDC( HDC *pHDC )
  * ReleaseDC
  *
  ****************************************************************************/
-HRESULT    WindowDeviceOpenGL::ReleaseDC( HDC hdc )
+HRESULT    WindowDeviceOpenGL::ReleaseDC(HDC hdc)
 {
-//    return (::ReleaseDC( GetWindow(), hdc ) == 1) ? SUCCESS : FAILURE;
-    return SUCCESS;
+	//    return (::ReleaseDC( GetWindow(), hdc ) == 1) ? SUCCESS : FAILURE;
+	return SUCCESS;
 }
 
 
@@ -195,9 +195,9 @@ HRESULT    WindowDeviceOpenGL::ReleaseDC( HDC hdc )
  * OnResize
  *
  ****************************************************************************/
-void    WindowDeviceOpenGL::OnResize( void )
+void    WindowDeviceOpenGL::OnResize(void)
 {
-    /* UpdateOverlayProperties(); */
+	/* UpdateOverlayProperties(); */
 }
 
 /****************************************************************************
@@ -205,9 +205,9 @@ void    WindowDeviceOpenGL::OnResize( void )
  * OnMove
  *
  ****************************************************************************/
-void    WindowDeviceOpenGL::OnMove( void )
+void    WindowDeviceOpenGL::OnMove(void)
 {
-    /* UpdateOverlayProperties(); */
+	/* UpdateOverlayProperties(); */
 //    ClearScreen();
 }
 
@@ -217,57 +217,57 @@ void    WindowDeviceOpenGL::OnMove( void )
  * ClearScreen
  *
  ****************************************************************************/
-error_t    WindowDeviceOpenGL::ClearScreen( void )
+error_t    WindowDeviceOpenGL::ClearScreen(void)
 {
-    error_t err = SUCCESS;
-//    void *pPixels;
-//    DWORD    nWidth;
-//    DWORD    nHeight;
-//    DWORD    nPixelFormat;
+	error_t err = SUCCESS;
+	//    void *pPixels;
+	//    DWORD    nWidth;
+	//    DWORD    nHeight;
+	//    DWORD    nPixelFormat;
 
 
-//    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
-//    glClear( GL_COLOR_BUFFER_BIT );
-//    SwapBuffers( m_hDC );
+	//    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
+	//    glClear( GL_COLOR_BUFFER_BIT );
+	//    SwapBuffers( m_hDC );
 
 
 #ifdef UNDEFINED
-    EnterCS();
+	EnterCS();
 
-    if( GetBitCanvas() != NULL )
-    {
+	if (GetBitCanvas() != NULL)
+	{
 
-        pPixels = GetBitCanvas()->GetPixelMemory(&nWidth, &nHeight, &nPixelFormat);
-        if( pPixels == NULL )
-            err = FAILURE;
+		pPixels = GetBitCanvas()->GetPixelMemory(&nWidth, &nHeight, &nPixelFormat);
+		if (pPixels == NULL)
+			err = FAILURE;
 
-        if( err == SUCCESS )
-        {
- // DumpToFile("error.txt", "Finished Blit!\n" );
-//    DumpToFile("error.txt", glGetError(), "\n" );
+		if (err == SUCCESS)
+		{
+			// DumpToFile("error.txt", "Finished Blit!\n" );
+		   //    DumpToFile("error.txt", glGetError(), "\n" );
 
-//    glReadBuffer( GL_BACK );
-//    glDrawBuffer( GL_FRONT );
-    glDrawBuffer( GL_BACK );
+		   //    glReadBuffer( GL_BACK );
+		   //    glDrawBuffer( GL_FRONT );
+			glDrawBuffer(GL_BACK);
 
-//    glRasterPos2i( 0, 0 );
-    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_BYTE, pPixels);
-//    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_INT, pPixels);
-//    glBitmap( nWidth, nHeight, 0.0f, 0.0f, 0.0f, 0.0f, pPixels );
-//    glReadPixels( (640 - nWidth) >> 1, (480 - nHeight)>> 1, nWidth, nHeight, GL_COLOR );
-//    glCopyPixels( (640 - nWidth) >> 1, ((480 - nHeight)>> 1) + nHeight, nWidth, nHeight, GL_COLOR );
+			//    glRasterPos2i( 0, 0 );
+			glDrawPixels(nWidth, nHeight, GL_RGBA, GL_UNSIGNED_BYTE, pPixels);
+			//    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_INT, pPixels);
+			//    glBitmap( nWidth, nHeight, 0.0f, 0.0f, 0.0f, 0.0f, pPixels );
+			//    glReadPixels( (640 - nWidth) >> 1, (480 - nHeight)>> 1, nWidth, nHeight, GL_COLOR );
+			//    glCopyPixels( (640 - nWidth) >> 1, ((480 - nHeight)>> 1) + nHeight, nWidth, nHeight, GL_COLOR );
 
-    
-            SwapBuffers( m_hDC );
 
-        }
+			SwapBuffers(m_hDC);
 
-    }
+		}
 
-    LeaveCS();
+	}
+
+	LeaveCS();
 #endif
 
-    return err;
+	return err;
 }
 
 
@@ -277,10 +277,10 @@ error_t    WindowDeviceOpenGL::ClearScreen( void )
  * ClearScreenAll
  *
  ****************************************************************************/
-error_t    WindowDeviceOpenGL::ClearScreenAll( void )
+error_t    WindowDeviceOpenGL::ClearScreenAll(void)
 {
-//    glDrawBuffer( GL_FRONT_AND_BACK );
-    return ClearScreen();
+	//    glDrawBuffer( GL_FRONT_AND_BACK );
+	return ClearScreen();
 }
 
 
@@ -290,125 +290,125 @@ error_t    WindowDeviceOpenGL::ClearScreenAll( void )
 
 /****************************************************************************
  *
- * Blit - 
+ * Blit -
  *
  ****************************************************************************/
-HRESULT    WindowDeviceOpenGL::Blit( void )
+HRESULT    WindowDeviceOpenGL::Blit(void)
 {
-    HRESULT hRet = SUCCESS;
-    error_t err  = SUCCESS;
-//    HDC        hDC;
-//    HGLRC    hRC;
-    void *pPixels;
-    DWORD    nWidth;
-    DWORD    nHeight;
-    DWORD    nPixelFormat;
+	HRESULT hRet = SUCCESS;
+	error_t err = SUCCESS;
+	//    HDC        hDC;
+	//    HGLRC    hRC;
+	void* pPixels;
+	DWORD    nWidth;
+	DWORD    nHeight;
+	DWORD    nPixelFormat;
 
-//    hRet = GetRC( &hRC, &hDC );
-//    if( hRet != SUCCESS )
-//        return hRet;
+	//    hRet = GetRC( &hRC, &hDC );
+	//    if( hRet != SUCCESS )
+	//        return hRet;
 
-    if( GetBitCanvas() != NULL )
-    {
+	if (GetBitCanvas() != NULL)
+	{
 
-        pPixels = GetBitCanvas()->GetPixelMemory(&nWidth, &nHeight, &nPixelFormat);
-        if( pPixels == NULL )
-            err = FAILURE;
+		pPixels = GetBitCanvas()->GetPixelMemory(&nWidth, &nHeight, &nPixelFormat);
+		if (pPixels == NULL)
+			err = FAILURE;
 
-        if( err == SUCCESS )
-        {
- // DumpToFile("error.txt", "Finished Blit!\n" );
-//    DumpToFile("error.txt", glGetError(), "\n" );
+		if (err == SUCCESS)
+		{
+			// DumpToFile("error.txt", "Finished Blit!\n" );
+		   //    DumpToFile("error.txt", glGetError(), "\n" );
 
-//    glDrawBuffer( GL_FRONT );
-//    glDrawBuffer( GL_BACK );
+		   //    glDrawBuffer( GL_FRONT );
+		   //    glDrawBuffer( GL_BACK );
 
-//    glRasterPos2i( 0, 0 );
-//    glRasterPos2d( 0, (((480 - nHeight) >> 1) + nHeight) / -480.0f );
-    glRasterPos2d( -(value_t)nWidth / (value_t)Width(), -(value_t)nHeight / (value_t)Height() );
-    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_BYTE, pPixels);
-//    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_INT, pPixels);
+		   //    glRasterPos2i( 0, 0 );
+		   //    glRasterPos2d( 0, (((480 - nHeight) >> 1) + nHeight) / -480.0f );
+			glRasterPos2d(-(value_t)nWidth / (value_t)Width(), -(value_t)nHeight / (value_t)Height());
+			glDrawPixels(nWidth, nHeight, GL_RGBA, GL_UNSIGNED_BYTE, pPixels);
+			//    glDrawPixels( nWidth, nHeight, GL_RGBA, GL_UNSIGNED_INT, pPixels);
 
-//    SwapBuffers( m_hDC );
-        }
+			//    SwapBuffers( m_hDC );
+		}
 
-    }
+	}
 
 
 
-    return hRet;
+	return hRet;
 }
 
 
 /****************************************************************************
  *
- * OnFlip - 
+ * OnFlip -
  *
  ****************************************************************************/
-HRESULT    WindowDeviceOpenGL::OnFlip( void )
+HRESULT    WindowDeviceOpenGL::OnFlip(void)
 {
-    HRESULT        hRet = SUCCESS;
-/*    HDC            hDC;
+	HRESULT        hRet = SUCCESS;
+	/*    HDC            hDC;
 
-    hRet = GetDC( &hDC );
+		hRet = GetDC( &hDC );
 
-    if( hRet != SUCCESS )
-        return hRet;
+		if( hRet != SUCCESS )
+			return hRet;
 
-//    hRet = SwapBuffers( hDC );
+	//    hRet = SwapBuffers( hDC );
 
-    return ReleaseDC( hDC );
-    /**/
-//  DumpToFile("error.txt", "Entering Flip!\n" );
-//  wglMakeCurrent( m_hDC, GetRC() );
+		return ReleaseDC( hDC );
+		/**/
+		//  DumpToFile("error.txt", "Entering Flip!\n" );
+		//  wglMakeCurrent( m_hDC, GetRC() );
 
-    SwapBuffers( m_hDC );
+	SwapBuffers(m_hDC);
 
-//    DumpToFile("error.txt", (DWORD)m_hDC, "\n" );
-//  DumpToFile("error.txt", "Finished Flip!\n" );
+	//    DumpToFile("error.txt", (DWORD)m_hDC, "\n" );
+	//  DumpToFile("error.txt", "Finished Flip!\n" );
 
 
-    return hRet;/**/
+	return hRet;/**/
 }
 /*
-    srcRect.left   = 0;
-    srcRect.top    = 0;
-    srcRect.right  = Width();
-    srcRect.bottom = Height();
-    GetClientRect(GetWindow(), &dstRect );
-    ClientToScreen(GetWindow(), (POINT*)&dstRect.left);
-    ClientToScreen(GetWindow(), (POINT*)&dstRect.right);
+	srcRect.left   = 0;
+	srcRect.top    = 0;
+	srcRect.right  = Width();
+	srcRect.bottom = Height();
+	GetClientRect(GetWindow(), &dstRect );
+	ClientToScreen(GetWindow(), (POINT*)&dstRect.left);
+	ClientToScreen(GetWindow(), (POINT*)&dstRect.right);
 */
 
 #if EXTREME_DEBUGGING
 /****************************************************************************
  *
- * Update - 
+ * Update -
  *
  ****************************************************************************/
-void    WindowDeviceOpenGL::Update( const long symbol )
+void    WindowDeviceOpenGL::Update(const long symbol)
 {
-    HRESULT hRet = SUCCESS;
-    HRESULT hRet2 = SUCCESS;
+	HRESULT hRet = SUCCESS;
+	HRESULT hRet2 = SUCCESS;
 
-    EnterCS();
+	EnterCS();
 
-    //make a "blit" function!
-    if( symbol == 'Flop' && GetBitCanvas() != NULL )
-    {
-        if( (hRet = Blit()) != SUCCESS 
-            || (hRet2 = Flip()) != SUCCESS 
-            )
-        {
-            if( hRet2 == SUCCESS )
-            DumpToFile( "error.txt", ErrorString(hRet), " 'Update:Blit'\n");//, ErrorString(hRet) );
-            else
-            DumpToFile( "error.txt", ErrorString(hRet2), " 'Update:OnFlip'\n");//, ErrorString(hRet) );
-        }
+	//make a "blit" function!
+	if (symbol == 'Flop' && GetBitCanvas() != NULL)
+	{
+		if ((hRet = Blit()) != SUCCESS
+			|| (hRet2 = Flip()) != SUCCESS
+			)
+		{
+			if (hRet2 == SUCCESS)
+				DumpToFile("error.txt", ErrorString(hRet), " 'Update:Blit'\n");//, ErrorString(hRet) );
+			else
+				DumpToFile("error.txt", ErrorString(hRet2), " 'Update:OnFlip'\n");//, ErrorString(hRet) );
+		}
 
-    }
+	}
 
-    LeaveCS();
+	LeaveCS();
 }
 #endif
 
@@ -416,37 +416,37 @@ void    WindowDeviceOpenGL::Update( const long symbol )
 
 // Enable OpenGL
 
-VOID EnableOpenGL( HWND hWnd, HDC * hDC, HGLRC * hRC )
+VOID EnableOpenGL(HWND hWnd, HDC* hDC, HGLRC* hRC)
 {
-    PIXELFORMATDESCRIPTOR pfd;
-    int iFormat;
+	PIXELFORMATDESCRIPTOR pfd;
+	int iFormat;
 
-    // Get the device context (DC)
-    *hDC = GetDC( hWnd );
+	// Get the device context (DC)
+	*hDC = GetDC(hWnd);
 
-    // Set the pixel format for the DC
-    ZeroMemory( & pfd, sizeof( pfd ) );
-    pfd.nSize        = sizeof( pfd );
-    pfd.nVersion    = 1;
-    pfd.dwFlags        = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pfd.cColorBits    = 24;
-    pfd.cDepthBits    = 16;
-    pfd.iLayerType    = PFD_MAIN_PLANE;
-    iFormat            = ChoosePixelFormat( *hDC, &pfd );
-    SetPixelFormat( *hDC, iFormat, &pfd );
+	// Set the pixel format for the DC
+	ZeroMemory(&pfd, sizeof(pfd));
+	pfd.nSize = sizeof(pfd);
+	pfd.nVersion = 1;
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.cColorBits = 24;
+	pfd.cDepthBits = 16;
+	pfd.iLayerType = PFD_MAIN_PLANE;
+	iFormat = ChoosePixelFormat(*hDC, &pfd);
+	SetPixelFormat(*hDC, iFormat, &pfd);
 
-    // Create and enable the render context (RC)
-    *hRC            = wglCreateContext( * hDC);
-    wglMakeCurrent( *hDC, *hRC);
+	// Create and enable the render context (RC)
+	*hRC = wglCreateContext(*hDC);
+	wglMakeCurrent(*hDC, *hRC);
 }
 
 // Disable OpenGL
 
-VOID DisableOpenGL( HWND hWnd, HDC hDC, HGLRC hRC )
+VOID DisableOpenGL(HWND hWnd, HDC hDC, HGLRC hRC)
 {
-    wglMakeCurrent( NULL, NULL );
-    wglDeleteContext( hRC );
-    ReleaseDC( hWnd, hDC );
+	wglMakeCurrent(NULL, NULL);
+	wglDeleteContext(hRC);
+	ReleaseDC(hWnd, hDC);
 }
 
 #endif

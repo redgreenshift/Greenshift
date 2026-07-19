@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * BitCanvas - internal representation of screen data
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * BitCanvas - internal representation of screen data
+  *
+  ****************************************************************************/
 
 #ifndef _BitCanvas_H_
 #define _BitCanvas_H_
@@ -35,7 +35,7 @@
 
 #include <stdlib.h> /* for atol() */
 #include <math.h>
-//I don't think I should include math just for fabs()
+  //I don't think I should include math just for fabs()
 #include "DeltaTween.h"
 #include "DeltaField.h"
 #include "ContiguousAlignedMemoryAllocator.h"
@@ -52,28 +52,28 @@
  *
  ****************************************************************************/
 
-//#define FORCE_LINE_WIDTH_TO_1 1
+ //#define FORCE_LINE_WIDTH_TO_1 1
 
-//#define USE_BITMAP 1
-//#define USE_DOUBLE_BITMAP 1
-//#define BOTTOM_UP_DIB 1
+ //#define USE_BITMAP 1
+ //#define USE_DOUBLE_BITMAP 1
+ //#define BOTTOM_UP_DIB 1
 #define TOP_DOWN_DIB 1
 /*
  * bit depth conversion macros
  */
 
-/*
- * 16 bit to 32 bit
- */
+ /*
+  * 16 bit to 32 bit
+  */
 #define _5_to_8( px )  ((px) << 3)
 #define _6_to_8( px )  ((px) << 2)
 #define r16to32( px )  (_5_to_8( px ))
 #define g16to32( px )  (_6_to_8( px ))
 #define b16to32( px )  (_5_to_8( px ))
 
-/*
- * 32 bit to 16 bit
- */
+  /*
+   * 32 bit to 16 bit
+   */
 #define _8_to_5( px )  (((px) >> 3) & 0x1F)
 #define _8_to_6( px )  (((px) >> 2) & 0x3F)
 #define r32to16( px )  (_8_to_5( px ))
@@ -81,8 +81,8 @@
 #define b32to16( px )  (_8_to_5( px ))
 
 
-//#define DECAY8 * 31 >> 7
-//#define DECAY8 * 63 >> 8
+   //#define DECAY8 * 31 >> 7
+   //#define DECAY8 * 63 >> 8
 #define DECAY8 * 127 >> 9
 //#define DECAY8 * 255 >> 10
 //#define DECAY8 * 511 >> 11
@@ -156,12 +156,12 @@ DECAY256_TENS(21)
 DECAY256_TENS(22)
 DECAY256_TENS(23)
 DECAY256_TENS(24)
-DECAY256( 250 ),
-DECAY256( 251 ),
-DECAY256( 252 ),
-DECAY256( 253 ),
-DECAY256( 254 ),
-DECAY256( 255 )
+DECAY256(250),
+DECAY256(251),
+DECAY256(252),
+DECAY256(253),
+DECAY256(254),
+DECAY256(255)
 };
 /*
 10 DECAY8,
@@ -267,503 +267,503 @@ DECAY256( 255 )
  };/**/
 
 
-/****************************************************************************
- *
- * BitCanvas
- *
- * BitCanvas is neither a screen nor a device.
- * It's more like an intelligent bitmap.
- * It just manipulates a bunch of bits, presumably to display somewhere,
- * but not necessarily on screen.
- *
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * BitCanvas
+  *
+  * BitCanvas is neither a screen nor a device.
+  * It's more like an intelligent bitmap.
+  * It just manipulates a bunch of bits, presumably to display somewhere,
+  * but not necessarily on screen.
+  *
+  *
+  ****************************************************************************/
 class BitCanvas
 {
 private:
-    value_t     m_nDrawingAspect;
-    value_t     m_nWidthFactor;
-    value_t     m_nHeightFactor;
-//    value_t     m_nWidthFactorInverse;
-//    value_t     m_nHeightFactorInverse;
+	value_t     m_nDrawingAspect;
+	value_t     m_nWidthFactor;
+	value_t     m_nHeightFactor;
+	//    value_t     m_nWidthFactorInverse;
+	//    value_t     m_nHeightFactorInverse;
 
-//    value_t     m_nWidthOffset;
-//    value_t     m_nHeightOffset;
-
-
-public:
-void    SetDrawingAspect( value_t nAspect, const bool bZoom, const value_t nAspect2, const bool bZoom2, const value_t nPercent )
-{
-    const value_t        nWidth  = (value_t)BufferWidth();
-    const value_t        nHeight = (value_t)BufferHeight();
-    const value_t        nBufferAspect = nWidth / nHeight;
-    const value_t nAs = nAspect == 0.0f ? nBufferAspect : nAspect;
-    const value_t nAs2 = nAspect2 == 0.0f ? nBufferAspect : nAspect2;
-
-    SetDrawingAspect( nAs + (nAs2 - nAs) * nPercent, nPercent < 0.5f ? bZoom : bZoom2 );
-}
-void    SetDrawingAspect( value_t nAspect, const bool bZoom )
-{
-    const value_t        nWidth  = (value_t)BufferWidth();
-    const value_t        nHeight = (value_t)BufferHeight();
-    const value_t        nBlah   = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
-
-    // nAspect is a term with units   width/height
-    // so to compare screenwidth and screen height, you have to convert the units to match
-    // screenwidth/aspect == screenheight
-
-
-    if( nAspect == 0.0f )
-        nAspect = nWidth / nHeight;
-
-
-                /* Jared's way            */   /*     Andy's way            */
-    if( bZoom ? (nAspect > nWidth / nHeight) : ( nAspect <= nWidth / nHeight )  )
-    {
-        m_nWidthFactor  = 0.5f * nHeight * nAspect;
-        m_nHeightFactor = 0.5f * nHeight;
-    }
-    else
-    {
-        m_nWidthFactor  = 0.5f * nWidth;
-        m_nHeightFactor = 0.5f * nWidth / nAspect;
-    }
-
-
-
-/*
-    m_visibleX.SetBounds( 0.0f, (value_t)(BufferWidth()  - 1) );
-    m_visibleY.SetBounds( 0.0f, (value_t)(BufferHeight() - 1) );
-//    m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
-//    m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
-
-//    /*
-//     * why is this right again?  I need to verify its correctness.
-//     *
-//     * It's wrong, it should be based on SCREEN dimensions and aspect
-//     * /
-    m_logicalX.SetBounds( -(value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
-                           (value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
-    m_logicalY.SetBounds( -(value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
-                           (value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
-/**/
-    m_logicalX.SetBounds( -(value_t)BufferWidth()  / nAspect / nBlah,
-                           (value_t)BufferWidth()  / nAspect / nBlah );
-    m_logicalY.SetBounds( -(value_t)BufferHeight() / nAspect / nBlah,
-                           (value_t)BufferHeight() / nAspect / nBlah );
-}
-
-
-
-
-
-
+	//    value_t     m_nWidthOffset;
+	//    value_t     m_nHeightOffset;
 
 
 public:
-    void    FramerateWarning( void )
-    {
-        m_hTransitionTable.m_bFramerateTooLow = true;
-    };
-    error_t SetDelta( DeltaField *pDelta );
-    void    DoDelta( void )
-    {
-        DoDelta( m_hTransitionTable.GetPixelMap() );
-    };
+	void    SetDrawingAspect(value_t nAspect, const bool bZoom, const value_t nAspect2, const bool bZoom2, const value_t nPercent)
+	{
+		const value_t        nWidth = (value_t)BufferWidth();
+		const value_t        nHeight = (value_t)BufferHeight();
+		const value_t        nBufferAspect = nWidth / nHeight;
+		const value_t nAs = nAspect == 0.0f ? nBufferAspect : nAspect;
+		const value_t nAs2 = nAspect2 == 0.0f ? nBufferAspect : nAspect2;
+
+		SetDrawingAspect(nAs + (nAs2 - nAs) * nPercent, nPercent < 0.5f ? bZoom : bZoom2);
+	}
+	void    SetDrawingAspect(value_t nAspect, const bool bZoom)
+	{
+		const value_t        nWidth = (value_t)BufferWidth();
+		const value_t        nHeight = (value_t)BufferHeight();
+		const value_t        nBlah = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
+
+		// nAspect is a term with units   width/height
+		// so to compare screenwidth and screen height, you have to convert the units to match
+		// screenwidth/aspect == screenheight
+
+
+		if (nAspect == 0.0f)
+			nAspect = nWidth / nHeight;
+
+
+		/* Jared's way            */   /*     Andy's way            */
+		if (bZoom ? (nAspect > nWidth / nHeight) : (nAspect <= nWidth / nHeight))
+		{
+			m_nWidthFactor = 0.5f * nHeight * nAspect;
+			m_nHeightFactor = 0.5f * nHeight;
+		}
+		else
+		{
+			m_nWidthFactor = 0.5f * nWidth;
+			m_nHeightFactor = 0.5f * nWidth / nAspect;
+		}
+
+
+
+		/*
+			m_visibleX.SetBounds( 0.0f, (value_t)(BufferWidth()  - 1) );
+			m_visibleY.SetBounds( 0.0f, (value_t)(BufferHeight() - 1) );
+		//    m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+		//    m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+
+		//    /*
+		//     * why is this right again?  I need to verify its correctness.
+		//     *
+		//     * It's wrong, it should be based on SCREEN dimensions and aspect
+		//     * /
+			m_logicalX.SetBounds( -(value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
+								   (value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
+			m_logicalY.SetBounds( -(value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
+								   (value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
+		/**/
+		m_logicalX.SetBounds(-(value_t)BufferWidth() / nAspect / nBlah,
+			(value_t)BufferWidth() / nAspect / nBlah);
+		m_logicalY.SetBounds(-(value_t)BufferHeight() / nAspect / nBlah,
+			(value_t)BufferHeight() / nAspect / nBlah);
+	}
+
+
+
+
+
+
+
 
 public:
-    /*
-     * Optimization Level Type
-     */
-    typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE } opt_level_t;
+	void    FramerateWarning(void)
+	{
+		m_hTransitionTable.m_bFramerateTooLow = true;
+	};
+	error_t SetDelta(DeltaField* pDelta);
+	void    DoDelta(void)
+	{
+		DoDelta(m_hTransitionTable.GetPixelMap());
+	};
 
-    
-                    BitCanvas(  const DWORD dwWidth,
-                                const DWORD dwHeight,
-                                const DWORD dwBitDepth,
-                                const TWEENDESCRIPTION &tween_description );
-    virtual         ~BitCanvas();
+public:
+	/*
+	 * Optimization Level Type
+	 */
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE } opt_level_t;
 
-                    /*
-                     * instance creation
-                     */
-    static error_t  New( BitCanvas **outBitCanvas,
-                         MyDictionary<char*> *inConfig,
-                         MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals,
-                         MyDictionary<value_t*> *inValues );
 
-    error_t         Initialize( void );
+	BitCanvas(const DWORD dwWidth,
+		const DWORD dwHeight,
+		const DWORD dwBitDepth,
+		const TWEENDESCRIPTION& tween_description);
+	virtual         ~BitCanvas();
 
-                    /*
-                     * change the optimization level
-                     */
-    void            SetOptimizationLevel( const opt_level_t enumOptLevel );
+	/*
+	 * instance creation
+	 */
+	static error_t  New(BitCanvas** outBitCanvas,
+		MyDictionary<char*>* inConfig,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
+		MyDictionary<value_t*>* inValues);
 
-                    /*
-                     * accessors
-                     *
-                     * see above comment for corresponding variable
-                     */
-    inline DWORD    BufferWidth( void )     { return m_dwBufferWidth; };
-    inline DWORD    BufferHeight( void )    { return m_dwBufferHeight; };
-    inline DWORD    BitDepth( void )        { return m_dwBitDepth; };
+	error_t         Initialize(void);
 
-                    /*
-                     * swap the buffer pointers
-                     */
-    void            FlipBuffers( void );
+	/*
+	 * change the optimization level
+	 */
+	void            SetOptimizationLevel(const opt_level_t enumOptLevel);
+
+	/*
+	 * accessors
+	 *
+	 * see above comment for corresponding variable
+	 */
+	inline DWORD    BufferWidth(void) { return m_dwBufferWidth; };
+	inline DWORD    BufferHeight(void) { return m_dwBufferHeight; };
+	inline DWORD    BitDepth(void) { return m_dwBitDepth; };
+
+	/*
+	 * swap the buffer pointers
+	 */
+	void            FlipBuffers(void);
 
 protected:
-                    /*
-                     * apply the pixel transition
-                     */
-    void            DoDelta    ( const PIXELMAP    *lpTransitionTable );
-                    /*
-                     * copy buffer contents to
-                     * the alternate pixel medium
-                     * perfoming bit depth
-                     * conversion if necessary
-                     */
+	/*
+	 * apply the pixel transition
+	 */
+	void            DoDelta(const PIXELMAP* lpTransitionTable);
+	/*
+	 * copy buffer contents to
+	 * the alternate pixel medium
+	 * perfoming bit depth
+	 * conversion if necessary
+	 */
 public:
 #ifdef USE_BITMAP
-    void            CopyTo  ( const DWORD nWidth,
-                        const DWORD nHeight,
-                        HDC hDC );
+	void            CopyTo(const DWORD nWidth,
+		const DWORD nHeight,
+		HDC hDC);
 #endif
-    void            CopyTo  ( void          *lpSurface,
-                              const DWORD   nWidth,
-                              const DWORD   nHeight,
-                              const DWORD   nPitch,
-                              const DWORD   nPixelFormat );
+	void            CopyTo(void* lpSurface,
+		const DWORD   nWidth,
+		const DWORD   nHeight,
+		const DWORD   nPitch,
+		const DWORD   nPixelFormat);
 protected:
-    void            CopyToSameBitdepth  ( void  *lpSurface,
-                              const DWORD   dwWidth,
-                              const DWORD   dwHeight,
-                              const DWORD   dwPitch )
-//                              const DWORD   dwPixelFormat )
-    {
-        static const DWORD dwBufferDWORDPitch  = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
-        const DWORD dwSurfaceDWORDPitch = dwPitch / sizeof(DWORD);
-        const DWORD dwDeadSpace  = dwSurfaceDWORDPitch - dwBufferDWORDPitch;
-        DWORD    *lpSurface2 = (DWORD*)lpSurface;
-        DWORD    *lpBuffer   = m_pReadBuffer32;
+	void            CopyToSameBitdepth(void* lpSurface,
+		const DWORD   dwWidth,
+		const DWORD   dwHeight,
+		const DWORD   dwPitch)
+		//                              const DWORD   dwPixelFormat )
+	{
+		static const DWORD dwBufferDWORDPitch = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
+		const DWORD dwSurfaceDWORDPitch = dwPitch / sizeof(DWORD);
+		const DWORD dwDeadSpace = dwSurfaceDWORDPitch - dwBufferDWORDPitch;
+		DWORD* lpSurface2 = (DWORD*)lpSurface;
+		DWORD* lpBuffer = m_pReadBuffer32;
 
 
-        for( DWORD j = m_dwBufferHeight;  j != 0;  j-- )
-        {
-//            for( i = 0;  i < dwBufferDWORDPitch;  i++ )
-            for( DWORD i = dwBufferDWORDPitch; i != 0; i-- )
-            {
-                //assign the value to the surface
-                *lpSurface2++ = *lpBuffer++;
-            }
+		for (DWORD j = m_dwBufferHeight; j != 0; j--)
+		{
+			//            for( i = 0;  i < dwBufferDWORDPitch;  i++ )
+			for (DWORD i = dwBufferDWORDPitch; i != 0; i--)
+			{
+				//assign the value to the surface
+				*lpSurface2++ = *lpBuffer++;
+			}
 
-            //skip over the cache area
-            lpSurface2 += dwDeadSpace;
-        }
-    };
+			//skip over the cache area
+			lpSurface2 += dwDeadSpace;
+		}
+	};
 
 public:
-//    inline void     CopyLastLine( void );
+	//    inline void     CopyLastLine( void );
 
-                    /*
-                     * line drawing routine (only worry about 2D!)
-                     */
-    void            DrawLine( const value_t x1,
-                              const value_t y1,
-                              const value_t x2,
-                              const value_t y2,
-                              const value_t line_width_parameter,
-                              const value_t color );
-    void            DrawDot( const value_t x,
-                             const value_t y,
-                             const value_t dot_size,
-                             const value_t color );
+						/*
+						 * line drawing routine (only worry about 2D!)
+						 */
+	void            DrawLine(const value_t x1,
+		const value_t y1,
+		const value_t x2,
+		const value_t y2,
+		const value_t line_width_parameter,
+		const value_t color);
+	void            DrawDot(const value_t x,
+		const value_t y,
+		const value_t dot_size,
+		const value_t color);
 
 protected:
-/*    void            PlotLineBresenham(
-                              long x0,
-                              long y0,
-                              const long x1,
-                              long y1,
-                              const BYTE color );/**/
-    void            PlotLineBresenham(
-                              long x0,
-                              long y0,
-                              const long x1,
-                              long y1,
-                              const BYTE color );
-    void            PlotLineBresenhamThick(
-                              long x0,
-                              long y0,
-                              long x1,
-                              long y1,
-                              const long line_width,
-                              const BYTE color );
+	/*    void            PlotLineBresenham(
+								  long x0,
+								  long y0,
+								  const long x1,
+								  long y1,
+								  const BYTE color );/**/
+	void            PlotLineBresenham(
+		long x0,
+		long y0,
+		const long x1,
+		long y1,
+		const BYTE color);
+	void            PlotLineBresenhamThick(
+		long x0,
+		long y0,
+		long x1,
+		long y1,
+		const long line_width,
+		const BYTE color);
 protected:
-    void            PlotDot( const value_t x,
-                             const value_t y,
-                             const value_t dot_size,
-                             const value_t color );
+	void            PlotDot(const value_t x,
+		const value_t y,
+		const value_t dot_size,
+		const value_t color);
 public:
 
-    error_t         SetPalette( Palette *pPalette );
-    error_t         SetPalette( Palette *pPalette1,
-                                Palette *pPalette2,
-                                const value_t nPercent );
+	error_t         SetPalette(Palette* pPalette);
+	error_t         SetPalette(Palette* pPalette1,
+		Palette* pPalette2,
+		const value_t nPercent);
 
-    /****************************************************************************
-     *
-     * GetPalette - return the logical palette so a device context can use it
-     *
-     ****************************************************************************/
-    inline
-    LOGPALETTE      *PGetPalette( void )
-    {
-        return m_pPalette.PGetLogicalPalette();
-    //    return &m_pPalette.GetLogicalPalette();
-    }
-
-
+	/****************************************************************************
+	 *
+	 * GetPalette - return the logical palette so a device context can use it
+	 *
+	 ****************************************************************************/
+	inline
+		LOGPALETTE* PGetPalette(void)
+	{
+		return m_pPalette.PGetLogicalPalette();
+		//    return &m_pPalette.GetLogicalPalette();
+	}
 
 
-    /*
-     * TODO: JRDV: Why did I define BlahPutPixel? there is a comment "hack for graphics project"
-     * AHA! That was for CS4451a_project_3, so this was intended to be temporary, and I can clean it up
-     */
-    inline void     BlahPutPixel(const long x, const long y,
-                                     const DWORD r, const DWORD g, const DWORD b)
-    {
-        const DWORD    pixelOffset = BufferWidth() * y + x;
-
-        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth() )
-            BlahPutPixel( pixelOffset, r, g, b );
-    };
-    inline void     PutPixel(const long x, const long y,
-                                     const BYTE color)
-    {
-        const DWORD    pixelOffset = BufferWidth() * y + x;
-
-        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth() )
-            PutPixel( pixelOffset, color );
-    };
-    inline void     PutPixel(const long x, const long y,
-                            const WORD pixel_width, const BYTE color)
-    {
-        const DWORD    pixelOffset = BufferWidth() * y + x;
-
-//        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
-        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth() )
-        {
-            const long wid = pixel_width - (long)BufferWidth() + x;
-            if( wid <= 0 )
-                PutPixel( pixelOffset, pixel_width, color );
-            else
-                PutPixel( pixelOffset, (WORD)wid - 1, color );
-        }
-    };
-    inline DWORD    GetPixel(const long x, const long y);
 
 
-        /*
-         * hack for OpenGL.... it needs direct access...
-         */
-    void *GetPixelMemory( DWORD *nWidth, DWORD *nHeight, DWORD *nPixelFormat );
+	/*
+	 * TODO: JRDV: Why did I define BlahPutPixel? there is a comment "hack for graphics project"
+	 * AHA! That was for CS4451a_project_3, so this was intended to be temporary, and I can clean it up
+	 */
+	inline void     BlahPutPixel(const long x, const long y,
+		const DWORD r, const DWORD g, const DWORD b)
+	{
+		const DWORD    pixelOffset = BufferWidth() * y + x;
+
+		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
+			BlahPutPixel(pixelOffset, r, g, b);
+	};
+	inline void     PutPixel(const long x, const long y,
+		const BYTE color)
+	{
+		const DWORD    pixelOffset = BufferWidth() * y + x;
+
+		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
+			PutPixel(pixelOffset, color);
+	};
+	inline void     PutPixel(const long x, const long y,
+		const WORD pixel_width, const BYTE color)
+	{
+		const DWORD    pixelOffset = BufferWidth() * y + x;
+
+		//        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
+		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
+		{
+			const long wid = pixel_width - (long)BufferWidth() + x;
+			if (wid <= 0)
+				PutPixel(pixelOffset, pixel_width, color);
+			else
+				PutPixel(pixelOffset, (WORD)wid - 1, color);
+		}
+	};
+	inline DWORD    GetPixel(const long x, const long y);
+
+
+	/*
+	 * hack for OpenGL.... it needs direct access...
+	 */
+	void* GetPixelMemory(DWORD* nWidth, DWORD* nHeight, DWORD* nPixelFormat);
 
 
 protected:
-    /************************************************************************
-     *
-     * the following functions should be defined in derived classes
-     *
-     ************************************************************************/
-    inline virtual DWORD    GetPixel(const DWORD pixelOffset ) = 0;
-    inline virtual void     PutPixel(const DWORD pixelOffset,
-                                     const BYTE color) = 0;
-    inline virtual void     BlahPutPixel(const DWORD pixelOffset,
-                                     const DWORD r,
-                                     const DWORD g,
-                                     const DWORD b) = 0;
-    inline virtual void     PutPixel(const DWORD pixelOffset,
-                                     const WORD pixel_width,
-                                     const BYTE color ) = 0;
+	/************************************************************************
+	 *
+	 * the following functions should be defined in derived classes
+	 *
+	 ************************************************************************/
+	inline virtual DWORD    GetPixel(const DWORD pixelOffset) = 0;
+	inline virtual void     PutPixel(const DWORD pixelOffset,
+		const BYTE color) = 0;
+	inline virtual void     BlahPutPixel(const DWORD pixelOffset,
+		const DWORD r,
+		const DWORD g,
+		const DWORD b) = 0;
+	inline virtual void     PutPixel(const DWORD pixelOffset,
+		const WORD pixel_width,
+		const BYTE color) = 0;
 
-    virtual void    DoDelta_cpp ( const PIXELMAP *lpTransitionTable ) = 0;
-    virtual void    DoDelta_x86 ( const PIXELMAP *lpTransitionTable );
-    virtual void    DoDelta_MMX ( const PIXELMAP *lpTransitionTable );
-    virtual void    DoDelta_SSE ( const PIXELMAP *lpTransitionTable );
-    virtual void    CopyTo8 ( void *lpSurface, const DWORD nDeadSpace ) = 0;
-    virtual void    CopyTo16( void *lpSurface, const DWORD nDeadSpace ) = 0;
-    virtual void    CopyTo24( void *lpSurface, const DWORD nDeadSpace ) = 0;
-    virtual void    CopyTo32( void *lpSurface, const DWORD nDeadSpace ) = 0;
+	virtual void    DoDelta_cpp(const PIXELMAP* lpTransitionTable) = 0;
+	virtual void    DoDelta_x86(const PIXELMAP* lpTransitionTable);
+	virtual void    DoDelta_MMX(const PIXELMAP* lpTransitionTable);
+	virtual void    DoDelta_SSE(const PIXELMAP* lpTransitionTable);
+	virtual void    CopyTo8(void* lpSurface, const DWORD nDeadSpace) = 0;
+	virtual void    CopyTo16(void* lpSurface, const DWORD nDeadSpace) = 0;
+	virtual void    CopyTo24(void* lpSurface, const DWORD nDeadSpace) = 0;
+	virtual void    CopyTo32(void* lpSurface, const DWORD nDeadSpace) = 0;
 
 
 
 
 #ifndef UNDEFINED
-    /****************************************************************************
-     *
-     * GetRed -
-     *
-     ****************************************************************************/
-    inline BYTE     GetRed( const BYTE nIndex )
-    {
-        return PGetPalette()->palPalEntry[nIndex].peRed;
-    };
+	/****************************************************************************
+	 *
+	 * GetRed -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetRed(const BYTE nIndex)
+	{
+		return PGetPalette()->palPalEntry[nIndex].peRed;
+	};
 
 
-    /****************************************************************************
-     *
-     * GetGreen -
-     *
-     ****************************************************************************/
-    inline BYTE     GetGreen( const BYTE nIndex )
-    {
-        return PGetPalette()->palPalEntry[nIndex].peGreen;
-    };
+	/****************************************************************************
+	 *
+	 * GetGreen -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetGreen(const BYTE nIndex)
+	{
+		return PGetPalette()->palPalEntry[nIndex].peGreen;
+	};
 
 
-    /****************************************************************************
-     *
-     * GetBlue -
-     *
-     ****************************************************************************/
-    inline BYTE     GetBlue( const BYTE nIndex )
-    {
-        return PGetPalette()->palPalEntry[nIndex].peBlue;
-    };
+	/****************************************************************************
+	 *
+	 * GetBlue -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetBlue(const BYTE nIndex)
+	{
+		return PGetPalette()->palPalEntry[nIndex].peBlue;
+	};
 #else
 
-    /****************************************************************************
-     *
-     * GetRed -
-     *
-     ****************************************************************************/
-    inline BYTE     GetRed( const BYTE nIndex )
-    {
-        return m_pPaletteEntry[nIndex].peRed;
-    };
+	/****************************************************************************
+	 *
+	 * GetRed -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetRed(const BYTE nIndex)
+	{
+		return m_pPaletteEntry[nIndex].peRed;
+	};
 
 
-    /****************************************************************************
-     *
-     * GetGreen -
-     *
-     ****************************************************************************/
-    inline BYTE     GetGreen( const BYTE nIndex )
-    {
-        return m_pPaletteEntry[nIndex].peGreen;
-    };
+	/****************************************************************************
+	 *
+	 * GetGreen -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetGreen(const BYTE nIndex)
+	{
+		return m_pPaletteEntry[nIndex].peGreen;
+	};
 
 
-    /****************************************************************************
-     *
-     * GetBlue -
-     *
-     ****************************************************************************/
-    inline BYTE     GetBlue( const BYTE nIndex )
-    {
-        return m_pPaletteEntry[nIndex].peBlue;
-    };
+	/****************************************************************************
+	 *
+	 * GetBlue -
+	 *
+	 ****************************************************************************/
+	inline BYTE     GetBlue(const BYTE nIndex)
+	{
+		return m_pPaletteEntry[nIndex].peBlue;
+	};
 
 #ifdef UNDEFINED
-    /****************************************************************************
-     *
-     * GetEntry -
-     *
-     ****************************************************************************/
-    inline PALETTEENTRY  GetEntry( const BYTE nIndex )
-    {
-        return m_pPaletteEntry[nIndex];
-    };
+	/****************************************************************************
+	 *
+	 * GetEntry -
+	 *
+	 ****************************************************************************/
+	inline PALETTEENTRY  GetEntry(const BYTE nIndex)
+	{
+		return m_pPaletteEntry[nIndex];
+	};
 
-    /****************************************************************************
-     *
-     * GetRGB -
-     *
-     ****************************************************************************/
-    inline void GetRGB( const BYTE nIndex, BYTE *outRed, BYTE *outGreen, BYTE *outBlue )
-    {
-        const PALETTEENTRY  tmpPE = m_pPaletteEntry[nIndex];
+	/****************************************************************************
+	 *
+	 * GetRGB -
+	 *
+	 ****************************************************************************/
+	inline void GetRGB(const BYTE nIndex, BYTE* outRed, BYTE* outGreen, BYTE* outBlue)
+	{
+		const PALETTEENTRY  tmpPE = m_pPaletteEntry[nIndex];
 
-        *outRed   = tmpPE.peRed;
-        *outGreen = tmpPE.peGreen;
-        *outBlue  = tmpPE.peBlue;
-    };
+		*outRed = tmpPE.peRed;
+		*outGreen = tmpPE.peGreen;
+		*outBlue = tmpPE.peBlue;
+	};
 #endif
 #endif
 
 
 private:
-    opt_level_t     m_nDeltaOptimizationLevel;
-    Interval        m_logicalX;
-    Interval        m_logicalY;
-    Interval        m_visibleX;
-    Interval        m_visibleY;
-    DeltaField      *m_pDelta;
-    DeltaTween      m_hTransitionTable;
+	opt_level_t     m_nDeltaOptimizationLevel;
+	Interval        m_logicalX;
+	Interval        m_logicalY;
+	Interval        m_visibleX;
+	Interval        m_visibleY;
+	DeltaField* m_pDelta;
+	DeltaTween      m_hTransitionTable;
 
-    void            *m_pUnalignedDoubleBuffer;
-    void            ReleaseBuffers( void );    /* free allocated memory */
+	void* m_pUnalignedDoubleBuffer;
+	void            ReleaseBuffers(void);    /* free allocated memory */
 
 protected:
 
-    const DWORD     m_dwBitDepth;    /* number of bits per pixel
-                                     */
+	const DWORD     m_dwBitDepth;    /* number of bits per pixel
+									 */
 protected:
-    const DWORD     m_dwBufferWidth; /* the width in pixels
-                                     * of ReadOnlyBuffer and WriteOnlyBuffer
-                                     */
-    const DWORD     m_dwBufferHeight;/* the height in pixels
-                                     * of ReadOnlyBuffer and WriteOnlyBuffer
-                                     */
-    const DWORD     m_dwCacheLength; /* the number of DWORD's allocated past
-                                     * the end of the buffer.  The extra
-                                     * space is used to cache the first line
-                                     * of pixels.
-                                     */
-                                    /* Width * Height + CacheLength should
-                                     * also be an even multiple of DQWORD
-                                     */
-    const DWORD     m_dwBufferByteLength;
-    const DWORD     m_dwBufferLength;
+	const DWORD     m_dwBufferWidth; /* the width in pixels
+									 * of ReadOnlyBuffer and WriteOnlyBuffer
+									 */
+	const DWORD     m_dwBufferHeight;/* the height in pixels
+									 * of ReadOnlyBuffer and WriteOnlyBuffer
+									 */
+	const DWORD     m_dwCacheLength; /* the number of DWORD's allocated past
+									 * the end of the buffer.  The extra
+									 * space is used to cache the first line
+									 * of pixels.
+									 */
+									 /* Width * Height + CacheLength should
+									  * also be an even multiple of DQWORD
+									  */
+	const DWORD     m_dwBufferByteLength;
+	const DWORD     m_dwBufferLength;
 
-    const DWORD     m_dwHalfWidth;
-    const DWORD     m_dwHalfHeight;
+	const DWORD     m_dwHalfWidth;
+	const DWORD     m_dwHalfHeight;
 
-    const value_t   m_nLineWidthFactor;
+	const value_t   m_nLineWidthFactor;
 
 
-    union {
-        void        *m_pWriteOnlyBuffer;/* the frame currently being drawn
-                                         */
-        BYTE        *m_pWriteBuffer8;   /* accessor for BitCanvas8  */
-        WORD        *m_pWriteBuffer16;  /* accessor for BitCanvas16 */
-        DWORD       *m_pWriteBuffer32;  /* accessor for BitCanvas32 */
-    };
+	union {
+		void* m_pWriteOnlyBuffer;/* the frame currently being drawn
+										 */
+		BYTE* m_pWriteBuffer8;   /* accessor for BitCanvas8  */
+		WORD* m_pWriteBuffer16;  /* accessor for BitCanvas16 */
+		DWORD* m_pWriteBuffer32;  /* accessor for BitCanvas32 */
+	};
 
-    union {
-        void        *m_pReadOnlyBuffer; /* the completed frame
-                                         */
-        BYTE        *m_pReadBuffer8;    /* accessor for BitCanvas8  */
-        WORD        *m_pReadBuffer16;   /* accessor for BitCanvas16 */
-        DWORD       *m_pReadBuffer32;   /* accessor for BitCanvas32 */
-    };
+	union {
+		void* m_pReadOnlyBuffer; /* the completed frame
+										 */
+		BYTE* m_pReadBuffer8;    /* accessor for BitCanvas8  */
+		WORD* m_pReadBuffer16;   /* accessor for BitCanvas16 */
+		DWORD* m_pReadBuffer32;   /* accessor for BitCanvas32 */
+	};
 
-    Palette         m_pPalette;
-//    PALETTEENTRY    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
+	Palette         m_pPalette;
+	//    PALETTEENTRY    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
 
 
 #ifdef USE_BITMAP
-    HDC             m_hDC;
+	HDC             m_hDC;
 #ifdef USE_DOUBLE_BITMAP
-    BITMAPINFO      m_hDoubleBitmapInfo;
-    HBITMAP         m_hDoubleBitmap;
+	BITMAPINFO      m_hDoubleBitmapInfo;
+	HBITMAP         m_hDoubleBitmap;
 #else // Double Bitmap
-    BITMAPINFO      m_hReadOnlyBitmapInfo;
-    BITMAPINFO      m_hWriteOnlyBitmapInfo;
-    HBITMAP         m_hWriteOnlyBitmap;
-    HBITMAP         m_hReadOnlyBitmap;
+	BITMAPINFO      m_hReadOnlyBitmapInfo;
+	BITMAPINFO      m_hWriteOnlyBitmapInfo;
+	HBITMAP         m_hWriteOnlyBitmap;
+	HBITMAP         m_hReadOnlyBitmap;
 #endif // Double Bitmap
 #endif // Use Bitmap
 
@@ -775,31 +775,31 @@ protected:
 class BitCanvas8 : public BitCanvas
 {
 public:
-    BitCanvas8( const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION &td );
+	BitCanvas8(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-    /*
-     * removed inline next to Get/PutPixel since it's in the base class
-     */
-    DWORD           GetPixel(const DWORD pixelOffset );
-    void            PutPixel(const DWORD pixelOffset, const BYTE color);
-    void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
-    void     BlahPutPixel(const DWORD pixelOffset,
-                                     const DWORD r,
-                                     const DWORD g,
-                                     const DWORD b)
-    {   /* hack for graphics project */
-        m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32( r, g, b );
-    };
-    
-    void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
-    void            DoDelta_x86( const PIXELMAP *lpTransitionTable );
-    void            DoDelta_MMX( const PIXELMAP *lpTransitionTable );
-//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-    void            CopyTo8 ( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo16( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo24( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo32( void *lpSurface, const DWORD nDeadSpace );
+	/*
+	 * removed inline next to Get/PutPixel since it's in the base class
+	 */
+	DWORD           GetPixel(const DWORD pixelOffset);
+	void            PutPixel(const DWORD pixelOffset, const BYTE color);
+	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
+	void     BlahPutPixel(const DWORD pixelOffset,
+		const DWORD r,
+		const DWORD g,
+		const DWORD b)
+	{   /* hack for graphics project */
+		m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32(r, g, b);
+	};
+
+	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
+	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
+	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
+	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
+	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
 };
 
 
@@ -807,28 +807,28 @@ protected:
 class BitCanvas16 : public BitCanvas
 {
 public:
-    BitCanvas16( const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION &td );
+	BitCanvas16(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-    DWORD           GetPixel(const DWORD pixelOffset );
-    void            PutPixel(const DWORD pixelOffset, const BYTE color);
-    void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
-    void     BlahPutPixel(const DWORD pixelOffset,
-                                     const DWORD r,
-                                     const DWORD g,
-                                     const DWORD b)
-    {
-        m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16( r, g, b );
-    };
+	DWORD           GetPixel(const DWORD pixelOffset);
+	void            PutPixel(const DWORD pixelOffset, const BYTE color);
+	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
+	void     BlahPutPixel(const DWORD pixelOffset,
+		const DWORD r,
+		const DWORD g,
+		const DWORD b)
+	{
+		m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16(r, g, b);
+	};
 
-    void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
-    void            DoDelta_x86( const PIXELMAP *lpTransitionTable );
-    void            DoDelta_MMX( const PIXELMAP *lpTransitionTable );
-//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-    void            CopyTo8 ( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo16( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo24( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo32( void *lpSurface, const DWORD nDeadSpace );
+	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
+	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
+	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
+	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
+	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
 };
 
 
@@ -836,34 +836,34 @@ protected:
 class BitCanvas32 : public BitCanvas
 {
 public:
-    BitCanvas32( const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION &td );
+	BitCanvas32(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-    DWORD           GetPixel(const DWORD pixelOffset );
-    void            PutPixel(const DWORD pixelOffset, const BYTE color);
-    void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color );
-    void     BlahPutPixel(const DWORD pixelOffset,
-                                     const DWORD r,
-                                     const DWORD g,
-                                     const DWORD b)
-    {
-        m_pWriteBuffer32[pixelOffset] = RGB32( r, g, b );
-//        m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
-//        DumpToFile( "error.txt", "blah!", "");
-    };
+	DWORD           GetPixel(const DWORD pixelOffset);
+	void            PutPixel(const DWORD pixelOffset, const BYTE color);
+	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
+	void     BlahPutPixel(const DWORD pixelOffset,
+		const DWORD r,
+		const DWORD g,
+		const DWORD b)
+	{
+		m_pWriteBuffer32[pixelOffset] = RGB32(r, g, b);
+		//        m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
+		//        DumpToFile( "error.txt", "blah!", "");
+	};
 
-    void            DoDelta_cpp( const PIXELMAP *lpTransitionTable );
+	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
 #ifdef USE_MMX_INTRINSICS
-    void            DoDelta_x86( const PIXELMAP *lpTransitionTable );
+	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
 #endif
 #ifdef USE_MMX_ASSEMBLY
-    void            DoDelta_MMX( const PIXELMAP *lpTransitionTable );
+	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
 #endif
-//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-    void            CopyTo8    ( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo16( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo24( void *lpSurface, const DWORD nDeadSpace );
-    void            CopyTo32( void *lpSurface, const DWORD nDeadSpace );
+	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
+	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
+	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
 };
 
 

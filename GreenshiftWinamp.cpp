@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * GreenshiftWinamp
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * GreenshiftWinamp
+  *
+  ****************************************************************************/
 
 #include "GreenshiftWinamp.h"
 
@@ -32,28 +32,28 @@
 #ifdef GREENSHIFT_DLL
 
 
-/****************************************************************************
- *
- * config - thing Winamp calls to tell Greenshift to open a GUI prefs editor
- *
- ****************************************************************************/
-void config(struct winampVisModule *this_mod)
+  /****************************************************************************
+   *
+   * config - thing Winamp calls to tell Greenshift to open a GUI prefs editor
+   *
+   ****************************************************************************/
+void config(struct winampVisModule* this_mod)
 {
-    Greenshift *greenshift;
+	Greenshift* greenshift;
 
-    greenshift = (Greenshift*)this_mod->userData;
+	greenshift = (Greenshift*)this_mod->userData;
 
 
-    MessageBox(this_mod->hwndParent,
-        "This module is Copyright (c) 2001-2026, Jared Ivey\n"
-//        "This is the first official release of the Greenshift visualization dll\n"
-        "There are no settings to configure here.  See settings.txt\n\n"
-        "Updates at:\n"
-        "    https://github.com/redgreenshift/greenshift",
-                                    VIS_TITLE " " VIS_VERSION ,MB_OK);
+	MessageBox(this_mod->hwndParent,
+		"This module is Copyright (c) 2001-2026, Jared Ivey\n"
+		//        "This is the first official release of the Greenshift visualization dll\n"
+		"There are no settings to configure here.  See settings.txt\n\n"
+		"Updates at:\n"
+		"    https://github.com/redgreenshift/greenshift",
+		VIS_TITLE " " VIS_VERSION, MB_OK);
 
-    if( greenshift != NULL )
-        greenshift->Config();
+	if (greenshift != NULL)
+		greenshift->Config();
 }
 
 /****************************************************************************
@@ -61,43 +61,43 @@ void config(struct winampVisModule *this_mod)
  * init - the thing Winamp calls to tell Greenshift to initialize
  *
  ****************************************************************************/
-int init(struct winampVisModule *this_mod)
+int init(struct winampVisModule* this_mod)
 {
-    Greenshift  *greenshift;
-//    HWND        hWindow;
+	Greenshift* greenshift;
+	//    HWND        hWindow;
 
-    greenshift = (Greenshift*)this_mod->userData;
+	greenshift = (Greenshift*)this_mod->userData;
 
-//    hWindow = FindWindow( "Winamp v1.x", NULL );
+	//    hWindow = FindWindow( "Winamp v1.x", NULL );
 
-//    MessageBox( NULL, (hWindow == NULL)?"not found":"found", "ack!", MB_OK );
-//    MessageBox( NULL, (hWindow == this_mod->hwndParent)?"equal":"not equal",
-    //"ack!", MB_OK );
+	//    MessageBox( NULL, (hWindow == NULL)?"not found":"found", "ack!", MB_OK );
+	//    MessageBox( NULL, (hWindow == this_mod->hwndParent)?"equal":"not equal",
+		//"ack!", MB_OK );
 
-    if( greenshift != NULL )
-    {
+	if (greenshift != NULL)
+	{
 #if EXTREME_DEBUGGING
-        error_t err;
+		error_t err;
 
-        greenshift->SetParentWindow( this_mod->hwndParent );
-        DumpToFile( "error.txt", "About to Initialize Greenshift.", "\n" );
-        err = greenshift->Initialize( this_mod->hDllInstance );
-        if( err == SUCCESS )
-            DumpToFile("error.txt", "Greenshift successfully Initialized.\n");
-        else
-        {
-            DumpToFile( "error.txt",
-                "An ERROR occured while initializing Greenshift!", "\n" );
-            DumpToFile( "error.txt", ErrorString( err ), "\n" );
-        }
-        return err;
+		greenshift->SetParentWindow(this_mod->hwndParent);
+		DumpToFile("error.txt", "About to Initialize Greenshift.", "\n");
+		err = greenshift->Initialize(this_mod->hDllInstance);
+		if (err == SUCCESS)
+			DumpToFile("error.txt", "Greenshift successfully Initialized.\n");
+		else
+		{
+			DumpToFile("error.txt",
+				"An ERROR occured while initializing Greenshift!", "\n");
+			DumpToFile("error.txt", ErrorString(err), "\n");
+		}
+		return err;
 #else
-        greenshift->SetParentWindow( this_mod->hwndParent );
-        return greenshift->Initialize( this_mod->hDllInstance );
+		greenshift->SetParentWindow(this_mod->hwndParent);
+		return greenshift->Initialize(this_mod->hDllInstance);
 #endif
-    }
-    else
-        return -1;
+	}
+	else
+		return -1;
 }
 
 
@@ -106,56 +106,56 @@ int init(struct winampVisModule *this_mod)
  * render - the thing Winamp calls to tell Greenshift to render a frame
  *
  ****************************************************************************/
-int render(struct winampVisModule *this_mod)
+int render(struct winampVisModule* this_mod)
 {
-//    int channel;
-//    int i;
-    Greenshift    *greenshift;
+	//    int channel;
+	//    int i;
+	Greenshift* greenshift;
 
-    greenshift = (Greenshift*)this_mod->userData;
+	greenshift = (Greenshift*)this_mod->userData;
 
-    if( greenshift != NULL )
-    {
+	if (greenshift != NULL)
+	{
 #if EXTREME_DEBUGGING
-        error_t err;
+		error_t err;
 
-//        DumpToFile( "error.txt", "About to set sound data.", "\n" );
-        err = greenshift->SetSoundData( this_mod->waveformNch,
-                                  this_mod->waveformData,
-                                  this_mod->spectrumNch,
-                                  this_mod->spectrumData );
-        if( err != SUCCESS )
-        {
-            DumpToFile( "error.txt", "ERROR: ", "" );
-            DumpToFile( "error.txt", ErrorString( err ), "\n" );
-        }
-//        else
-//            DumpToFile( "error.txt", "Successfully set sound data.", "\n" );
+		//        DumpToFile( "error.txt", "About to set sound data.", "\n" );
+		err = greenshift->SetSoundData(this_mod->waveformNch,
+			this_mod->waveformData,
+			this_mod->spectrumNch,
+			this_mod->spectrumData);
+		if (err != SUCCESS)
+		{
+			DumpToFile("error.txt", "ERROR: ", "");
+			DumpToFile("error.txt", ErrorString(err), "\n");
+		}
+		//        else
+		//            DumpToFile( "error.txt", "Successfully set sound data.", "\n" );
 
-        if( err == SUCCESS )
-        {
-//            DumpToFile( "error.txt", "About to render frame.", "\n" );
-            err = greenshift->Render();
-            if( err != SUCCESS )
-            {
-                DumpToFile( "error.txt", "ERROR: ", "" );
-                DumpToFile( "error.txt", ErrorString( err ), "\n" );
-            }
-//            else
-//                DumpToFile("error.txt", "Successfully rendered the frame.\n");
-        }
-        return err;
+		if (err == SUCCESS)
+		{
+			//            DumpToFile( "error.txt", "About to render frame.", "\n" );
+			err = greenshift->Render();
+			if (err != SUCCESS)
+			{
+				DumpToFile("error.txt", "ERROR: ", "");
+				DumpToFile("error.txt", ErrorString(err), "\n");
+			}
+			//            else
+			//                DumpToFile("error.txt", "Successfully rendered the frame.\n");
+		}
+		return err;
 #else
-        greenshift->SetSoundData( this_mod->waveformNch,
-                                  this_mod->waveformData,
-                                  this_mod->spectrumNch,
-                                  this_mod->spectrumData );
+		greenshift->SetSoundData(this_mod->waveformNch,
+			this_mod->waveformData,
+			this_mod->spectrumNch,
+			this_mod->spectrumData);
 
-        return greenshift->Render();
+		return greenshift->Render();
 #endif
-    }
-    else
-        return -1;
+	}
+	else
+		return -1;
 }
 
 /****************************************************************************
@@ -163,10 +163,10 @@ int render(struct winampVisModule *this_mod)
  * quit - the thing Winamp calls to tell Greenshift to cleanup
  *
  ****************************************************************************/
-void quit(struct winampVisModule *this_mod)
+void quit(struct winampVisModule* this_mod)
 {
-/* Greenshift cleans up after itself when the Greenshift object is destroyed
- * if crashes if you tell it to cean up here too */
+	/* Greenshift cleans up after itself when the Greenshift object is destroyed
+	 * if crashes if you tell it to cean up here too */
 }
 
 
@@ -178,10 +178,10 @@ void quit(struct winampVisModule *this_mod)
 #ifdef __cplusplus
 extern "C" {
 #endif
-__declspec( dllexport ) winampVisHeader *winampVisGetHeader()
-{
-    return &hdr;
-}
+	__declspec(dllexport) winampVisHeader* winampVisGetHeader()
+	{
+		return &hdr;
+	}
 #ifdef __cplusplus
 }
 #endif
@@ -191,13 +191,13 @@ __declspec( dllexport ) winampVisHeader *winampVisGetHeader()
 // getmodule routine from the main header. Returns NULL if an
 // invalid module was requested,
 // otherwise return the only module
-winampVisModule *getModule(int which)
+winampVisModule* getModule(int which)
 {
-    switch (which)
-    {
-        case 0: return &modMain;
-        default:return NULL;
-    }
+	switch (which)
+	{
+	case 0: return &modMain;
+	default:return NULL;
+	}
 }
 
 #endif  /* GREENSHIFT_DLL */

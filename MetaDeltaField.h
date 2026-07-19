@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * MetaDeltaField - 
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * MetaDeltaField -
+  *
+  ****************************************************************************/
 
 #ifndef _MetaDeltaField_H_
 #define _MetaDeltaField_H_
@@ -36,28 +36,28 @@
 class MetaDeltaField : public MetaConfig
 {
 protected:
-    value_t                 m_nInterval;
-//    value_t                m_nTweenTime;
-    DWORD                   m_dwCurrent;
-    DWORD                   m_dwNext;
-    DeltaField              *m_pDeltaFields;
-    Expression              *m_pIntervalTime;
-    Expression              *m_pTweenDuration;
-    HighResolutionTimer     m_hrInterval;
+	value_t                 m_nInterval;
+	//    value_t                m_nTweenTime;
+	DWORD                   m_dwCurrent;
+	DWORD                   m_dwNext;
+	DeltaField* m_pDeltaFields;
+	Expression* m_pIntervalTime;
+	Expression* m_pTweenDuration;
+	HighResolutionTimer     m_hrInterval;
 
 public:
-                            MetaDeltaField();
-    virtual                 ~MetaDeltaField();
+	MetaDeltaField();
+	virtual                 ~MetaDeltaField();
 
-    virtual error_t         InitializeDerived(
-                            MyDictionary<char*> *inMainConfig,
-                            MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals );
+	virtual error_t         InitializeDerived(
+		MyDictionary<char*>* inMainConfig,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
-    virtual error_t         UpdateDerived( BitCanvas * pBitCanvas );
-    virtual error_t         UpdateDerived( WindowDevice *pWindowDevice );
+	virtual error_t         UpdateDerived(BitCanvas* pBitCanvas);
+	virtual error_t         UpdateDerived(WindowDevice* pWindowDevice);
 
 
-    void                    CheckInterval( void );
+	void                    CheckInterval(void);
 
 };
 

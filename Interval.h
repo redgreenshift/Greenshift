@@ -20,77 +20,77 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * Interval - represents a finite arithmetic progression
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * Interval - represents a finite arithmetic progression
+  *
+  ****************************************************************************/
 
 #ifndef _Interval_H_
 #define _Interval_H_
 
 
-/****************************************************************************
- *
- * Interval - represents a finite arithmetic progression
- *
- ****************************************************************************/
+  /****************************************************************************
+   *
+   * Interval - represents a finite arithmetic progression
+   *
+   ****************************************************************************/
 class Interval
 {
 public:
 
-/****************************************************************************
- *
- * Interval - default constructor
- *
- ****************************************************************************/
-Interval()
-{
-    m_nStart = 0.0f;
-    m_nStop  = 1.0f;
-    m_nNormalizationFactor = 1.0f;
-};
+	/****************************************************************************
+	 *
+	 * Interval - default constructor
+	 *
+	 ****************************************************************************/
+	Interval()
+	{
+		m_nStart = 0.0f;
+		m_nStop = 1.0f;
+		m_nNormalizationFactor = 1.0f;
+	};
 
-/****************************************************************************
- *
- * SetBounds - set bounds
- *
- ****************************************************************************/
-void    SetBounds( const value_t nStart, const value_t nStop )
-{
-    m_nStart = nStart;
-    m_nStop  = nStop;
-    m_nNormalizationFactor = 1.0f / (m_nStop - m_nStart);
-};
-
-
-/****************************************************************************
- *
- * operator[] - return the value nReal percent between start and stop
- *
- ****************************************************************************/
-inline value_t    operator[]( const value_t inValue )
-{
-    return m_nStart + (m_nStop - m_nStart) * inValue;
-};
+	/****************************************************************************
+	 *
+	 * SetBounds - set bounds
+	 *
+	 ****************************************************************************/
+	void    SetBounds(const value_t nStart, const value_t nStop)
+	{
+		m_nStart = nStart;
+		m_nStop = nStop;
+		m_nNormalizationFactor = 1.0f / (m_nStop - m_nStart);
+	};
 
 
-/****************************************************************************
- *
- * ToNormalized - return the value normalized to the interval 0..1
- *
- ****************************************************************************/
-inline value_t    Normalize( const value_t inValue )
-{
-    return (inValue - m_nStart) * m_nNormalizationFactor;
-};
+	/****************************************************************************
+	 *
+	 * operator[] - return the value nReal percent between start and stop
+	 *
+	 ****************************************************************************/
+	inline value_t    operator[](const value_t inValue)
+	{
+		return m_nStart + (m_nStop - m_nStart) * inValue;
+	};
+
+
+	/****************************************************************************
+	 *
+	 * ToNormalized - return the value normalized to the interval 0..1
+	 *
+	 ****************************************************************************/
+	inline value_t    Normalize(const value_t inValue)
+	{
+		return (inValue - m_nStart) * m_nNormalizationFactor;
+	};
 
 
 
 protected:
-    value_t        m_nNormalizationFactor;
-    value_t        m_nStart;
-    value_t        m_nStop;
+	value_t        m_nNormalizationFactor;
+	value_t        m_nStart;
+	value_t        m_nStop;
 
 };
 

@@ -20,26 +20,26 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * DeltaTween
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * DeltaTween
+  *
+  ****************************************************************************/
 
 #include "DeltaTween.h"
 
-/****************************************************************************
- *
- * DeltaTween - constructor
- *
- ****************************************************************************/
-DeltaTween::DeltaTween( const TWEENDESCRIPTION &tween_description )
-: TweenThread     ( tween_description ),
-  m_lVisibleWidth ( ((PIXELMAPDESCRIPTION*)tween_description.pData)->dwWidth  ),
-  m_lVisibleHeight( ((PIXELMAPDESCRIPTION*)tween_description.pData)->dwHeight )
+  /****************************************************************************
+   *
+   * DeltaTween - constructor
+   *
+   ****************************************************************************/
+DeltaTween::DeltaTween(const TWEENDESCRIPTION& tween_description)
+	: TweenThread(tween_description),
+	m_lVisibleWidth(((PIXELMAPDESCRIPTION*)tween_description.pData)->dwWidth),
+	m_lVisibleHeight(((PIXELMAPDESCRIPTION*)tween_description.pData)->dwHeight)
 {
-    m_bFramerateTooLow = false;
-    SetAspect(1.0f, false);
+	m_bFramerateTooLow = false;
+	SetAspect(1.0f, false);
 }
 
 
@@ -61,57 +61,57 @@ DeltaTween::~DeltaTween()
  * SetAspect - set the aspect ratio
  *
  *
-    If aspect/screen aspect < 1.0f
-    width is -1,1
-    height is -aspect/screen aspect, aspect/screen aspect
+	If aspect/screen aspect < 1.0f
+	width is -1,1
+	height is -aspect/screen aspect, aspect/screen aspect
 
-    width interval bounds are -0.5*width, 0.5*width
-    height interval bounds are -0.5*height*screen aspect/aspect, 0.5*height*screen aspect/aspect
-    simplified:  -0.5*width/aspect, 0.5*width/aspect
+	width interval bounds are -0.5*width, 0.5*width
+	height interval bounds are -0.5*height*screen aspect/aspect, 0.5*height*screen aspect/aspect
+	simplified:  -0.5*width/aspect, 0.5*width/aspect
 
 
 
-    If aspect/screen aspect > 1.0f
-    width is -screen aspect/aspect, screen aspect/aspect
-    height is -1,1
+	If aspect/screen aspect > 1.0f
+	width is -screen aspect/aspect, screen aspect/aspect
+	height is -1,1
 
-    width interval bounds are -0.5*width*aspect/screen aspect, 0.5*width*aspect/screen aspect
-    simplified: width interval bounds are -0.5*height*aspect, 0.5*height*aspect
-    height interval bounds are -0.5*height, 0.5*height
+	width interval bounds are -0.5*width*aspect/screen aspect, 0.5*width*aspect/screen aspect
+	simplified: width interval bounds are -0.5*height*aspect, 0.5*height*aspect
+	height interval bounds are -0.5*height, 0.5*height
 
  *
  ****************************************************************************/
-void    DeltaTween::SetAspect( value_t nAspect, const bool bZoom )
+void    DeltaTween::SetAspect(value_t nAspect, const bool bZoom)
 {
-    const value_t        nWidth  = (value_t)Width();
-    const value_t        nHeight = (value_t)Height();
+	const value_t        nWidth = (value_t)Width();
+	const value_t        nHeight = (value_t)Height();
 
-    // nAspect is a term with units   width/height
-    // so to compare screenwidth and screen height, you have to convert the units to match
-    // screenwidth/aspect == screenheight
+	// nAspect is a term with units   width/height
+	// so to compare screenwidth and screen height, you have to convert the units to match
+	// screenwidth/aspect == screenheight
 
 
-    if( nAspect == 0.0f )
-        nAspect = nWidth / nHeight;
+	if (nAspect == 0.0f)
+		nAspect = nWidth / nHeight;
 
-/*
-//    if( nAspect > nWidth / nHeight )   // Jared's way
-    if( nAspect <= nWidth / nHeight )  // Andy's way
-/**/
-                /* Jared's way            */   /*     Andy's way            */
-    if( bZoom ? (nAspect > nWidth / nHeight) : ( nAspect <= nWidth / nHeight )  )
-    {
-        m_nWidthFactor  = 0.5f * nHeight * nAspect;
-        m_nHeightFactor = 0.5f * nHeight;
-    }
-    else
-    {
-        m_nWidthFactor  = 0.5f * nWidth;
-        m_nHeightFactor = 0.5f * nWidth / nAspect;
-    }
+	/*
+	//    if( nAspect > nWidth / nHeight )   // Jared's way
+		if( nAspect <= nWidth / nHeight )  // Andy's way
+	/**/
+	/* Jared's way            */   /*     Andy's way            */
+	if (bZoom ? (nAspect > nWidth / nHeight) : (nAspect <= nWidth / nHeight))
+	{
+		m_nWidthFactor = 0.5f * nHeight * nAspect;
+		m_nHeightFactor = 0.5f * nHeight;
+	}
+	else
+	{
+		m_nWidthFactor = 0.5f * nWidth;
+		m_nHeightFactor = 0.5f * nWidth / nAspect;
+	}
 
-    m_nWidthFactorInverse  = 1.0f / m_nWidthFactor;
-    m_nHeightFactorInverse = 1.0f / m_nHeightFactor;
+	m_nWidthFactorInverse = 1.0f / m_nWidthFactor;
+	m_nHeightFactorInverse = 1.0f / m_nHeightFactor;
 }
 
 
@@ -120,38 +120,38 @@ void    DeltaTween::SetAspect( value_t nAspect, const bool bZoom )
  * ConvertToScreen - maps a physical ordinate to a screen ordinate (should modify to allow aspect)
  *
  ****************************************************************************/
-long    DeltaTween::ConvertToScreen( const value_t nPhysicalValue,
-                                     const long nHalfDimension,
-                                     const long nDimension,
-                                     const DWORD nBoundsType )
+long    DeltaTween::ConvertToScreen(const value_t nPhysicalValue,
+	const long nHalfDimension,
+	const long nDimension,
+	const DWORD nBoundsType)
 {
-    long    nReturnValue;
+	long    nReturnValue;
 
-    nReturnValue   =  (long)floor(nPhysicalValue); /* if I were to fmod and then add to make it positive, I would then floor it.  floor'ing now does the same thing */
-    nReturnValue  += nHalfDimension;
+	nReturnValue = (long)floor(nPhysicalValue); /* if I were to fmod and then add to make it positive, I would then floor it.  floor'ing now does the same thing */
+	nReturnValue += nHalfDimension;
 
-    switch( nBoundsType )
-    {
-    default:
-    case 0:    /* wrap */
+	switch (nBoundsType)
+	{
+	default:
+	case 0:    /* wrap */
 
-        nReturnValue %= nDimension;
-        while( nReturnValue < 0L )
-            nReturnValue += nDimension;
-        break;
+		nReturnValue %= nDimension;
+		while (nReturnValue < 0L)
+			nReturnValue += nDimension;
+		break;
 
-    case 1:    /* clip */
+	case 1:    /* clip */
 
-        if( nReturnValue < 0L )
-            nReturnValue = 0L;
-        else
-        if( nReturnValue > nDimension - 2L )
-            nReturnValue = nDimension - 2L;
+		if (nReturnValue < 0L)
+			nReturnValue = 0L;
+		else
+			if (nReturnValue > nDimension - 2L)
+				nReturnValue = nDimension - 2L;
 
-        break;
-    }
+		break;
+	}
 
-    return nReturnValue;
+	return nReturnValue;
 }
 
 
@@ -163,145 +163,145 @@ long    DeltaTween::ConvertToScreen( const value_t nPhysicalValue,
  * PrerenderFrames - calculates the frames between fields
  *
  ****************************************************************************/
-void DeltaTween::PrerenderFrames( const DWORD dwFrames,
-                                  void    **pFrames,
-                                  void    *pObject1,
-                                  void    *pObject2 )
+void DeltaTween::PrerenderFrames(const DWORD dwFrames,
+	void** pFrames,
+	void* pObject1,
+	void* pObject2)
 {
-//    static const long       lWidth  = Width();
-//    static const long       lHeight = Height();
-    static const long       nHalfWidth  = Width() >> 1;
-    static const long       nHalfHeight = Height() >> 1;
-    static const value_t    fHalfWidth  = (value_t)nHalfWidth - 0.5f;
-    static const value_t    fHalfHeight = (value_t)nHalfHeight - 0.5f;
-    const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
-    const bool bTween = (pObject2 != NULL) ? true : false;
-    PIXELMAP    **pPixelMap = (PIXELMAP**)pFrames;
-    DeltaField  *pDF1       = (DeltaField*)pObject1;
-    DeltaField  *pDF2       = (DeltaField*)pObject2;
-    value_t     logicalX;
-    value_t     logicalY;
-//    value_t     deltaX;
-//    value_t     deltaY;
-    value_t     deltaX1;
-    value_t     deltaY1;
-    value_t     deltaX2;
-    value_t     deltaY2;
-    value_t     fPercent;
-    long        destX;
-    long        destY;
-    long        displayX;
-    long        displayY;
+	//    static const long       lWidth  = Width();
+	//    static const long       lHeight = Height();
+	static const long       nHalfWidth = Width() >> 1;
+	static const long       nHalfHeight = Height() >> 1;
+	static const value_t    fHalfWidth = (value_t)nHalfWidth - 0.5f;
+	static const value_t    fHalfHeight = (value_t)nHalfHeight - 0.5f;
+	const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
+	const bool bTween = (pObject2 != NULL) ? true : false;
+	PIXELMAP** pPixelMap = (PIXELMAP**)pFrames;
+	DeltaField* pDF1 = (DeltaField*)pObject1;
+	DeltaField* pDF2 = (DeltaField*)pObject2;
+	value_t     logicalX;
+	value_t     logicalY;
+	//    value_t     deltaX;
+	//    value_t     deltaY;
+	value_t     deltaX1;
+	value_t     deltaY1;
+	value_t     deltaX2;
+	value_t     deltaY2;
+	value_t     fPercent;
+	long        destX;
+	long        destY;
+	long        displayX;
+	long        displayY;
 
-    DWORD       dwDestX;
-    DWORD       dwDestY;
-    DWORD       dwSourceOffset;
-    DWORD       dwDestOffset = 0;
-    DWORD       boundsType  = 0;
+	DWORD       dwDestX;
+	DWORD       dwDestY;
+	DWORD       dwSourceOffset;
+	DWORD       dwDestOffset = 0;
+	DWORD       boundsType = 0;
 
-    DWORD       currentFrame;
+	DWORD       currentFrame;
 
-    /*
-     * yadda yadda yadda... always check for NULL
-     */
-    if( pPixelMap == NULL || pDF1 == NULL )//|| pDF2 == NULL )
-        return;
+	/*
+	 * yadda yadda yadda... always check for NULL
+	 */
+	if (pPixelMap == NULL || pDF1 == NULL)//|| pDF2 == NULL )
+		return;
 
 
 
-/*  BLEH!  now I *need* to use the frame loop on the outside!
-    if( bTween )
-    {
-        value_t nAspect1 = pDF1->GetAspect();
-        value_t nAspect2 = pDF2->GetAspect();
+	/*  BLEH!  now I *need* to use the frame loop on the outside!
+		if( bTween )
+		{
+			value_t nAspect1 = pDF1->GetAspect();
+			value_t nAspect2 = pDF2->GetAspect();
 
-        if( nAspect1 == 0.0f )
-            nAspect1 = Width() / (value_t)Height();
-        if( nAspect2 == 0.0f )
-            nAspect2 = Width() / (value_t)Height();
+			if( nAspect1 == 0.0f )
+				nAspect1 = Width() / (value_t)Height();
+			if( nAspect2 == 0.0f )
+				nAspect2 = Width() / (value_t)Height();
 
-        SetAspect( nAspect1 * (1.0f - nPercent) + nAspect2 * nPercent );
+			SetAspect( nAspect1 * (1.0f - nPercent) + nAspect2 * nPercent );
 
-    }
-    else/**/
-        SetAspect( pDF1->GetAspect(), pDF1->GetZoom() );
+		}
+		else/**/
+	SetAspect(pDF1->GetAspect(), pDF1->GetZoom());
 
-    /*
-     * logicalY loops across  1.0 to -1.0
-     */
-    for( destY = nHalfHeight,   dwDestY = Height();
-                                dwDestY != 0;
-         destY--,               dwDestY--
-        )
-    {
-             /*
-              * subtract 0.5 to calculate from center of pixel
-              */
-//        logicalY = (destY - 0.5f) / m_nHeightFactor;
-        logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
+	/*
+	 * logicalY loops across  1.0 to -1.0
+	 */
+	for (destY = nHalfHeight, dwDestY = Height();
+		dwDestY != 0;
+		destY--, dwDestY--
+		)
+	{
+		/*
+		 * subtract 0.5 to calculate from center of pixel
+		 */
+		 //        logicalY = (destY - 0.5f) / m_nHeightFactor;
+		logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
 
-        for(    destX = -nHalfWidth,    dwDestX = Width();
-                                        dwDestX != 0;
-                destX++,                dwDestX--
-            )
-        {
-//            logicalX = (destX + 0.5f) / m_nWidthFactor;
-            logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
+		for (destX = -nHalfWidth, dwDestX = Width();
+			dwDestX != 0;
+			destX++, dwDestX--
+			)
+		{
+			//            logicalX = (destX + 0.5f) / m_nWidthFactor;
+			logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
 
-            /*
-             * logical delta
-             */
-//            deltaX1 = pDF1->GetDeltaX( logicalX, logicalY );
-//            deltaY1 = pDF1->GetDeltaY( logicalX, logicalY );
-            pDF1->GetDeltaXY( logicalX, logicalY, &deltaX1, &deltaY1 );
+			/*
+			 * logical delta
+			 */
+			 //            deltaX1 = pDF1->GetDeltaX( logicalX, logicalY );
+			 //            deltaY1 = pDF1->GetDeltaY( logicalX, logicalY );
+			pDF1->GetDeltaXY(logicalX, logicalY, &deltaX1, &deltaY1);
 
-            if( bTween )
-            {
-//                deltaX2 = pDF2->GetDeltaX( logicalX, logicalY );
-//                deltaY2 = pDF2->GetDeltaY( logicalX, logicalY );
-                pDF2->GetDeltaXY( logicalX, logicalY, &deltaX2, &deltaY2 );
-            }
+			if (bTween)
+			{
+				//                deltaX2 = pDF2->GetDeltaX( logicalX, logicalY );
+				//                deltaY2 = pDF2->GetDeltaY( logicalX, logicalY );
+				pDF2->GetDeltaXY(logicalX, logicalY, &deltaX2, &deltaY2);
+			}
 
-            for( currentFrame = 0;  currentFrame < dwFrames;  currentFrame++ )
-            {
-                if( bTween )
-                {
-//                    fPercent = (currentFrame + 1.0f) / (dwFrames + 1.0f);
-                    fPercent = (currentFrame + 1.0f) * nNumFramesInverse;
+			for (currentFrame = 0; currentFrame < dwFrames; currentFrame++)
+			{
+				if (bTween)
+				{
+					//                    fPercent = (currentFrame + 1.0f) / (dwFrames + 1.0f);
+					fPercent = (currentFrame + 1.0f) * nNumFramesInverse;
 
-//                    deltaX = deltaX1 * (1.0f - fPercent) + deltaX2 * fPercent;
-//                    deltaY = deltaY1 * (1.0f - fPercent) + deltaY2 * fPercent;
-                    deltaX1 = deltaX1 + (deltaX2 - deltaX1) * fPercent;
-                    deltaY1 = deltaY1 + (deltaY2 - deltaY1) * fPercent;
-                }
-/*                else
-                {
-                    deltaX = deltaX1;
-                    deltaY = deltaY1;
-                }/**/
+					//                    deltaX = deltaX1 * (1.0f - fPercent) + deltaX2 * fPercent;
+					//                    deltaY = deltaY1 * (1.0f - fPercent) + deltaY2 * fPercent;
+					deltaX1 = deltaX1 + (deltaX2 - deltaX1) * fPercent;
+					deltaY1 = deltaY1 + (deltaY2 - deltaY1) * fPercent;
+				}
+				/*                else
+								{
+									deltaX = deltaX1;
+									deltaY = deltaY1;
+								}/**/
 
-                displayX = ConvertToScreen( destX + 0.5f + deltaX1 * m_nWidthFactor,
-                                            nHalfWidth, Width(), boundsType );
+				displayX = ConvertToScreen(destX + 0.5f + deltaX1 * m_nWidthFactor,
+					nHalfWidth, Width(), boundsType);
 
-                displayY = ConvertToScreen( 0.5f - destY - deltaY1 * m_nHeightFactor, /* invert y */
-                                            nHalfHeight, Height(), boundsType );
+				displayY = ConvertToScreen(0.5f - destY - deltaY1 * m_nHeightFactor, /* invert y */
+					nHalfHeight, Height(), boundsType);
 
-                /*
-                 * store the buffer offset
-                 */
-                dwSourceOffset            = displayY * Width() + displayX;
+				/*
+				 * store the buffer offset
+				 */
+				dwSourceOffset = displayY * Width() + displayX;
 
-                pPixelMap[currentFrame][dwDestOffset] = dwSourceOffset;
-            } /* for currentFrame */
+				pPixelMap[currentFrame][dwDestOffset] = dwSourceOffset;
+			} /* for currentFrame */
 
-            dwDestOffset++;
+			dwDestOffset++;
 
-        }  /* logicalX loop */
-Sleep(1);
-                /* sleep for 1 ms every other time */
+		}  /* logicalX loop */
+		Sleep(1);
+		/* sleep for 1 ms every other time */
 //        if( destY & 1L )
 //        Sleep(1); /* let the main thread have a few more cycles if this thread is hogging too many */
-    }  /* logicalY loop */
+	}  /* logicalY loop */
 
 }
 
@@ -317,153 +317,153 @@ Sleep(1);
   Should be just as fast (or almost) as other method
  */
 
-/****************************************************************************
- *
- * PrerenderFrames - calculates the frames between fields
- *
- ****************************************************************************/
-void DeltaTween::PrerenderFrames( const DWORD dwFrames,
-                                  void    **pFrames,
-                                  void    *pObject1,
-                                  void    *pObject2 )
+ /****************************************************************************
+  *
+  * PrerenderFrames - calculates the frames between fields
+  *
+  ****************************************************************************/
+void DeltaTween::PrerenderFrames(const DWORD dwFrames,
+	void** pFrames,
+	void* pObject1,
+	void* pObject2)
 {
-    static const long        nHalfWidth  = Width() >> 1;
-    static const long        nHalfHeight = Height() >> 1;
-    static const value_t    fHalfWidth  = (value_t)nHalfWidth - 0.5f;
-    static const value_t    fHalfHeight = (value_t)nHalfHeight - 0.5f;
-    const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
+	static const long        nHalfWidth = Width() >> 1;
+	static const long        nHalfHeight = Height() >> 1;
+	static const value_t    fHalfWidth = (value_t)nHalfWidth - 0.5f;
+	static const value_t    fHalfHeight = (value_t)nHalfHeight - 0.5f;
+	const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
 
-    PIXELMAP    **pPixelMap = (PIXELMAP**)pFrames;
-    DeltaField  *pDF1       = (DeltaField*)pObject1;
-    DeltaField  *pDF2       = (DeltaField*)pObject2;
-    value_t     nAspect1;
-    value_t     nAspect2;
-    value_t     logicalX;
-    value_t     logicalY;
-    value_t     deltaX;
-    value_t     deltaY;
-    value_t     deltaX1;
-    value_t     deltaY1;
-    value_t     deltaX2;
-    value_t     deltaY2;
-    value_t     fPercent;
-    long        destX;
-    long        destY;
-    long        displayX;
-    long        displayY;
+	PIXELMAP** pPixelMap = (PIXELMAP**)pFrames;
+	DeltaField* pDF1 = (DeltaField*)pObject1;
+	DeltaField* pDF2 = (DeltaField*)pObject2;
+	value_t     nAspect1;
+	value_t     nAspect2;
+	value_t     logicalX;
+	value_t     logicalY;
+	value_t     deltaX;
+	value_t     deltaY;
+	value_t     deltaX1;
+	value_t     deltaY1;
+	value_t     deltaX2;
+	value_t     deltaY2;
+	value_t     fPercent;
+	long        destX;
+	long        destY;
+	long        displayX;
+	long        displayY;
 
-    DWORD       nDestX;
-    DWORD       nDestY;
-    DWORD       nSourceOffset;
-    DWORD       nDestOffset = 0;
-    DWORD       boundsType  = 0;
+	DWORD       nDestX;
+	DWORD       nDestY;
+	DWORD       nSourceOffset;
+	DWORD       nDestOffset = 0;
+	DWORD       boundsType = 0;
 
-    DWORD       currentFrame;
+	DWORD       currentFrame;
 
-    const bool  bTween = (pObject2 != NULL) ? true : false;
+	const bool  bTween = (pObject2 != NULL) ? true : false;
 
-    /*
-     * yadda yadda yadda... always check for NULL
-     */
-    if( pPixelMap == NULL || pDF1 == NULL )//|| pDF2 == NULL )
-        return;
+	/*
+	 * yadda yadda yadda... always check for NULL
+	 */
+	if (pPixelMap == NULL || pDF1 == NULL)//|| pDF2 == NULL )
+		return;
 
-    nAspect1 = pDF1->GetAspect();
-    if( bTween )
-        nAspect2 = pDF2->GetAspect();
-    else
-        nAspect2 = 0.0f;
+	nAspect1 = pDF1->GetAspect();
+	if (bTween)
+		nAspect2 = pDF2->GetAspect();
+	else
+		nAspect2 = 0.0f;
 
-    if( nAspect1 == 0.0f )
-        nAspect1 = Width() / (value_t)Height();
-    if( nAspect2 == 0.0f )
-        nAspect2 = Width() / (value_t)Height();
-
-
-    SetAspect( nAspect1 );
+	if (nAspect1 == 0.0f)
+		nAspect1 = Width() / (value_t)Height();
+	if (nAspect2 == 0.0f)
+		nAspect2 = Width() / (value_t)Height();
 
 
-    for( currentFrame = 0;  currentFrame < dwFrames;  currentFrame++ )
-    {
-        if( bTween )
-        {
-            fPercent = (currentFrame + 1.0f) * nNumFramesInverse;
+	SetAspect(nAspect1);
 
-            if( nAspect1 != nAspect2 )
-            {
-                SetAspect( nAspect1 * (1.0f - fPercent) + nAspect2 * fPercent );
-            }
 
-//            fPercent = (currentFrame + 1.0f) / (dwFrames + 1.0f);
+	for (currentFrame = 0; currentFrame < dwFrames; currentFrame++)
+	{
+		if (bTween)
+		{
+			fPercent = (currentFrame + 1.0f) * nNumFramesInverse;
 
-        }
+			if (nAspect1 != nAspect2)
+			{
+				SetAspect(nAspect1 * (1.0f - fPercent) + nAspect2 * fPercent);
+			}
 
-        nDestOffset = 0;
+			//            fPercent = (currentFrame + 1.0f) / (dwFrames + 1.0f);
 
-        /*
-         * logicalY loops across  1.0 to -1.0
-         */
-        for( destY = nHalfHeight,    nDestY = Height();
-                                    nDestY != 0;
-             destY--,                nDestY--
-            )
-        {
-                 /*
-                  * subtract 0.5 to calculate from center of pixel
-                  */
-    //        logicalY = (destY - 0.5f) / m_nHeightFactor;
-            logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
+		}
 
-            for(    destX = -nHalfWidth,    nDestX = Width();
-                                            nDestX != 0;
-                    destX++,                nDestX--
-                )
-            {
-    //            logicalX = (destX + 0.5f) / m_nWidthFactor;
-                logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
+		nDestOffset = 0;
 
-                /*
-                 * logical delta
-                 */
-                deltaX1 = pDF1->GetDeltaX( logicalX, logicalY );
-                deltaY1 = pDF1->GetDeltaY( logicalX, logicalY );
+		/*
+		 * logicalY loops across  1.0 to -1.0
+		 */
+		for (destY = nHalfHeight, nDestY = Height();
+			nDestY != 0;
+			destY--, nDestY--
+			)
+		{
+			/*
+			 * subtract 0.5 to calculate from center of pixel
+			 */
+			 //        logicalY = (destY - 0.5f) / m_nHeightFactor;
+			logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
 
-                if( bTween )
-                {
-                    deltaX2 = pDF2->GetDeltaX( logicalX, logicalY );
-                    deltaY2 = pDF2->GetDeltaY( logicalX, logicalY );
-                }
+			for (destX = -nHalfWidth, nDestX = Width();
+				nDestX != 0;
+				destX++, nDestX--
+				)
+			{
+				//            logicalX = (destX + 0.5f) / m_nWidthFactor;
+				logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
 
-                if( bTween )
-                {
-                    deltaX = deltaX1 * (1.0f - fPercent) + deltaX2 * fPercent;
-                    deltaY = deltaY1 * (1.0f - fPercent) + deltaY2 * fPercent;
-                }
-                else
-                {
-                    deltaX = deltaX1;
-                    deltaY = deltaY1;
-                }
+				/*
+				 * logical delta
+				 */
+				deltaX1 = pDF1->GetDeltaX(logicalX, logicalY);
+				deltaY1 = pDF1->GetDeltaY(logicalX, logicalY);
 
-                displayX = ConvertToScreen( destX + 0.5f + deltaX * m_nWidthFactor,
-                                            nHalfWidth, Width(), boundsType );
+				if (bTween)
+				{
+					deltaX2 = pDF2->GetDeltaX(logicalX, logicalY);
+					deltaY2 = pDF2->GetDeltaY(logicalX, logicalY);
+				}
 
-                displayY = ConvertToScreen( 0.5f - destY - deltaY * m_nHeightFactor,
-                                            nHalfHeight, Height(), boundsType );
+				if (bTween)
+				{
+					deltaX = deltaX1 * (1.0f - fPercent) + deltaX2 * fPercent;
+					deltaY = deltaY1 * (1.0f - fPercent) + deltaY2 * fPercent;
+				}
+				else
+				{
+					deltaX = deltaX1;
+					deltaY = deltaY1;
+				}
 
-                /*
-                 * store the buffer offset
-                 */
-                nSourceOffset            = displayY * Width() + displayX;
+				displayX = ConvertToScreen(destX + 0.5f + deltaX * m_nWidthFactor,
+					nHalfWidth, Width(), boundsType);
 
-                pPixelMap[currentFrame][nDestOffset] = nSourceOffset;
+				displayY = ConvertToScreen(0.5f - destY - deltaY * m_nHeightFactor,
+					nHalfHeight, Height(), boundsType);
 
-                nDestOffset++;
+				/*
+				 * store the buffer offset
+				 */
+				nSourceOffset = displayY * Width() + displayX;
 
-            }  /* logicalX loop */
-        }  /* logicalY loop */
+				pPixelMap[currentFrame][nDestOffset] = nSourceOffset;
 
-     } /* frame loop */
+				nDestOffset++;
+
+			}  /* logicalX loop */
+		}  /* logicalY loop */
+
+	} /* frame loop */
 
 }
 
@@ -478,99 +478,99 @@ void DeltaTween::PrerenderFrames( const DWORD dwFrames,
  * ExperimentalPrerenderFrame - calculates the frames between fields
  *
  ****************************************************************************/
-void DeltaTween::ExperimentalPrerenderFrame( 
-                                  void    *pFrame,
-                                  void    *pObject1 )
+void DeltaTween::ExperimentalPrerenderFrame(
+	void* pFrame,
+	void* pObject1)
 {
-//    static const long       lWidth  = Width();
-//    static const long       lHeight = Height();
-    static const long       nHalfWidth  = Width() >> 1;
-    static const long       nHalfHeight = Height() >> 1;
-    PIXELMAP    *pPixelMap = (PIXELMAP*)pFrame;
-    DeltaField  *pDF1      = (DeltaField*)pObject1;
-    value_t     logicalX;
-    value_t     logicalY;
-//    value_t     deltaX;
-//    value_t     deltaY;
-    value_t     deltaX1;
-    value_t     deltaY1;
-    long        destX;
-    long        destY;
-    long        displayX;
-    long        displayY;
+	//    static const long       lWidth  = Width();
+	//    static const long       lHeight = Height();
+	static const long       nHalfWidth = Width() >> 1;
+	static const long       nHalfHeight = Height() >> 1;
+	PIXELMAP* pPixelMap = (PIXELMAP*)pFrame;
+	DeltaField* pDF1 = (DeltaField*)pObject1;
+	value_t     logicalX;
+	value_t     logicalY;
+	//    value_t     deltaX;
+	//    value_t     deltaY;
+	value_t     deltaX1;
+	value_t     deltaY1;
+	long        destX;
+	long        destY;
+	long        displayX;
+	long        displayY;
 
-    DWORD       dwDestX;
-    DWORD       dwDestY;
-    DWORD       dwSourceOffset;
-    DWORD       dwDestOffset = 0;
-    DWORD       boundsType   = 0;
+	DWORD       dwDestX;
+	DWORD       dwDestY;
+	DWORD       dwSourceOffset;
+	DWORD       dwDestOffset = 0;
+	DWORD       boundsType = 0;
 
-    /*
-     * yadda yadda yadda... always check for NULL
-     */
-    if( pPixelMap == NULL || pDF1 == NULL )//|| pDF2 == NULL )
-        return;
+	/*
+	 * yadda yadda yadda... always check for NULL
+	 */
+	if (pPixelMap == NULL || pDF1 == NULL)//|| pDF2 == NULL )
+		return;
 
-    boundsType = pDF1->GetEdgeWrap() ? 0 : 1;
-    boundsType = 1; // TODO: JRDV: I don't understand why I hard coded this
+	boundsType = pDF1->GetEdgeWrap() ? 0 : 1;
+	boundsType = 1; // TODO: JRDV: I don't understand why I hard coded this
 
-    m_bFramerateTooLow = false;
+	m_bFramerateTooLow = false;
 
-    SetAspect( pDF1->GetAspect(), pDF1->GetZoom() );
-//    SetAspect( pDF1->GetAspect(), true );
+	SetAspect(pDF1->GetAspect(), pDF1->GetZoom());
+	//    SetAspect( pDF1->GetAspect(), true );
 
-    /*
-     * logicalY loops across  1.0 to -1.0
-     */
-    for( destY = nHalfHeight,   dwDestY = Height();
-                                dwDestY != 0;
-         destY--,               dwDestY--
-        )
-    {
-             /*
-              * subtract 0.5 to calculate from center of pixel
-              */
-//        logicalY = (destY - 0.5f) / m_nHeightFactor;
-        logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
+		/*
+		 * logicalY loops across  1.0 to -1.0
+		 */
+	for (destY = nHalfHeight, dwDestY = Height();
+		dwDestY != 0;
+		destY--, dwDestY--
+		)
+	{
+		/*
+		 * subtract 0.5 to calculate from center of pixel
+		 */
+		 //        logicalY = (destY - 0.5f) / m_nHeightFactor;
+		logicalY = (destY - 0.5f) * m_nHeightFactorInverse;
 
-        for(    destX = -nHalfWidth,    dwDestX = Width();
-                                        dwDestX != 0;
-                destX++,                dwDestX--
-            )
-        {
-//            logicalX = (destX + 0.5f) / m_nWidthFactor;
-            logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
+		for (destX = -nHalfWidth, dwDestX = Width();
+			dwDestX != 0;
+			destX++, dwDestX--
+			)
+		{
+			//            logicalX = (destX + 0.5f) / m_nWidthFactor;
+			logicalX = (destX + 0.5f) * m_nWidthFactorInverse;
 
-            /*
-             * logical delta
-             */
-            pDF1->GetDeltaXY( logicalX, logicalY, &deltaX1, &deltaY1 );
+			/*
+			 * logical delta
+			 */
+			pDF1->GetDeltaXY(logicalX, logicalY, &deltaX1, &deltaY1);
 
-//            deltaX1 *= 0.5f;
-//            deltaY1 *= 0.5f;
+			//            deltaX1 *= 0.5f;
+			//            deltaY1 *= 0.5f;
 
-            displayX = ConvertToScreen( destX + 0.5f + deltaX1 * m_nWidthFactor,
-                                        nHalfWidth, Width(), boundsType );
+			displayX = ConvertToScreen(destX + 0.5f + deltaX1 * m_nWidthFactor,
+				nHalfWidth, Width(), boundsType);
 
-            displayY = ConvertToScreen( 0.5f - destY - deltaY1 * m_nHeightFactor, /* invert y */
-                                        nHalfHeight, Height(), boundsType );
+			displayY = ConvertToScreen(0.5f - destY - deltaY1 * m_nHeightFactor, /* invert y */
+				nHalfHeight, Height(), boundsType);
 
-            /*
-             * store the buffer offset
-             */
-            dwSourceOffset          = displayY * Width() + displayX;
+			/*
+			 * store the buffer offset
+			 */
+			dwSourceOffset = displayY * Width() + displayX;
 
-            pPixelMap[dwDestOffset] = dwSourceOffset;
+			pPixelMap[dwDestOffset] = dwSourceOffset;
 
-            dwDestOffset++;
+			dwDestOffset++;
 
-        }  /* logicalX loop */
-        if( m_bFramerateTooLow )
-            Sleep(3);
-                /* sleep for 1 ms every other time */
+		}  /* logicalX loop */
+		if (m_bFramerateTooLow)
+			Sleep(3);
+		/* sleep for 1 ms every other time */
 //        if( destY & 1L )
 //        Sleep(1); /* let the main thread have a few more cycles if this thread is hogging too many */
-    }  /* logicalY loop */
+	}  /* logicalY loop */
 
 }
 
@@ -584,72 +584,72 @@ void DeltaTween::ExperimentalPrerenderFrame(
  * ONLY called with no NULL pointers
  *
  ****************************************************************************/
-void DeltaTween::ExperimentalPrerenderFrames( const DWORD dwFrames,
-                                  void    **pFrames,
-                                  void    *pFirstFrame,
-                                  void    *pLastFrame )
+void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
+	void** pFrames,
+	void* pFirstFrame,
+	void* pLastFrame)
 {
-//    const long       lWidth  = Width();
-//    const long       lHeight = Height();
-    const DWORD       dwLength = (DWORD)(Width() * Height());
-    const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
-    PIXELMAP    **ppPixelMap = (PIXELMAP**)pFrames;
-    PIXELMAP    *pPixelMap1 = (PIXELMAP*)pFirstFrame;
-    PIXELMAP    *pPixelMap2 = (PIXELMAP*)pLastFrame;
+	//    const long       lWidth  = Width();
+	//    const long       lHeight = Height();
+	const DWORD       dwLength = (DWORD)(Width() * Height());
+	const value_t    nNumFramesInverse = 1.0f / (dwFrames + 1);
+	PIXELMAP** ppPixelMap = (PIXELMAP**)pFrames;
+	PIXELMAP* pPixelMap1 = (PIXELMAP*)pFirstFrame;
+	PIXELMAP* pPixelMap2 = (PIXELMAP*)pLastFrame;
 
-    DWORD       dwSourceOffset;
-    DWORD       dwDestOffset;
+	DWORD       dwSourceOffset;
+	DWORD       dwDestOffset;
 
-    DWORD       dwCurrentFrame;
+	DWORD       dwCurrentFrame;
 
-    /*
-     * yadda yadda yadda... always check for NULL
-     */
-    if( ppPixelMap == NULL || pPixelMap1 == NULL || pPixelMap2 == NULL )
-        return;
-
-
-
-    /*
-     * logicalY loops across  1.0 to -1.0
-     */
-    for( dwDestOffset = 0;  dwDestOffset < dwLength; dwDestOffset++ )
-    {
-        const long lSource1 = (long)pPixelMap1[dwDestOffset];
-        const long lSource2 = (long)pPixelMap2[dwDestOffset];
-        const long lDeltaX1  = lSource1 % Width();
-        const long lDeltaY1  = lSource1 - lDeltaX1;
-        const long lDeltaX2  = lSource2 % Width();
-        const long lDeltaY2  = lSource2 - lDeltaX2;/**/
-/*        const long lDeltaY1  = lSource1 / Width();
-        const long lDeltaX1  = lSource1 - lDeltaY1;
-        const long lDeltaY2  = lSource2 / Width();
-        const long lDeltaX2  = lSource2 - lDeltaY2;/**/
-        const value_t deltaX1  = (value_t)lDeltaX1;
-        const value_t deltaY1  = (value_t)lDeltaY1;
-        const value_t deltaX2  = (value_t)lDeltaX2;
-        const value_t deltaY2  = (value_t)lDeltaY2;
+	/*
+	 * yadda yadda yadda... always check for NULL
+	 */
+	if (ppPixelMap == NULL || pPixelMap1 == NULL || pPixelMap2 == NULL)
+		return;
 
 
-        for( dwCurrentFrame = 0;  dwCurrentFrame < dwFrames;  dwCurrentFrame++ )
-        {
-            const value_t fPercent = (dwCurrentFrame + 1.0f) * nNumFramesInverse;
-            const value_t deltaX = deltaX1 + (deltaX2 - deltaX1) * fPercent;
-            const value_t deltaY = deltaY1 + (deltaY2 - deltaY1) * fPercent;
 
-            const long displayX = (long)deltaX;
-//            const long displayY = deltaY - deltaY % Width();
-            const long displayY = ((long)deltaY) / Width();
+	/*
+	 * logicalY loops across  1.0 to -1.0
+	 */
+	for (dwDestOffset = 0; dwDestOffset < dwLength; dwDestOffset++)
+	{
+		const long lSource1 = (long)pPixelMap1[dwDestOffset];
+		const long lSource2 = (long)pPixelMap2[dwDestOffset];
+		const long lDeltaX1 = lSource1 % Width();
+		const long lDeltaY1 = lSource1 - lDeltaX1;
+		const long lDeltaX2 = lSource2 % Width();
+		const long lDeltaY2 = lSource2 - lDeltaX2;/**/
+		/*        const long lDeltaY1  = lSource1 / Width();
+				const long lDeltaX1  = lSource1 - lDeltaY1;
+				const long lDeltaY2  = lSource2 / Width();
+				const long lDeltaX2  = lSource2 - lDeltaY2;/**/
+		const value_t deltaX1 = (value_t)lDeltaX1;
+		const value_t deltaY1 = (value_t)lDeltaY1;
+		const value_t deltaX2 = (value_t)lDeltaX2;
+		const value_t deltaY2 = (value_t)lDeltaY2;
 
 
-            /*
-             * store the buffer offset
-             */
-            dwSourceOffset            = displayY * Width() + displayX;
+		for (dwCurrentFrame = 0; dwCurrentFrame < dwFrames; dwCurrentFrame++)
+		{
+			const value_t fPercent = (dwCurrentFrame + 1.0f) * nNumFramesInverse;
+			const value_t deltaX = deltaX1 + (deltaX2 - deltaX1) * fPercent;
+			const value_t deltaY = deltaY1 + (deltaY2 - deltaY1) * fPercent;
 
-            ppPixelMap[dwCurrentFrame][dwDestOffset] = dwSourceOffset;
-        } /* for currentFrame */
-    }
+			const long displayX = (long)deltaX;
+			//            const long displayY = deltaY - deltaY % Width();
+			const long displayY = ((long)deltaY) / Width();
+
+
+			/*
+			 * store the buffer offset
+			 */
+			dwSourceOffset = displayY * Width() + displayX;
+
+			ppPixelMap[dwCurrentFrame][dwDestOffset] = dwSourceOffset;
+		} /* for currentFrame */
+	}
 
 }
 
@@ -664,61 +664,61 @@ void DeltaTween::ExperimentalPrerenderFrames( const DWORD dwFrames,
  * ONLY called with no NULL pointers
  *
  ****************************************************************************/
-void DeltaTween::ExperimentalPrerenderFrames( const DWORD dwFrames,
-                                  void    **pFrames,
-                                  void    *pFirstFrame,
-                                  void    *pLastFrame )
+void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
+	void** pFrames,
+	void* pFirstFrame,
+	void* pLastFrame)
 {
-    const DWORD     dwLength = (DWORD)(Width() * Height());
-    const value_t   nPercentDifference = 1.0f / (dwFrames + 1UL);
-    value_t         nTweenPercent = 0.0f;
-    PIXELMAP        **ppPixelMap  = (PIXELMAP**)pFrames;
-    PIXELMAP        *pPixelMap1   = (PIXELMAP*)pFirstFrame;
-    PIXELMAP        *pPixelMap2   = (PIXELMAP*)pLastFrame;
-//    long        *pPixelMap1   = (long*)pFirstFrame;
-//    long        *pPixelMap2   = (long*)pLastFrame;
+	const DWORD     dwLength = (DWORD)(Width() * Height());
+	const value_t   nPercentDifference = 1.0f / (dwFrames + 1UL);
+	value_t         nTweenPercent = 0.0f;
+	PIXELMAP** ppPixelMap = (PIXELMAP**)pFrames;
+	PIXELMAP* pPixelMap1 = (PIXELMAP*)pFirstFrame;
+	PIXELMAP* pPixelMap2 = (PIXELMAP*)pLastFrame;
+	//    long        *pPixelMap1   = (long*)pFirstFrame;
+	//    long        *pPixelMap2   = (long*)pLastFrame;
 
-    DWORD           dwSourceOffset;
-    DWORD           dwDestOffset;
+	DWORD           dwSourceOffset;
+	DWORD           dwDestOffset;
 
-    DWORD           dwCurrentFrame;
+	DWORD           dwCurrentFrame;
 
-    /*
-     * yadda yadda yadda... always check for NULL
-     */
-    if( ppPixelMap == NULL || pPixelMap1 == NULL || pPixelMap2 == NULL )
-        return;
-
-
-
-    /*
-     * logicalY loops across  1.0 to -1.0
-     */
-    for( dwCurrentFrame = 0;  dwCurrentFrame < dwFrames;  dwCurrentFrame++ )
-    {
-        nTweenPercent += nPercentDifference;
-
-        for( dwDestOffset = 0;  dwDestOffset < dwLength; dwDestOffset++ )
-        {
-            const long lSource1 = pPixelMap1[dwDestOffset];
-            const long lSource2 = pPixelMap2[dwDestOffset];
-            const long lDeltaX1 = lSource1 % Width();
-            const long lDeltaY1 = lSource1 - lDeltaX1;
-            const long lDeltaX2 = lSource2 % Width();
-            const long lDeltaY2 = lSource2 - lDeltaX2;
-            const long displayX = lDeltaX1 + (long)((lDeltaX2 - lDeltaX1) * nTweenPercent);
-            const long deltaY   = lDeltaY1 + (long)((lDeltaY2 - lDeltaY1) * nTweenPercent);
+	/*
+	 * yadda yadda yadda... always check for NULL
+	 */
+	if (ppPixelMap == NULL || pPixelMap1 == NULL || pPixelMap2 == NULL)
+		return;
 
 
-            /*
-             * store the buffer offset
-             */
-//            dwSourceOffset            = displayY * Width() + displayX;
-            dwSourceOffset            = deltaY - (deltaY % Width()) + displayX;
 
-            ppPixelMap[dwCurrentFrame][dwDestOffset] = dwSourceOffset;
-        } /* for currentFrame */
-    }
+	/*
+	 * logicalY loops across  1.0 to -1.0
+	 */
+	for (dwCurrentFrame = 0; dwCurrentFrame < dwFrames; dwCurrentFrame++)
+	{
+		nTweenPercent += nPercentDifference;
+
+		for (dwDestOffset = 0; dwDestOffset < dwLength; dwDestOffset++)
+		{
+			const long lSource1 = pPixelMap1[dwDestOffset];
+			const long lSource2 = pPixelMap2[dwDestOffset];
+			const long lDeltaX1 = lSource1 % Width();
+			const long lDeltaY1 = lSource1 - lDeltaX1;
+			const long lDeltaX2 = lSource2 % Width();
+			const long lDeltaY2 = lSource2 - lDeltaX2;
+			const long displayX = lDeltaX1 + (long)((lDeltaX2 - lDeltaX1) * nTweenPercent);
+			const long deltaY = lDeltaY1 + (long)((lDeltaY2 - lDeltaY1) * nTweenPercent);
+
+
+			/*
+			 * store the buffer offset
+			 */
+			 //            dwSourceOffset            = displayY * Width() + displayX;
+			dwSourceOffset = deltaY - (deltaY % Width()) + displayX;
+
+			ppPixelMap[dwCurrentFrame][dwDestOffset] = dwSourceOffset;
+		} /* for currentFrame */
+	}
 
 }
 

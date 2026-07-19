@@ -20,24 +20,24 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * MetaConfig - abstract class for managing configs
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * MetaConfig - abstract class for managing configs
+  *
+  ****************************************************************************/
 
 #include "MetaConfig.h"
 
 
-/****************************************************************************
- *
- * MetaConfig - constructor
- *
- ****************************************************************************/
+  /****************************************************************************
+   *
+   * MetaConfig - constructor
+   *
+   ****************************************************************************/
 MetaConfig::MetaConfig()
 {
-    m_pConfigs    = NULL;
-    m_nUpdateTime = 0.0f;
+	m_pConfigs = NULL;
+	m_nUpdateTime = 0.0f;
 }
 
 
@@ -48,7 +48,7 @@ MetaConfig::MetaConfig()
  ****************************************************************************/
 MetaConfig::~MetaConfig()
 {
-//    SAFE_DELETE_ARRAY( m_pConfigs );
+	//    SAFE_DELETE_ARRAY( m_pConfigs );
 }
 
 
@@ -59,22 +59,22 @@ MetaConfig::~MetaConfig()
  *
  ****************************************************************************/
 error_t    MetaConfig::Initialize(
-                            MyDictionary<char*> *pConfigs,
-                            const DWORD dwNumConfigs,
-                            MyDictionary<char*> *inMainConfig,
-                            MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals )
+	MyDictionary<char*>* pConfigs,
+	const DWORD dwNumConfigs,
+	MyDictionary<char*>* inMainConfig,
+	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 
-    if( pConfigs == NULL || dwNumConfigs == 0 )
-        return ERR_NULL;
-    
-    m_pConfigs     = pConfigs;
-    m_dwNumConfigs = dwNumConfigs;
+	if (pConfigs == NULL || dwNumConfigs == 0)
+		return ERR_NULL;
 
-    m_fsRecentList.RestrictSize( m_dwNumConfigs / 2 );
+	m_pConfigs = pConfigs;
+	m_dwNumConfigs = dwNumConfigs;
+
+	m_fsRecentList.RestrictSize(m_dwNumConfigs / 2);
 
 
-    return InitializeDerived( inMainConfig, inGlobals );
+	return InitializeDerived(inMainConfig, inGlobals);
 }
 
 
@@ -85,98 +85,98 @@ error_t    MetaConfig::Initialize(
  * DisplayString
  *
  ****************************************************************************/
-error_t    MetaConfig::DisplayString( const int position, const char *strName, const char *string, WindowDevice *pWindowDevice )
+error_t    MetaConfig::DisplayString(const int position, const char* strName, const char* string, WindowDevice* pWindowDevice)
 {
-    char strPrintString[256];
-    int x;
-    int y;
+	char strPrintString[256];
+	int x;
+	int y;
 
-    if( strName != NULL && string != NULL && pWindowDevice != NULL )
-    {
-        strcpy( strPrintString, strName );
-        if( strlen(strName) > 0 )
-            strcat( strPrintString, " : " );
-        strcat( strPrintString, string );
+	if (strName != NULL && string != NULL && pWindowDevice != NULL)
+	{
+		strcpy(strPrintString, strName);
+		if (strlen(strName) > 0)
+			strcat(strPrintString, " : ");
+		strcat(strPrintString, string);
 
-        while( strlen(strPrintString) < 200 )
-            strcat( strPrintString, " " );
+		while (strlen(strPrintString) < 200)
+			strcat(strPrintString, " ");
 
-        switch(position)
-        {
-        case 0:  /* deltafield */
-            x = 60;
-            y = 0;
-            break;
-        case 1:  /* waveshape */
-            x = 0;
-            y = 20;
-            break;
-        case 2: /* particle */
-            x = 0;
-            y = 40;
-            break;
-        case 3: /* nothing */
-            x = -1;
-            y = 0;
-            break;
-        case 4: /* palette */
-            x = -1;
-            y = 20;
-            break;
-        case 5: /* palette */
-            x = -1;
-            y = 40;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 40;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 60;
-            break;/**/
-        case 8:  /* deltafield */
-            x = 0;
-            y = -60;
-            break;
-        case 9:  /* waveshape */
-            x = 0;
-            y = -40;
-            break;
-        case 10: /* particle */
-            x = 0;
-            y = -20;
-            break;
-        case 11: /* palette */
-            x = -1;
-            y = -60;
-            break;
-        case 12: /* palette */
-            x = -1;
-            y = -40;
-            break;
-        case 13: /* palette */
-            x = -1;
-            y = -20;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 460;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 460;
-            break;/**/
-        default:
-            x = 0;
-            y = 0;
-            break;
-        }
+		switch (position)
+		{
+		case 0:  /* deltafield */
+			x = 60;
+			y = 0;
+			break;
+		case 1:  /* waveshape */
+			x = 0;
+			y = 20;
+			break;
+		case 2: /* particle */
+			x = 0;
+			y = 40;
+			break;
+		case 3: /* nothing */
+			x = -1;
+			y = 0;
+			break;
+		case 4: /* palette */
+			x = -1;
+			y = 20;
+			break;
+		case 5: /* palette */
+			x = -1;
+			y = 40;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 40;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 60;
+						break;/**/
+		case 8:  /* deltafield */
+			x = 0;
+			y = -60;
+			break;
+		case 9:  /* waveshape */
+			x = 0;
+			y = -40;
+			break;
+		case 10: /* particle */
+			x = 0;
+			y = -20;
+			break;
+		case 11: /* palette */
+			x = -1;
+			y = -60;
+			break;
+		case 12: /* palette */
+			x = -1;
+			y = -40;
+			break;
+		case 13: /* palette */
+			x = -1;
+			y = -20;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 460;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 460;
+						break;/**/
+		default:
+			x = 0;
+			y = 0;
+			break;
+		}
 
-        return pWindowDevice->Print( x, y, strPrintString );
-    }
-    else
-        return ERR_NULL;
+		return pWindowDevice->Print(x, y, strPrintString);
+	}
+	else
+		return ERR_NULL;
 }
 
 #else
@@ -187,98 +187,98 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
  * DisplayString
  *
  ****************************************************************************/
-error_t    MetaConfig::DisplayString( const int position, const char *strName, const char *string, WindowDevice *pWindowDevice )
+error_t    MetaConfig::DisplayString(const int position, const char* strName, const char* string, WindowDevice* pWindowDevice)
 {
-    char strPrintString[256];
-    int x;
-    int y;
+	char strPrintString[256];
+	int x;
+	int y;
 
-    if( strName != NULL && string != NULL && pWindowDevice != NULL )
-    {
-        strcpy( strPrintString, strName );
-        if( strlen(strName) > 0 )
-            strcat( strPrintString, " : " );
-        strcat( strPrintString, string );
+	if (strName != NULL && string != NULL && pWindowDevice != NULL)
+	{
+		strcpy(strPrintString, strName);
+		if (strlen(strName) > 0)
+			strcat(strPrintString, " : ");
+		strcat(strPrintString, string);
 
-        while( strlen(strPrintString) < 200 )
-            strcat( strPrintString, " " );
+		while (strlen(strPrintString) < 200)
+			strcat(strPrintString, " ");
 
-        switch(position)
-        {
-        case 0:  /* deltafield */
-            x = 60;
-            y = 0;
-            break;
-        case 1:  /* waveshape */
-            x = 0;
-            y = 17;
-            break;
-        case 2: /* particle */
-            x = 0;
-            y = 34;
-            break;
-        case 3: /* nothing */
-            x = 350;
-            y = 0;
-            break;
-        case 4: /* palette */
-            x = 320;
-            y = 17;
-            break;
-        case 5: /* palette */
-            x = 320;
-            y = 34;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 40;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 60;
-            break;/**/
-        case 8:  /* deltafield */
-            x = 0;
-            y = 430;
-            break;
-        case 9:  /* waveshape */
-            x = 0;
-            y = 447;
-            break;
-        case 10: /* particle */
-            x = 0;
-            y = 464;
-            break;
-        case 11: /* palette */
-            x = 320;
-            y = 430;
-            break;
-        case 12: /* palette */
-            x = 320;
-            y = 447;
-            break;
-        case 13: /* palette */
-            x = 320;
-            y = 464;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 460;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 460;
-            break;/**/
-        default:
-            x = 0;
-            y = 0;
-            break;
-        }
+		switch (position)
+		{
+		case 0:  /* deltafield */
+			x = 60;
+			y = 0;
+			break;
+		case 1:  /* waveshape */
+			x = 0;
+			y = 17;
+			break;
+		case 2: /* particle */
+			x = 0;
+			y = 34;
+			break;
+		case 3: /* nothing */
+			x = 350;
+			y = 0;
+			break;
+		case 4: /* palette */
+			x = 320;
+			y = 17;
+			break;
+		case 5: /* palette */
+			x = 320;
+			y = 34;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 40;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 60;
+						break;/**/
+		case 8:  /* deltafield */
+			x = 0;
+			y = 430;
+			break;
+		case 9:  /* waveshape */
+			x = 0;
+			y = 447;
+			break;
+		case 10: /* particle */
+			x = 0;
+			y = 464;
+			break;
+		case 11: /* palette */
+			x = 320;
+			y = 430;
+			break;
+		case 12: /* palette */
+			x = 320;
+			y = 447;
+			break;
+		case 13: /* palette */
+			x = 320;
+			y = 464;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 460;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 460;
+						break;/**/
+		default:
+			x = 0;
+			y = 0;
+			break;
+		}
 
-        return pWindowDevice->Print( x, y, strPrintString );
-    }
-    else
-        return ERR_NULL;
+		return pWindowDevice->Print(x, y, strPrintString);
+	}
+	else
+		return ERR_NULL;
 }
 
 #else
@@ -288,98 +288,98 @@ error_t    MetaConfig::DisplayString( const int position, const char *strName, c
  * DisplayString
  *
  ****************************************************************************/
-error_t    MetaConfig::DisplayString( const int position, const char *strName, const char *string, WindowDevice *pWindowDevice )
+error_t    MetaConfig::DisplayString(const int position, const char* strName, const char* string, WindowDevice* pWindowDevice)
 {
-    char strPrintString[256];
-    int x;
-    int y;
+	char strPrintString[256];
+	int x;
+	int y;
 
-    if( strName != NULL && string != NULL && pWindowDevice != NULL )
-    {
-        strcpy( strPrintString, strName );
-        if( strlen(strName) > 0 )
-            strcat( strPrintString, " : " );
-        strcat( strPrintString, string );
+	if (strName != NULL && string != NULL && pWindowDevice != NULL)
+	{
+		strcpy(strPrintString, strName);
+		if (strlen(strName) > 0)
+			strcat(strPrintString, " : ");
+		strcat(strPrintString, string);
 
-        while( strlen(strPrintString) < 200 )
-            strcat( strPrintString, " " );
+		while (strlen(strPrintString) < 200)
+			strcat(strPrintString, " ");
 
-        switch(position)
-        {
-        case 0:  /* deltafield */
-            x = 60;
-            y = 0;
-            break;
-        case 1:  /* waveshape */
-            x = 0;
-            y = 17;
-            break;
-        case 2: /* particle */
-            x = 0;
-            y = 34;
-            break;
-        case 3: /* nothing */
-            x = -1; // 350
-            y = 0;
-            break;
-        case 4: /* palette */
-            x = -1; // 320
-            y = 17;
-            break;
-        case 5: /* palette */
-            x = -1;
-            y = 34;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 40;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 60;
-            break;/**/
-        case 8:  /* deltafield */
-            x = 0;
-            y = -50;
-            break;
-        case 9:  /* waveshape */
-            x = 0;
-            y = -33;
-            break;
-        case 10: /* particle */
-            x = 0;
-            y = -16;
-            break;
-        case 11: /* palette */
-            x = -1;
-            y = -50;
-            break;
-        case 12: /* palette */
-            x = -1;
-            y = -33;
-            break;
-        case 13: /* palette */
-            x = -1;
-            y = -16;
-            break;
-/*        case 6: // unused
-            x = 320;
-            y = 460;
-            break;
-        case 7: // unused
-            x = 320;
-            y = 460;
-            break;/**/
-        default:
-            x = 0;
-            y = 0;
-            break;
-        }
+		switch (position)
+		{
+		case 0:  /* deltafield */
+			x = 60;
+			y = 0;
+			break;
+		case 1:  /* waveshape */
+			x = 0;
+			y = 17;
+			break;
+		case 2: /* particle */
+			x = 0;
+			y = 34;
+			break;
+		case 3: /* nothing */
+			x = -1; // 350
+			y = 0;
+			break;
+		case 4: /* palette */
+			x = -1; // 320
+			y = 17;
+			break;
+		case 5: /* palette */
+			x = -1;
+			y = 34;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 40;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 60;
+						break;/**/
+		case 8:  /* deltafield */
+			x = 0;
+			y = -50;
+			break;
+		case 9:  /* waveshape */
+			x = 0;
+			y = -33;
+			break;
+		case 10: /* particle */
+			x = 0;
+			y = -16;
+			break;
+		case 11: /* palette */
+			x = -1;
+			y = -50;
+			break;
+		case 12: /* palette */
+			x = -1;
+			y = -33;
+			break;
+		case 13: /* palette */
+			x = -1;
+			y = -16;
+			break;
+			/*        case 6: // unused
+						x = 320;
+						y = 460;
+						break;
+					case 7: // unused
+						x = 320;
+						y = 460;
+						break;/**/
+		default:
+			x = 0;
+			y = 0;
+			break;
+		}
 
-        return pWindowDevice->Print( x, y, strPrintString );
-    }
-    else
-        return ERR_NULL;
+		return pWindowDevice->Print(x, y, strPrintString);
+	}
+	else
+		return ERR_NULL;
 }
 
 #endif

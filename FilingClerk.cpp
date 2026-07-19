@@ -20,32 +20,32 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * FilingClerk - handles all file access
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * FilingClerk - handles all file access
+  *
+  ****************************************************************************/
 
 #include "FilingClerk.h"
 #include <ctype.h>
 
-/****************************************************************************
- *
- * FilingClerk - constructor
- *
- ****************************************************************************/
+  /****************************************************************************
+   *
+   * FilingClerk - constructor
+   *
+   ****************************************************************************/
 FilingClerk::FilingClerk()
 {
-    m_pFile         = NULL;
-    m_strFolder     = NULL;
-    m_strFile       = NULL;
-    m_strRoot       = NULL;
+	m_pFile = NULL;
+	m_strFolder = NULL;
+	m_strFile = NULL;
+	m_strRoot = NULL;
 
-    m_pTokenBuffer  = NULL;
-    m_nBufferLength = 0;
-    m_nUsedLength   = 0;
+	m_pTokenBuffer = NULL;
+	m_nBufferLength = 0;
+	m_nUsedLength = 0;
 
-    m_hFindHandle   = 0;
+	m_hFindHandle = 0;
 }
 
 
@@ -56,10 +56,10 @@ FilingClerk::FilingClerk()
  ****************************************************************************/
 FilingClerk::~FilingClerk()
 {
-    SAFE_FREE( m_strRoot );
-    SAFE_FREE( m_strFile );
-    SAFE_FREE( m_strFolder );
-    SAFE_FREE( m_pTokenBuffer );
+	SAFE_FREE(m_strRoot);
+	SAFE_FREE(m_strFile);
+	SAFE_FREE(m_strFolder);
+	SAFE_FREE(m_pTokenBuffer);
 }
 
 
@@ -76,17 +76,17 @@ FilingClerk::~FilingClerk()
 
 
 
-/****************************************************************************
- *
- * SetRoot - root directory
- *
- ****************************************************************************/
-error_t    FilingClerk::SetRoot( char *strRoot )
+ /****************************************************************************
+  *
+  * SetRoot - root directory
+  *
+  ****************************************************************************/
+error_t    FilingClerk::SetRoot(char* strRoot)
 {
-    SAFE_FREE(m_strRoot);
-    m_strRoot = strdup(strRoot);
+	SAFE_FREE(m_strRoot);
+	m_strRoot = strdup(strRoot);
 
-    return (m_strRoot != NULL) ? SUCCESS : ERR_MALLOC;
+	return (m_strRoot != NULL) ? SUCCESS : ERR_MALLOC;
 }
 
 /****************************************************************************
@@ -94,48 +94,48 @@ error_t    FilingClerk::SetRoot( char *strRoot )
  * SetFolder - current filing folder to search
  *
  ****************************************************************************/
-error_t    FilingClerk::SetFolder( char *strFolder )
+error_t    FilingClerk::SetFolder(char* strFolder)
 {
-    SAFE_FREE(m_strFolder);
-    m_strFolder = strdup(strFolder);
+	SAFE_FREE(m_strFolder);
+	m_strFolder = strdup(strFolder);
 
-    return (m_strFolder != NULL) ? SUCCESS : ERR_MALLOC;
+	return (m_strFolder != NULL) ? SUCCESS : ERR_MALLOC;
 }
 
 
 
 /****************************************************************************
  *
- * OpenFile - 
+ * OpenFile -
  *
  ****************************************************************************/
-error_t FilingClerk::OpenFile( const char *strFileName, const char *strAccess )
+error_t FilingClerk::OpenFile(const char* strFileName, const char* strAccess)
 {
-    CloseFile(); /* make sure it's not already open */
+	CloseFile(); /* make sure it's not already open */
 
-    /*
-     * open the file for reading
-     */
-    if( (m_pFile = fopen(strFileName, strAccess)) == NULL )
-        return FAILURE;  //ERR_FILE
+	/*
+	 * open the file for reading
+	 */
+	if ((m_pFile = fopen(strFileName, strAccess)) == NULL)
+		return FAILURE;  //ERR_FILE
 
-    return SUCCESS;
+	return SUCCESS;
 }
 
 
 /****************************************************************************
  *
- * CloseFile - 
+ * CloseFile -
  *
  ****************************************************************************/
-error_t    FilingClerk::CloseFile( void )
+error_t    FilingClerk::CloseFile(void)
 {
-    if( m_pFile != NULL )
-    {
-        fclose( m_pFile );
-        m_pFile = NULL;
-    }
-    return SUCCESS;
+	if (m_pFile != NULL)
+	{
+		fclose(m_pFile);
+		m_pFile = NULL;
+	}
+	return SUCCESS;
 }
 
 
@@ -144,34 +144,34 @@ error_t    FilingClerk::CloseFile( void )
  * GetChar - returns the next character in the stream
  *
  ****************************************************************************/
-int FilingClerk::GetChar( void )
+int FilingClerk::GetChar(void)
 {
-    int c;
-    char *lpTempString;
+	int c;
+	char* lpTempString;
 
-    if( m_nUsedLength >= m_nBufferLength - 2 )
-    {
-        m_nBufferLength *= 2;
+	if (m_nUsedLength >= m_nBufferLength - 2)
+	{
+		m_nBufferLength *= 2;
 
-        /*
-         * if an error occurs while resizing the string,
-         * pretend we just found the end of the file...
-         * yeah, that's it... the end of the file...
-         */
-        if( (lpTempString = (char*)realloc( m_pTokenBuffer,
-                        m_nBufferLength * sizeof(*m_pTokenBuffer) )) == NULL )
-            return EOF;
+		/*
+		 * if an error occurs while resizing the string,
+		 * pretend we just found the end of the file...
+		 * yeah, that's it... the end of the file...
+		 */
+		if ((lpTempString = (char*)realloc(m_pTokenBuffer,
+			m_nBufferLength * sizeof(*m_pTokenBuffer))) == NULL)
+			return EOF;
 
-        m_pTokenBuffer = lpTempString;
-    }
+		m_pTokenBuffer = lpTempString;
+	}
 
-    if( (c = getc( m_pFile )) != EOF )
-    {
-        m_pTokenBuffer[ m_nUsedLength++ ] = c;
-         m_pTokenBuffer[ m_nUsedLength ] = '\0';
-    }
+	if ((c = getc(m_pFile)) != EOF)
+	{
+		m_pTokenBuffer[m_nUsedLength++] = c;
+		m_pTokenBuffer[m_nUsedLength] = '\0';
+	}
 
-    return c;
+	return c;
 }
 
 
@@ -181,16 +181,16 @@ int FilingClerk::GetChar( void )
  * UnGetChar - puts a character back in the stream
  *
  ****************************************************************************/
-int FilingClerk::UnGetChar( int c )
+int FilingClerk::UnGetChar(int c)
 {
-    if( m_nUsedLength > 0 )
-    {
-        m_nUsedLength--;
+	if (m_nUsedLength > 0)
+	{
+		m_nUsedLength--;
 
-        m_pTokenBuffer[ m_nUsedLength ] = '\0';
-    }
+		m_pTokenBuffer[m_nUsedLength] = '\0';
+	}
 
-    return ungetc( c, m_pFile );
+	return ungetc(c, m_pFile);
 }
 
 
@@ -199,15 +199,15 @@ int FilingClerk::UnGetChar( int c )
  * GetChar - read in the next character from the file
  *
  ****************************************************************************/
-int FilingClerk::PeekChar( void )
+int FilingClerk::PeekChar(void)
 {
-    int c;
+	int c;
 
-    c = getc( m_pFile );
+	c = getc(m_pFile);
 
-    ungetc( c, m_pFile );
+	ungetc(c, m_pFile);
 
-    return c;
+	return c;
 }
 
 
@@ -217,21 +217,21 @@ int FilingClerk::PeekChar( void )
  * ClearBuffer - reset the token buffer so we can search for another token
  *
  ****************************************************************************/
-error_t    FilingClerk::ClearBuffer( void )
+error_t    FilingClerk::ClearBuffer(void)
 {
-    if( m_pTokenBuffer == NULL )
-    {
-        m_nBufferLength = 32;
+	if (m_pTokenBuffer == NULL)
+	{
+		m_nBufferLength = 32;
 
-        if( (m_pTokenBuffer = (char*)malloc(
-                    m_nBufferLength * sizeof(*m_pTokenBuffer) ) ) == NULL )
-        return ERR_MALLOC;
-    }
+		if ((m_pTokenBuffer = (char*)malloc(
+			m_nBufferLength * sizeof(*m_pTokenBuffer))) == NULL)
+			return ERR_MALLOC;
+	}
 
-    m_nUsedLength = 0;
-    m_pTokenBuffer[0] = '\0';
+	m_nUsedLength = 0;
+	m_pTokenBuffer[0] = '\0';
 
-    return SUCCESS;
+	return SUCCESS;
 }
 
 
@@ -241,9 +241,9 @@ error_t    FilingClerk::ClearBuffer( void )
  * TokenBuffer - return the internal buffer used to collect characters
  *
  ****************************************************************************/
-char    *FilingClerk::TokenBuffer( void )
+char* FilingClerk::TokenBuffer(void)
 {
-    return m_pTokenBuffer;
+	return m_pTokenBuffer;
 }
 
 
@@ -251,81 +251,81 @@ char    *FilingClerk::TokenBuffer( void )
 
 /****************************************************************************
  *
- * GetFirstFile - 
+ * GetFirstFile -
  *
  ****************************************************************************/
-char    *FilingClerk::GetFirstFile( const char *strFileMask )
+char* FilingClerk::GetFirstFile(const char* strFileMask)
 {
-//    char strFile[260];
-    char strFile[_MAX_PATH];
+	//    char strFile[260];
+	char strFile[_MAX_PATH];
 
-    strcpy( strFile, m_strRoot );
-    strcat( strFile, "\\" );
-    strcat( strFile, m_strFolder );
-    strcat( strFile, "\\" );
-    strcat( strFile, strFileMask );
+	strcpy(strFile, m_strRoot);
+	strcat(strFile, "\\");
+	strcat(strFile, m_strFolder);
+	strcat(strFile, "\\");
+	strcat(strFile, strFileMask);
 
-    /*
-     * close any previous unclosed searches
-     */
-    if( m_hFindHandle != 0 )
-        EndSearch();
+	/*
+	 * close any previous unclosed searches
+	 */
+	if (m_hFindHandle != 0)
+		EndSearch();
 
-    /*
-     * find the first file
-     */
-//    if( (m_hFindHandle = _findfirst( strFile, &m_wFindData )) != 0 )
-    if( (m_hFindHandle = _findfirst( strFile, &m_wFindData )) != -1 )
-    {
-        if( ! (m_wFindData.attrib & _A_SUBDIR)
-            && ! (m_wFindData.attrib & _A_HIDDEN) )
-            return m_wFindData.name;
-        else
-            return GetNextFile();
-    }
-    else
-    {
+	/*
+	 * find the first file
+	 */
+	 //    if( (m_hFindHandle = _findfirst( strFile, &m_wFindData )) != 0 )
+	if ((m_hFindHandle = _findfirst(strFile, &m_wFindData)) != -1)
+	{
+		if (!(m_wFindData.attrib & _A_SUBDIR)
+			&& !(m_wFindData.attrib & _A_HIDDEN))
+			return m_wFindData.name;
+		else
+			return GetNextFile();
+	}
+	else
+	{
 #if EXTREME_DEBUGGING
-        DumpToFile( "error.txt",
-            "ERROR: couldn't find any files matching the search string.\n\t");
-        DumpToFile( "error.txt", strFile, "\n" );
+		DumpToFile("error.txt",
+			"ERROR: couldn't find any files matching the search string.\n\t");
+		DumpToFile("error.txt", strFile, "\n");
 #endif
-        return EndSearch();
-    }
+		return EndSearch();
+	}
 }
 
 
 /****************************************************************************
  *
- * GetNextFile - 
+ * GetNextFile -
  *
  ****************************************************************************/
-char    *FilingClerk::GetNextFile( void )
+char* FilingClerk::GetNextFile(void)
 {
-    /*
-     * if a search has been started, find the next one
-     */
-    if( m_hFindHandle != 0 )
-    {
-        /*
-         * if more files are found, return its name
-         */
-        if( _findnext( m_hFindHandle, &m_wFindData ) == 0 )
-        {
-            /*
-             * if the found file is not a directory, return its name
-             */
-            if( ! (m_wFindData.attrib & _A_SUBDIR)
-                && ! (m_wFindData.attrib & _A_HIDDEN) )
-                return m_wFindData.name;
-            else
-                return GetNextFile();  /* else return the next file */
-        }
-        else
-            return EndSearch();
-    }
+	/*
+	 * if a search has been started, find the next one
+	 */
+	if (m_hFindHandle != 0)
+	{
+		/*
+		 * if more files are found, return its name
+		 */
+		if (_findnext(m_hFindHandle, &m_wFindData) == 0)
+		{
+			/*
+			 * if the found file is not a directory, return its name
+			 */
+			if (!(m_wFindData.attrib & _A_SUBDIR)
+				&& !(m_wFindData.attrib & _A_HIDDEN))
+				return m_wFindData.name;
+			else
+				return GetNextFile();  /* else return the next file */
+		}
+		else
+			return EndSearch();
+	}
 
-    return EndSearch();
+	return EndSearch();
 }
 
 
@@ -336,265 +336,267 @@ char    *FilingClerk::GetNextFile( void )
  *      but it's ok to call it, if it makes you feel better.
  *
  ****************************************************************************/
-char    *FilingClerk::EndSearch( void )
+char* FilingClerk::EndSearch(void)
 {
-    /*
-     * close the find handle
-     */
-    if( m_hFindHandle != 0 )
-        _findclose( m_hFindHandle );
+	/*
+	 * close the find handle
+	 */
+	if (m_hFindHandle != 0)
+		_findclose(m_hFindHandle);
 
-    /*
-     * mark the find handle as closed
-     */
-    m_hFindHandle = 0;
-    return NULL;
+	/*
+	 * mark the find handle as closed
+	 */
+	m_hFindHandle = 0;
+	return NULL;
 }
 
 
-                                 
+
 /****************************************************************************
  *
  * GetToken - return the type of the next token matched on the input stream
  *
  ****************************************************************************/
-token_t    FilingClerk::GetToken( void )
+token_t    FilingClerk::GetToken(void)
 {
-    int    c;
-    int delimiter;
-    enum { inDefault,
-           inMultiCharacter,
-           inSTRING,
-           inLineCOMMENT,
-           inCOMMENT,
-           inDELIMITED } state = inDefault;
+	int    c;
+	int delimiter;
+	enum {
+		inDefault,
+		inMultiCharacter,
+		inSTRING,
+		inLineCOMMENT,
+		inCOMMENT,
+		inDELIMITED
+	} state = inDefault;
 
 
-    /*
-     * start a new token buffer
-     */
-    ClearBuffer();
-    
-    /*
-     *
-     */
-    while( (c = GetChar()) != EOF )
-    {
-        switch( state )
-        {
-        default:
-        case inDefault: /*****************
-                         * BEGIN inDefault
-                         *****************/
+	/*
+	 * start a new token buffer
+	 */
+	ClearBuffer();
 
-            switch( c )
-            {
-//            case ' ':
-//            case 1:
-//            case '\n':
-//            case '\r':
-//            case '\t':
-//                m_nUsedLength--; /* ignore whitespace */
-//                break;
+	/*
+	 *
+	 */
+	while ((c = GetChar()) != EOF)
+	{
+		switch (state)
+		{
+		default:
+		case inDefault: /*****************
+						 * BEGIN inDefault
+						 *****************/
 
-            case '=':
-                return '=';
+			switch (c)
+			{
+				//            case ' ':
+				//            case 1:
+				//            case '\n':
+				//            case '\r':
+				//            case '\t':
+				//                m_nUsedLength--; /* ignore whitespace */
+				//                break;
 
-            case ',':
-                return ',';
+			case '=':
+				return '=';
 
-            case '[':
-                state = inDELIMITED;
-                delimiter = ']';
-                break;
+			case ',':
+				return ',';
 
-
-            case '\"':
-                state = inSTRING;
-                break;
-
-            case '/':
-                if( PeekChar() == '*' )
-                    state = inCOMMENT;
-                else
-                if( PeekChar() == '/' )
-                    state = inLineCOMMENT;
-                else
-                    state = inMultiCharacter;
-                break;
-
-            case ';':
-                state = inLineCOMMENT;
-                break;
-
-            default:
-//                if( strchr(",=", c) != NULL )
-//                    return c;
-//                else
-                /*
-                 * Space is after all control characters, and before all
-                 * other typed characters.
-                 */
-                if( c != ' ' && ! iscntrl( c ) && c != 0x7f )//'\127' )
-                    state = inMultiCharacter;
-                else
-                    m_nUsedLength--; /* ignore whitespace */
-
-                break;
-            }
-
-            break;      /******************
-                         * END of inDefault
-                         ******************/
+			case '[':
+				state = inDELIMITED;
+				delimiter = ']';
+				break;
 
 
-        case inCOMMENT: /*****************
-                         * BEGIN inCOMMENT
-                         *****************/
+			case '\"':
+				state = inSTRING;
+				break;
 
-            switch( c )
-            {
-            case '*':
-                if( PeekChar() == '/' )
-                {
-                    GetChar();
+			case '/':
+				if (PeekChar() == '*')
+					state = inCOMMENT;
+				else
+					if (PeekChar() == '/')
+						state = inLineCOMMENT;
+					else
+						state = inMultiCharacter;
+				break;
 
-                    return tokCOMMENT;
-                }
+			case ';':
+				state = inLineCOMMENT;
+				break;
 
-                break;
-            default:
-                break;
-            }
+			default:
+				//                if( strchr(",=", c) != NULL )
+				//                    return c;
+				//                else
+								/*
+								 * Space is after all control characters, and before all
+								 * other typed characters.
+								 */
+				if (c != ' ' && !iscntrl(c) && c != 0x7f)//'\127' )
+					state = inMultiCharacter;
+				else
+					m_nUsedLength--; /* ignore whitespace */
 
-            break;      /******************
-                         * END of inCOMMENT
-                         ******************/
+				break;
+			}
 
-        case inLineCOMMENT:
-                        /*********************
-                         * BEGIN inLineCOMMENT
-                         *********************/
-
-            switch( c )
-            {
-            case '\n': /* linefeed */
-            case '\r': /* carriage return */
-                    return tokCOMMENT;
-
-            default:
-                break;
-            }
-
-            break;      /**********************
-                         * END of inLineCOMMENT
-                         **********************/
+			break;      /******************
+						 * END of inDefault
+						 ******************/
 
 
-        case inSTRING:  /****************
-                         * BEGIN inSTRING
-                         ****************/
+		case inCOMMENT: /*****************
+						 * BEGIN inCOMMENT
+						 *****************/
 
-            switch( c )
-            {
-            case '\"':
-                return tokSTRING;
-                break;
+			switch (c)
+			{
+			case '*':
+				if (PeekChar() == '/')
+				{
+					GetChar();
 
-            case '\\':
-                m_nUsedLength--; /* backup one */
+					return tokCOMMENT;
+				}
 
-//                switch( c = GetChar() )
-//                {
-//                case '\"':
-//                    break;
-//                }
+				break;
+			default:
+				break;
+			}
 
-                break;
-            default:
-                break;
-            } /* inSTRING switch ( c ) */
+			break;      /******************
+						 * END of inCOMMENT
+						 ******************/
 
+		case inLineCOMMENT:
+			/*********************
+			 * BEGIN inLineCOMMENT
+			 *********************/
 
-            break;      /*****************
-                         * END of inString
-                         *****************/
+			switch (c)
+			{
+			case '\n': /* linefeed */
+			case '\r': /* carriage return */
+				return tokCOMMENT;
 
+			default:
+				break;
+			}
 
-        case inDELIMITED:/*******************
-                          * BEGIN inDELIMITED
-                          *******************/
-
-            if( c == delimiter )
-                return tokHEADER;
-
-            break;      /********************
-                         * END of inDELIMITED
-                         ********************/
-
-
-        case inMultiCharacter:
-                        /************************
-                         * BEGIN inMultiCharacter
-                         ************************/
-
-            switch( c )
-            {
-            case ' ':
-            case '\t':
-            case '\n': /* linefeed */
-            case '\r': /* carriage return */
-                m_pTokenBuffer[ --m_nUsedLength ] = '\0';
-                return tokID;
-//                return tokSTRING;
-
-            case '=':
-            case ',':
-            case '\"':
-            case '/':
-
-                UnGetChar( c );        /* unget... yadda */
-
-                return tokID;
-
-            } /* inMultiCharacter switch ( c ) */
+			break;      /**********************
+						 * END of inLineCOMMENT
+						 **********************/
 
 
-            break;      /*************************
-                         * END of inMultiCharacter
-                         *************************/
+		case inSTRING:  /****************
+						 * BEGIN inSTRING
+						 ****************/
 
-        } /* switch ( state ) */
+			switch (c)
+			{
+			case '\"':
+				return tokSTRING;
+				break;
 
-        /********************************
-         *
-         * the "END of inXXXX"
-         * BREAK statements jump to here
-         *
-         ********************************/
+			case '\\':
+				m_nUsedLength--; /* backup one */
 
-    } /* while ( GetChar != EOF ) */
+				//                switch( c = GetChar() )
+				//                {
+				//                case '\"':
+				//                    break;
+				//                }
 
-    /*
-     * handle the case where a token ends right at EOF
-     */
-    if( strlen(TokenBuffer()) > 1 )
-    {
-        UnGetChar( c );
+				break;
+			default:
+				break;
+			} /* inSTRING switch ( c ) */
 
-        switch( state )
-        {
-            case inSTRING:
-                return tokSTRING;
-            case inCOMMENT:
-            case inLineCOMMENT:
-                return tokCOMMENT;
-            default:
-                return tokID;
-        }
-    }
 
-    return tokEND;
+			break;      /*****************
+						 * END of inString
+						 *****************/
+
+
+		case inDELIMITED:/*******************
+						  * BEGIN inDELIMITED
+						  *******************/
+
+			if (c == delimiter)
+				return tokHEADER;
+
+			break;      /********************
+						 * END of inDELIMITED
+						 ********************/
+
+
+		case inMultiCharacter:
+			/************************
+			 * BEGIN inMultiCharacter
+			 ************************/
+
+			switch (c)
+			{
+			case ' ':
+			case '\t':
+			case '\n': /* linefeed */
+			case '\r': /* carriage return */
+				m_pTokenBuffer[--m_nUsedLength] = '\0';
+				return tokID;
+				//                return tokSTRING;
+
+			case '=':
+			case ',':
+			case '\"':
+			case '/':
+
+				UnGetChar(c);        /* unget... yadda */
+
+				return tokID;
+
+			} /* inMultiCharacter switch ( c ) */
+
+
+			break;      /*************************
+						 * END of inMultiCharacter
+						 *************************/
+
+		} /* switch ( state ) */
+
+		/********************************
+		 *
+		 * the "END of inXXXX"
+		 * BREAK statements jump to here
+		 *
+		 ********************************/
+
+	} /* while ( GetChar != EOF ) */
+
+	/*
+	 * handle the case where a token ends right at EOF
+	 */
+	if (strlen(TokenBuffer()) > 1)
+	{
+		UnGetChar(c);
+
+		switch (state)
+		{
+		case inSTRING:
+			return tokSTRING;
+		case inCOMMENT:
+		case inLineCOMMENT:
+			return tokCOMMENT;
+		default:
+			return tokID;
+		}
+	}
+
+	return tokEND;
 
 }  /* END - GetToken() */
 
@@ -611,140 +613,140 @@ token_t    FilingClerk::GetToken( void )
  *        particle or whatnot
  *
  ****************************************************************************/
-error_t FilingClerk::LoadConfig( MyDictionary<char*> **ppConfig,
-                                 DWORD *inoutNumAllocated )
+error_t FilingClerk::LoadConfig(MyDictionary<char*>** ppConfig,
+	DWORD* inoutNumAllocated)
 {
-    error_t             err         = SUCCESS;
-    char                *strFile    = NULL;
-    DWORD               nConfig     = 0;
-    DWORD               nNumConfig  = 0;
-    MyDictionary<char*>   *pTmpConfig = NULL;
+	error_t             err = SUCCESS;
+	char* strFile = NULL;
+	DWORD               nConfig = 0;
+	DWORD               nNumConfig = 0;
+	MyDictionary<char*>* pTmpConfig = NULL;
 
 
-    if( ppConfig == NULL || inoutNumAllocated == NULL )
-        return ERR_NULL;
+	if (ppConfig == NULL || inoutNumAllocated == NULL)
+		return ERR_NULL;
 
-    nNumConfig = 0;
-    strFile = GetFirstFile("*.*");
+	nNumConfig = 0;
+	strFile = GetFirstFile("*.*");
 
-    /*
-     * count the number of files
-     */
-    while( strFile != NULL )
-    {
-        if( ! EndsIn(strFile, ".zip") )
-            nNumConfig++;
-        strFile = GetNextFile();
-    }
+	/*
+	 * count the number of files
+	 */
+	while (strFile != NULL)
+	{
+		if (!EndsIn(strFile, ".zip"))
+			nNumConfig++;
+		strFile = GetNextFile();
+	}
 
-    if( nNumConfig > 0 )
-    {
-        nNumConfig = nNumConfig + *inoutNumAllocated;
-        /*
-         * allocate space for nConfig Dictionaries
-         */
-        pTmpConfig = new MyDictionary<char*> [nNumConfig];
-        if( pTmpConfig == NULL )
-            return ERR_MALLOC;
-
-
-        /*
-         * now find all the files over again
-         */
-
-        strFile = GetFirstFile("*.*");
-
-        nConfig = *inoutNumAllocated;
-
-        /*
-         * loop through the files again, but in case the number of files
-         * changed (for whatever reason), use the extra check
-         */
-        while( (strFile != NULL) && (nConfig < nNumConfig) )
-        {
-            if( ! EndsIn(strFile, ".zip") )
-            {
-                err = GetData( strFile, &pTmpConfig[nConfig] );
-
-/*
-#if EXTREME_DEBUGGING
-#define DICT_DUMP_FILE "configdump.txt"
-				DumpToFile(DICT_DUMP_FILE, "\n-----------------------\nNAME: ");
-				DumpToFile(DICT_DUMP_FILE, strFile, "\n");
-				pTmpConfig[nConfig].DebugDumpContents(DICT_DUMP_FILE);
-#endif
-*/
-
-                if( err == SUCCESS )
-                    err = pTmpConfig[nConfig].SetValue(
-                                            "NAME", strdup(strFile) );
-
-                if( err == SUCCESS )
-                    nConfig++;
-                else
-                    pTmpConfig[nConfig].WipeContents();
-            }
+	if (nNumConfig > 0)
+	{
+		nNumConfig = nNumConfig + *inoutNumAllocated;
+		/*
+		 * allocate space for nConfig Dictionaries
+		 */
+		pTmpConfig = new MyDictionary<char*>[nNumConfig];
+		if (pTmpConfig == NULL)
+			return ERR_MALLOC;
 
 
-            strFile = GetNextFile();
-        }
+		/*
+		 * now find all the files over again
+		 */
+
+		strFile = GetFirstFile("*.*");
+
+		nConfig = *inoutNumAllocated;
+
+		/*
+		 * loop through the files again, but in case the number of files
+		 * changed (for whatever reason), use the extra check
+		 */
+		while ((strFile != NULL) && (nConfig < nNumConfig))
+		{
+			if (!EndsIn(strFile, ".zip"))
+			{
+				err = GetData(strFile, &pTmpConfig[nConfig]);
+
+				/*
+				#if EXTREME_DEBUGGING
+				#define DICT_DUMP_FILE "configdump.txt"
+								DumpToFile(DICT_DUMP_FILE, "\n-----------------------\nNAME: ");
+								DumpToFile(DICT_DUMP_FILE, strFile, "\n");
+								pTmpConfig[nConfig].DebugDumpContents(DICT_DUMP_FILE);
+				#endif
+				*/
+
+				if (err == SUCCESS)
+					err = pTmpConfig[nConfig].SetValue(
+						"NAME", strdup(strFile));
+
+				if (err == SUCCESS)
+					nConfig++;
+				else
+					pTmpConfig[nConfig].WipeContents();
+			}
+
+
+			strFile = GetNextFile();
+		}
 #ifdef UNDEFINED
-    }
+	}
 
-    nNumConfig = nConfig;
+	nNumConfig = nConfig;
 
-    for( nConfig = 0; nConfig < *inoutNumAllocated; nConfig++ )
-    {
-        err = pTmpConfig[nConfig].Import( (*ppConfig)[nConfig] );
-        if( err != SUCCESS )
-            break;
-    }
+	for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
+	{
+		err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
+		if (err != SUCCESS)
+			break;
+	}
 
 
-    if( err == SUCCESS )
-    {
-        if( *inoutNumAllocated > 0 )
-            delete[] *ppConfig;
+	if (err == SUCCESS)
+	{
+		if (*inoutNumAllocated > 0)
+			delete[] * ppConfig;
 
-        *inoutNumAllocated = nNumConfig;
-        *ppConfig = pTmpConfig;
+		*inoutNumAllocated = nNumConfig;
+		*ppConfig = pTmpConfig;
 
-        return SUCCESS;
-    }
-    else
-    {
-        delete[] pTmpConfig;
-        return err;
-    }
+		return SUCCESS;
+	}
+	else
+	{
+		delete[] pTmpConfig;
+		return err;
+	}
 #else
-        nNumConfig = nConfig;
+		nNumConfig = nConfig;
 
-        for( nConfig = 0; nConfig < *inoutNumAllocated; nConfig++ )
-        {
-            err = pTmpConfig[nConfig].Import( (*ppConfig)[nConfig] );
-            if( err != SUCCESS )
-                break;
-        }
+		for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
+		{
+			err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
+			if (err != SUCCESS)
+				break;
+		}
 
 
-        if( err == SUCCESS )
-        {
-            if( *inoutNumAllocated > 0 )
-                delete[] *ppConfig;
+		if (err == SUCCESS)
+		{
+			if (*inoutNumAllocated > 0)
+				delete[] * ppConfig;
 
-            *inoutNumAllocated = nNumConfig;
-            *ppConfig = pTmpConfig;
+			*inoutNumAllocated = nNumConfig;
+			*ppConfig = pTmpConfig;
 
-            return SUCCESS;
-        }
-        else
-        {
-            delete[] pTmpConfig;
-            return err;
-        }
-    }
+			return SUCCESS;
+		}
+		else
+		{
+			delete[] pTmpConfig;
+			return err;
+		}
+	}
 #endif
-    return err;
+	return err;
 }
 
 
@@ -754,140 +756,140 @@ error_t FilingClerk::LoadConfig( MyDictionary<char*> **ppConfig,
  *        requirements for palettes, color maps, or whatever you call them.
  *
  ****************************************************************************/
-error_t FilingClerk::LoadColorMaps( MyDictionary<char*> **ppConfig,
-                                    DWORD *inoutNumAllocated )
+error_t FilingClerk::LoadColorMaps(MyDictionary<char*>** ppConfig,
+	DWORD* inoutNumAllocated)
 {
-    error_t             err         = SUCCESS;
-    char                *strFile    = NULL;
-    DWORD               nConfig     = 0;
-    DWORD               nNumConfig  = 0;
-    MyDictionary<char *>  *pTmpConfig = NULL;
-//    DWORD    i;
+	error_t             err = SUCCESS;
+	char* strFile = NULL;
+	DWORD               nConfig = 0;
+	DWORD               nNumConfig = 0;
+	MyDictionary<char*>* pTmpConfig = NULL;
+	//    DWORD    i;
 
-    if( ppConfig == NULL || inoutNumAllocated == NULL )
-        return ERR_NULL;
-
-
-    nNumConfig = 0;
-    strFile = GetFirstFile("*.*");
-
-    /*
-     * count the number of files
-     */
-    while( strFile != NULL )
-    {
-        if( ! EndsIn(strFile, ".zip") )
-            nNumConfig++;
-        strFile = GetNextFile();
-    }
-
-    if( nNumConfig > 0 )
-    {
-        nNumConfig = nNumConfig + *inoutNumAllocated;
-        /*
-         * allocate space for nConfig Dictionaries
-         */
-        pTmpConfig = new MyDictionary<char*> [nNumConfig];
-        if( pTmpConfig == NULL )
-            return 0;
-
-        /*
-         * now find all the files over again
-         */
-
-        strFile = GetFirstFile("*.*");
-
-        nConfig = *inoutNumAllocated;
-
-        /*
-         * loop through the files again, but in case the number of files
-         * changed (for whatever reason), use the extra check
-         */
-        while( (strFile != NULL) && (nConfig < nNumConfig) )
-        {
-            if( ! EndsIn( strFile, ".zip" ) )
-            {
-                if( EndsIn(strFile, ".map") )
-                {
-                    err = GetColorMap(strFile, &pTmpConfig[nConfig] );
-                }
-                else
-                    err = GetData( strFile, &pTmpConfig[nConfig] );
+	if (ppConfig == NULL || inoutNumAllocated == NULL)
+		return ERR_NULL;
 
 
-                if( err == SUCCESS )
-                    err = pTmpConfig[nConfig].SetValue(
-                                        "NAME", strdup(strFile) );
+	nNumConfig = 0;
+	strFile = GetFirstFile("*.*");
 
-                if( err == SUCCESS )
-                    nConfig++;
-                else
-                    pTmpConfig[nConfig].WipeContents();
-            }
+	/*
+	 * count the number of files
+	 */
+	while (strFile != NULL)
+	{
+		if (!EndsIn(strFile, ".zip"))
+			nNumConfig++;
+		strFile = GetNextFile();
+	}
 
-            strFile = GetNextFile();
-        }
+	if (nNumConfig > 0)
+	{
+		nNumConfig = nNumConfig + *inoutNumAllocated;
+		/*
+		 * allocate space for nConfig Dictionaries
+		 */
+		pTmpConfig = new MyDictionary<char*>[nNumConfig];
+		if (pTmpConfig == NULL)
+			return 0;
+
+		/*
+		 * now find all the files over again
+		 */
+
+		strFile = GetFirstFile("*.*");
+
+		nConfig = *inoutNumAllocated;
+
+		/*
+		 * loop through the files again, but in case the number of files
+		 * changed (for whatever reason), use the extra check
+		 */
+		while ((strFile != NULL) && (nConfig < nNumConfig))
+		{
+			if (!EndsIn(strFile, ".zip"))
+			{
+				if (EndsIn(strFile, ".map"))
+				{
+					err = GetColorMap(strFile, &pTmpConfig[nConfig]);
+				}
+				else
+					err = GetData(strFile, &pTmpConfig[nConfig]);
+
+
+				if (err == SUCCESS)
+					err = pTmpConfig[nConfig].SetValue(
+						"NAME", strdup(strFile));
+
+				if (err == SUCCESS)
+					nConfig++;
+				else
+					pTmpConfig[nConfig].WipeContents();
+			}
+
+			strFile = GetNextFile();
+		}
 #ifdef UNDEFINED
-    }
+	}
 
-    nNumConfig = nConfig;
-
-
-        
-    for( nConfig = 0; nConfig < *inoutNumAllocated; nConfig++ )
-    {
-        err = pTmpConfig[nConfig].Import( (*ppConfig)[nConfig] );
-        if( err != SUCCESS )
-            break;
-    }
+	nNumConfig = nConfig;
 
 
-    if( err == SUCCESS )
-    {
-        if( *inoutNumAllocated > 0 )
-            delete[] *ppConfig;
 
-        *inoutNumAllocated = nNumConfig;
-        *ppConfig = pTmpConfig;
+	for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
+	{
+		err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
+		if (err != SUCCESS)
+			break;
+	}
 
-        return SUCCESS;
-    }
-    else
-    {
-        delete[] pTmpConfig;
-        return err;
-    }
+
+	if (err == SUCCESS)
+	{
+		if (*inoutNumAllocated > 0)
+			delete[] * ppConfig;
+
+		*inoutNumAllocated = nNumConfig;
+		*ppConfig = pTmpConfig;
+
+		return SUCCESS;
+	}
+	else
+	{
+		delete[] pTmpConfig;
+		return err;
+	}
 #else
-        nNumConfig = nConfig;
+		nNumConfig = nConfig;
 
 
-        
-        for( nConfig = 0; nConfig < *inoutNumAllocated; nConfig++ )
-        {
-            err = pTmpConfig[nConfig].Import( (*ppConfig)[nConfig] );
-            if( err != SUCCESS )
-                break;
-        }
+
+		for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
+		{
+			err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
+			if (err != SUCCESS)
+				break;
+		}
 
 
-        if( err == SUCCESS )
-        {
-            if( *inoutNumAllocated > 0 )
-                delete[] *ppConfig;
+		if (err == SUCCESS)
+		{
+			if (*inoutNumAllocated > 0)
+				delete[] * ppConfig;
 
-            *inoutNumAllocated = nNumConfig;
-            *ppConfig = pTmpConfig;
+			*inoutNumAllocated = nNumConfig;
+			*ppConfig = pTmpConfig;
 
-            return SUCCESS;
-        }
-        else
-        {
-            delete[] pTmpConfig;
-            return err;
-        }
-    }
+			return SUCCESS;
+		}
+		else
+		{
+			delete[] pTmpConfig;
+			return err;
+		}
+	}
 #endif
-    return err;
+	return err;
 }
 
 
@@ -897,159 +899,159 @@ error_t FilingClerk::LoadColorMaps( MyDictionary<char*> **ppConfig,
  *            file is just a list of numbers, sets of three, for the RGB parts
  *
  ****************************************************************************/
-error_t FilingClerk::GetColorMap( char *id, MyDictionary<char*> *outMyDictionary )
+error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 {
-    char    strID[8];
-    error_t    err;
-    int        token     = 0;
-    char    *strTOKEN = NULL;
-    char    *strToken = NULL;
-    char    *strExp   = NULL;
-    char    *strTmp   = NULL;
-    enum { look_for_red, look_for_green, look_for_blue } state = look_for_red;
-    DWORD    nEntryNumber = 0;
+	char    strID[8];
+	error_t    err;
+	int        token = 0;
+	char* strTOKEN = NULL;
+	char* strToken = NULL;
+	char* strExp = NULL;
+	char* strTmp = NULL;
+	enum { look_for_red, look_for_green, look_for_blue } state = look_for_red;
+	DWORD    nEntryNumber = 0;
 
 
-//    return FAILURE;  /* hack to get it to work */
+	//    return FAILURE;  /* hack to get it to work */
 
-    if( id == NULL || outMyDictionary == NULL )
-        return FAILURE;
+	if (id == NULL || outMyDictionary == NULL)
+		return FAILURE;
 
-/*****/
-
-
-    if( m_strFolder == NULL || m_strRoot == NULL )
-    {
-        SAFE_FREE( m_strFile );
-        m_strFile = strdup( id );
-        if( m_strFile == NULL )
-            return ERR_MALLOC;
-    }
-    else
-    {
-        strTmp = (char*)realloc( m_strFile, strlen( id )
-                                          + strlen( m_strFolder )
-                                          + strlen(m_strRoot) + 3 );
-        if( strTmp == NULL )
-            return ERR_REALLOC;
+	/*****/
 
 
-        m_strFile = strTmp;
-        strcpy( m_strFile, m_strRoot );
-        if( m_strRoot[0] != '\0' )
-            strcat( m_strFile, "\\" );
-        strcat( m_strFile, m_strFolder );
-        if( m_strFolder[0] != '\0' )
-            strcat( m_strFile, "\\" );
-        strcat( m_strFile, id );
+	if (m_strFolder == NULL || m_strRoot == NULL)
+	{
+		SAFE_FREE(m_strFile);
+		m_strFile = strdup(id);
+		if (m_strFile == NULL)
+			return ERR_MALLOC;
+	}
+	else
+	{
+		strTmp = (char*)realloc(m_strFile, strlen(id)
+			+ strlen(m_strFolder)
+			+ strlen(m_strRoot) + 3);
+		if (strTmp == NULL)
+			return ERR_REALLOC;
 
-//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
-    }
+
+		m_strFile = strTmp;
+		strcpy(m_strFile, m_strRoot);
+		if (m_strRoot[0] != '\0')
+			strcat(m_strFile, "\\");
+		strcat(m_strFile, m_strFolder);
+		if (m_strFolder[0] != '\0')
+			strcat(m_strFile, "\\");
+		strcat(m_strFile, id);
+
+		//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+	}
 
 
-/******/
-
-
-
-    /*
-     * open the file for reading
-     */
-    if( (err = OpenFile( m_strFile )) != SUCCESS )
-        return err;
+	/******/
 
 
 
-    do
-    {
-        token = GetToken();
-        /*
-         * strTOKEN is freed after each iteration of the loop
-         * thus it should not be modified.  However, strToken
-         * may be modified inside the switch statement since
-         * it may be useful to remove the quotes on a string
-         */
-        SAFE_FREE( strTOKEN );
-        strTOKEN = strToken = strdup( TokenBuffer() );
-        if( strTOKEN == NULL )
-            return ERR_MALLOC;
-
-
-//    DumpToFile( "error2.txt", token, "\n" );
-
-        switch( token )
-        {
-        default:
-        case tokCOMMENT: /* ignore comments */
-            break;
-
-//        case tokSTRING:
-        case tokID:
-        case tokNUMBER: /* number parsing doesn't work yet */
-
-            /*
-             * should allow higher numbers...
-             */
-            if( nEntryNumber > 255 )
-            {
-                token = tokEND;  /* exit! */
-                break;
-            }
-
-            {
-                int blah = atoi(strToken);
-                if(blah == 0 && strToken[0] != '0')
-                    break;  /* ignore non numbers */
-            }
+		/*
+		 * open the file for reading
+		 */
+	if ((err = OpenFile(m_strFile)) != SUCCESS)
+		return err;
 
 
 
-            switch( state )
-            {
-            case look_for_red:
-                if( sprintf( strID, "r%d", nEntryNumber ) == 0)
-                    break;
-                outMyDictionary->SetValue( strID, (strToken) );
-                strTOKEN = NULL;
-                state    = look_for_green;
-                break;
-
-            case look_for_green:
-                if( sprintf( strID, "g%d", nEntryNumber ) == 0)
-                    break;
-                outMyDictionary->SetValue( strID, (strToken));
-                strTOKEN = NULL;
-                state    = look_for_blue;
-                break;
-
-            case look_for_blue:
-                if( sprintf( strID, "b%d", nEntryNumber ) == 0 )
-                    break;
-                nEntryNumber++;
-                outMyDictionary->SetValue( strID, (strToken));
-                strTOKEN = NULL;
-                state    = look_for_red;
-                break;
-                
-            default:
-                break;
-            }
-            break;
-
-        } /* switch ( token ) */
+	do
+	{
+		token = GetToken();
+		/*
+		 * strTOKEN is freed after each iteration of the loop
+		 * thus it should not be modified.  However, strToken
+		 * may be modified inside the switch statement since
+		 * it may be useful to remove the quotes on a string
+		 */
+		SAFE_FREE(strTOKEN);
+		strTOKEN = strToken = strdup(TokenBuffer());
+		if (strTOKEN == NULL)
+			return ERR_MALLOC;
 
 
-        /******************
-         * BREAK jumps here
-         ******************/
-        SAFE_FREE( strTOKEN );
-        strToken = NULL;
+		//    DumpToFile( "error2.txt", token, "\n" );
 
-    }  while( token != tokEND );
+		switch (token)
+		{
+		default:
+		case tokCOMMENT: /* ignore comments */
+			break;
+
+			//        case tokSTRING:
+		case tokID:
+		case tokNUMBER: /* number parsing doesn't work yet */
+
+			/*
+			 * should allow higher numbers...
+			 */
+			if (nEntryNumber > 255)
+			{
+				token = tokEND;  /* exit! */
+				break;
+			}
+
+			{
+				int blah = atoi(strToken);
+				if (blah == 0 && strToken[0] != '0')
+					break;  /* ignore non numbers */
+			}
 
 
-//    outMyDictionary->DebugDumpContents( "argh.txt" );
 
-    return CloseFile();
+			switch (state)
+			{
+			case look_for_red:
+				if (sprintf(strID, "r%d", nEntryNumber) == 0)
+					break;
+				outMyDictionary->SetValue(strID, (strToken));
+				strTOKEN = NULL;
+				state = look_for_green;
+				break;
+
+			case look_for_green:
+				if (sprintf(strID, "g%d", nEntryNumber) == 0)
+					break;
+				outMyDictionary->SetValue(strID, (strToken));
+				strTOKEN = NULL;
+				state = look_for_blue;
+				break;
+
+			case look_for_blue:
+				if (sprintf(strID, "b%d", nEntryNumber) == 0)
+					break;
+				nEntryNumber++;
+				outMyDictionary->SetValue(strID, (strToken));
+				strTOKEN = NULL;
+				state = look_for_red;
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		} /* switch ( token ) */
+
+
+		/******************
+		 * BREAK jumps here
+		 ******************/
+		SAFE_FREE(strTOKEN);
+		strToken = NULL;
+
+	} while (token != tokEND);
+
+
+	//    outMyDictionary->DebugDumpContents( "argh.txt" );
+
+	return CloseFile();
 }
 
 
@@ -1059,257 +1061,257 @@ error_t FilingClerk::GetColorMap( char *id, MyDictionary<char*> *outMyDictionary
  * GetData - parses the file, and returns file as a MyDictionary
  *
  ****************************************************************************/
-error_t    FilingClerk::GetData( char *id, MyDictionary<char*> *outMyDictionary,
-                                 MyDictionary<MyDictionary<char*>*> *outExtra )
+error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
+	MyDictionary<MyDictionary<char*>*>* outExtra)
 {
-    error_t    err;
-    int        token  = 0;
-    char    *strTOKEN = NULL;
-    char    *strToken = NULL;
-    char    *strID    = NULL;
-    char    *strExp   = NULL;
-    char    *strTmp;
-    enum { look_for_id, look_for_expression } state = look_for_id;
-    enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
-    MyDictionary<char*>    *pIndirectMyDictionary = outMyDictionary;
+	error_t    err;
+	int        token = 0;
+	char* strTOKEN = NULL;
+	char* strToken = NULL;
+	char* strID = NULL;
+	char* strExp = NULL;
+	char* strTmp;
+	enum { look_for_id, look_for_expression } state = look_for_id;
+	enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
+	MyDictionary<char*>* pIndirectMyDictionary = outMyDictionary;
 
-    /*
-     * outExtra contains extra dictionaries for storing section specific data
-     *
-     * the key is of the form "[section-name]"
-     *
-     * when a section is encountered in a config file, if the corresponding
-     * section name is defined in outExtra, then all config data following
-     * that section heading is placed in the corresponding extra MyDictionary.
-     *
-     * if the section name is not defined, or outExtra is NULL, then the
-     * everything for that section is added to the default outMyDictionary
-     */
-
-
-    if( id == NULL || outMyDictionary == NULL )
-        return ERR_NULL;
+	/*
+	 * outExtra contains extra dictionaries for storing section specific data
+	 *
+	 * the key is of the form "[section-name]"
+	 *
+	 * when a section is encountered in a config file, if the corresponding
+	 * section name is defined in outExtra, then all config data following
+	 * that section heading is placed in the corresponding extra MyDictionary.
+	 *
+	 * if the section name is not defined, or outExtra is NULL, then the
+	 * everything for that section is added to the default outMyDictionary
+	 */
 
 
-    if( m_strFolder == NULL || m_strRoot == NULL )
-    {
-        SAFE_FREE( m_strFile );
-        m_strFile = strdup( id );
-        if( m_strFile == NULL )
-            return ERR_MALLOC;
-    }
-    else
-    {
-        strTmp = (char*)realloc( m_strFile, strlen( id )
-                                          + strlen( m_strFolder )
-                                          + strlen(m_strRoot) + 3 );
-        if( strTmp == NULL )
-            return ERR_REALLOC;
+	if (id == NULL || outMyDictionary == NULL)
+		return ERR_NULL;
 
 
-        m_strFile = strTmp;
-        strcpy( m_strFile, m_strRoot );
-        if( m_strRoot[0] != '\0' )
-            strcat( m_strFile, "\\" );
-        strcat( m_strFile, m_strFolder );
-        if( m_strFolder[0] != '\0' )
-            strcat( m_strFile, "\\" );
-        strcat( m_strFile, id );
+	if (m_strFolder == NULL || m_strRoot == NULL)
+	{
+		SAFE_FREE(m_strFile);
+		m_strFile = strdup(id);
+		if (m_strFile == NULL)
+			return ERR_MALLOC;
+	}
+	else
+	{
+		strTmp = (char*)realloc(m_strFile, strlen(id)
+			+ strlen(m_strFolder)
+			+ strlen(m_strRoot) + 3);
+		if (strTmp == NULL)
+			return ERR_REALLOC;
 
-//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
-    }
 
-    /*
-     * open the file for reading
-     */
-    if( (err = OpenFile( m_strFile )) != SUCCESS )
-    {
+		m_strFile = strTmp;
+		strcpy(m_strFile, m_strRoot);
+		if (m_strRoot[0] != '\0')
+			strcat(m_strFile, "\\");
+		strcat(m_strFile, m_strFolder);
+		if (m_strFolder[0] != '\0')
+			strcat(m_strFile, "\\");
+		strcat(m_strFile, id);
+
+		//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+	}
+
+	/*
+	 * open the file for reading
+	 */
+	if ((err = OpenFile(m_strFile)) != SUCCESS)
+	{
 #if EXTREME_DEBUGGING
-        if( err != SUCCESS )
-        {
-            DumpToFile( "error.txt",
-                    "ERROR: FilingClerk::GetData() -> OpenFile()", "\n" );
-            DumpToFile( "error.txt", ErrorString( err ), "\n" );
-        }
+		if (err != SUCCESS)
+		{
+			DumpToFile("error.txt",
+				"ERROR: FilingClerk::GetData() -> OpenFile()", "\n");
+			DumpToFile("error.txt", ErrorString(err), "\n");
+		}
 #endif
-        return err;
-    }
+		return err;
+	}
 
 
 
-    do
-    {
-        token = GetToken();
-        /*
-         * strTOKEN is freed after each iteration of the loop
-         * thus it should not be modified.  However, strToken
-         * may be modified inside the switch statement since
-         * it may be useful to remove the quotes on a string
-         */
-        SAFE_FREE( strTOKEN );
-        strTOKEN = strToken = strdup( TokenBuffer() );
-        if( strTOKEN == NULL )
-            return ERR_MALLOC;
+	do
+	{
+		token = GetToken();
+		/*
+		 * strTOKEN is freed after each iteration of the loop
+		 * thus it should not be modified.  However, strToken
+		 * may be modified inside the switch statement since
+		 * it may be useful to remove the quotes on a string
+		 */
+		SAFE_FREE(strTOKEN);
+		strTOKEN = strToken = strdup(TokenBuffer());
+		if (strTOKEN == NULL)
+			return ERR_MALLOC;
 
-        /*
-         * when a header is found, and the header is defined,
-         * start using the extra MyDictionary, else, default to outMyDictionary
-         */
-        if( token == tokHEADER )
-        {
-            if( outExtra == NULL ||
-                (pIndirectMyDictionary = outExtra->GetValue( strToken )) == NULL
-                )
-            {
-                pIndirectMyDictionary = outMyDictionary;
-            }
+		/*
+		 * when a header is found, and the header is defined,
+		 * start using the extra MyDictionary, else, default to outMyDictionary
+		 */
+		if (token == tokHEADER)
+		{
+			if (outExtra == NULL ||
+				(pIndirectMyDictionary = outExtra->GetValue(strToken)) == NULL
+				)
+			{
+				pIndirectMyDictionary = outMyDictionary;
+			}
 
-            state = look_for_id;
-            continue;
-        }
-
-
-        switch( state )
-        {
-        default:
-        case look_for_id:
-                        /*******************
-                         * BEGIN look for ID
-                         *******************/
-
-            switch( token )
-            {
-            case tokCOMMENT: /* ignore comments */
-                break;
-
-            case '=':
-                state = look_for_expression;
-                break;
-
-            case tokSTRING:
-            case tokID:
-            default:
-                /*
-                 * if this is the first time through here, strID == NULL
-                 * so just duplicate the token string
-                 */
-                if( strID == NULL )
-                {
-                    strID = strdup( strToken );
-                    if( strID == NULL )
-                        return ERR_MALLOC;
-                }
-                else
-                {
-                    strTmp = (char*)realloc( strID,   strlen( strID )
-                                                    + strlen( strToken )
-                                                    + 1 );
-                    if( strTmp == NULL )
-                        return ERR_REALLOC;
-
-                    /* append the token string and assign it to strID */
-                    strID = strcat( strTmp, strToken );
-                }
-
-                break;
-
-            } /* switch ( token ) */
-
-            break;        /********************
-                         * END of look for ID
-                         ********************/
+			state = look_for_id;
+			continue;
+		}
 
 
-        case look_for_expression:
-                        /***************************
-                         * BEGIN look for expression
-                         ***************************/
+		switch (state)
+		{
+		default:
+		case look_for_id:
+			/*******************
+			 * BEGIN look for ID
+			 *******************/
 
-            switch( token )
-            {
-            case tokCOMMENT:
-                break;
-            case tokEND:
-            case ',':    /* found the expression part,
-                         * continue searching for an
-                         * ID when done here
-                         */
-                state = look_for_id;
+			switch (token)
+			{
+			case tokCOMMENT: /* ignore comments */
+				break;
 
-                /*
-                 * should never be NULL, but just in case...
-                 * keep MyDictionary from dereferencing NULL
-                 */
-                if( strID  == NULL )    strID  = "";
-                if( strExp == NULL )    strExp = "";
+			case '=':
+				state = look_for_expression;
+				break;
 
-//                err = outMyDictionary->SetValue( strID, strExp );
-                err = pIndirectMyDictionary->SetValue( strID, strExp );
-                if( err != SUCCESS )
-                    return err;
-                /*
-                 * ensure we don't free the data passed to MyDictionary, as
-                 * MyDictionary does not make a copy of the data passed to it
-                 */
-                strID  = NULL;
-                strExp = NULL;
+			case tokSTRING:
+			case tokID:
+			default:
+				/*
+				 * if this is the first time through here, strID == NULL
+				 * so just duplicate the token string
+				 */
+				if (strID == NULL)
+				{
+					strID = strdup(strToken);
+					if (strID == NULL)
+						return ERR_MALLOC;
+				}
+				else
+				{
+					strTmp = (char*)realloc(strID, strlen(strID)
+						+ strlen(strToken)
+						+ 1);
+					if (strTmp == NULL)
+						return ERR_REALLOC;
 
-                break;
+					/* append the token string and assign it to strID */
+					strID = strcat(strTmp, strToken);
+				}
 
-            case tokSTRING:
-                /*
-                 * remove quotes on the string
-                 */
-                strToken[strlen(strToken)-1] = '\0';
-                strToken++;
-            case tokID:
-            default:
+				break;
 
-                /*
-                 * if this is the first time through here, strExp == NULL
-                 * so just duplicate the token string
-                 */
-                if( strExp == NULL )
-                {
-                    strExp = strdup( strToken );
-                    if( strExp == NULL )
-                        return ERR_MALLOC;
-                }
-                else /* append token string to the expression found so far */
-                {
-                    strTmp = (char*)realloc( strExp,  strlen( strExp )
-                                                    + strlen( strToken )
-                                                    + 1 );
-                    if( strTmp == NULL )
-                        return ERR_REALLOC;
+			} /* switch ( token ) */
 
-                    /* append the token string and assign it to strExp */
-                    strExp = strcat( strTmp, strToken );
-                }
-
-                break;
-
-            } /* switch ( token ) */
+			break;        /********************
+						 * END of look for ID
+						 ********************/
 
 
-            break;        /****************************
-                         * END of look for expression
-                         ****************************/
+		case look_for_expression:
+			/***************************
+			 * BEGIN look for expression
+			 ***************************/
 
-        }
+			switch (token)
+			{
+			case tokCOMMENT:
+				break;
+			case tokEND:
+			case ',':    /* found the expression part,
+						 * continue searching for an
+						 * ID when done here
+						 */
+				state = look_for_id;
+
+				/*
+				 * should never be NULL, but just in case...
+				 * keep MyDictionary from dereferencing NULL
+				 */
+				if (strID == NULL)    strID = "";
+				if (strExp == NULL)    strExp = "";
+
+				//                err = outMyDictionary->SetValue( strID, strExp );
+				err = pIndirectMyDictionary->SetValue(strID, strExp);
+				if (err != SUCCESS)
+					return err;
+				/*
+				 * ensure we don't free the data passed to MyDictionary, as
+				 * MyDictionary does not make a copy of the data passed to it
+				 */
+				strID = NULL;
+				strExp = NULL;
+
+				break;
+
+			case tokSTRING:
+				/*
+				 * remove quotes on the string
+				 */
+				strToken[strlen(strToken) - 1] = '\0';
+				strToken++;
+			case tokID:
+			default:
+
+				/*
+				 * if this is the first time through here, strExp == NULL
+				 * so just duplicate the token string
+				 */
+				if (strExp == NULL)
+				{
+					strExp = strdup(strToken);
+					if (strExp == NULL)
+						return ERR_MALLOC;
+				}
+				else /* append token string to the expression found so far */
+				{
+					strTmp = (char*)realloc(strExp, strlen(strExp)
+						+ strlen(strToken)
+						+ 1);
+					if (strTmp == NULL)
+						return ERR_REALLOC;
+
+					/* append the token string and assign it to strExp */
+					strExp = strcat(strTmp, strToken);
+				}
+
+				break;
+
+			} /* switch ( token ) */
 
 
-        /******************
-         * BREAK jumps here
-         ******************/
-        SAFE_FREE( strTOKEN );
-        strToken = NULL;
+			break;        /****************************
+						 * END of look for expression
+						 ****************************/
 
-    }  while( token != tokEND );
+		}
 
 
+		/******************
+		 * BREAK jumps here
+		 ******************/
+		SAFE_FREE(strTOKEN);
+		strToken = NULL;
 
-    return CloseFile();
+	} while (token != tokEND);
+
+
+
+	return CloseFile();
 
 }  /* END - GetData() */
 

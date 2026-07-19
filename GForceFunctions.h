@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * GForceFunctions - in order to maintain compatibility with G-Force configs
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * GForceFunctions - in order to maintain compatibility with G-Force configs
+  *
+  ****************************************************************************/
 
 #ifndef _GForceFunctions_H_
 #define _GForceFunctions_H_
@@ -33,25 +33,25 @@
 #include <stdlib.h> /* rand() & srand() */
 
 
-value_t GForce_mag ( value_t nValue, void *pData );
-value_t GForce_fft ( value_t nValue, void *pData );
-value_t GForce_pos ( value_t nValue );
-value_t GForce_abs ( value_t nValue );
-value_t GForce_sqr ( value_t nValue );
-value_t GForce_sgn ( value_t nValue );
-value_t GForce_rnd ( value_t nValue );
-value_t GForce_clip( value_t nValue );
-value_t GForce_trnc( value_t nValue );
-value_t GForce_flor( value_t nValue );
-value_t GForce_wrap( value_t nValue );
-value_t GForce_sqwv( value_t nValue );
-value_t GForce_trwv( value_t nValue );
-value_t GForce_seed( value_t nValue );
-value_t GForce_tan ( value_t nValue );
-value_t GForce_atan( value_t nValue );
-value_t GForce_log ( value_t nValue );
-value_t GForce_exp ( value_t nValue );
-value_t GForce_sqrt( value_t nValue );
+value_t GForce_mag(value_t nValue, void* pData);
+value_t GForce_fft(value_t nValue, void* pData);
+value_t GForce_pos(value_t nValue);
+value_t GForce_abs(value_t nValue);
+value_t GForce_sqr(value_t nValue);
+value_t GForce_sgn(value_t nValue);
+value_t GForce_rnd(value_t nValue);
+value_t GForce_clip(value_t nValue);
+value_t GForce_trnc(value_t nValue);
+value_t GForce_flor(value_t nValue);
+value_t GForce_wrap(value_t nValue);
+value_t GForce_sqwv(value_t nValue);
+value_t GForce_trwv(value_t nValue);
+value_t GForce_seed(value_t nValue);
+value_t GForce_tan(value_t nValue);
+value_t GForce_atan(value_t nValue);
+value_t GForce_log(value_t nValue);
+value_t GForce_exp(value_t nValue);
+value_t GForce_sqrt(value_t nValue);
 
 
 #endif /* _GForceFunctions_H_ */

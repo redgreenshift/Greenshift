@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * DeltaField - parametric equation for pixel transition (the brief comment)
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * DeltaField - parametric equation for pixel transition (the brief comment)
+  *
+  ****************************************************************************/
 
 #ifndef _DeltaField_H_
 #define _DeltaField_H_
@@ -33,55 +33,55 @@
 #include "PhaseFunction.h"
 
 
-/****************************************************************************
- *
- * DeltaField
- *
- ****************************************************************************/
+  /****************************************************************************
+   *
+   * DeltaField
+   *
+   ****************************************************************************/
 class DeltaField
 {
 public:
-                DeltaField();
-                ~DeltaField();
+	DeltaField();
+	~DeltaField();
 
-    void        GetDeltaXY( const value_t destX,
-                            const value_t destY,
-                            value_t *deltaX,
-                            value_t *deltaY );
-    value_t     GetAspect( void )    { return m_nAspect;   };
-    bool        GetEdgeWrap( void )  { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
-    bool        GetZoom( void )      { return m_bZoom;     };
+	void        GetDeltaXY(const value_t destX,
+		const value_t destY,
+		value_t* deltaX,
+		value_t* deltaY);
+	value_t     GetAspect(void) { return m_nAspect; };
+	bool        GetEdgeWrap(void) { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
+	bool        GetZoom(void) { return m_bZoom; };
 
-    error_t     Initialize( MyDictionary<char*> *inDeltaConfig,
-                            MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals );
+	error_t     Initialize(MyDictionary<char*>* inDeltaConfig,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
 #if EXTREME_DEBUGGING
-    void DebugDump(const char * strFile)
-    {
-        DumpToFile(strFile, (m_bIsPolar?"polar":"cartesian"), "\n");
-        DumpToFile(strFile, m_pSource1->PrintString(), "\n");
-        DumpToFile(strFile, m_pSource2->PrintString(), "\n");
+	void DebugDump(const char* strFile)
+	{
+		DumpToFile(strFile, (m_bIsPolar ? "polar" : "cartesian"), "\n");
+		DumpToFile(strFile, m_pSource1->PrintString(), "\n");
+		DumpToFile(strFile, m_pSource2->PrintString(), "\n");
 
-/*        m_pfValues.DebugDump();*/
-    };
+		/*        m_pfValues.DebugDump();*/
+	};
 #endif
 
 private:
-    value_t                 m_nX;
-    value_t                 m_nY;
-    value_t                 m_nRadius;
-    value_t                 m_nTheta;
-    value_t                 m_nAspect;
+	value_t                 m_nX;
+	value_t                 m_nY;
+	value_t                 m_nRadius;
+	value_t                 m_nTheta;
+	value_t                 m_nAspect;
 
-    Expression              *m_pSource1;
-    Expression              *m_pSource2;
+	Expression* m_pSource1;
+	Expression* m_pSource2;
 
-    PhaseFunction           m_pfValues;
-    MyDictionary<value_t*>    m_dictValues;
+	PhaseFunction           m_pfValues;
+	MyDictionary<value_t*>    m_dictValues;
 
-    bool                    m_bIsPolar;
-    bool                    m_bEdgeWrap;
-    bool                    m_bZoom;
+	bool                    m_bIsPolar;
+	bool                    m_bEdgeWrap;
+	bool                    m_bZoom;
 };
 
 

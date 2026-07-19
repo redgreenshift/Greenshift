@@ -20,26 +20,26 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * ThreadedEntity - abstract class for multithreading
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * ThreadedEntity - abstract class for multithreading
+  *
+  ****************************************************************************/
 
 #include "ThreadedEntity.h"
 
 
-/****************************************************************************
- *
- * ThreadedEntityThreadProc - thing that gets the thread going
- *
- ****************************************************************************/
-DWORD WINAPI ThreadedEntityThreadProc( LPVOID lpVoid )
+  /****************************************************************************
+   *
+   * ThreadedEntityThreadProc - thing that gets the thread going
+   *
+   ****************************************************************************/
+DWORD WINAPI ThreadedEntityThreadProc(LPVOID lpVoid)
 {
-    if( lpVoid != NULL )
-        return ((ThreadedEntity*)lpVoid)->BaseThreadProcedure();
-    else
-        return 1;
+	if (lpVoid != NULL)
+		return ((ThreadedEntity*)lpVoid)->BaseThreadProcedure();
+	else
+		return 1;
 }
 
 #if EXTREME_DEBUGGING
@@ -50,32 +50,32 @@ DWORD WINAPI ThreadedEntityThreadProc( LPVOID lpVoid )
 
 /****************************************************************************
  *
- * BaseThreadProcedure - 
+ * BaseThreadProcedure -
  *
  ****************************************************************************/
-int    ThreadedEntity::BaseThreadProcedure( void *pData )
+int    ThreadedEntity::BaseThreadProcedure(void* pData)
 {
-    int iRet;
+	int iRet;
 
-    iRet = ThreadProcedure( pData ); /* the upcall to the derived class */
+	iRet = ThreadProcedure(pData); /* the upcall to the derived class */
 
-    EnterCS();
-        m_bActive      = false;  /* no longer active */
-        m_bBusy        = true;   /* no longer accepting work */
-    LeaveCS();
+	EnterCS();
+	m_bActive = false;  /* no longer active */
+	m_bBusy = true;   /* no longer accepting work */
+	LeaveCS();
 
 #if EXTREME_DEBUGGING
-        if( iRet != SUCCESS )
-        {
-            DumpToFile( "error.txt", "Not sure which, but one of the following two errors occured:", "\n" );
-            DumpToFile( "error.txt", "\tERROR: ", "" );
-            DumpToFile( "error.txt", ErrorString( iRet ), "\n" );
-            DumpToFile( "error.txt", "\tERROR: ", "" );
-            DumpToFile( "error.txt", DXError( iRet ), "\n" );
-        }
+	if (iRet != SUCCESS)
+	{
+		DumpToFile("error.txt", "Not sure which, but one of the following two errors occured:", "\n");
+		DumpToFile("error.txt", "\tERROR: ", "");
+		DumpToFile("error.txt", ErrorString(iRet), "\n");
+		DumpToFile("error.txt", "\tERROR: ", "");
+		DumpToFile("error.txt", DXError(iRet), "\n");
+	}
 #endif
 
-    return iRet;
+	return iRet;
 }
 
 
@@ -85,27 +85,27 @@ int    ThreadedEntity::BaseThreadProcedure( void *pData )
  * ThreadedEntity - abstract class for multithreading
  *
  ****************************************************************************/
-ThreadedEntity::ThreadedEntity( const int iThreadPriority ) :
-    m_bInitialized(false),
-    m_bActive(false),
-    m_bBusy(false)
+ThreadedEntity::ThreadedEntity(const int iThreadPriority) :
+	m_bInitialized(false),
+	m_bActive(false),
+	m_bBusy(false)
 {
-    m_hThread = NULL;
+	m_hThread = NULL;
 
-    InitializeCriticalSection( &m_CritSect );
+	InitializeCriticalSection(&m_CritSect);
 
-    m_hThread = CreateThread(
-                NULL,
-                0,
-                ThreadedEntityThreadProc,
-                this,
-                CREATE_SUSPENDED,
-                &m_dwThreadID );
+	m_hThread = CreateThread(
+		NULL,
+		0,
+		ThreadedEntityThreadProc,
+		this,
+		CREATE_SUSPENDED,
+		&m_dwThreadID);
 
-    SetThreadPriority( m_hThread, iThreadPriority );
+	SetThreadPriority(m_hThread, iThreadPriority);
 
-/*     DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
-    GetCurrentProcess(), &m_hMainThread, DUPLICATE_SAME_ACCESS, false, 0 );*/
+	/*     DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
+		GetCurrentProcess(), &m_hMainThread, DUPLICATE_SAME_ACCESS, false, 0 );*/
 }
 
 
@@ -117,11 +117,11 @@ ThreadedEntity::ThreadedEntity( const int iThreadPriority ) :
  ****************************************************************************/
 ThreadedEntity::~ThreadedEntity()
 {
-    /*
-     * kill the thread if it's still running
-     */
-    TerminateThread();
-    DeleteCriticalSection( &m_CritSect );
+	/*
+	 * kill the thread if it's still running
+	 */
+	TerminateThread();
+	DeleteCriticalSection(&m_CritSect);
 }
 
 
@@ -130,21 +130,21 @@ ThreadedEntity::~ThreadedEntity()
  * TerminateThread - ensure thread is halted
  *
  ****************************************************************************/
-void    ThreadedEntity::TerminateThread( void )
+void    ThreadedEntity::TerminateThread(void)
 {
-    if( m_hThread != NULL )
-    {
-    EnterCS();
+	if (m_hThread != NULL)
+	{
+		EnterCS();
 
-        ::TerminateThread(m_hThread, 0);
-        
-        CloseHandle(m_hThread);
+		::TerminateThread(m_hThread, 0);
 
-        m_hThread    = NULL;
-        m_dwThreadID = 0;
+		CloseHandle(m_hThread);
 
-    LeaveCS();
-    }
+		m_hThread = NULL;
+		m_dwThreadID = 0;
+
+		LeaveCS();
+	}
 }
 
 
@@ -157,22 +157,22 @@ void    ThreadedEntity::TerminateThread( void )
  * the thread should be in the critical section during initialization... I think
  *
  ****************************************************************************/
-bool    ThreadedEntity::ResumeAndWaitUntilThreadHasInitialized( void )
+bool    ThreadedEntity::ResumeAndWaitUntilThreadHasInitialized(void)
 {
-    bool bInitialized = false;
+	bool bInitialized = false;
 
-    Resume();
+	Resume();
 
-    while( ! bInitialized )
-    {
-    EnterCS();
+	while (!bInitialized)
+	{
+		EnterCS();
 
-        bInitialized = m_bInitialized;
+		bInitialized = m_bInitialized;
 
-    LeaveCS();
-    }
+		LeaveCS();
+	}
 
-    return bInitialized;
+	return bInitialized;
 }
 
 /****************************************************************************
@@ -180,14 +180,14 @@ bool    ThreadedEntity::ResumeAndWaitUntilThreadHasInitialized( void )
  * ThreadHasInitialized - the thread calls this when initialization is complete
  *
  ****************************************************************************/
-void    ThreadedEntity::ThreadHasInitialized( const bool bSuccessfullyInitialized )
+void    ThreadedEntity::ThreadHasInitialized(const bool bSuccessfullyInitialized)
 {
-    EnterCS();
+	EnterCS();
 
-        m_bInitialized = true;
-        m_bActive      = bSuccessfullyInitialized;
+	m_bInitialized = true;
+	m_bActive = bSuccessfullyInitialized;
 
-    LeaveCS();
+	LeaveCS();
 }
 
 
@@ -205,38 +205,38 @@ void    ThreadedEntity::ThreadHasInitialized( const bool bSuccessfullyInitialize
  *           specified thread is still suspended."
  *
  ****************************************************************************/
-DWORD    ThreadedEntity::Resume( void )
+DWORD    ThreadedEntity::Resume(void)
 {
-    DWORD    dwRet = -1;  /* error return if thread doesn't exist */
+	DWORD    dwRet = -1;  /* error return if thread doesn't exist */
 
-    if( m_hThread != NULL )
-    {
-    EnterCS();
-        m_bBusy = true; /* thread is busy once resumed - if the ResumeThread
-                         * call does restart it, then m_bBusy should be true
-                         * That's why it's necessary to set m_bBusy *before*
-                         * calling ResumeThread.
-                         */
-        dwRet   = ResumeThread(m_hThread);
+	if (m_hThread != NULL)
+	{
+		EnterCS();
+		m_bBusy = true; /* thread is busy once resumed - if the ResumeThread
+						 * call does restart it, then m_bBusy should be true
+						 * That's why it's necessary to set m_bBusy *before*
+						 * calling ResumeThread.
+						 */
+		dwRet = ResumeThread(m_hThread);
 
-        /*
-         * now if the thread is running, all is good,
-         * but if the thread isn't running,
-         * no harm done, just make m_bBusy false.
-         *
-         * The only "bad" thing that could have happened is if another thread
-         * asked if it was safe to give work to the thread.  The answer would
-         * be an incorrect "no, I'm busy", but that's not the end of the world.
-         * It's better than an incorrect "yes, I can accept work"... I think.
-         */
-        if( dwRet > 1 ) /* if the thread was suspended multiple times, it's still suspended */
-            m_bBusy = false; /* therefore not busy */
-        else
-            m_bBusy = true;
-    LeaveCS();
-    }
+		/*
+		 * now if the thread is running, all is good,
+		 * but if the thread isn't running,
+		 * no harm done, just make m_bBusy false.
+		 *
+		 * The only "bad" thing that could have happened is if another thread
+		 * asked if it was safe to give work to the thread.  The answer would
+		 * be an incorrect "no, I'm busy", but that's not the end of the world.
+		 * It's better than an incorrect "yes, I can accept work"... I think.
+		 */
+		if (dwRet > 1) /* if the thread was suspended multiple times, it's still suspended */
+			m_bBusy = false; /* therefore not busy */
+		else
+			m_bBusy = true;
+		LeaveCS();
+	}
 
-    return dwRet;
+	return dwRet;
 }
 
 
@@ -246,20 +246,20 @@ DWORD    ThreadedEntity::Resume( void )
  * Suspend - suspend the thread, *always* suspends the thread
  *
  ****************************************************************************/
-DWORD    ThreadedEntity::Suspend( void )
+DWORD    ThreadedEntity::Suspend(void)
 {
-    DWORD    dwRet = -1;  /* error return if thread doesn't exist */
+	DWORD    dwRet = -1;  /* error return if thread doesn't exist */
 
-    if( m_hThread != NULL )
-    {
-    EnterCS();
-        m_bBusy = false;
-    LeaveCS();
+	if (m_hThread != NULL)
+	{
+		EnterCS();
+		m_bBusy = false;
+		LeaveCS();
 
-        dwRet   = SuspendThread(m_hThread);
-    }
+		dwRet = SuspendThread(m_hThread);
+	}
 
-    return dwRet;
+	return dwRet;
 }
 
 
@@ -268,15 +268,15 @@ DWORD    ThreadedEntity::Suspend( void )
  * IsActive - returns the status of the thread, determines if it was returned
  *
  ****************************************************************************/
-bool    ThreadedEntity::IsActive( void )
+bool    ThreadedEntity::IsActive(void)
 {
-    bool bActive;
+	bool bActive;
 
-    EnterCS();
-        bActive = m_bActive;
-    LeaveCS();
+	EnterCS();
+	bActive = m_bActive;
+	LeaveCS();
 
-    return bActive;
+	return bActive;
 }
 
 
@@ -285,14 +285,14 @@ bool    ThreadedEntity::IsActive( void )
  * IsBusy - returns the status of the thread, determines if it is working on something
  *
  ****************************************************************************/
-bool    ThreadedEntity::IsBusy( void )
+bool    ThreadedEntity::IsBusy(void)
 {
-    bool bBusy;
+	bool bBusy;
 
-    EnterCS();
-        bBusy = m_bBusy;
-    LeaveCS();
+	EnterCS();
+	bBusy = m_bBusy;
+	LeaveCS();
 
-    return bBusy;
+	return bBusy;
 }
 

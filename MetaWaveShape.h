@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * MetaWaveShape - 
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * MetaWaveShape -
+  *
+  ****************************************************************************/
 
 #ifndef _MetaWaveShape_H_
 #define _MetaWaveShape_H_
@@ -37,45 +37,45 @@
 class MetaWaveShape : public MetaParticleAbstract
 {
 protected:
-//    value_t                m_nPercent;
-    DWORD               m_dwCurrent;
-    DWORD               m_dwNext;
-    value_t             m_nIntervalTime;
-    value_t             m_nTweenDuration;
-//    HighResolutionTimer m_hrWaveShapeTimer;
-    WaveShape           *m_pWaveShapes;
-    Expression          *m_pIntervalTime;
-    Expression          *m_pTweenDuration;
-    HighResolutionTimer m_hrIntervalTimer;
-    HighResolutionTimer m_hrTweenTimer;
-//    bool                m_bTweening;
-//    bool                m_bConnected;
+	//    value_t                m_nPercent;
+	DWORD               m_dwCurrent;
+	DWORD               m_dwNext;
+	value_t             m_nIntervalTime;
+	value_t             m_nTweenDuration;
+	//    HighResolutionTimer m_hrWaveShapeTimer;
+	WaveShape* m_pWaveShapes;
+	Expression* m_pIntervalTime;
+	Expression* m_pTweenDuration;
+	HighResolutionTimer m_hrIntervalTimer;
+	HighResolutionTimer m_hrTweenTimer;
+	//    bool                m_bTweening;
+	//    bool                m_bConnected;
 
-//    value_t                *m_pLastX;
-//    value_t                *m_pLastY;
+	//    value_t                *m_pLastX;
+	//    value_t                *m_pLastY;
 
 
-//    value_t                    m_nStep;
-//    value_t                    m_nX;
-//    value_t                    m_nZ;
-    MyDictionary<value_t*>    m_dValues;
+	//    value_t                    m_nStep;
+	//    value_t                    m_nX;
+	//    value_t                    m_nZ;
+	MyDictionary<value_t*>    m_dValues;
 
 public:
-                        MetaWaveShape();
-    virtual             ~MetaWaveShape();
+	MetaWaveShape();
+	virtual             ~MetaWaveShape();
 
-    virtual error_t     InitializeDerived(
-                            MyDictionary<char*> *inMainConfig,
-                            MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals );
+	virtual error_t     InitializeDerived(
+		MyDictionary<char*>* inMainConfig,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
 
-    virtual error_t     ReduceTime( void );
+	virtual error_t     ReduceTime(void);
 
 protected:
-    virtual error_t     UpdateDerived( BitCanvas * pBitCanvas );
-    virtual error_t     UpdateDerived( WindowDevice *pWindowDevice );
+	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas);
+	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice);
 
-    error_t             IntervalCheck( void );
+	error_t             IntervalCheck(void);
 
 };
 

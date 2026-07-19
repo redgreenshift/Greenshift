@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * Greenshift - the visualization class
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * Greenshift - the visualization class
+  *
+  ****************************************************************************/
 
 #ifndef _Greenshift_H_
 #define _Greenshift_H_
@@ -69,114 +69,114 @@ typedef unsigned char sound_data_t[2][SOUND_DATA_LENGTH];
 class Greenshift
 {
 public:
-                                Greenshift();  /* default constructor */
-                                ~Greenshift(); /* default destructor */
+	Greenshift();  /* default constructor */
+	~Greenshift(); /* default destructor */
 
-    /*
-     * the interface to the outside world
-     */
-    void                        Config( void );
-    error_t                     Initialize( HINSTANCE hInstance );
-    error_t                     Render( void );
-    void                        Shutdown( void );
-
-
-    void                        SetParentWindow( HWND hWindow );
-    error_t                     SetSoundData( const DWORD nWfCh,
-                                              sound_data_t pWaveform,
-                                              const DWORD nSpCh,
-                                              sound_data_t pSpectrum );
-//    inline
-    value_t                     GetWaveformData( const value_t nValue );
-//    inline
-    value_t                     GetSpectrumData( const value_t nValue );
+	/*
+	 * the interface to the outside world
+	 */
+	void                        Config(void);
+	error_t                     Initialize(HINSTANCE hInstance);
+	error_t                     Render(void);
+	void                        Shutdown(void);
 
 
-protected:
-    error_t                     LoadConfigs( void );
-
-    inline error_t              RegulateFramerate( void );
-
-    inline DWORD                NumDeltaFields( void )    { return m_dwNumDeltaFields; };
-    inline DWORD                NumWaveShapes( void )    { return m_dwNumWaveShapes;  };
-    inline DWORD                NumParticles( void )    { return m_dwNumParticles;   };
-    inline DWORD                NumPalettes( void )        { return m_dwNumPalettes;    };
-
-    void                        UpdateDisplayText( void );
-    error_t                     DisplayString( const int position,
-                                               const char *strName,
-                                               const char *string );
-
+	void                        SetParentWindow(HWND hWindow);
+	error_t                     SetSoundData(const DWORD nWfCh,
+		sound_data_t pWaveform,
+		const DWORD nSpCh,
+		sound_data_t pSpectrum);
+	//    inline
+	value_t                     GetWaveformData(const value_t nValue);
+	//    inline
+	value_t                     GetSpectrumData(const value_t nValue);
 
 
 protected:
-    MTRand                      m_mtRand;
+	error_t                     LoadConfigs(void);
 
-    /* ?!  I have two forms?!  I should remove one! */
-    unsigned char               m_cWaveformData[2][SOUND_DATA_LENGTH];
-    unsigned char               m_cSpectrumData[2][SOUND_DATA_LENGTH];
-    value_t                     m_nWaveformData[2][SOUND_DATA_LENGTH];
-    value_t                     m_nSpectrumData[2][SOUND_DATA_LENGTH];
-    HINSTANCE                   m_hInstance;    /* reference to module instance */
-    HWND                        m_hParentWindow;
-    FilingClerk                 m_fcFilingClerk;
-    WindowDevice                *m_pWindowDevice;
-    BitCanvas                   *m_pBitCanvas;
+	inline error_t              RegulateFramerate(void);
 
-    EXPRESSIONDESCRIPTION       *m_pGlobals;
+	inline DWORD                NumDeltaFields(void) { return m_dwNumDeltaFields; };
+	inline DWORD                NumWaveShapes(void) { return m_dwNumWaveShapes; };
+	inline DWORD                NumParticles(void) { return m_dwNumParticles; };
+	inline DWORD                NumPalettes(void) { return m_dwNumPalettes; };
 
-    /* MetaConfigs */
-    MetaDeltaField              m_dfMetaDeltaField;
-    MetaWaveShape               m_wsMetaWaveShape;
-    MetaParticle                m_mpMetaParticle;
-    MetaPalette                 m_mpMetaPalette;
+	void                        UpdateDisplayText(void);
+	error_t                     DisplayString(const int position,
+		const char* strName,
+		const char* string);
 
 
-    MyDictionary<char*>           m_dMainConfig; /* settings found in the main config file */
-    MyDictionary<MyDictionary<char*>*>
-                                m_dExtraConfig;
-    MyDictionary<EXPRESSIONDESCRIPTION*>    /* variables and functions allowed */
-                                m_dGlobals; /* in all Greenshift expressions */
-    MyDictionary<char*>           m_dAlias;
-    MyDictionary<char*>           m_dConstant;
-    MyDictionary<char*>           m_dDefaults;
-    MyDictionary<char*>           m_dFunction;
-    MyDictionary<value_t*>        m_dValues;
-    value_t*                      m_pValues = nullptr;
+
+protected:
+	MTRand                      m_mtRand;
+
+	/* ?!  I have two forms?!  I should remove one! */
+	unsigned char               m_cWaveformData[2][SOUND_DATA_LENGTH];
+	unsigned char               m_cSpectrumData[2][SOUND_DATA_LENGTH];
+	value_t                     m_nWaveformData[2][SOUND_DATA_LENGTH];
+	value_t                     m_nSpectrumData[2][SOUND_DATA_LENGTH];
+	HINSTANCE                   m_hInstance;    /* reference to module instance */
+	HWND                        m_hParentWindow;
+	FilingClerk                 m_fcFilingClerk;
+	WindowDevice* m_pWindowDevice;
+	BitCanvas* m_pBitCanvas;
+
+	EXPRESSIONDESCRIPTION* m_pGlobals;
+
+	/* MetaConfigs */
+	MetaDeltaField              m_dfMetaDeltaField;
+	MetaWaveShape               m_wsMetaWaveShape;
+	MetaParticle                m_mpMetaParticle;
+	MetaPalette                 m_mpMetaPalette;
 
 
-    HighResolutionTimer         m_hrFramerateTimer;    /* timer used in framerate regulation */
-    HighResolutionTimer         m_hrDisplayTimer;    /* time since last info display */
-//    HighResolutionTimer            m_hrSeedTimer;        /* time since last random seed */
-
-    /*
-     * named variables accessable from any expression
-     */
-    value_t                     m_nBASS;                /* BASS */
-
-    DWORD                       m_dwNumDeltaFields;        /* size of the deltafield array */
-    DWORD                       m_dwNumWaveShapes;        /* size of the waveshape array */
-    DWORD                       m_dwNumParticles;        /* size of the particle array */
-    DWORD                       m_dwNumPalettes;        /* size of the palette array */
-
-    MyDictionary<char*>           *m_pDeltaFieldConfigs;
-    MyDictionary<char*>           *m_pWaveShapeConfigs;
-    MyDictionary<char*>           *m_pParticleConfigs;
-    MyDictionary<char*>           *m_pPaletteConfigs;
-
-    Expression                  *m_pFFTTransform;
-
-    value_t                     m_nRawFFTValue;
-    value_t                     m_nFrequency;
+	MyDictionary<char*>           m_dMainConfig; /* settings found in the main config file */
+	MyDictionary<MyDictionary<char*>*>
+		m_dExtraConfig;
+	MyDictionary<EXPRESSIONDESCRIPTION*>    /* variables and functions allowed */
+		m_dGlobals; /* in all Greenshift expressions */
+	MyDictionary<char*>           m_dAlias;
+	MyDictionary<char*>           m_dConstant;
+	MyDictionary<char*>           m_dDefaults;
+	MyDictionary<char*>           m_dFunction;
+	MyDictionary<value_t*>        m_dValues;
+	value_t* m_pValues = nullptr;
 
 
-    value_t                     m_nFramesPerSecond;
-    value_t                     m_nSecondsPerFrame;
-    value_t                     m_nDesiredFramerate;
-    value_t                     m_nMinimumFramerate;
+	HighResolutionTimer         m_hrFramerateTimer;    /* timer used in framerate regulation */
+	HighResolutionTimer         m_hrDisplayTimer;    /* time since last info display */
+	//    HighResolutionTimer            m_hrSeedTimer;        /* time since last random seed */
 
-    DWORD                       m_dwDesiredMSecondsPerFrame;
-    DWORD                       m_dwMaximumMSecondsPerFrame;
+		/*
+		 * named variables accessable from any expression
+		 */
+	value_t                     m_nBASS;                /* BASS */
+
+	DWORD                       m_dwNumDeltaFields;        /* size of the deltafield array */
+	DWORD                       m_dwNumWaveShapes;        /* size of the waveshape array */
+	DWORD                       m_dwNumParticles;        /* size of the particle array */
+	DWORD                       m_dwNumPalettes;        /* size of the palette array */
+
+	MyDictionary<char*>* m_pDeltaFieldConfigs;
+	MyDictionary<char*>* m_pWaveShapeConfigs;
+	MyDictionary<char*>* m_pParticleConfigs;
+	MyDictionary<char*>* m_pPaletteConfigs;
+
+	Expression* m_pFFTTransform;
+
+	value_t                     m_nRawFFTValue;
+	value_t                     m_nFrequency;
+
+
+	value_t                     m_nFramesPerSecond;
+	value_t                     m_nSecondsPerFrame;
+	value_t                     m_nDesiredFramerate;
+	value_t                     m_nMinimumFramerate;
+
+	DWORD                       m_dwDesiredMSecondsPerFrame;
+	DWORD                       m_dwMaximumMSecondsPerFrame;
 
 };
 

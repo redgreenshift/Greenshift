@@ -20,11 +20,11 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-/****************************************************************************
- *
- * MetaPalette - 
- *
- ****************************************************************************/
+ /****************************************************************************
+  *
+  * MetaPalette -
+  *
+  ****************************************************************************/
 
 #ifndef _MetaPalette_H_
 #define _MetaPalette_H_
@@ -38,31 +38,31 @@
 class MetaPalette : public MetaConfig
 {
 protected:
-    DWORD                   m_dwCurrent;
-    DWORD                   m_dwNext;
-    value_t                 m_nPercent;
-    value_t                 m_nInterval;
-    value_t                 m_nTween;
-    Palette                 *m_pPalettes;
-    Expression              *m_pInterval;
-    Expression              *m_pTweenTime;
-    HighResolutionTimer     m_hrTweenTimer;
-    HighResolutionTimer     m_hrIntervalTimer;
-    bool                    m_bTweening;
+	DWORD                   m_dwCurrent;
+	DWORD                   m_dwNext;
+	value_t                 m_nPercent;
+	value_t                 m_nInterval;
+	value_t                 m_nTween;
+	Palette* m_pPalettes;
+	Expression* m_pInterval;
+	Expression* m_pTweenTime;
+	HighResolutionTimer     m_hrTweenTimer;
+	HighResolutionTimer     m_hrIntervalTimer;
+	bool                    m_bTweening;
 
 
 public:
-                        MetaPalette();
-    virtual             ~MetaPalette();
+	MetaPalette();
+	virtual             ~MetaPalette();
 
-    virtual error_t     InitializeDerived(
-                            MyDictionary<char*> *inMainConfig,
-                            MyDictionary<EXPRESSIONDESCRIPTION*> *inGlobals );
+	virtual error_t     InitializeDerived(
+		MyDictionary<char*>* inMainConfig,
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
-    virtual error_t     UpdateDerived( BitCanvas * pBitCanvas );
-    virtual error_t     UpdateDerived( WindowDevice *pWindowDevice );
+	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas);
+	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice);
 
-    void                IntervalCheck( void );
+	void                IntervalCheck(void);
 
 };
 
