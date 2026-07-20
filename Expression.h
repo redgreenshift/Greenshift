@@ -389,13 +389,13 @@ public:
 											 */
 
 	/// <summary>
-	/// Simplifies the expression tree by treating the provided variable as a constant
+	/// Simplifies the expression by replacing the specified variable with its value
 	/// and collapsing resulting constant subexpressions.
 	/// </summary>
 	/// <param name="inValue">
-	/// A pointer to the target variable instance used for substitution; it is used to
-	/// identify which variable to fix, and what value to lock in when folding constant
-	/// subexpressions.
+	/// A pointer to the target variable instance used for substitution. It is used to
+	/// both identify which variable to fix, and provide the value to lock in when
+	/// folding constant subexpressions.
 	/// </param>
 	/// <param name="outExpression">
 	/// The potentially simplified expression tree output.
