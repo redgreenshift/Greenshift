@@ -2302,6 +2302,7 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 	 */
 	static parsingLogic_t ops[] = {
 
+		// https://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B
 		/* Comma has the lowest precedence of all */
 		BINARY(",", Comma),
 		{NULL, },
@@ -2313,9 +2314,12 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 		{NULL, },
 #endif
 
-		// Relational
+		// Relational (Equality)
 		BINARY("==", Equality),
 		BINARY("!=", NonEquality),
+		{NULL, },
+
+		// Relational (GT/LT/GTOE/LTOE are higher precedence than Equality)
 		BINARY(">=", GreaterThanOrEqual), // Matching is greedy, therefore the longer match must appear first in the list (i.e. ">=" before ">")
 		BINARY(">", GreaterThan),
 		BINARY("<=", LessThanOrEqual),

@@ -1124,6 +1124,52 @@ namespace GreenshiftUnitTest
 					"(((2/3)%4)*5)",
 					3.333333333333f,
 				},
+
+				// RelationalVsSubtraction
+				{
+					"(1 == 3) - 2",
+					"((1==3)-2)",
+					-2,
+				},
+				{
+					"1 == 3 - 2",
+					"(1==(3-2))",
+					1,
+				},
+				{
+					"3 - 2 == 1",
+					"((3-2)==1)",
+					1,
+				},
+
+				// EqualityVsNonEquality -- EQUAL PRECEDENCE
+				{
+					"(2 == 5) != 3",
+					"((2==5)!=3)",
+					1,
+				},
+				{
+					"3 != 2 == 5",
+					"((3!=2)==5)",
+					0,
+				},
+
+				// EqualityVsLessThanOrEqual
+				{
+					"(2 == 5) <= 3",
+					"((2==5)<=3)",
+					1,
+				},
+				{
+					"1 == 3 <= 2",
+					"(1==(3<=2))",
+					0,
+				},
+				{
+					"3 <= 2 == 1",
+					"((3<=2)==1)",
+					0,
+				},
 			};
 
 			MyDictionary<value_t*> dict;
@@ -1140,8 +1186,7 @@ namespace GreenshiftUnitTest
 					errEvaluate += utf8_to_wstring(table[i].original.c_str());
 					char* pszResult = spExpression->PrintString();
 					Assert::AreEqual(table[i].expected.c_str(), pszResult, errPrint.c_str());
-					free(pszResult);
-					pszResult = nullptr;
+					SAFE_FREE(pszResult);
 
 					value_t fResult = spExpression->Evaluate();
 					Assert::AreEqual(table[i].fExpected, fResult, defaultTolerance, errEvaluate.c_str());

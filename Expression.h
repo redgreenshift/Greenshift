@@ -114,6 +114,8 @@
   | | +-ExpressionMult
   | | |
   | | +-ExpressionDiv
+  | | |
+  | | +-ExpressionMod
   | |
   | +-ExpressionAdditive        (subclasses have equal precedence)
   | | |
