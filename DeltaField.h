@@ -73,15 +73,15 @@ private:
 	value_t                 m_nTheta;
 	value_t                 m_nAspect;
 
-	Expression* m_pSource1;
-	Expression* m_pSource2;
+	Expression* m_pSource1 = nullptr;
+	Expression* m_pSource2 = nullptr;
 
 	PhaseFunction           m_pfValues;
-	MyDictionary<value_t*>    m_dictValues;
+	MyDictionary<value_t*>  m_dictValues;
 
-	bool                    m_bIsPolar;
-	bool                    m_bEdgeWrap;
-	bool                    m_bZoom;
+	bool                    m_bIsPolar = false;
+	bool                    m_bEdgeWrap = false;
+	bool                    m_bZoom = false;
 };
 
 

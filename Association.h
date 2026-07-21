@@ -57,7 +57,7 @@ public:
 	Association()
 	{
 		m_strKey = NULL;
-		//        m_strKey = m_strDebugKey;
+//		m_strKey = m_strDebugKey;
 		m_pValue = NULL;
 	};
 
@@ -118,11 +118,13 @@ public:
 	char* NewStrdup(const char* inString)
 	{
 		char* strTmp;
+		const size_t size = strlen(inString) + 1;
 
 		if (inString != NULL
-			&& (strTmp = new char[strlen(inString) + 1]) != NULL)
+			&& (strTmp = new char[size]) != NULL)
 		{
-			return strcpy(strTmp, inString);
+			strncpy_s(strTmp, size, inString, size);
+			return strTmp;
 		}
 		else
 			return NULL;
@@ -161,7 +163,7 @@ public:
 
 	/****************************************************************************
 	 *
-	 * SetValue - sets the value
+	 * SetValue - attaches the value
 	 *
 	 ****************************************************************************/
 	void    SetValue(ValueType inValue) { m_pValue = inValue; };
