@@ -101,6 +101,8 @@
   |   +-ExpressionSqr
   |   |
   |   +-ExpressionSqrt
+  |   |
+  |   +-ExpressionFactorial
   |
   +-ExpressionBinary
   | |
@@ -122,6 +124,20 @@
   | | +-ExpressionAdd
   | | |
   | | +-ExpressionSub
+  | |
+  | +-ExpressionRelational
+  | | |
+  | | +-ExpressionEquality (Equality/NonEquality have lower precedence than the other Relational expressions)
+  | | |
+  | | +-ExpressionNonEquality
+  | | |
+  | | +-ExpressionGreaterThan
+  | | |
+  | | +-ExpressionGreaterThanOrEqual
+  | | |
+  | | +-ExpressionLessThan
+  | | |
+  | | +-ExpressionLessThanOrEqual
   | |
   | +-ExpressionList
   |   |
@@ -284,6 +300,7 @@ public:
 	error_t Log10(Expression** outExpression);
 	error_t Ln(Expression** outExpression);
 	error_t Exp(Expression** outExpression);
+	error_t Factorial(Expression** outExpression);
 
 	/* Trigonometric */
 	error_t Cos(Expression** outExpression);
@@ -439,6 +456,7 @@ protected:
 	static error_t  NewLog10(Expression*, Expression*, Expression**);
 	static error_t  NewLn(Expression*, Expression*, Expression**);
 	static error_t  NewExp(Expression*, Expression*, Expression**);
+	static error_t  NewFactorial(Expression*, Expression*, Expression**);
 
 	/* Trigonometric */
 	static error_t  NewCos(Expression*, Expression*, Expression**);
@@ -911,6 +929,18 @@ public:
 		Expression** outExpression);
 };
 
+class ExpressionFactorial : public ExpressionUnary
+{
+public:
+	ExpressionFactorial(Expression* inExpression1)
+		: ExpressionUnary(inExpression1) {
+	};
+	char* Operator(void);
+	value_t     Evaluate(void);
+	error_t     Copy(Expression** outExpression);
+	error_t     PartialSimplification(value_t* inValue,
+		Expression** outExpression);
+};
 
 /****************************************************************************
  *

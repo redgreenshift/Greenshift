@@ -563,6 +563,11 @@ value_t ExpressionExp::Evaluate(void)
 	return (value_t)exp(UnaryTerm()->Evaluate());
 }
 
+value_t ExpressionFactorial::Evaluate(void)
+{
+	// double factorial(double x) {return std::tgamma(x+1);}
+	return (value_t)std::tgamma(1 + UnaryTerm()->Evaluate());
+}
 
 
 
@@ -826,6 +831,7 @@ EXPRESSION_UNARY__MATH_OPERATION(Sqr)
 EXPRESSION_UNARY__MATH_OPERATION(Log10)
 EXPRESSION_UNARY__MATH_OPERATION(Ln)
 EXPRESSION_UNARY__MATH_OPERATION(Exp)
+EXPRESSION_UNARY__MATH_OPERATION(Factorial)
 
 EXPRESSION_UNARY__MATH_OPERATION(Cos)
 EXPRESSION_UNARY__MATH_OPERATION(Sin)
@@ -953,6 +959,7 @@ EXPRESSION_UNARY__COPY(Sqr)
 EXPRESSION_UNARY__COPY(Log10)
 EXPRESSION_UNARY__COPY(Ln)
 EXPRESSION_UNARY__COPY(Exp)
+EXPRESSION_UNARY__COPY(Factorial)
 
 EXPRESSION_UNARY__COPY(Sin)
 EXPRESSION_UNARY__COPY(Cos)
@@ -1113,6 +1120,7 @@ EXPRESSION_UNARY__PARTIAL(Sqr)
 EXPRESSION_UNARY__PARTIAL(Log10)
 EXPRESSION_UNARY__PARTIAL(Ln)
 EXPRESSION_UNARY__PARTIAL(Exp)
+EXPRESSION_UNARY__PARTIAL(Factorial)
 
 EXPRESSION_UNARY__PARTIAL(Sin)
 EXPRESSION_UNARY__PARTIAL(Cos)
@@ -1174,6 +1182,7 @@ char* ExpressionSqr::Operator(void) { return "sqr"; };
 char* ExpressionLog10::Operator(void) { return "log10"; };
 char* ExpressionLn::Operator(void) { return "log"; };
 char* ExpressionExp::Operator(void) { return "exp"; };
+char* ExpressionFactorial::Operator(void) { return "fact"; };
 
 /* Trigonometric */
 char* ExpressionCos::Operator(void) { return "cos"; };
@@ -1538,6 +1547,7 @@ char* ExpressionTernary::PrintString(char* inStr, int& nLength)
 #define NEW_LOG10(exp1)             (new ExpressionLog10(exp1))
 #define NEW_LN(exp1)                (new ExpressionLn(exp1))
 #define NEW_EXP(exp1)               (new ExpressionExp(exp1))
+#define NEW_FACTORIAL(exp1)			(new ExpressionFactorial(exp1))
 
 /* Trigonometric */
 #define NEW_SIN(exp1)               (new ExpressionSin(exp1))
@@ -1681,6 +1691,16 @@ error_t    Expression::NewExp(Expression* inExpression1,
 		return SUCCESS;
 	else
 		return ERR_EXP;
+}
+
+error_t Expression::NewFactorial(Expression* inExpression1,
+	Expression* inExpression2,
+	Expression** outExpression)
+{
+	if ((*outExpression = NEW_FACTORIAL(inExpression1)) != NULL)
+		return SUCCESS;
+	else
+		return FAILURE;
 }
 
 error_t Expression::NewCos(Expression* inExpression1,
@@ -2350,6 +2370,7 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 		UNARY("log10", Log10),
 		UNARY("log",   Ln),
 		UNARY("exp",   Exp),
+		UNARY("fact",  Factorial),
 		UNARY("cosh",  Cosh),
 		UNARY("sinh",  Sinh),
 		UNARY("tanh",  Tanh),
