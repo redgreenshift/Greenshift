@@ -6,6 +6,9 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+// TODO: JRDV: Consider updating to use std::wformat / std::wformat_string whenever updating to C++20
+//#include <format> // The project currently defaults to C++14, and this header is only available in C++20
+std::wstring utf8_to_wstring(const std::string& s);
 namespace GreenshiftUnitTest
 {
 	TEST_CLASS(ExpressionUT)
@@ -1017,8 +1020,10 @@ namespace GreenshiftUnitTest
 				Expression* myExpressionSimplified;
 				err = spExpression->PartialSimplification(&x, &myExpressionSimplified);
 				Assert::IsTrue(err == SUCCESS, L"PartialSimplification failed");
-				const char* pszResultSimplified = myExpressionSimplified->PrintString();
+				char* pszResultSimplified = myExpressionSimplified->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResultSimplified, L"PrintString failed");
+				free(pszResultSimplified);
+				pszResultSimplified = nullptr;
 
 				value_t fResult = myExpressionSimplified->Evaluate();
 				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
@@ -1026,6 +1031,124 @@ namespace GreenshiftUnitTest
 			}
 
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		/********************************************************************
+		* OrderOfOperations
+		*/
+
+		TEST_METHOD(TestExpressionOrderOfOperationsTable)
+		{
+			error_t err;
+			struct {
+				std::string const	original;
+				std::string const	expected;
+				value_t				fExpected;
+
+			} table[] =
+			{
+				// AddVsMultiply
+				{
+					"(1 + 2) * 3",
+					"((1+2)*3)",
+					9,
+				},
+				{
+					"1 + 2 * 3",
+					"(1+(2*3))",
+					7,
+				},
+				{
+					"2 * 3 + 1",
+					"((2*3)+1)",
+					7,
+				},
+
+				// AddVsSubtract -- EQUAL PRECEDENCE
+				{
+					"1 + 2 - 3",
+					"((1+2)-3)",
+					0,
+				},
+				{
+					"1 - 2 + 3",
+					"((1-2)+3)",
+					2,
+				},
+
+				// MultVsPower
+				{
+					"(2 * 3) ^ 4",
+					"((2*3)^4)",
+					1296,
+				},
+				{
+					"2 * 3 ^ 4",
+					"(2*(3^4))",
+					162,
+				},
+				{
+					"3 ^ 4 * 2",
+					"((3^4)*2)",
+					162,
+				},
+
+				// MultDivModulo -- EQUAL PRECEDENCE
+				{
+					"2 * 3 / 4 % 5",
+					"(((2*3)/4)%5)",
+					1.5f,
+				},
+				{
+					"2 * 3 % 4 / 5",
+					"(((2*3)%4)/5)",
+					0.4f,
+				},
+				{
+					"2 % 3 * 4 / 5",
+					"(((2%3)*4)/5)",
+					1.6f,
+				},
+				{
+					"2 / 3 * 4 % 5",
+					"(((2/3)*4)%5)",
+					2.666666666666f,
+				},
+				{
+					"2 % 3 / 4 * 5",
+					"(((2%3)/4)*5)",
+					2.5,
+				},
+				{
+					"2 / 3 % 4 * 5",
+					"(((2/3)%4)*5)",
+					3.333333333333f,
+				},
+			};
+
+			MyDictionary<value_t*> dict;
+
+			for (int i = 0; i < _countof(table); ++i)
+			{
+				std::shared_ptr<Expression> spExpression;
+
+				if ((err = Expression::Compile(table[i].original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+				{
+					std::wstring errPrint(L"PrintString failed for: ");
+					std::wstring errEvaluate(L"Evaluate failed for: ");
+					errPrint += utf8_to_wstring(table[i].original.c_str());
+					errEvaluate += utf8_to_wstring(table[i].original.c_str());
+					char* pszResult = spExpression->PrintString();
+					Assert::AreEqual(table[i].expected.c_str(), pszResult, errPrint.c_str());
+					free(pszResult);
+					pszResult = nullptr;
+
+					value_t fResult = spExpression->Evaluate();
+					Assert::AreEqual(table[i].fExpected, fResult, defaultTolerance, errEvaluate.c_str());
+				}
+
+				Assert::IsTrue(err == SUCCESS, L"Compile failed");
+			}
 		}
 	};
 }

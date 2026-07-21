@@ -28,6 +28,15 @@
 
 #include "Expression.h"
 
+// TODO: JRDV: Consider updating to use std::wformat / std::wformat_string whenever updating to C++20
+//#include <format> // The project currently defaults to C++14, and this header is only available in C++20
+//std::wstring utf8_to_wstring(const std::string& s);
+#include <string>
+#include <codecvt>
+std::wstring utf8_to_wstring(const std::string& s) {
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	return conv.from_bytes(s);
+}
 
 #ifdef REGULAR_EXPRESSION
   /****************************************************************************
