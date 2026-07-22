@@ -616,9 +616,9 @@ token_t    FilingClerk::GetToken(void)
 error_t FilingClerk::LoadConfig(MyDictionary<char*>** ppConfig,
 	DWORD* inoutNumAllocated)
 {
-	error_t             err = SUCCESS;
-	char* strFile = NULL;
-	DWORD               nConfig = 0;
+	error_t				err = SUCCESS;
+	char*				strFile = NULL;
+	DWORD				nConfig = 0;
 	DWORD               nNumConfig = 0;
 	MyDictionary<char*>* pTmpConfig = NULL;
 
@@ -752,7 +752,7 @@ error_t FilingClerk::LoadConfig(MyDictionary<char*>** ppConfig,
 
 /****************************************************************************
  *
- * LoadColorMaps - similar to LoadConfig, except handles teh special parsing
+ * LoadColorMaps - similar to LoadConfig, except handles the special parsing
  *        requirements for palettes, color maps, or whatever you call them.
  *
  ****************************************************************************/
