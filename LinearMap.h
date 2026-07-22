@@ -32,6 +32,17 @@
  * LinearMap
  *
  ****************************************************************************/
+ /****************************************************************************
+  *
+  * LinearMap
+  *
+  * I represent a set of elements that can be viewed as
+  * 1) a map from Keys to a Values, or
+  * 2) a list of Key/Value pairs in the order they were added.
+  *
+  * NOW you can remove vars
+  *
+  ****************************************************************************/
 template<class KeyType, class DataType>
 class LinearMap
 {
@@ -42,10 +53,7 @@ class LinearMap
 public:
 	error_t Add(const KeyType& key, const DataType& data)
 	{
-		//m_map.insert(key, std::make_tuple(data, m_sequence));
-		//m_map.insert(std::make_tuple(key, data, m_sequence));
 		m_map.emplace(key, std::make_tuple(data, m_sequence++));
-		//m_map.emplace(std::make_tuple(key, data, m_sequence));
 
 		return SUCCESS;
 	}
@@ -253,8 +261,15 @@ public:
 
 		outArray = std::move(retVal);
 		return SUCCESS;
-	};
-};
+	}
 
+	virtual void    WipeContents(void)
+	{
+		/*
+		 * if should free the elements, do so before delete[]'ing the array
+		 */
+		m_map.clear();
+	}
+};
 
 
