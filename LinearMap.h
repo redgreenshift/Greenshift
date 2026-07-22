@@ -35,8 +35,9 @@
 template<class KeyType, class DataType>
 class LinearMap
 {
-	std::unordered_map<KeyType, std::tuple<DataType, int> > m_map;
-	int m_sequence = 0;
+	typedef int SequenceType;
+	std::unordered_map<KeyType, std::tuple<DataType, SequenceType> > m_map;
+	SequenceType m_sequence = 0;
 
 public:
 	error_t Add(const KeyType& key, const DataType& data)
@@ -227,18 +228,28 @@ public:
 		/*
 		 * create the array to copy the contents
 		 */
-		//if (((*outArray) = new std::vector<std::tuple<KeyType, DataType>[size])> == NULL)
-		//	return ERR_MALLOC;
+		std::map< SequenceType, std::tuple<KeyType, DataType> > sequenceMap;
 
 		for (auto const & kvPair : m_map)
 		{
 			const KeyType& key = kvPair.first;
-			const std::tuple<DataType, int>& value = kvPair.second;
+			const std::tuple<DataType, SequenceType>& value = kvPair.second;
 			const DataType& data = std::get<0>(value);
-			int sequence = std::get<1>(value); // TODO: JRDV: This is NOT guaranteed to be true INDEX to insert, except if NOTHING IS EVER REMOVED!!! So we gotta sort...
+			SequenceType sequence = std::get<1>(value);
 
-			retVal[sequence] = std::make_tuple(key, data);
+			sequenceMap.emplace(sequence, std::make_tuple(key, data));
 		}
+
+		int index = 0;
+		for (auto& kvPair : sequenceMap)
+		{
+			std::tuple<KeyType, DataType>& value = kvPair.second;
+
+			retVal[index++] = std::move(value);
+		}
+
+		if (index != size)
+			return FAILURE;
 
 		outArray = std::move(retVal);
 		return SUCCESS;
