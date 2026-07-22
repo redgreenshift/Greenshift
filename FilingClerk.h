@@ -163,7 +163,7 @@ protected:
 
 
 	error_t     OpenFile(const char* strFileName, const char* strAccess = "rb");
-	int         CloseFile(void);
+	error_t     CloseFile(void);
 
 
 	bool        EndsIn(const char* inString, const char* inMatchString)

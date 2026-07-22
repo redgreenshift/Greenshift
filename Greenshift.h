@@ -164,19 +164,19 @@ protected:
 	MyDictionary<char*>* m_pParticleConfigs;
 	MyDictionary<char*>* m_pPaletteConfigs;
 
-	Expression* m_pFFTTransform;
+	Expression* m_pFFTTransform = nullptr;
 
-	value_t                     m_nRawFFTValue;
-	value_t                     m_nFrequency;
+	value_t                     m_nRawFFTValue = 0;
+	value_t                     m_nFrequency = 0;
 
 
-	value_t                     m_nFramesPerSecond;
-	value_t                     m_nSecondsPerFrame;
-	value_t                     m_nDesiredFramerate;
-	value_t                     m_nMinimumFramerate;
+	value_t                     m_nFramesPerSecond = 0;
+	value_t                     m_nSecondsPerFrame = 0;
+	value_t                     m_nDesiredFramerate = 0;
+	value_t                     m_nMinimumFramerate = 0;
 
-	DWORD                       m_dwDesiredMSecondsPerFrame;
-	DWORD                       m_dwMaximumMSecondsPerFrame;
+	DWORD                       m_dwDesiredMSecondsPerFrame = 0;
+	DWORD                       m_dwMaximumMSecondsPerFrame = 0;
 
 };
 

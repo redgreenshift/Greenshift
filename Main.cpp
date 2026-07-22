@@ -148,7 +148,7 @@ int PASCAL WINMAIN(HINSTANCE hInstance,
 	LPSTR lpCmdLine,
 	int nCmdShow)
 {
-	error_t err = 0;
+	error_t err = SUCCESS;
 	//    int i;
 	DWORD i;
 	//    DWORD j;
@@ -403,7 +403,7 @@ int PASCAL WINMAIN2(HINSTANCE hInstance,
 	LPSTR lpCmdLine,
 	int nCmdShow)
 {
-	error_t err = 0;
+	error_t err = SUCCESS;
 	BitCanvas* bitCanvas;
 	MyDictionary<char*> dConfig;
 

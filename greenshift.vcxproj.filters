@@ -194,6 +194,9 @@
     <ClInclude Include="MyDictionary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LinearMap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="settings.txt" />

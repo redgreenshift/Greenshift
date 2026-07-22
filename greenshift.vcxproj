@@ -596,6 +596,7 @@
     <ClInclude Include="ContiguousAlignedMemoryAllocator.h" />
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
+    <ClInclude Include="LinearMap.h" />
     <ClInclude Include="MyDictionary.h" />
     <ClInclude Include="DXError.h" />
     <ClInclude Include="Expression.h" />

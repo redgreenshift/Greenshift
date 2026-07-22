@@ -837,7 +837,7 @@ error_t    Greenshift::Render(void)
 	error_t err;
 	if (m_pWindowDevice == NULL || !m_pWindowDevice->IsActive())
 	{
-		return -1;
+		return ERR_DD_FAILURE; //  -1;
 	}
 
 	m_hrFramerateTimer.Start();  /* start timer, see how long drawing takes */

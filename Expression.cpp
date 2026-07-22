@@ -880,8 +880,8 @@ EXPRESSION_BINARY_MATH_OPERATION(And)
 #define EXPRESSION_UNARY__COPY(OperationName)    \
 error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 {\
-    Expression *tmpExpression;\
-    error_t err;\
+    Expression *tmpExpression = nullptr;\
+    error_t err = SUCCESS;\
 \
     if( (err = UnaryTerm()->Copy(&tmpExpression)) == SUCCESS )\
         return New##OperationName ( tmpExpression, NULL, outExpression );\
@@ -892,10 +892,10 @@ error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 #define EXPRESSION_BINARY_COPY(OperationName)    \
 error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 {\
-    Expression *term1;\
-    Expression *term2;\
-    error_t err1 = 0;\
-    error_t err2 = 0;\
+    Expression *term1 = nullptr;\
+    Expression *term2 = nullptr;\
+    error_t err1 = SUCCESS;\
+    error_t err2 = SUCCESS;\
 \
     if( (err1 = FirstTerm()->Copy(&term1)) == SUCCESS &&\
         (err2 = SecondTerm()->Copy(&term2)) == SUCCESS )\
@@ -907,12 +907,12 @@ error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 #define EXPRESSION_TERNARY_COPY(OperationName)    \
 error_t    Expression##OperationName    ::Copy(Expression **outExpression)\
 {\
-    Expression *term1;\
-    Expression *term2;\
-    Expression *term3;\
-    error_t err1 = 0;\
-    error_t err2 = 0;\
-    error_t err3 = 0;\
+    Expression *term1 = nullptr;\
+    Expression *term2 = nullptr;\
+    Expression *term3 = nullptr;\
+    error_t err1 = SUCCESS;\
+    error_t err2 = SUCCESS;\
+    error_t err3 = SUCCESS;\
 \
     if( (err1 = FirstTerm()->Copy(&term1)) == SUCCESS &&\
         (err2 = SecondTerm()->Copy(&term2)) == SUCCESS &&\
@@ -938,7 +938,7 @@ error_t    ExpressionSymbol::Copy(Expression** outExpression)
 error_t    ExpressionUserDefined::Copy(Expression** outExpression)
 {
 	Expression* term1;
-	error_t        err = 0;
+	error_t        err = SUCCESS;
 
 	if ((err = UnaryTerm()->Copy(&term1)) == SUCCESS)
 		return NewUserDefined(&m_edExpressionDescription,
@@ -1061,8 +1061,8 @@ error_t ExpressionUserDefined::PartialSimplification
 error_t Expression##OperationName    ::PartialSimplification\
     (value_t *inValue, Expression **outExpression)\
 {\
-    Expression *tmpExpression;\
-    error_t err;\
+    Expression *tmpExpression = nullptr;\
+    error_t err = SUCCESS;\
 \
     if( this->IsConstantExpression(inValue) )\
         return NewConstant( this->Evaluate(), outExpression );\
@@ -1078,9 +1078,9 @@ error_t Expression##OperationName    ::PartialSimplification\
 error_t Expression##OperationName    ::PartialSimplification\
     (value_t *inValue, Expression **outExpression)\
 {\
-    Expression *term1, *term2;\
-    error_t err1 = 0;\
-    error_t err2 = 0;\
+    Expression *term1 = nullptr, *term2 = nullptr;\
+    error_t err1 = SUCCESS;\
+    error_t err2 = SUCCESS;\
 \
     if( this->IsConstantExpression(inValue) )\
         return NewConstant( this->Evaluate(), outExpression );\
@@ -1097,10 +1097,10 @@ error_t Expression##OperationName    ::PartialSimplification\
 error_t Expression##OperationName    ::PartialSimplification\
     (value_t *inValue, Expression **outExpression)\
 {\
-    Expression *term1, *term2, *term3;\
-    error_t err1 = 0;\
-    error_t err2 = 0;\
-    error_t err3 = 0;\
+    Expression *term1 = nullptr, *term2 = nullptr, *term3 = nullptr;\
+    error_t err1 = SUCCESS;\
+    error_t err2 = SUCCESS;\
+    error_t err3 = SUCCESS;\
 \
     if( this->IsConstantExpression(inValue) )\
         return NewConstant( this->Evaluate(), outExpression );\

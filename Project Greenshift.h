@@ -845,6 +845,7 @@ enum {
 	ERR_OR,                 /* Expression */
 	ERR_AND,                /* Expression */
 	ERR_STAR,               /* Expression */
+	ERR_DD_FAILURE,
 	//    ERR_UNKNOWNOPCODE,      /* Expression - when using the VM approach */
 
 	ERR_UNDEFINED,          /* the error code right after the last error,

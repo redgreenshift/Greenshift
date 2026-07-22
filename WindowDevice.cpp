@@ -65,6 +65,8 @@ WindowDevice::WindowDevice()
 	m_bSwitchingModes = false;
 
 	m_hParentWindow = NULL;
+	m_hDefWindowProc = NULL;
+	m_hWindow = NULL;
 
 	m_dwWindowWidth = 0;
 	m_dwWindowHeight = 0;
