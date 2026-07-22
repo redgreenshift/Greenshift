@@ -270,9 +270,7 @@ public:
 	 ****************************************************************************/
 	error_t        RemoveValue(const char* inKey)
 	{
-		error_t    err;
 		DWORD    i;
-		Association<DataType>* pTmp;
 
 		if (inKey == NULL)
 			return ERR_NULL;

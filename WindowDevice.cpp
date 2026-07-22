@@ -599,7 +599,7 @@ error_t    WindowDevice::Flip(void)
 		//            hrtClock.Start();
 	}
 
-	err = OnFlip();  /* perform the flip, or blit */
+	err = SUCCEEDED(OnFlip()) ? SUCCESS : ERR_DD_FAILURE;  /* perform the flip, or blit */
 
 	if (dwFrames > 50)
 	{

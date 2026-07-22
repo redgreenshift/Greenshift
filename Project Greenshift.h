@@ -174,10 +174,6 @@
 typedef unsigned long   PIXELMAP;
 typedef unsigned long* PPIXELMAP;
 
-/*
- * the error type (error codes are listed below)
- */
-typedef int     error_t;
 
 /*
  * the floating point value type
@@ -774,7 +770,7 @@ static void DumpToFile(const char* fileName, char* aString, char* anotherString 
   * Error Codes
   *
   ****************************************************************************/
-enum {
+typedef enum {
 	/* Error Name */        /* thing that returns the specific error */
 
 	SUCCESS = 0,           /* anything - means no error */
@@ -860,7 +856,7 @@ enum {
 	ERR_INVALIDERRORCODE    /* same thing as undefined error -
 							 * I just couldn't decide between the two
 							 */
-};
+} error_t; // the error type (error codes are listed above)
 
 
 

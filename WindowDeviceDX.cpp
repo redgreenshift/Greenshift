@@ -90,9 +90,9 @@ HRESULT    WindowDeviceDX::Blit(void)
 	ZeroMemory(&ddsd, sizeof(ddsd));
 	ddsd.dwSize = sizeof(ddsd);
 
-	if (GetBack()->IsLost())
+	if (S_OK != GetBack()->IsLost())
 		hRet = GetBack()->Restore();  /* cannot restore the back buffer of a flipping chain */
-	if (GetPrimary()->IsLost())
+	if (S_OK != GetPrimary()->IsLost())
 		hRet = GetPrimary()->Restore();
 
 	/* if surfaces were created in a different mode, recreate them */
@@ -171,9 +171,9 @@ HRESULT    WindowDeviceDX::OnFlip(void)
 	//    do
 	{
 
-		if (GetPrimary()->IsLost())
+		if (S_OK != GetPrimary()->IsLost())
 			GetPrimary()->Restore();
-		if (GetBack()->IsLost())
+		if (S_OK != GetBack()->IsLost())
 			GetBack()->Restore();
 
 		if (ShouldFlip())
@@ -383,7 +383,7 @@ error_t    WindowDeviceDX::ClearScreenAll(void)
 	LeaveCS();
 
 	if (hRet != DD_OK)
-		return hRet;
+		return ERR_DD_FAILURE;
 
 	return SUCCESS;
 }
