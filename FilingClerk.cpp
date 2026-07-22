@@ -791,7 +791,7 @@ error_t FilingClerk::LoadColorMaps(MyDictionary<char*>** ppConfig,
 		 */
 		pTmpConfig = new MyDictionary<char*>[nNumConfig];
 		if (pTmpConfig == NULL)
-			return SUCCESS;
+			return ERR_MALLOC;
 
 		/*
 		 * now find all the files over again
