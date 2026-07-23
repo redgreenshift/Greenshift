@@ -267,6 +267,7 @@ void* TweenThread::GetFrame(void)
 		m_dwState = 2;
 		LeaveCS();
 		/* FALLTHROUGH */
+		__fallthrough;
 
 	case 2:
 
@@ -286,7 +287,8 @@ void* TweenThread::GetFrame(void)
 							  * the fallthrough does frame 0,
 							  * so let frame 1 go next
 							  */
-							  /* FALLTHROUGH */
+		/* FALLTHROUGH */
+		__fallthrough;
 
 	default:
 		return m_pPlainFrames[0];
