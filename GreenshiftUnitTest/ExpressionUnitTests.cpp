@@ -21,6 +21,8 @@
 #include "pch.h"
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
+#include "..\TextUtils.hpp"
+#include "..\TextUtils.cpp"
 #include "..\Expression.h"
 #include "..\Expression.cpp"
 

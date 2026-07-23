@@ -322,6 +322,7 @@
       <ObjectFileName>.\expressionconsole___Win32_Release_Windows\</ObjectFileName>
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows\</ProgramDataBaseFileName>
       <AdditionalOptions> /GM </AdditionalOptions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows\expressionconsole.tlb</TypeLibraryName>
@@ -554,6 +555,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">true</ExcludedFromBuild>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'"> /GM   /GM </AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="TextUtils.cpp" />
     <ClCompile Include="ThreadedEntity.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'"> /GM   /GM </AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows DLL|Win32'"> /GM   /GM </AdditionalOptions>
@@ -617,6 +619,7 @@
     <ClInclude Include="PhaseFunction.h" />
     <ClInclude Include="PointRotation.h" />
     <ClInclude Include="Project Greenshift.h" />
+    <ClInclude Include="TextUtils.hpp" />
     <ClInclude Include="ThreadedEntity.h" />
     <ClInclude Include="TweenThread.h" />
     <ClInclude Include="VectorGraphic.h" />
