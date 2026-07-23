@@ -1166,7 +1166,7 @@ EXPRESSION_BINARY_PARTIAL(And)
  ****************************************************************************/
 
  /* default has no operator -- Scalar */
-	char* ExpressionValue::Operator(void) { return NULL; };
+char* ExpressionValue::Operator(void) { return NULL; };
 
 /* Unary */
 char* ExpressionSqrt::Operator(void) { return "sqrt"; };
