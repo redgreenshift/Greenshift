@@ -123,7 +123,11 @@ public:
 		if (inString != NULL
 			&& (strTmp = new char[size]) != NULL)
 		{
-			strncpy_s(strTmp, size, inString, size);
+			if (strcpy_s(strTmp, size, inString) != 0)
+			{
+				delete[] strTmp;
+				return nullptr;
+			}
 			return strTmp;
 		}
 		else
