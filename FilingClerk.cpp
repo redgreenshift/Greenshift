@@ -259,11 +259,14 @@ char* FilingClerk::GetFirstFile(const char* strFileMask)
 	//    char strFile[260];
 	char strFile[_MAX_PATH];
 
-	strcpy(strFile, m_strRoot);
-	strcat(strFile, "\\");
-	strcat(strFile, m_strFolder);
-	strcat(strFile, "\\");
-	strcat(strFile, strFileMask);
+	if (   strcpy_s(strFile, _countof(strFile), m_strRoot) != 0
+		|| strcat_s(strFile, _countof(strFile), "\\") != 0
+		|| strcat_s(strFile, _countof(strFile), m_strFolder) != 0
+		|| strcat_s(strFile, _countof(strFile), "\\") != 0
+		|| strcat_s(strFile, _countof(strFile), strFileMask) != 0)
+	{
+		return nullptr;
+	}
 
 	/*
 	 * close any previous unclosed searches
@@ -930,23 +933,26 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 	}
 	else
 	{
-		strTmp = (char*)realloc(m_strFile, strlen(id)
+		size_t nLength = strlen(id)
 			+ strlen(m_strFolder)
-			+ strlen(m_strRoot) + 3);
+			+ strlen(m_strRoot) + 3;
+		strTmp = (char*)realloc(m_strFile, nLength);
 		if (strTmp == NULL)
 			return ERR_REALLOC;
 
-
 		m_strFile = strTmp;
-		strcpy(m_strFile, m_strRoot);
-		if (m_strRoot[0] != '\0')
-			strcat(m_strFile, "\\");
-		strcat(m_strFile, m_strFolder);
-		if (m_strFolder[0] != '\0')
-			strcat(m_strFile, "\\");
-		strcat(m_strFile, id);
+		if (strcpy_s(m_strFile, nLength, m_strRoot) != 0)
+			return FAILURE;
+		if (m_strRoot[0] != '\0' && strcat_s(m_strFile, nLength, "\\") != 0)
+			return FAILURE;
+		if (strcat_s(m_strFile, nLength, m_strFolder) != 0)
+			return FAILURE;
+		if (m_strFolder[0] != '\0' && strcat_s(m_strFile, nLength, "\\") != 0)
+			return FAILURE;
+		if (strcat_s(m_strFile, nLength, id) != 0)
+			return FAILURE;
 
-		//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+		//sprintf( m_strFile, "%s\\%s", m_strFolder, id );
 	}
 
 
@@ -1103,23 +1109,26 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 	}
 	else
 	{
-		strTmp = (char*)realloc(m_strFile, strlen(id)
+		const size_t nLength = strlen(id)
 			+ strlen(m_strFolder)
-			+ strlen(m_strRoot) + 3);
+			+ strlen(m_strRoot) + 3;
+		strTmp = (char*)realloc(m_strFile, nLength);
 		if (strTmp == NULL)
 			return ERR_REALLOC;
 
-
 		m_strFile = strTmp;
-		strcpy(m_strFile, m_strRoot);
-		if (m_strRoot[0] != '\0')
-			strcat(m_strFile, "\\");
-		strcat(m_strFile, m_strFolder);
-		if (m_strFolder[0] != '\0')
-			strcat(m_strFile, "\\");
-		strcat(m_strFile, id);
+		if (strcpy_s(m_strFile, nLength, m_strRoot) != 0)
+			return FAILURE;
+		if (m_strRoot[0] != '\0' && strcat_s(m_strFile, nLength, "\\") != 0)
+			return FAILURE;
+		if (strcat_s(m_strFile, nLength, m_strFolder) != 0)
+			return FAILURE;
+		if (m_strFolder[0] != '\0' && strcat_s(m_strFile, nLength, "\\") != 0)
+			return FAILURE;
+		if (strcat_s(m_strFile, nLength, id) != 0)
+			return FAILURE;
 
-		//        sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+		//sprintf( m_strFile, "%s\\%s", m_strFolder, id );
 	}
 
 	/*
@@ -1204,14 +1213,17 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 				}
 				else
 				{
-					strTmp = (char*)realloc(strID, strlen(strID)
+					const size_t length = strlen(strID)
 						+ strlen(strToken)
-						+ 1);
+						+ 1;
+					strTmp = (char*)realloc(strID, length);
 					if (strTmp == NULL)
 						return ERR_REALLOC;
 
 					/* append the token string and assign it to strID */
-					strID = strcat(strTmp, strToken);
+					if (strcat_s(strTmp, length, strToken) != 0)
+						return FAILURE;
+					strID = strTmp;
 				}
 
 				break;
@@ -1280,14 +1292,17 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 				}
 				else /* append token string to the expression found so far */
 				{
-					strTmp = (char*)realloc(strExp, strlen(strExp)
+					const size_t cchLen = strlen(strExp)
 						+ strlen(strToken)
-						+ 1);
+						+ 1;
+					strTmp = (char*)realloc(strExp, cchLen);
 					if (strTmp == NULL)
 						return ERR_REALLOC;
 
 					/* append the token string and assign it to strExp */
-					strExp = strcat(strTmp, strToken);
+					if (strcat_s(strTmp, cchLen, strToken) != 0)
+						return FAILURE;
+					strExp = strTmp;
 				}
 
 				break;

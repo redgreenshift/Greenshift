@@ -1312,7 +1312,13 @@ char* ExpressionVariable::PrintString(char* inStr, int& nLength)
 		/*
 		 * add yer stuff
 		 */
-		return strcat(tmpStr, VariableName());
+		if (strcat_s(tmpStr, nLength, VariableName()) != 0)
+		{
+			/* failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
+		}
+		return tmpStr;
 	}
 	else
 	{    /* realloc failure, free the memory and get out */
@@ -1348,7 +1354,13 @@ char* ExpressionConstant::PrintString(char* inStr, int& nLength)
 	if ((tmpStr = (char*)realloc(inStr, nLength)) != NULL)
 	{
 		/* add the number */
-		return strcat(tmpStr, buffer);
+		if (strcat_s(tmpStr, nLength, buffer) != 0)
+		{
+			/* failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
+		}
+		return tmpStr;
 	}
 	else
 	{    /* realloc failure, free the memory and get out */
@@ -1414,19 +1426,21 @@ char* ExpressionUnary::PrintString(char* inStr, int& nLength)
 	 */
 	if ((tmpStr = (char*)realloc(inStr, nLength)) != NULL)
 	{
-		strcat(tmpStr, Operator());    /* add the operator */
-		strcat(tmpStr, "(");            /* and the opening paren */
-		if ((tmpTmpStr = UnaryTerm()->PrintString(tmpStr, nLength)) != NULL)
+		if (   strcat_s(tmpStr, nLength, Operator()) != 0	/* add the operator */
+			|| strcat_s(tmpStr, nLength, "(") != 0			/* and the opening paren */
+			|| (tmpTmpStr = UnaryTerm()->PrintString(tmpStr, nLength)) == NULL
+			|| strcat_s(tmpTmpStr, nLength, ")") != 0)		/* and now the closing paren */
 		{
-			//            tmpStr = tmpTmpStr;
-			return strcat(tmpTmpStr, ")"); /* and now the closing paren */
+			/* failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
 		}
+		return tmpTmpStr;
 	}
-	else
-		/* realloc failure, free the memory and get out */
-		free(inStr);
 
 	/* else, something went wrong */
+	/* realloc failure, free the memory and get out */
+	free(inStr);
 	return NULL;
 }
 
@@ -1447,23 +1461,44 @@ char* ExpressionBinary::PrintString(char* inStr, int& nLength)
 	/* make space for current operation and parens */
 	if ((tmpStr = (char*)realloc(inStr, nLength)) != NULL)
 	{
-		strTerm1 = strcat(tmpStr, "(");
+		if (strcat_s(tmpStr, nLength, "(") != 0)
+		{
+			/* failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
+		}
+		strTerm1 = tmpStr;
 
 		if ((tmpStr = FirstTerm()->PrintString(strTerm1, nLength)) != NULL)
 		{
-			strTerm2 = strcat(tmpStr, Operator());
+			if (strcat_s(tmpStr, nLength, Operator()) != 0)
+			{
+				/* failure, free the memory and get out */
+				free(tmpStr);
+				return nullptr;
+			}
+			strTerm2 = tmpStr;
 
 			if ((tmpStr = SecondTerm()->PrintString(strTerm2, nLength)) != NULL)
 			{
-				return strcat(tmpStr, ")");
+				if (strcat_s(tmpStr, nLength, ")") != 0)
+				{
+					/* failure, free the memory and get out */
+					free(tmpStr);
+					return nullptr;
+				}
+				return tmpStr;
 			}
 		}
+
+		/* else failure, free the memory and get out */
+		free(tmpStr);
+		return nullptr;
 	}
-	else
-		/* realloc failure, free the memory and get out */
-		free(inStr);
 
 	/* else, something bad happened */
+	/* realloc failure, free the memory and get out */
+	free(inStr);
 	return NULL;
 }
 
@@ -1484,28 +1519,55 @@ char* ExpressionTernary::PrintString(char* inStr, int& nLength)
 	/* make space for current operation and parens */
 	if ((tmpStr = (char*)realloc(inStr, nLength)) != NULL)
 	{
-		strTerm1 = strcat(tmpStr, "(");
+		if (strcat_s(tmpStr, nLength, "(") != 0)
+		{
+			/* failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
+		}
+		strTerm1 = tmpStr;
 
 		if ((tmpStr = FirstTerm()->PrintString(strTerm1, nLength)) != NULL)
 		{
-			strTerm2 = strcat(tmpStr, "?"); // TODO: need to refactor Operator(), or use a format string.
+			if (strcat_s(tmpStr, nLength, "?") != 0)
+			{
+				/* failure, free the memory and get out */
+				free(tmpStr);
+				return nullptr;
+			}
+			strTerm2 = tmpStr;
 
 			if ((tmpStr = SecondTerm()->PrintString(strTerm2, nLength)) != NULL)
 			{
-				strTerm3 = strcat(tmpStr, ":"); // TODO: need to refactor Operator(), or use a format string.
+				if (strcat_s(tmpStr, nLength, ":") != 0)
+				{
+					/* failure, free the memory and get out */
+					free(tmpStr);
+					return nullptr;
+				}
+				strTerm3 = tmpStr;
 
 				if ((tmpStr = ThirdTerm()->PrintString(strTerm3, nLength)) != NULL)
 				{
-					return strcat(tmpStr, ")");
+					if (strcat_s(tmpStr, nLength, ")") != 0)
+					{
+						/* failure, free the memory and get out */
+						free(tmpStr);
+						return nullptr;
+					}
+					return tmpStr;
 				}
 			}
+
+			/* else failure, free the memory and get out */
+			free(tmpStr);
+			return nullptr;
 		}
 	}
-	else
-		/* realloc failure, free the memory and get out */
-		free(inStr);
 
 	/* else, something bad happened */
+	/* realloc failure, free the memory and get out */
+	free(inStr);
 	return NULL;
 }
 
@@ -2127,11 +2189,13 @@ error_t Expression::Compile(const char* inString,
 	 */
 	if (strWithoutWhitespace[0] == '\0')
 	{
+		const char szZero[] = "0";
 		delete[] strWithoutWhitespace;
-		if ((strWithoutWhitespace = new char[2]) == NULL)
+		if ((strWithoutWhitespace = new char[_countof(szZero)]) == NULL)
 			return ERR_MALLOC;
 
-		strcpy(strWithoutWhitespace, "0");
+		if (strcpy_s(strWithoutWhitespace, _countof(szZero), szZero) != 0)
+			return FAILURE;
 	}
 
 
