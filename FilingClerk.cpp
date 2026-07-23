@@ -613,7 +613,8 @@ token_t    FilingClerk::GetToken(void)
  *        particle or whatnot
  *
  ****************************************************************************/
-error_t FilingClerk::LoadConfig(MyDictionary<char*>** ppConfig,
+error_t FilingClerk::LoadConfig(
+	MyDictionary<char*>** ppConfig,
 	DWORD* inoutNumAllocated)
 {
 	error_t				err = SUCCESS;

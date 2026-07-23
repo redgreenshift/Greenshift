@@ -425,13 +425,6 @@ public:
 
 
 
-
-
-
-
-
-
-
 protected:
 
 	/************************************************************************
@@ -851,7 +844,8 @@ public:
 	char* Operator(void);
 	value_t     Evaluate(void);
 	error_t     Copy(Expression** outExpression);
-	error_t     PartialSimplification(value_t* inValue,
+	error_t     PartialSimplification(
+		value_t* inValue,
 		Expression** outExpression);
 };
 
@@ -1317,7 +1311,8 @@ public:
 	char* Operator(void);
 	value_t     Evaluate(void);
 	error_t     Copy(Expression** outExpression);
-	error_t     PartialSimplification(value_t* inValue,
+	error_t     PartialSimplification(
+		value_t* inValue,
 		Expression** outExpression);
 };
 

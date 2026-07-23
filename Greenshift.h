@@ -110,7 +110,7 @@ protected:
 
 
 protected:
-	MTRand                      m_mtRand;
+	//MTRand                      m_mtRand;
 
 	/* ?!  I have two forms?!  I should remove one! */
 	unsigned char               m_cWaveformData[2][SOUND_DATA_LENGTH];

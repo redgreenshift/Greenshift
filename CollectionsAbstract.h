@@ -54,7 +54,7 @@ class Collection
 protected:
 	DWORD           m_dwNumElements;   /* number of elements stored */
 	DWORD           m_dwCapacity;      /* num of allocated spaces in array */
-	DataType* m_pArray;         /* data stored in the Collection */
+	DataType*		m_pArray;          /* data stored in the Collection */
 	bool            m_bGrowable;       /* true if m_pArray may be resized,
 										* false if has a fixed size */
 	bool            m_bDeleteElements; /* if true, the elements in the array
@@ -145,12 +145,16 @@ public:
 		 * if should free the elements, do so before delete[]'ing the array
 		 */
 		if (m_bDeleteElements)
+		{
 			for (i = 0; i < Capacity(); i++)
+			{
 				if (m_pArray[i] != InvalidValue)
 				{
 					delete m_pArray[i];
 					m_pArray[i] = InvalidValue;
 				}
+			}
+		}
 
 		m_dwNumElements = 0;
 	};
@@ -184,7 +188,7 @@ public:
 	virtual error_t Add(DataType inValue)
 	{
 		error_t err;
-		DWORD   i;
+		DWORD   i = -1;
 
 		if (!IsValid(inValue))
 			return ERR_NULL;

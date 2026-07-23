@@ -2627,7 +2627,11 @@ error_t Expression::Compile(char* inString,
 									return currentOperation->newExpression(term1, term2, outExpression);
 								}
 								else
+								{
+									delete term1;
+									delete term2;
 									return max(err1, err2);
+								}
 
 								return currentOperation->newExpression(term1, term2, outExpression);
 
@@ -2751,11 +2755,6 @@ error_t Expression::Compile(char* inString,
 	};
 #endif
 
-
-
-
 	return ERR_COMPILE;    /* couldn't parse it */
-
 }
-
 
