@@ -602,6 +602,21 @@ protected:
 
 
 
+#if EXTREME_DEBUGGING
+static void DumpToFile(const char* fileName, MyDictionary<char*>* pDict, char* anotherString = "")
+{
+	FILE* outFile;
+
+//    pDict->DebugDumpContents( fileName );
+
+
+	outFile = fopen(fileName, "a");
+
+	fprintf(outFile, " %s", anotherString);
+
+	fclose(outFile);
+}
+#endif
 
 
 #endif    /* _MyDictionary_H_ */

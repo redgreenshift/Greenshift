@@ -2067,6 +2067,25 @@ error_t     Expression::NewAnd(Expression* inExpression1,
 
 
 
+#if EXTREME_DEBUGGING
+void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, char* anotherString /* = "" */)
+{
+	FILE* outFile = fopen(fileName, "a");
+
+	fprintf(outFile, "%s %d", pED->strName, pED->edtType);
+
+	if (pED->edtType == ED_CONSTANT)
+		fprintf(outFile, " %g", pED->value);
+
+
+	fprintf(outFile, " %s", anotherString);
+
+	fclose(outFile);
+
+}
+#endif
+
+
 
 
 

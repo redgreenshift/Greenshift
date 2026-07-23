@@ -714,36 +714,6 @@ static void DumpToFile(const char* fileName, value_t* aNumber, char* anotherStri
 	fclose(outFile);
 
 }
-#include "Expression.h"
-static void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, char* anotherString = "")
-{
-	FILE* outFile = fopen(fileName, "a");
-
-	fprintf(outFile, "%s %d", pED->strName, pED->edtType);
-
-	if (pED->edtType == ED_CONSTANT)
-		fprintf(outFile, " %g", pED->value);
-
-
-	fprintf(outFile, " %s", anotherString);
-
-	fclose(outFile);
-
-}
-
-static void DumpToFile(const char* fileName, MyDictionary<char*>* pDict, char* anotherString = "")
-{
-	FILE* outFile;
-
-	//    pDict->DebugDumpContents( fileName );
-
-
-	outFile = fopen(fileName, "a");
-
-	fprintf(outFile, " %s", anotherString);
-
-	fclose(outFile);
-}
 
 static void DumpToFile(const char* fileName, char* aString, char* anotherString = "")
 {

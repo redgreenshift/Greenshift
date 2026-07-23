@@ -1488,6 +1488,9 @@ public:
 #endif
 
 
+#if EXTREME_DEBUGGING
+void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, char* anotherString = "");
+#endif
 
 #endif /* _Expression_H_ */
 
