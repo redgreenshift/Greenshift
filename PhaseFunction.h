@@ -195,7 +195,8 @@ public:
 			 */
 			index = 0;
 			do {
-				sprintf(strID,
+				snprintf(strID,
+					_countof(strID),
 					"%c%d",
 					strPhaseID[dwPhase],
 					index++);
@@ -218,7 +219,7 @@ public:
 													 */
 		for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
 		{
-			sprintf(strID, "%c0", strDimensionID[dwDimension]);
+			snprintf(strID, _countof(strID), "%c0", strDimensionID[dwDimension]);
 
 			/*
 			 * if one of the dimensions is not used
@@ -247,7 +248,8 @@ public:
 				//            for( nDimension = 0; strDimensionID[nDimension] != '\0'; nDimension++ )
 				for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
 				{
-					sprintf(strID,
+					snprintf(strID,
+						_countof(strID),
 						"%c%d",
 						strDimensionID[dwDimension],
 						index++);
@@ -349,7 +351,8 @@ public:
 			 * loop and count the number of expressions in each phase
 			 */
 			index = 0;
-			sprintf(strID,
+			snprintf(strID,
+				_countof(strID),
 				"%c%d", strPhaseID[dwPhase], index++);
 
 			while (inConfig->GetValue(strID) != NULL)
@@ -372,7 +375,8 @@ public:
 				/*
 				 * make the next ID
 				 */
-				sprintf(strID,
+				snprintf(strID,
+					_countof(strID),
 					"%c%d", strPhaseID[dwPhase], index++);
 			}
 
@@ -398,7 +402,7 @@ public:
 			for (index = 0; index < m_pPhases[dwPhase].dwPhaseLength; index++)
 			{
 				/* dis I forget to do tolower? */
-				sprintf(strID, "%c%d", strPhaseID[dwPhase], index);
+				snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index);
 
 				err = Expression::Compile(inConfig->GetValue(strID),
 					&(m_pPhases[dwPhase].pFunctions[index]),
@@ -483,7 +487,7 @@ public:
 
 			for (index = 0; index < NumDimensions(); index++)
 			{
-				sprintf(strID, "%c%d", strDimensionID[index], dwFunction);
+				snprintf(strID, _countof(strID), "%c%d", strDimensionID[index], dwFunction);
 
 				/*
 				 * this is causing an error for some WaveShapes

@@ -166,7 +166,7 @@ error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
 
 	/*
 	 * determine palette type
-	 * Partial order, RGB, HSV, HLS, CMY
+	 * Partial order, RGB, HSV, HLS, CMY(K?)
 	 */
 	m_nPaletteType = PALETTE_UNKNOWN;
 	if ((strRed = pConfig->GetValue("R")) != NULL
@@ -214,9 +214,9 @@ error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
 		{
 			char* rVal, * gVal, * bVal;
 
-			sprintf(strIDRed, "r%d", i);
-			sprintf(strIDGreen, "g%d", i);
-			sprintf(strIDBlue, "b%d", i);
+			snprintf(strIDRed, _countof(strIDRed), "r%d", i);
+			snprintf(strIDGreen, _countof(strIDGreen), "g%d", i);
+			snprintf(strIDBlue, _countof(strIDBlue), "b%d", i);
 			rVal = pConfig->GetValue(strIDRed);
 			gVal = pConfig->GetValue(strIDGreen);
 			bVal = pConfig->GetValue(strIDBlue);

@@ -882,7 +882,7 @@ static char* ErrorString(error_t errCode)
 	//      }
 };
 #else
-static char* ErrorString(error_t errCode)
+static const char* ErrorString(error_t errCode)
 {
 	switch (errCode)
 	{

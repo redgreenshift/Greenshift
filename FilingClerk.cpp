@@ -1008,7 +1008,7 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 			switch (state)
 			{
 			case look_for_red:
-				if (sprintf(strID, "r%d", nEntryNumber) == 0)
+				if (snprintf(strID, _countof(strID), "r%d", nEntryNumber) == 0)
 					break;
 				outMyDictionary->SetValue(strID, (strToken));
 				strTOKEN = NULL;
@@ -1016,7 +1016,7 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 				break;
 
 			case look_for_green:
-				if (sprintf(strID, "g%d", nEntryNumber) == 0)
+				if (snprintf(strID, _countof(strID), "g%d", nEntryNumber) == 0)
 					break;
 				outMyDictionary->SetValue(strID, (strToken));
 				strTOKEN = NULL;
@@ -1024,7 +1024,7 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 				break;
 
 			case look_for_blue:
-				if (sprintf(strID, "b%d", nEntryNumber) == 0)
+				if (snprintf(strID, _countof(strID), "b%d", nEntryNumber) == 0)
 					break;
 				nEntryNumber++;
 				outMyDictionary->SetValue(strID, (strToken));
@@ -1064,13 +1064,13 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 	MyDictionary<MyDictionary<char*>*>* outExtra)
 {
-	error_t    err;
+	error_t    err = ERR_FAKE;
 	int        token = 0;
 	char* strTOKEN = NULL;
 	char* strToken = NULL;
 	char* strID = NULL;
 	char* strExp = NULL;
-	char* strTmp;
+	char* strTmp = nullptr;
 	enum { look_for_id, look_for_expression } state = look_for_id;
 	enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
 	MyDictionary<char*>* pIndirectMyDictionary = outMyDictionary;

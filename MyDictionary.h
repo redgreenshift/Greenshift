@@ -31,7 +31,8 @@
 
 #include "CollectionsAbstract.h"
 #include "Association.h"
-#include <string.h>
+#include "LinearMap.h"
+#include <string>
 
 
 
@@ -90,7 +91,6 @@ protected:
 		 */
 		for (i = Capacity(); i < dwNewSize; i++)
 			pNewArray[i] = NULL;
-
 
 		return SUCCESS;
 	};
@@ -155,7 +155,7 @@ class MyDictionary : public Set< Association<DataType>* >
 {
 protected:
 	DWORD                   m_dwAliasCount;
-	MyDictionary<char*>* m_pAlias;
+	MyDictionary<char*>*	m_pAlias;
 	MyDictionary<DataType>* m_pAlternate;
 	bool                    m_bCaseSensitive;  /* comparisons are case sensitive */
 
