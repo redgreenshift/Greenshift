@@ -35,6 +35,11 @@
 
 #if EXTREME_DEBUGGING
 #include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
+#if defined(_MSC_VER)
+#pragma warning(push)
+// The warning is only in logging code, so deferring for now
+#pragma warning(disable: 4244) // 'argument': conversion from 'const DWORD' to 'value_t', possible loss of data
+#endif
 #endif
 
 #include <stdio.h>  /* for sprintf() */
@@ -727,6 +732,11 @@ protected:
 	BYTE* m_pUnalignedMem;
 };
 
+#if EXTREME_DEBUGGING
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+#endif
 
 #endif  /* _PhaseFunction_H_ */
 
