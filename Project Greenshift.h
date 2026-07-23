@@ -685,7 +685,7 @@ static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNu
   */
 #include <stdio.h>
 #include <float.h>
-static void DumpToFile(const char* fileName, char* aString, value_t aNumber, char* anotherString = "")
+static void DumpToFile(const char* fileName, const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -695,7 +695,7 @@ static void DumpToFile(const char* fileName, char* aString, value_t aNumber, cha
 
 }
 
-static void DumpToFile(const char* fileName, value_t aNumber, char* anotherString = "")
+static void DumpToFile(const char* fileName, value_t aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -705,7 +705,7 @@ static void DumpToFile(const char* fileName, value_t aNumber, char* anotherStrin
 
 }
 
-static void DumpToFile(const char* fileName, value_t* aNumber, char* anotherString = "")
+static void DumpToFile(const char* fileName, value_t* aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -715,7 +715,7 @@ static void DumpToFile(const char* fileName, value_t* aNumber, char* anotherStri
 
 }
 
-static void DumpToFile(const char* fileName, char* aString, char* anotherString = "")
+static void DumpToFile(const char* fileName, const char* aString, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 

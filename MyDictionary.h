@@ -607,7 +607,7 @@ static void DumpToFile(const char* fileName, MyDictionary<char*>* pDict, char* a
 {
 	FILE* outFile;
 
-//    pDict->DebugDumpContents( fileName );
+	pDict->DebugDumpContents( fileName );
 
 
 	outFile = fopen(fileName, "a");

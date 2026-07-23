@@ -1277,6 +1277,7 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 				 */
 				strToken[strlen(strToken) - 1] = '\0';
 				strToken++;
+				__fallthrough;
 			case tokID:
 			default:
 

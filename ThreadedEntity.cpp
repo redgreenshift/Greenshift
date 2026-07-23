@@ -69,7 +69,7 @@ int    ThreadedEntity::BaseThreadProcedure(void* pData)
 	{
 		DumpToFile("error.txt", "Not sure which, but one of the following two errors occured:", "\n");
 		DumpToFile("error.txt", "\tERROR: ", "");
-		DumpToFile("error.txt", ErrorString(iRet), "\n");
+		DumpToFile("error.txt", ErrorString((error_t)iRet), "\n");
 		DumpToFile("error.txt", "\tERROR: ", "");
 		DumpToFile("error.txt", DXError(iRet), "\n");
 	}
