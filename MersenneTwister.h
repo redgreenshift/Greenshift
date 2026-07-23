@@ -51,6 +51,15 @@
 #include <limits.h>
 #include <iostream>
 
+#if defined(_MSC_VER)
+#  pragma warning(push)
+#  pragma warning(disable: 5033) // "'register' is no longer a supported storage class"
+#endif
+
+#pragma push_macro("min")
+#pragma push_macro("max")
+#undef min
+#undef max
 
 class MTRand {
 // Data
@@ -306,6 +315,13 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 	mtrand.pNext = &mtrand.state[mtrand.N-mtrand.left];
 	return is;
 }
+
+#pragma pop_macro("max")
+#pragma pop_macro("min")
+
+#if defined(_MSC_VER)
+#  pragma warning(pop)
+#endif
 
 #endif  //MERSENNETWISTER_H
 
