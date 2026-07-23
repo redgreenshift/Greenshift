@@ -251,7 +251,7 @@ value_t Greenshift::GetWaveformData(const value_t nValue)
 
 DWORD getWindowBitDepth(void) {
 	DWORD    bpp;
-	HDC        hdc;
+	HDC      hdc;
 	// retrieves device-specific information about 
 	// the specified device. 
 
@@ -280,49 +280,49 @@ error_t    Greenshift::Initialize(HINSTANCE hInstance)
 	{
 		{ ED_FUNCTION,  "pos",        1, GForce_pos  }, /* pos(x)  == x if x >= 0 and 0 otherwise */
 		{ ED_FUNCTION,  "abs",        1, GForce_abs  }, /* abs(x)  == |x| */
-		//      { ED_FUNCTION,  "sqr",        1, GForce_sqr  }, /* sqr(x)  == x * x */
-				{ ED_FUNCTION,  "sgn",        1, GForce_sgn  }, /* sgn(x)  == 1 if x >= 0 and -1 if x < 0 */
-				{ ED_FUNCTION,  "rand",       1, GForce_rnd  }, /* rnd(x)  == a random real number from 0 to x */
-				{ ED_FUNCTION,  "clip",       1, GForce_clip }, /* clip(x) == 0 when x < 0, 1 when x > 1, and x when  0 <= x <= 1 */
-				//      { ED_FUNCTION,  "trnc",       1, GForce_trnc }, /* trnc(x) == x with everything right of the decimal point dropped */
-						{ ED_FUNCTION,  "trunc",      1, GForce_trnc }, /* trnc(x) == x with everything right of the decimal point dropped */
-						{ ED_FUNCTION,  "floor",      1, GForce_flor }, /* flor(x) == the largest integer that's also less than x (ex, flor(3.2) == 3, flor(-2.7) == -3 ) */
-						//      { ED_FUNCTION,  "flor",       1, GForce_flor }, /* flor(x) == the largest integer that's also less than x (ex, flor(3.2) == 3, flor(-2.7) == -3 ) */
-								{ ED_FUNCTION,  "wrap",       1, GForce_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
-								{ ED_FUNCTION,  "sqwv",       1, GForce_sqwv }, /* sqwv(x) == 1 if |x| <= 1.0 and 0 otherwise. */
-								{ ED_FUNCTION,  "trwv",       1, GForce_trwv }, /* trwv(x) == Triangle shape that passes thru (0,0), (1,1), (2,0) and repeats in both directions */
-								{ ED_FUNCTION,  "seed",       1, GForce_seed }, /* seed(x) seeds the random number generator based on the bits of x, returns x */
+		//{ ED_FUNCTION,  "sqr",        1, GForce_sqr  }, /* sqr(x)  == x * x */
+		{ ED_FUNCTION,  "sgn",        1, GForce_sgn  }, /* sgn(x)  == 1 if x >= 0 and -1 if x < 0 */
+		{ ED_FUNCTION,  "rand",       1, GForce_rnd  }, /* rnd(x)  == a random real number from 0 to x */
+		{ ED_FUNCTION,  "clip",       1, GForce_clip }, /* clip(x) == 0 when x < 0, 1 when x > 1, and x when  0 <= x <= 1 */
+		//{ ED_FUNCTION,  "trnc",       1, GForce_trnc }, /* trnc(x) == x with everything right of the decimal point dropped */
+		{ ED_FUNCTION,  "trunc",      1, GForce_trnc }, /* trnc(x) == x with everything right of the decimal point dropped */
+		{ ED_FUNCTION,  "floor",      1, GForce_flor }, /* flor(x) == the largest integer that's also less than x (ex, flor(3.2) == 3, flor(-2.7) == -3 ) */
+		//{ ED_FUNCTION,  "flor",       1, GForce_flor }, /* flor(x) == the largest integer that's also less than x (ex, flor(3.2) == 3, flor(-2.7) == -3 ) */
+		{ ED_FUNCTION,  "wrap",       1, GForce_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
+		{ ED_FUNCTION,  "sqwv",       1, GForce_sqwv }, /* sqwv(x) == 1 if |x| <= 1.0 and 0 otherwise. */
+		{ ED_FUNCTION,  "trwv",       1, GForce_trwv }, /* trwv(x) == Triangle shape that passes thru (0,0), (1,1), (2,0) and repeats in both directions */
+		{ ED_FUNCTION,  "seed",       1, GForce_seed }, /* seed(x) seeds the random number generator based on the bits of x, returns x */
 
-								{ ED_FUNCTIONEX,"mag",        1, GForce_mag, this }, /* waveshape data */
-								{ ED_FUNCTIONEX,"fft",        1, GForce_fft, this }, /* sound data */
+		{ ED_FUNCTIONEX,"mag",        1, GForce_mag, this }, /* waveshape data */
+		{ ED_FUNCTIONEX,"fft",        1, GForce_fft, this }, /* sound data */
 
-								{ ED_VARIABLE,  "BASS",       0, &m_nBASS },
-
-
-								{ ED_VARIABLE,  "FPS",        0, &m_nFramesPerSecond }, /* the frames per second */
-								{ ED_VARIABLE,  "x",          0, &m_nRawFFTValue }, /* for FFTT */
-								{ ED_VARIABLE,  "w",          0, &m_nFrequency }, /* for FFTT */
-								{ ED_CONSTANT,  "Parametric", VG_PARAMETRIC, NULL },
-								{ ED_CONSTANT,  "FourD",      VG_4D, NULL },
-								{ ED_CONSTANT,  "default_aspect", 640.0f / 380.0f, NULL },
+		{ ED_VARIABLE,  "BASS",       0, &m_nBASS },
 
 
-								{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
+		{ ED_VARIABLE,  "FPS",        0, &m_nFramesPerSecond }, /* the frames per second */
+		{ ED_VARIABLE,  "x",          0, &m_nRawFFTValue }, /* for FFTT */
+		{ ED_VARIABLE,  "w",          0, &m_nFrequency }, /* for FFTT */
+		{ ED_CONSTANT,  "Parametric", VG_PARAMETRIC, NULL },
+		{ ED_CONSTANT,  "FourD",      VG_4D, NULL },
+		{ ED_CONSTANT,  "default_aspect", 640.0f / 380.0f, NULL },
+
+
+		{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
 
 	};
 
 	error_t    err;
-	//    error_t err2;
+	//error_t err2;
 	DWORD    i;
 
 #ifdef FORMAT_OF_LOGFILE_HEADER
 
 	/************************************************************/
 	* Greenshift v0.4.2b - DEBUG VERSION Thu Jun 28 09:01 : 12 2001
-		*
-		*Desktop bit depth : 32
-		* Winamp version : 2.06
-		/************************************************************/
+	*
+	*Desktop bit depth : 32
+	* Winamp version : 2.06
+	/************************************************************/
 
 #endif
 
@@ -493,13 +493,13 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 			{
 				char* variable = pMainConfig[i]->GetKey();
 				char* expression = pMainConfig[i]->GetValue();
-				//                    value_t *value   = (value_t*)malloc(sizeof(*value));
+//                    value_t *value   = (value_t*)malloc(sizeof(*value));
 
-				//                    if(value==NULL)
-				//                        return ERR_MALLOC;
+//                    if(value==NULL)
+//                        return ERR_MALLOC;
 
-									/* this is where the NUM_PARTICLES isn't found while evaluating */
-				//                    *value = Expression::Evaluate(expression,
+					/* this is where the NUM_PARTICLES isn't found while evaluating */
+//                    *value = Expression::Evaluate(expression,
 				m_pValues[i] = Expression::Evaluate(expression,
 					(value_t)atol(expression), &m_dValues, &m_dGlobals);
 

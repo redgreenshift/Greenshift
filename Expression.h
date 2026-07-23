@@ -232,16 +232,16 @@ enum
 	ED_FUNCTIONEX        /* function with an extra pointer
 						 */
 
-						 /*
-						  * decided adding a new enum is a bad way to handle future expansion
-						  * an alternative is to have an additional field in EXPRESSIONDESCRIPTION
-						  * to store the number of parameters/arguments/operands
-						  */
-						  //    ED_PARAMETERLESS,    /* ie:  function with zero arguments */
-						  //    ED_UNARY,            /* function that takes one argument */
-						  //    ED_BINARY,            /* function that takes two arguments */
-						  //    ED_TERNARY,            /* function that takes two arguments */
-						  //    ED_QUATERNARY        /* function that takes two arguments */
+/*
+* decided adding a new enum is a bad way to handle future expansion
+* an alternative is to have an additional field in EXPRESSIONDESCRIPTION
+* to store the number of parameters/arguments/operands
+*/
+//    ED_PARAMETERLESS,    /* ie:  function with zero arguments */
+//    ED_UNARY,            /* function that takes one argument */
+//    ED_BINARY,            /* function that takes two arguments */
+//    ED_TERNARY,            /* function that takes three arguments */
+//    ED_QUATERNARY        /* function that takes four arguments */
 };
 typedef int expression_desc_t;
 
