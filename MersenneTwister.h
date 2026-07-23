@@ -52,8 +52,8 @@
 #include <iostream>
 
 #if defined(_MSC_VER)
-#  pragma warning(push)
-#  pragma warning(disable: 5033) // "'register' is no longer a supported storage class"
+#pragma warning(push)
+#pragma warning(disable: 5033) // "'register' is no longer a supported storage class"
 #endif
 
 #pragma push_macro("min")
@@ -320,7 +320,7 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 #pragma pop_macro("min")
 
 #if defined(_MSC_VER)
-#  pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 #endif  //MERSENNETWISTER_H
