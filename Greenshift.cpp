@@ -974,7 +974,8 @@ void    Greenshift::UpdateDisplayText(void)
 		if (m_hParentWindow != NULL)
 			i = GetWindowText(m_hParentWindow, strTitle, sizeof(strTitle));
 		else
-			strcpy(strTitle, "");
+			if (strcpy_s(strTitle, _countof(strTitle), "") != 0)
+				return;
 
 
 		if (i > 7)
