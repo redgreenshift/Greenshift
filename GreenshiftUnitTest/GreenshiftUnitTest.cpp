@@ -130,8 +130,9 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual((int)dConfig.Size(), 20, L"Expected to set values");
 
 
-			std::string val = dConfig.GetValue("canvas_aspect");
-			Assert::AreEqual(std::string{ "1" }, val, L"Picking a value from the middle ought to produce correct results");
+			std::optional<std::string> val = dConfig.GetValue("canvas_aspect");
+			Assert::IsTrue(val.has_value(), L"Picking a value from the middle ought to produce correct results");
+			Assert::AreEqual(std::string{ "1" }, val.value(), L"Picking a value from the middle ought to produce correct results");
 
 
 			for (const std::tuple<std::string, std::string>& pair : initialValues)
@@ -139,8 +140,9 @@ namespace GreenshiftUnitTest
 				const std::string& key = std::get<0>(pair);
 				const std::string& expected_value = std::get<1>(pair);
 
-				std::string result_value = dConfig.GetValue(key);
-				Assert::AreEqual(expected_value, result_value, L"Failed to retrieve value");
+				std::optional<std::string> result_value = dConfig.GetValue(key);
+				Assert::IsTrue(result_value.has_value(), L"Failed to retrieve value");
+				Assert::AreEqual(expected_value, result_value.value(), L"Failed to retrieve value");
 			}
 
 
@@ -210,6 +212,9 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected_key, result_key, L"BAD KEY: The moved item should appear last");
 				Assert::AreEqual(expected_value, result_value, L"BAD VALUE: The moved item should appear last");
 			}
+
+			dConfig.WipeContents();
+			Assert::AreEqual((int)dConfig.Size(), 0, L"Expected to clear values");
 		}
 	};
 }

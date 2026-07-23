@@ -47,6 +47,7 @@ template<class KeyType, class DataType>
 class LinearMap
 {
 	typedef int SequenceType;
+	typedef LinearMap<KeyType, DataType /*, DefaultValue, DefaultKey*/ > this_t;
 	std::unordered_map<KeyType, std::tuple<DataType, SequenceType> > m_map;
 	SequenceType m_sequence = 0;
 
@@ -84,7 +85,7 @@ public:
 	 * SetAlias - set the alias lookup MyDictionary
 	 *
 	 ****************************************************************************/
-	void    SetAlias(LinearMap<KeyType, KeyType> * mapAlias)
+	void    SetAlias(this_t * mapAlias)
 	{
 		m_mapAlias = mapAlias;
 	};
@@ -94,7 +95,7 @@ public:
 	 * SetAlternate - set the alternate lookup MyDictionary
 	 *
 	 ****************************************************************************/
-	void    SetAlternate(LinearMap<KeyType, DataType> * mapAlternate)
+	void    SetAlternate(this_t * mapAlternate)
 	{
 		m_mapAlternate = mapAlternate;
 	};
@@ -104,7 +105,7 @@ public:
 	 * Import - import the contents of another MyDictionary
 	 *
 	 ****************************************************************************/
-	error_t    Import(LinearMap<KeyType, DataType>& srcMyDictionary)
+	error_t    Import(this_t& srcMyDictionary)
 	{
 		error_t    err;
 		DWORD    i;
@@ -175,24 +176,24 @@ public:
 	 * GetValue - find a value stored in the MyDictionary
 	 *
 	 ****************************************************************************/
-	DataType    GetValue(const KeyType& inKey,
-		DataType returnValueIfNotFound = std::string{}) // JRDV: std::optional or some other mechanism?
+	std::optional<DataType> GetValue(const KeyType& inKey,
+		std::optional<DataType> returnValueIfNotFound = std::nullopt)
 	{
 		m_dwAliasCount = 0;
 		return GetValue_Helper(inKey, returnValueIfNotFound);
 	};
 
-	DataType    GetValue_Helper(const KeyType& inKey,
-		DataType returnValueIfNotFound = std::string{})
+	std::optional<DataType> GetValue_Helper(const KeyType& inKey,
+		std::optional<DataType> returnValueIfNotFound = std::nullopt)
 	{
-		DataType dtTemp = returnValueIfNotFound;
+		std::optional<DataType> dtTemp = returnValueIfNotFound;
 
 		/*
 		 * if for some reason an alias chain is circular,
 		 * stop the infinite recursion at 32
 		 */
 		if (m_dwAliasCount > 32)
-			return returnValueIfNotFound;
+			return dtTemp;
 
 		auto it = m_map.find(inKey);
 		if (it != m_map.cend())
@@ -203,14 +204,16 @@ public:
 		if (m_mapAlias != nullptr)
 		{
 			m_dwAliasCount++;
-			dtTemp = GetValue(m_mapAlias->GetValue_Helper(inKey), returnValueIfNotFound);
+			auto valAlias = m_mapAlias->GetValue_Helper(inKey);
+			if (valAlias.has_value())
+				dtTemp = GetValue_Helper(valAlias.value(), returnValueIfNotFound);
 			m_dwAliasCount++;
 		}
 
-		if (dtTemp == returnValueIfNotFound
+		if (!dtTemp.has_value()
 			&& m_dwAliasCount <= 33 /* keep it from checking 32 times as the recursion unwinds */
 			&& m_mapAlternate != NULL)
-			dtTemp = m_mapAlternate->GetValue(inKey, returnValueIfNotFound);
+			dtTemp = m_mapAlternate->GetValue_Helper(inKey, returnValueIfNotFound);
 
 		return dtTemp;
 	};
