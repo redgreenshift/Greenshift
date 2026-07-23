@@ -593,7 +593,7 @@ error_t    Greenshift::LoadConfigs(void)
 	 */
 
 	if (m_hInstance == NULL
-		|| GetModuleFileName(m_hInstance, strModulePath, MAX_PATH) == 0)
+		|| GetModuleFileNameA(m_hInstance, strModulePath, MAX_PATH) == 0)
 	{
 		//        return FAILURE;
 		if (strcpy_s(strModulePath, _countof(strModulePath), "\0") != 0)
@@ -984,7 +984,7 @@ void    Greenshift::UpdateDisplayText(void)
 		//        lResult = SendMessage( m_hParentWindow,WM_USER, data, id);
 		//        lResult = SendMessage( m_hParentWindow,WM_USER, NULL, IPC_GETPLAYLISTTITLE);
 		if (m_hParentWindow != NULL)
-			i = GetWindowText(m_hParentWindow, strTitle, sizeof(strTitle));
+			i = GetWindowTextA(m_hParentWindow, strTitle, sizeof(strTitle));
 		else
 			if (strcpy_s(strTitle, _countof(strTitle), "") != 0)
 				return;
