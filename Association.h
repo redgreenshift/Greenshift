@@ -57,7 +57,7 @@ public:
 	Association()
 	{
 		m_strKey = NULL;
-//		m_strKey = m_strDebugKey;
+		//m_strKey = m_strDebugKey;
 		m_pValue = NULL;
 	};
 
@@ -139,7 +139,7 @@ public:
 	{
 		if (inKey != NULL)
 		{
-			//            if( strcpy( m_strDebugKey, inKey ) != NULL )
+			//if( strcpy( m_strDebugKey, inKey ) != NULL )
 			if ((m_strKey = NewStrdup(inKey)) != NULL)
 			{
 				SetValue(inValue);
@@ -180,7 +180,7 @@ protected:
 	char* m_strKey;    /* the "index" */
 	ValueType    m_pValue;    /* the associated value */
 
-	//    char        m_strDebugKey[256];
+	//char        m_strDebugKey[256];
 };
 
 #endif  /* _Association_H_ */
