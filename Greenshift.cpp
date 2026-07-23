@@ -575,7 +575,7 @@ error_t    Greenshift::LoadConfigs(void)
 	Association<char*>** pArray = NULL;
 	char    strModulePath[MAX_PATH];
 	char    strRoot[MAX_PATH];
-	char* strGForce = NULL;
+	char*   strGForce = NULL;
 	int     index;
 
 
@@ -591,7 +591,8 @@ error_t    Greenshift::LoadConfigs(void)
 		|| GetModuleFileName(m_hInstance, strModulePath, MAX_PATH) == 0)
 	{
 		//        return FAILURE;
-		strcpy(strModulePath, "\0");
+		if (strcpy_s(strModulePath, _countof(strModulePath), "\0") != 0)
+			return FAILURE;
 	}
 
 	index = strlen(strModulePath);
@@ -601,8 +602,11 @@ error_t    Greenshift::LoadConfigs(void)
 		strModulePath[index] = '\0';
 	}
 
-	strcpy(strRoot, strModulePath);
-	strcat(strRoot, "Greenshift");
+	if (   strcpy_s(strRoot, _countof(strRoot), strModulePath) != 0
+		|| strcat_s(strRoot, _countof(strRoot), "Greenshift") != 0)
+	{
+		return FAILURE;
+	}
 
 
 
@@ -650,8 +654,11 @@ error_t    Greenshift::LoadConfigs(void)
 		/*
 		 * load G-Force configs
 		 */
-		strcpy(strRoot, strModulePath);
-		strcat(strRoot, strGForce);
+		if (   strcpy_s(strRoot, _countof(strRoot), strModulePath) != 0
+			|| strcat_s(strRoot, _countof(strRoot), strGForce) != 0)
+		{
+			return FAILURE;
+		}
 
 		if ((err = m_fcFilingClerk.SetRoot(strRoot)) == SUCCESS)
 		{
@@ -1024,13 +1031,18 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 
 	if (strName != NULL && string != NULL && m_pWindowDevice != NULL)
 	{
-		strcpy(strPrintString, strName);
-		if (strlen(strName) > 0)
-			strcat(strPrintString, " : ");
-		strcat(strPrintString, string);
+		if (strcpy_s(strPrintString, _countof(strPrintString), strName) != 0)
+			return FAILURE;
+		if (strlen(strName) > 0 && strcat_s(strPrintString, _countof(strPrintString), " : ") != 0)
+			return FAILURE;
+		if (strcat_s(strPrintString, _countof(strPrintString), string) != 0)
+			return FAILURE;
 
 		while (strlen(strPrintString) < 200)
-			strcat(strPrintString, " ");
+		{
+			if (strcat_s(strPrintString, _countof(strPrintString), " ") != 0)
+				return FAILURE;
+		}
 
 		switch (position)
 		{
@@ -1058,14 +1070,14 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 40;
 			break;
-			/*        case 6: // unused
-						x = 320;
-						y = 40;
-						break;
-					case 7: // unused
-						x = 320;
-						y = 60;
-						break;/**/
+/*        case 6: // unused
+			x = 320;
+			y = 40;
+			break;
+		case 7: // unused
+			x = 320;
+			y = 60;
+			break;/**/
 		case 8:  /* deltafield */
 			x = 0;
 			y = 420;
@@ -1090,14 +1102,14 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 460;
 			break;
-			/*        case 6: // unused
-						x = 320;
-						y = 460;
-						break;
-					case 7: // unused
-						x = 320;
-						y = 460;
-						break;/**/
+/*        case 6: // unused
+			x = 320;
+			y = 460;
+			break;
+		case 7: // unused
+			x = 320;
+			y = 460;
+			break;/**/
 		default:
 			x = 0;
 			y = 0;

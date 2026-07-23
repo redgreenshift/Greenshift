@@ -296,13 +296,18 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 
 	if (strName != NULL && string != NULL && pWindowDevice != NULL)
 	{
-		strcpy(strPrintString, strName);
-		if (strlen(strName) > 0)
-			strcat(strPrintString, " : ");
-		strcat(strPrintString, string);
+		if (strcpy_s(strPrintString, _countof(strPrintString), strName) != 0)
+			return FAILURE;
+		if (strlen(strName) > 0 && strcat_s(strPrintString, _countof(strPrintString), " : ") != 0)
+			return FAILURE;
+		if (strcat_s(strPrintString, _countof(strPrintString), string) != 0)
+			return FAILURE;
 
 		while (strlen(strPrintString) < 200)
-			strcat(strPrintString, " ");
+		{
+			if (strcat_s(strPrintString, _countof(strPrintString), " ") != 0)
+				return FAILURE;
+		}
 
 		switch (position)
 		{
@@ -330,14 +335,14 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 			x = -1;
 			y = 34;
 			break;
-			/*        case 6: // unused
-						x = 320;
-						y = 40;
-						break;
-					case 7: // unused
-						x = 320;
-						y = 60;
-						break;/**/
+/*        case 6: // unused
+			x = 320;
+			y = 40;
+			break;
+		case 7: // unused
+			x = 320;
+			y = 60;
+			break;/**/
 		case 8:  /* deltafield */
 			x = 0;
 			y = -50;
@@ -362,14 +367,14 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 			x = -1;
 			y = -16;
 			break;
-			/*        case 6: // unused
-						x = 320;
-						y = 460;
-						break;
-					case 7: // unused
-						x = 320;
-						y = 460;
-						break;/**/
+/*        case 6: // unused
+			x = 320;
+			y = 460;
+			break;
+		case 7: // unused
+			x = 320;
+			y = 460;
+			break;/**/
 		default:
 			x = 0;
 			y = 0;

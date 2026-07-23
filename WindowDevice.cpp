@@ -144,7 +144,8 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 
 	m_hParentWindow = hParentWindow;
 
-	strcpy(m_strWindowTitle, strWindowTitle);
+	if (strcpy_s(m_strWindowTitle, _countof(m_strWindowTitle), strWindowTitle) != 0)
+		return FAILURE;
 
 	m_dwBitDepth = (DWORD)Expression::Evaluate(inConfig->GetValue("screen_depth"), m_nBitDepth, inValues, inGlobals);
 	m_nBitDepth = (value_t)m_dwBitDepth;
@@ -939,7 +940,8 @@ BOOL    WindowDevice::MessageHandler(HWND hWindow, UINT message, WPARAM wParam, 
 	}
 	//            return 0;
 
-				/* FALLTHROUGH! */
+		/* FALLTHROUGH! */
+		__fallthrough;
 
 	case WM_KEYDOWN:
 
