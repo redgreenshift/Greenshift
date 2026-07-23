@@ -1538,15 +1538,17 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 
 		p1 = (p1 + (p2 >> 8)) DECAY8;
 
-		//        m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
+		//m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
 		pWriteBuffer[pixelOffset] = (BYTE)p1;
 
 
+#if 0
 #if EXTREME_DEBUGGING
 		/* DEBUG CODE, REMOVE IMMEDIATELY */
 		if (p1 > 255)
 			DumpToFile("error.txt", p1, "\n");
-		//            pWriteBuffer[pixelOffset] = (pixelOffset & 0x1) ? 255 : 0;
+		//pWriteBuffer[pixelOffset] = (pixelOffset & 0x1) ? 255 : 0;
+#endif
 #endif
 
 
@@ -1599,15 +1601,17 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 		//        p1 = (p1 + (p2 >> 8)) DECAY8;
 		p1 = (p1 + (p2 >> 8)) >> 2;
 
+#if 0
 #if EXTREME_DEBUGGING
 		/* DEBUG CODE, REMOVE IMMEDIATELY */
 		if (p1 > 255)
 			DumpToFile("error.txt", p1, "\n");
-		//            pWriteBuffer[pixelOffset] = (pixelOffset & 0x1) ? 255 : 0;
+		//pWriteBuffer[pixelOffset] = (pixelOffset & 0x1) ? 255 : 0;
+#endif
 #endif
 
 
-//        m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
+		//m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
 		pWriteBuffer[pixelOffset] = decay256[p1];
 
 

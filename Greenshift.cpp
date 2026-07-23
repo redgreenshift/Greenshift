@@ -262,8 +262,6 @@ DWORD getWindowBitDepth(void) {
 	// Release the Device Context
 	ReleaseDC(NULL, hdc);
 	return bpp;
-
-
 }
 
 #endif
@@ -333,7 +331,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 	DumpToFile("error.txt", "/************************************************************/", "\n");
 	DumpToFile("error.txt", " * " VIS_TITLE " " VIS_VERSION " " __TIMESTAMP__, "\n");
 	DumpToFile("error.txt", " *", "\n");
-	DumpToFile("error.txt", " * Desktop bit depth: ", getWindowBitDepth(), "\n");
+	DumpToFile("error.txt", " * Desktop bit depth: ", (value_t)getWindowBitDepth(), "\n");
 
 	if (m_hParentWindow != NULL)
 	{
