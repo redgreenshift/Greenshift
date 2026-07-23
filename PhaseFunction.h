@@ -195,11 +195,12 @@ public:
 			 */
 			index = 0;
 			do {
-				snprintf(strID,
-					_countof(strID),
-					"%c%d",
-					strPhaseID[dwPhase],
-					index++);
+				int ret = snprintf(strID, _countof(strID),
+									"%c%d",
+									strPhaseID[dwPhase],
+									index++);
+				if (ret < 0 || (size_t)ret >= _countof(strID))
+					return FAILURE;
 
 			} while (inConfig->GetValue(strID) != NULL);
 
@@ -219,7 +220,9 @@ public:
 													 */
 		for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
 		{
-			snprintf(strID, _countof(strID), "%c0", strDimensionID[dwDimension]);
+			int ret = snprintf(strID, _countof(strID), "%c0", strDimensionID[dwDimension]);
+			if (ret < 0 || (size_t)ret >= _countof(strID))
+				return FAILURE;
 
 			/*
 			 * if one of the dimensions is not used
@@ -248,11 +251,12 @@ public:
 				//            for( nDimension = 0; strDimensionID[nDimension] != '\0'; nDimension++ )
 				for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
 				{
-					snprintf(strID,
-						_countof(strID),
-						"%c%d",
-						strDimensionID[dwDimension],
-						index++);
+					int ret = snprintf(strID, _countof(strID),
+										"%c%d",
+										strDimensionID[dwDimension],
+										index++);
+					if (ret < 0 || (size_t)ret >= _countof(strID))
+						return FAILURE;
 
 					if (inConfig->GetValue(strID) == NULL)
 						break; /* break out of the for loop */
@@ -351,9 +355,10 @@ public:
 			 * loop and count the number of expressions in each phase
 			 */
 			index = 0;
-			snprintf(strID,
-				_countof(strID),
-				"%c%d", strPhaseID[dwPhase], index++);
+			int ret = snprintf(strID, _countof(strID),
+								"%c%d", strPhaseID[dwPhase], index++);
+			if (ret < 0 || (size_t)ret >= _countof(strID))
+				return FAILURE;
 
 			while (inConfig->GetValue(strID) != NULL)
 			{
@@ -375,9 +380,9 @@ public:
 				/*
 				 * make the next ID
 				 */
-				snprintf(strID,
-					_countof(strID),
-					"%c%d", strPhaseID[dwPhase], index++);
+				int ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index++);
+				if (ret < 0 || (size_t)ret >= _countof(strID))
+					return FAILURE;
 			}
 
 			/*
@@ -402,7 +407,9 @@ public:
 			for (index = 0; index < m_pPhases[dwPhase].dwPhaseLength; index++)
 			{
 				/* dis I forget to do tolower? */
-				snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index);
+				int ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index);
+				if (ret < 0 || (size_t)ret >= _countof(strID))
+					return FAILURE;
 
 				err = Expression::Compile(inConfig->GetValue(strID),
 					&(m_pPhases[dwPhase].pFunctions[index]),
@@ -487,7 +494,9 @@ public:
 
 			for (index = 0; index < NumDimensions(); index++)
 			{
-				snprintf(strID, _countof(strID), "%c%d", strDimensionID[index], dwFunction);
+				int ret = snprintf(strID, _countof(strID), "%c%d", strDimensionID[index], dwFunction);
+				if (ret < 0 || (size_t)ret >= _countof(strID))
+					return FAILURE;
 
 				/*
 				 * this is causing an error for some WaveShapes

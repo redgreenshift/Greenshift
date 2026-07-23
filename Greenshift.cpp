@@ -337,7 +337,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 
 	if (m_hParentWindow != NULL)
 	{
-		char strVersion[16];
+		char strVersion[32];
 		int winampVersion;
 		int vMajor;
 		int vMinor;
@@ -357,7 +357,12 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 			vLeast = (winampVersion) & 0xF;
 		}
 
-		sprintf(strVersion, "%d.%d%d\n", vMajor, vMinor, vLeast);
+		int ret = snprintf(strVersion, _countof(strVersion), "%d.%d%d\n", vMajor, vMinor, vLeast);
+		if (ret < 0 || (size_t)ret >= _countof(strVersion))
+		{
+			// truncation or encoding error
+			return FAILURE;
+		}
 
 		DumpToFile("error.txt", " * Winamp version: ", strVersion);
 		//        DumpToFile( "error.txt", " * Winamp version: ", vMajor, "" );

@@ -952,7 +952,8 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 		if (strcat_s(m_strFile, nLength, id) != 0)
 			return FAILURE;
 
-		//sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+		//int ret = snprintf( m_strFile, nLength, "%s\\%s", m_strFolder, id );
+		//if (ret < 0 || (size_t)ret >= nLength) return FAILURE;
 	}
 
 
@@ -1015,29 +1016,38 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
 			switch (state)
 			{
 			case look_for_red:
-				if (snprintf(strID, _countof(strID), "r%d", nEntryNumber) == 0)
+			{
+				int nCount = snprintf(strID, _countof(strID), "r%d", nEntryNumber);
+				if (nCount < 0 || (size_t)nCount >= _countof(strID))
 					break;
 				outMyDictionary->SetValue(strID, (strToken));
 				strTOKEN = NULL;
 				state = look_for_green;
 				break;
+			}
 
 			case look_for_green:
-				if (snprintf(strID, _countof(strID), "g%d", nEntryNumber) == 0)
+			{
+				int nCount = snprintf(strID, _countof(strID), "g%d", nEntryNumber);
+				if (nCount < 0 || (size_t)nCount >= _countof(strID))
 					break;
 				outMyDictionary->SetValue(strID, (strToken));
 				strTOKEN = NULL;
 				state = look_for_blue;
 				break;
+			}
 
 			case look_for_blue:
-				if (snprintf(strID, _countof(strID), "b%d", nEntryNumber) == 0)
+			{
+				int nCount = snprintf(strID, _countof(strID), "b%d", nEntryNumber);
+				if (nCount < 0 || (size_t)nCount >= _countof(strID))
 					break;
 				nEntryNumber++;
 				outMyDictionary->SetValue(strID, (strToken));
 				strTOKEN = NULL;
 				state = look_for_red;
 				break;
+			}
 
 			default:
 				break;
@@ -1128,7 +1138,8 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 		if (strcat_s(m_strFile, nLength, id) != 0)
 			return FAILURE;
 
-		//sprintf( m_strFile, "%s\\%s", m_strFolder, id );
+		//int ret = snprintf( m_strFile, nLength, "%s\\%s", m_strFolder, id );
+		//if (ret < 0 || (size_t)ret >= nLength) return FAILURE;
 	}
 
 	/*

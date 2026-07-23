@@ -113,9 +113,9 @@ error_t    TweenThread::Initialize(void* pObject1)
 		dwPageSize,
 		dwBytesToAlign);
 
-	//    sprintf( strTmp, "%d", m_dwFrameSize );
-
-	//    MessageBox( NULL, strTmp, "ack!", MB_OK );
+	//int ret = snprintf( strTmp, _countof(strTmp), "%d", m_dwFrameSize );
+	//if (ret < 0 || (size_t)ret >= _countof(strTmp)) return FAILURE;
+	//MessageBoxA( NULL, strTmp, "ack!", MB_OK );
 
 	if (err != SUCCESS)
 		return err;

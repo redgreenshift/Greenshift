@@ -214,9 +214,16 @@ error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
 		{
 			char* rVal, * gVal, * bVal;
 
-			snprintf(strIDRed, _countof(strIDRed), "r%d", i);
-			snprintf(strIDGreen, _countof(strIDGreen), "g%d", i);
-			snprintf(strIDBlue, _countof(strIDBlue), "b%d", i);
+			int nR = snprintf(strIDRed, _countof(strIDRed), "r%d", i);
+			int nG = snprintf(strIDGreen, _countof(strIDGreen), "g%d", i);
+			int nB = snprintf(strIDBlue, _countof(strIDBlue), "b%d", i);
+			if (nR < 0 || (size_t)nR >= _countof(strIDRed))
+				return ERR_UNKNOWNPALETTETYPE;
+			if (nG < 0 || (size_t)nG >= _countof(strIDGreen))
+				return ERR_UNKNOWNPALETTETYPE;
+			if (nB < 0 || (size_t)nB >= _countof(strIDBlue))
+				return ERR_UNKNOWNPALETTETYPE;
+
 			rVal = pConfig->GetValue(strIDRed);
 			gVal = pConfig->GetValue(strIDGreen);
 			bVal = pConfig->GetValue(strIDBlue);

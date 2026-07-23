@@ -662,8 +662,14 @@ static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNu
 {
 	char    strDisplay[2048];
 
-	sprintf(strDisplay, "%s%.40g%s", aString, aNumber, anotherString);
-	MessageBox(NULL, strDisplay, "Debug MessageBox", MB_OK);
+	int ret = snprintf(strDisplay, _countof(strDisplay), "%s%.40g%s", aString, aNumber, anotherString);
+	if (ret < 0 || (size_t)ret >= _countof(strDisplay))
+	{
+		// truncation or encoding error
+		return;
+	}
+
+	MessageBoxA(NULL, strDisplay, "Debug MessageBox", MB_OK);
 }
 
 #endif

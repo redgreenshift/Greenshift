@@ -1345,6 +1345,8 @@ char* ExpressionConstant::PrintString(char* inStr, int& nLength)
 	 * convert num to string, and count the number of characters
 	 */
 	nCount = snprintf(buffer, _countof(buffer), "%g", ConstantValue());
+	if (nCount < 0 || (size_t)nCount >= _countof(buffer))
+		return nullptr;
 
 	nLength += nCount;
 
@@ -1387,6 +1389,8 @@ char* ExpressionSymbol::PrintString(char* inStr, int& nLength)
 	 * convert num to string, and count the number of characters
 	 */
 	nCount = snprintf(buffer, _countof(buffer), "%c", SymbolValue());
+	if (nCount < 0 || (size_t)nCount >= _countof(buffer))
+		return nullptr;
 
 	nLength += nCount;
 

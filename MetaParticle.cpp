@@ -163,7 +163,9 @@ error_t    MetaParticle::UpdateDerived(WindowDevice* pWindowDevice)
 	{
 		if ((particle = m_dwRunningList[i]) != 0xBADC0DE)
 		{
-			sprintf(strName, "Particle %d", dwNum);
+			int nCount = snprintf(strName, _countof(strName), "Particle %d", dwNum);
+			if (nCount < 0 || (size_t)nCount >= _countof(strName))
+				return FAILURE;
 			DisplayString(10 + dwNum, strName, m_pConfigs[particle].GetValue("NAME"), pWindowDevice);
 			dwNum++;
 		}

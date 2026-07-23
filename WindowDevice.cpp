@@ -592,7 +592,9 @@ error_t    WindowDevice::Flip(void)
 	{
 		nTime = hrtClock.Seconds();
 		//            ClearScreen();
-		sprintf(strFPS, "%5.3f", (value_t)dwFrames / nTime);
+		int ret = snprintf(strFPS, _countof(strFPS), "%5.3f", (value_t)dwFrames / nTime);
+		if (ret < 0 || (size_t)ret >= _countof(strFPS))
+			return FAILURE;
 		if (m_bShowFramerate)
 			PrintPrivate(0, 0, strFPS);
 		//                Print( 0, 0, strFPS, PALETTERGB(0,255,0) );

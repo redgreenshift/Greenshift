@@ -80,10 +80,11 @@ error_t    MetaWaveShape::InitializeDerived(
 		return ERR_MALLOC;
 
 
-	//    nDefaultAspect = Expression::Evaluate("canvas_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
-	//    nDefaultAspect = Expression::Evaluate("default_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
+	//nDefaultAspect = Expression::Evaluate("canvas_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
+	//nDefaultAspect = Expression::Evaluate("default_aspect", 640.0f / 380.0f, &m_dValues, inGlobals);
 
-	//    sprintf( m_strDefaultAspect, "%f", nDefaultAspect );
+	// int ret = snprintf( m_strDefaultAspect, _countof(m_strDefaultAspect), "%f", nDefaultAspect );
+	// if (ret < 0 || (size_t)ret >= _countof(m_strDefaultAspect)) return FAILURE;
 
 
 
