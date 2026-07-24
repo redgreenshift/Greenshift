@@ -1166,58 +1166,58 @@ EXPRESSION_BINARY_PARTIAL(And)
  ****************************************************************************/
 
  /* default has no operator -- Scalar */
-char* ExpressionValue::Operator(void) { return NULL; };
+const char* ExpressionValue::Operator(void) { return NULL; };
 
 /* Unary */
-char* ExpressionSqrt::Operator(void) { return "sqrt"; };
-char* ExpressionSqr::Operator(void) { return "sqr"; };
-char* ExpressionLog10::Operator(void) { return "log10"; };
-char* ExpressionLn::Operator(void) { return "log"; };
-char* ExpressionExp::Operator(void) { return "exp"; };
-char* ExpressionFactorial::Operator(void) { return "fact"; };
+const char* ExpressionSqrt::Operator(void) { return "sqrt"; };
+const char* ExpressionSqr::Operator(void) { return "sqr"; };
+const char* ExpressionLog10::Operator(void) { return "log10"; };
+const char* ExpressionLn::Operator(void) { return "log"; };
+const char* ExpressionExp::Operator(void) { return "exp"; };
+const char* ExpressionFactorial::Operator(void) { return "fact"; };
 
 /* Trigonometric */
-char* ExpressionCos::Operator(void) { return "cos"; };
-char* ExpressionSin::Operator(void) { return "sin"; };
-char* ExpressionTan::Operator(void) { return "tan"; };
-char* ExpressionArcCos::Operator(void) { return "acos"; };
-char* ExpressionArcSin::Operator(void) { return "asin"; };
-char* ExpressionArcTan::Operator(void) { return "atan"; };
+const char* ExpressionCos::Operator(void) { return "cos"; };
+const char* ExpressionSin::Operator(void) { return "sin"; };
+const char* ExpressionTan::Operator(void) { return "tan"; };
+const char* ExpressionArcCos::Operator(void) { return "acos"; };
+const char* ExpressionArcSin::Operator(void) { return "asin"; };
+const char* ExpressionArcTan::Operator(void) { return "atan"; };
 
 /* Hyperbolic Trig */
-char* ExpressionCosh::Operator(void) { return "cosh"; };
-char* ExpressionSinh::Operator(void) { return "sinh"; };
-char* ExpressionTanh::Operator(void) { return "tanh"; };
-char* ExpressionArcCosh::Operator(void) { return "acosh"; };
-char* ExpressionArcSinh::Operator(void) { return "asinh"; };
-char* ExpressionArcTanh::Operator(void) { return "atanh"; };
+const char* ExpressionCosh::Operator(void) { return "cosh"; };
+const char* ExpressionSinh::Operator(void) { return "sinh"; };
+const char* ExpressionTanh::Operator(void) { return "tanh"; };
+const char* ExpressionArcCosh::Operator(void) { return "acosh"; };
+const char* ExpressionArcSinh::Operator(void) { return "asinh"; };
+const char* ExpressionArcTanh::Operator(void) { return "atanh"; };
 
 /* Binary */
-char* ExpressionAdd::Operator(void) { return "+"; };
-char* ExpressionSub::Operator(void) { return "-"; };
-char* ExpressionMult::Operator(void) { return "*"; };
-char* ExpressionDiv::Operator(void) { return "/"; };
-char* ExpressionMod::Operator(void) { return "%"; };
-char* ExpressionPower::Operator(void) { return "^"; };
-char* ExpressionComma::Operator(void) { return ","; };
+const char* ExpressionAdd::Operator(void) { return "+"; };
+const char* ExpressionSub::Operator(void) { return "-"; };
+const char* ExpressionMult::Operator(void) { return "*"; };
+const char* ExpressionDiv::Operator(void) { return "/"; };
+const char* ExpressionMod::Operator(void) { return "%"; };
+const char* ExpressionPower::Operator(void) { return "^"; };
+const char* ExpressionComma::Operator(void) { return ","; };
 
 /* Relational */
-char* ExpressionEquality::Operator(void) { return "=="; };
-char* ExpressionNonEquality::Operator(void) { return "!="; };
-char* ExpressionGreaterThan::Operator(void) { return ">"; };
-char* ExpressionGreaterThanOrEqual::Operator(void) { return ">="; };
-char* ExpressionLessThan::Operator(void) { return "<"; };
-char* ExpressionLessThanOrEqual::Operator(void) { return "<="; };
+const char* ExpressionEquality::Operator(void) { return "=="; };
+const char* ExpressionNonEquality::Operator(void) { return "!="; };
+const char* ExpressionGreaterThan::Operator(void) { return ">"; };
+const char* ExpressionGreaterThanOrEqual::Operator(void) { return ">="; };
+const char* ExpressionLessThan::Operator(void) { return "<"; };
+const char* ExpressionLessThanOrEqual::Operator(void) { return "<="; };
 
 /* Ternary */
-char* ExpressionConditional::Operator(void) { return "?:"; }; /* JRDV: WRONG! */
+const char* ExpressionConditional::Operator(void) { return "?:"; }; /* JRDV: WRONG! */
 
 #ifdef REGULAR_EXPRESSION
-char* ExpressionStar::Operator(void) { return "#"; };
-char* ExpressionOr::Operator(void) { return "|"; };
-char* ExpressionAnd::Operator(void) { return "&"; };
+const char* ExpressionStar::Operator(void) { return "#"; };
+const char* ExpressionOr::Operator(void) { return "|"; };
+const char* ExpressionAnd::Operator(void) { return "&"; };
 #endif
-char* ExpressionUserDefined::Operator(void)
+const char* ExpressionUserDefined::Operator(void)
 {
 	return m_edExpressionDescription.strName;
 };
@@ -2262,7 +2262,7 @@ error_t Expression::Compile(const char* inString,
 
 
 
-bool Expression::MatchNumber(char* inString, int inLength)
+bool Expression::MatchNumber(const char* inString, int inLength)
 {
 	int i;
 
@@ -2283,7 +2283,7 @@ bool Expression::MatchNumber(char* inString, int inLength)
 		return false;
 }
 
-bool Expression::MatchIdentifier(char* inString, int inLength)
+bool Expression::MatchIdentifier(const char* inString, int inLength)
 {
 	int i;
 
@@ -2315,7 +2315,7 @@ bool Expression::MatchIdentifier(char* inString, int inLength)
 		return false;
 }/**/
 
-bool Expression::MatchOperator(char* inString, char* inOpString, int inLength)
+bool Expression::MatchOperator(const char* inString, const char* inOpString, int inLength)
 {
 	/*
 	 * case insensitive
@@ -2330,7 +2330,7 @@ bool Expression::MatchOperator(char* inString, char* inOpString, int inLength)
  *
  * Single-character operations may not consist of alphanumerics
  */
-bool Expression::AtBeginningOfToken(char* inString, char* position)
+bool Expression::AtBeginningOfToken(const char* inString, const char* position)
 {
 	if (
 		position <= inString    /* if we're at the beginning
