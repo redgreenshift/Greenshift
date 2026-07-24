@@ -21,10 +21,16 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#pragma push_macro("min")
+#pragma push_macro("max")
+#undef min
+#undef max
+
+#include <map>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-//#include <optional> // C++17
 
 
 /****************************************************************************
@@ -275,4 +281,6 @@ public:
 	}
 };
 
+#pragma pop_macro("max")
+#pragma pop_macro("min")
 
