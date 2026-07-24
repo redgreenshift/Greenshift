@@ -53,7 +53,7 @@
 	*
 	****************************************************************************/
 template<class DataType>
-class Set : public Collection<DataType, NULL>
+class Set : public Collection<DataType, nullptr>
 {
 protected:
 	//    DataType    *m_pArray;
@@ -80,13 +80,13 @@ protected:
 		/*
 		 * copy all the existing elements to the new array
 		 */
-		for (i = 0; i < Capacity(); i++)
+		for (i = 0; i < this->Capacity(); i++)
 			pNewArray[i] = pOldArray[i];
 
 		/*
 		 * NULL the remaining elements
 		 */
-		for (i = Capacity(); i < dwNewSize; i++)
+		for (i = this->Capacity(); i < dwNewSize; i++)
 			pNewArray[i] = NULL;
 
 		return SUCCESS;
@@ -162,7 +162,7 @@ public:
 	MyDictionary()
 	{
 		m_bCaseSensitive = false;
-		m_bDeleteElements = true;
+		this->m_bDeleteElements = true;
 		m_pAlias = NULL;
 		m_pAlternate = NULL;
 		m_dwAliasCount = 0;
@@ -224,7 +224,7 @@ public:
 
 		//            m_bCaseSensitive = srcMyDictionary->m_bCaseSensitive;
 		m_bCaseSensitive = false;
-		m_bDeleteElements = true;
+		this->m_bDeleteElements = true;
 
 		return SUCCESS;
 	};
@@ -272,12 +272,12 @@ public:
 		if (inKey == NULL)
 			return ERR_NULL;
 
-		for (i = 0; i < Capacity(); i++)
+		for (i = 0; i < this->Capacity(); i++)
 		{
-			if (m_pArray[i] != NULL
-				&& StringsMatch(inKey, m_pArray[i]->GetKey()))
+			if (this->m_pArray[i] != NULL
+				&& StringsMatch(inKey, this->m_pArray[i]->GetKey()))
 			{
-				return Remove(m_pArray[i]);
+				return Remove(this->m_pArray[i]);
 			}
 		}
 
@@ -309,11 +309,11 @@ public:
 		if (inKey == NULL || m_dwAliasCount > 32)
 			return returnValueIfNotFound;
 
-		for (i = 0; i < Capacity(); i++)
+		for (i = 0; i < this->Capacity(); i++)
 		{
-			if (m_pArray[i] != NULL
-				&& StringsMatch(inKey, m_pArray[i]->GetKey()))
-				return m_pArray[i]->GetValue();
+			if (this->m_pArray[i] != NULL
+				&& StringsMatch(inKey, this->m_pArray[i]->GetKey()))
+				return this->m_pArray[i]->GetValue();
 		}
 
 		if (m_pAlias != NULL)
@@ -400,13 +400,13 @@ protected:
 		/*
 		 * copy all the existing elements to the new array
 		 */
-		for (i = 0; i < Capacity(); i++)
+		for (i = 0; i < this->Capacity(); i++)
 			pNewArray[i] = pOldArray[i];
 
 		/*
 		 * NULL the remaining elements
 		 */
-		for (i = Capacity(); i < dwNewSize; i++)
+		for (i = this->Capacity(); i < dwNewSize; i++)
 			pNewArray[i] = NULL;
 
 
@@ -507,9 +507,9 @@ public:
 		for (i = 0; i < MaximumSize; i++)
 			m_pData[i] = NULL;
 
-		m_bGrowable = false;
-		m_dwCapacity = MaximumSize;
-		m_pArray = m_pData;
+		this->m_bGrowable = false;
+		this->m_dwCapacity = MaximumSize;
+		this->m_pArray = m_pData;
 	};
 
 	virtual         ~FiniteSet()
@@ -524,13 +524,13 @@ public:
 	{
 		DWORD    i;
 
-		m_dwCapacity = min(MaximumSize, dwSize);
+		this->m_dwCapacity = min(MaximumSize, dwSize);
 		//        m_dwCapacity = 1;
 
 		for (i = 0; i < MaximumSize; i++)
 			m_pData[i] = NULL;
 
-		m_dwNumElements = 0;
+		this->m_dwNumElements = 0;
 	};
 
 
@@ -539,18 +539,18 @@ protected:
 	{
 		DWORD    i;
 
-		if (Size() < Capacity() || Capacity() == 0)
+		if (this->Size() < this->Capacity() || this->Capacity() == 0)
 			return SUCCESS;
 
 		Remove(m_pData[0]);
 
-		for (i = 0; i < Capacity() - 1; i++)
+		for (i = 0; i < this->Capacity() - 1; i++)
 		{
 			while (m_pData[i] == NULL)
-				ShiftLeft(&m_pData[i], Capacity() - i);
+				ShiftLeft(&m_pData[i], this->Capacity() - i);
 		}
 
-		m_pData[Capacity() - 1] = NULL;
+		m_pData[this->Capacity() - 1] = NULL;
 		return SUCCESS;
 	};
 
