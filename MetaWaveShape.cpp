@@ -67,7 +67,7 @@ MetaWaveShape::~MetaWaveShape()
  *
  ****************************************************************************/
 error_t    MetaWaveShape::InitializeDerived(
-	MyDictionary<char*>* inMainConfig,
+	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	DWORD   i;

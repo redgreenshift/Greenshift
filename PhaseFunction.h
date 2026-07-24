@@ -114,7 +114,7 @@ public:
 	 ****************************************************************************/
 	error_t    Initialize(const char* strPhaseID,// = "ABCD",
 		const char* strDimensionID,// = "XY"
-		MyDictionary<char*>* inConfig,
+		MyDictionary<mychar_t*>* inConfig,
 		MyDictionary<value_t*>* inoutValues, //remind me again why this is in/out?
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 

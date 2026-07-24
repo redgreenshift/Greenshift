@@ -74,7 +74,7 @@ MetaParticle::~MetaParticle()
  *
  ****************************************************************************/
 error_t    MetaParticle::InitializeDerived(
-	MyDictionary<char*>* inMainConfig,
+	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	DWORD    i;

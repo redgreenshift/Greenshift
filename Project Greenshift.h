@@ -184,6 +184,8 @@ typedef unsigned long* PPIXELMAP;
 typedef float   value_t;
 /**/
 
+typedef const char mychar_t;
+
 /*
  * everything in Project Greenshift should use
  * value_t as the floating point type.

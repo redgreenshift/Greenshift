@@ -24,6 +24,7 @@
 #include "..\LinearMap.h"
 
 #include <array>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -55,8 +56,8 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestDictionary)
 		{
 			LinearMap<std::string, std::string> dConfig;
-			//MyDictionary<char*> dConfig;
-			//dict.Add(new Association<char*>());
+			//MyDictionary<mychar_t*> dConfig;
+			//dict.Add(new Association<mychar_t*>());
 
 			//cConfig.Add("screen_depth", "32");
 

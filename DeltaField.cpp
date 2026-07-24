@@ -124,15 +124,15 @@ void    DeltaField::GetDeltaXY(const value_t destX,
  * SetDelta -
  *
  ****************************************************************************/
-error_t    DeltaField::Initialize(MyDictionary<char*>* inDeltaConfig,
+error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	error_t     err = SUCCESS;
 	value_t     deltaVersion;
 	//    value_t     deltaAspect;
 	value_t     dispFactor;
-	char* strSource1 = NULL;
-	char* strSource2 = NULL;
+	const char* strSource1 = NULL;
+	const char* strSource2 = NULL;
 
 
 

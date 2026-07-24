@@ -50,7 +50,7 @@ private:
 	FiniteSet<void*, 61> m_fsRecentList;  /* hmm, tryint to make it private */
 protected:
 	value_t             m_nUpdateTime;
-	MyDictionary<char*>* m_pConfigs; /* array of configs */
+	MyDictionary<mychar_t*>* m_pConfigs; /* array of configs */
 
 
 public:
@@ -58,9 +58,9 @@ public:
 	virtual             ~MetaConfig();
 
 	error_t             Initialize(
-		MyDictionary<char*>* pConfigs,
+		MyDictionary<mychar_t*>* pConfigs,
 		const DWORD dwNumConfigs,
-		MyDictionary<char*>* inMainConfig,
+		MyDictionary<mychar_t*>* inMainConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals); /* constants are placed in globals */
 
 	value_t             GetUpdateTime(void) { return m_nUpdateTime; };
@@ -116,7 +116,7 @@ protected:
 	DWORD               GetRandomConfig(void)
 	{
 		DWORD               dwNewConfigNumber;
-		MyDictionary<char*>* pNewConfig;
+		MyDictionary<mychar_t*>* pNewConfig;
 
 		//        do {} while( (dwReturn = m_mtRand.randInt( m_dwNumConfigs ) ) >= m_dwNumConfigs );
 
@@ -135,7 +135,7 @@ protected:
 		WindowDevice* pWindowDevice);
 
 	virtual error_t     InitializeDerived(
-		MyDictionary<char*>* inMainConfig,
+		MyDictionary<mychar_t*>* inMainConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals) = 0;
 
 	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas) = 0;

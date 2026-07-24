@@ -52,7 +52,7 @@ public:
 	bool        GetEdgeWrap(void) { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
 	bool        GetZoom(void) { return m_bZoom; };
 
-	error_t     Initialize(MyDictionary<char*>* inDeltaConfig,
+	error_t     Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
 #if EXTREME_DEBUGGING

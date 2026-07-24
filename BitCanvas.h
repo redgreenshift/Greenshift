@@ -388,7 +388,7 @@ public:
 	 * instance creation
 	 */
 	static error_t  New(BitCanvas** outBitCanvas,
-		MyDictionary<char*>* inConfig,
+		MyDictionary<mychar_t*>* inConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 		MyDictionary<value_t*>* inValues);
 

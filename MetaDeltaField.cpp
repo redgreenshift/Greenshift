@@ -63,7 +63,7 @@ MetaDeltaField::~MetaDeltaField()
  *
  ****************************************************************************/
 error_t    MetaDeltaField::InitializeDerived(
-	MyDictionary<char*>* inMainConfig,
+	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	DWORD    i;
@@ -89,7 +89,7 @@ error_t    MetaDeltaField::InitializeDerived(
 				}
 				else
 				{
-					char* name = m_pConfigs[i].GetValue("Name");
+					mychar_t* name = m_pConfigs[i].GetValue("Name");
 					DumpToFile("error.txt", "\n", "Filename: ");
 					if (name != NULL)
 						DumpToFile("error.txt", name, "\n");
