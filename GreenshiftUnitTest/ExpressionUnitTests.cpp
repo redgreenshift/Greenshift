@@ -1034,7 +1034,7 @@ namespace GreenshiftUnitTest
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 			{
-				const char* pszResult = spExpression->PrintString();
+				char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
 
 				const value_t fResult = spExpression->Evaluate();
