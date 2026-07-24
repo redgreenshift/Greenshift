@@ -181,6 +181,7 @@
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\</ProgramDataBaseFileName>
       <AdditionalOptions>
       </AdditionalOptions>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.tlb</TypeLibraryName>
@@ -216,7 +217,7 @@
       <ObjectFileName>.\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Debug\expressionconsole.tlb</TypeLibraryName>
@@ -253,7 +254,7 @@
       <ObjectFileName>.\expressionconsole___Win32_Debug_Windows\</ObjectFileName>
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Debug_Windows\</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Debug_Windows\expressionconsole.tlb</TypeLibraryName>
@@ -289,7 +290,7 @@
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows_DLL\</ProgramDataBaseFileName>
       <AdditionalOptions>
       </AdditionalOptions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_DLL\expressionconsole.tlb</TypeLibraryName>
@@ -306,7 +307,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <LinkDLL>true</LinkDLL>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>c:\progra~1\winamp\plugins\vis_greenshift.dll</OutputFile>
+      <OutputFile>c:\temp\progra~1\winamp\plugins\vis_greenshift.dll</OutputFile>
       <ImportLibrary>.\expressionconsole___Win32_Release_Windows_DLL\vis_greenshift.lib</ImportLibrary>
       <AdditionalDependencies>opengl32.lib;ddraw.lib;dxguid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -327,7 +328,7 @@
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows\</ProgramDataBaseFileName>
       <AdditionalOptions>
       </AdditionalOptions>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows\expressionconsole.tlb</TypeLibraryName>
@@ -362,7 +363,7 @@
       <ObjectFileName>.\expressionconsole___Win32_Debug_Console\</ObjectFileName>
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Debug_Console\</ProgramDataBaseFileName>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Debug_Console\expressionconsole.tlb</TypeLibraryName>
@@ -397,6 +398,7 @@
       <PrecompiledHeaderOutputFile>.\expressionconsole___Win32_Release_Console\expressionconsole.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\expressionconsole___Win32_Release_Console\</ObjectFileName>
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Console\</ProgramDataBaseFileName>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Console\expressionconsole.tlb</TypeLibraryName>
@@ -430,7 +432,7 @@
       <PrecompiledHeaderOutputFile>.\Release\expressionconsole.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Release\</ObjectFileName>
       <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Release\expressionconsole.tlb</TypeLibraryName>
