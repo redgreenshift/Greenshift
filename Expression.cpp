@@ -1278,7 +1278,7 @@ char* Expression::PrintString(void)
 	}
 
 	/* else, something went wrong */
-	return "PrintString: ERROR creating string";
+	return strdup("PrintString: ERROR creating string");
 }
 
 
