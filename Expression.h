@@ -348,8 +348,8 @@ public:
 												 * constant expression
 												 */
 	char* PrintString(void);    /* builds a string representation
-										 * of the expression it defines
-										 */
+								 * of the expression it defines
+								 */
 
 
 
@@ -584,8 +584,8 @@ public:
 	virtual     ~ExpressionValue();
 
 	const char* Operator(void) override;
-	int         Size(void);
-	int         Depth(void);
+	int         Size(void) override;
+	int         Depth(void) override;
 
 };
 
@@ -605,11 +605,11 @@ public:
 	ExpressionUnary(Expression* inExpression1);
 	virtual     ~ExpressionUnary();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool        IsConstantExpression(void);
-	bool        IsConstantExpression(value_t* inValue);
-	int         Size(void);
-	int         Depth(void);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool        IsConstantExpression(void) override;
+	bool        IsConstantExpression(value_t* inValue) override;
+	int         Size(void) override;
+	int         Depth(void) override;
 };
 
 /* Do I really want to add the extra level? */
@@ -650,11 +650,11 @@ public:
 		Expression* inExpression2);
 	virtual ~ExpressionBinary();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool    IsConstantExpression(void);
-	bool    IsConstantExpression(value_t* inValue);
-	int     Size(void);
-	int     Depth(void);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool    IsConstantExpression(void) override;
+	bool    IsConstantExpression(value_t* inValue) override;
+	int     Size(void) override;
+	int     Depth(void) override;
 };
 
 
@@ -726,11 +726,11 @@ public:
 		Expression* inExpression3);
 	virtual     ~ExpressionTernary();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool        IsConstantExpression(void);
-	bool        IsConstantExpression(value_t* inValue);
-	int         Size(void);
-	int         Depth(void);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool        IsConstantExpression(void) override;
+	bool        IsConstantExpression(value_t* inValue) override;
+	int         Size(void) override;
+	int         Depth(void) override;
 };
 
 
@@ -756,11 +756,11 @@ public:
 		Expression* inExpression2);
 	virtual ~ExpressionNAry();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool    IsConstantExpression(void);
-	bool    IsConstantExpression(value_t* inValue);
-	int     Size(void);
-	int     Depth(void);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool    IsConstantExpression(void) override;
+	bool    IsConstantExpression(value_t* inValue) override;
+	int     Size(void) override;
+	int     Depth(void) override;
 };
 
 
@@ -797,13 +797,13 @@ public:
 	ExpressionConstant(const value_t inValue);
 	virtual     ~ExpressionConstant();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool        IsConstantExpression(void);
-	bool        IsConstantExpression(value_t* inValue);
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool        IsConstantExpression(void) override;
+	bool        IsConstantExpression(value_t* inValue) override;
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -820,13 +820,13 @@ public:
 	ExpressionVariable(char* inName, value_t* inValue);
 	virtual     ~ExpressionVariable();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool        IsConstantExpression(void);
-	bool        IsConstantExpression(value_t* inValue);
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool        IsConstantExpression(void) override;
+	bool        IsConstantExpression(value_t* inValue) override;
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -841,11 +841,11 @@ public:
 	virtual     ~ExpressionUserDefined();
 
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(
 		value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -862,10 +862,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionSqr : public ExpressionUnary
@@ -875,10 +875,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionLog10 : public ExpressionUnary
@@ -888,10 +888,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 // natral log (base-e)
@@ -902,10 +902,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 // base-e exponential function of x,
@@ -916,10 +916,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionFactorial : public ExpressionUnary
@@ -929,10 +929,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 /****************************************************************************
@@ -948,10 +948,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionSin : public ExpressionUnary
@@ -961,10 +961,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionTan : public ExpressionUnary
@@ -974,10 +974,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcCos : public ExpressionUnary
@@ -987,10 +987,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcSin : public ExpressionUnary
@@ -1000,10 +1000,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcTan : public ExpressionUnary
@@ -1013,10 +1013,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1032,10 +1032,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionSinh : public ExpressionUnary
@@ -1045,10 +1045,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionTanh : public ExpressionUnary
@@ -1058,10 +1058,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcCosh : public ExpressionUnary
@@ -1071,10 +1071,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcSinh : public ExpressionUnary
@@ -1084,10 +1084,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionArcTanh : public ExpressionUnary
@@ -1097,10 +1097,10 @@ public:
 		: ExpressionUnary(inExpression1) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1118,10 +1118,10 @@ public:
 		: ExpressionAdditive(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionSub : public ExpressionAdditive
@@ -1131,10 +1131,10 @@ public:
 		: ExpressionAdditive(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionMult : public ExpressionMultiplicative
@@ -1144,10 +1144,10 @@ public:
 		: ExpressionMultiplicative(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionDiv : public ExpressionMultiplicative
@@ -1157,10 +1157,10 @@ public:
 		: ExpressionMultiplicative(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionMod : public ExpressionMultiplicative
@@ -1170,10 +1170,10 @@ public:
 		: ExpressionMultiplicative(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionPower : public ExpressionExponential
@@ -1183,10 +1183,10 @@ public:
 		: ExpressionExponential(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1200,10 +1200,10 @@ public:
 		: ExpressionList(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1217,10 +1217,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionNonEquality : public ExpressionRelational
@@ -1230,10 +1230,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1244,10 +1244,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1258,10 +1258,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 class ExpressionLessThan : public ExpressionRelational
@@ -1271,10 +1271,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1285,10 +1285,10 @@ public:
 		: ExpressionRelational(inExpression1, inExpression2) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1308,11 +1308,11 @@ public:
 		: ExpressionTernary(inExpression1, inExpression2, inExpression3) {
 	};
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(
 		value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 };
 
 
@@ -1350,13 +1350,13 @@ public:
 	ExpressionSymbol(const long inValue);
 	virtual     ~ExpressionSymbol();
 
-	char* PrintString(char* inStr, int& nLength);
-	bool        IsConstantExpression(void);
-	bool        IsConstantExpression(value_t* inValue);
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	char* PrintString(char* inStr, int& nLength) override;
+	bool        IsConstantExpression(void) override;
+	bool        IsConstantExpression(value_t* inValue) override;
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 
 	bool    Match(char* inString, int* outMatchedLength)
 	{
@@ -1381,9 +1381,9 @@ public:
 	virtual     ~ExpressionStar();
 
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
-	error_t     PartialSimplification(value_t* inValue, Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
+	error_t     PartialSimplification(value_t* inValue, Expression** outExpression) override;
 
 
 
@@ -1418,10 +1418,10 @@ public:
 	virtual     ~ExpressionOr();
 
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 
 
 
@@ -1458,10 +1458,10 @@ public:
 	virtual     ~ExpressionAnd();
 
 	const char* Operator(void) override;
-	value_t     Evaluate(void);
-	error_t     Copy(Expression** outExpression);
+	value_t     Evaluate(void) override;
+	error_t     Copy(Expression** outExpression) override;
 	error_t     PartialSimplification(value_t* inValue,
-		Expression** outExpression);
+		Expression** outExpression) override;
 
 
 
