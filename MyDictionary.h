@@ -251,7 +251,7 @@ public:
 		err = pTmp->Initialize(inKey, inValue);
 		if (err == SUCCESS)
 		{
-			err = Add(pTmp);
+			err = this->Add(pTmp);
 			if (err != SUCCESS)
 				delete pTmp;
 		}
@@ -277,7 +277,7 @@ public:
 			if (this->m_pArray[i] != NULL
 				&& StringsMatch(inKey, this->m_pArray[i]->GetKey()))
 			{
-				return Remove(this->m_pArray[i]);
+				return this->Remove(this->m_pArray[i]);
 			}
 		}
 
@@ -542,7 +542,7 @@ protected:
 		if (this->Size() < this->Capacity() || this->Capacity() == 0)
 			return SUCCESS;
 
-		Remove(m_pData[0]);
+		this->Remove(m_pData[0]);
 
 		for (i = 0; i < this->Capacity() - 1; i++)
 		{
