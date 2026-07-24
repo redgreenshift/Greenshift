@@ -1489,7 +1489,7 @@ public:
 
 
 #if EXTREME_DEBUGGING
-void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, char* anotherString = "");
+void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, const char* anotherString = "");
 #endif
 
 #endif /* _Expression_H_ */

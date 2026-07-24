@@ -2072,7 +2072,7 @@ error_t     Expression::NewAnd(Expression* inExpression1,
 
 
 #if EXTREME_DEBUGGING
-void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, char* anotherString /* = "" */)
+void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, const char* anotherString /* = "" */)
 {
 	FILE* outFile = fopen(fileName, "a");
 

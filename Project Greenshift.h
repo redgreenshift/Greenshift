@@ -658,7 +658,7 @@ static inline void long_sqrt_rounded(const long lValue, long* outValue)
 
 #include <stdio.h>
 #include <windows.h>
-static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNumber, char* anotherString = "")
+static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	char    strDisplay[2048];
 
