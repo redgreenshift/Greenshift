@@ -122,7 +122,7 @@ BYTE    Palette::PercentToByte(const value_t nValue)
  * Initialize -
  *
  ****************************************************************************/
-error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
+error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	char        strIDRed[8];
@@ -130,22 +130,22 @@ error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
 	char        strIDBlue[8];
 	error_t     err = SUCCESS;
 	WORD        i;
-	char* strHue = NULL;
-	char* strSaturation = NULL;
-	char* strValue = NULL;
-	char* strLightness = NULL;
+	mychar_t* strHue = NULL;
+	mychar_t* strSaturation = NULL;
+	mychar_t* strValue = NULL;
+	mychar_t* strLightness = NULL;
 
-	char* strRed = NULL;
-	char* strGreen = NULL;
-	char* strBlue = NULL;
+	mychar_t* strRed = NULL;
+	mychar_t* strGreen = NULL;
+	mychar_t* strBlue = NULL;
 
-	char* strCyan = NULL;
-	char* strMagenta = NULL;
-	char* strYellow = NULL;
+	mychar_t* strCyan = NULL;
+	mychar_t* strMagenta = NULL;
+	mychar_t* strYellow = NULL;
 
-	char* strExp1 = NULL;
-	char* strExp2 = NULL;
-	char* strExp3 = NULL;
+	mychar_t* strExp1 = NULL;
+	mychar_t* strExp2 = NULL;
+	mychar_t* strExp3 = NULL;
 
 
 	/*
@@ -212,7 +212,7 @@ error_t        Palette::Initialize(MyDictionary<char*>* pConfig,
 	case PALETTE_STATIC_COLOR_MAP:
 		for (i = 0; i < PALETTE_SIZE; i++)
 		{
-			char* rVal, * gVal, * bVal;
+			mychar_t* rVal, * gVal, * bVal;
 
 			int nR = snprintf(strIDRed, _countof(strIDRed), "r%d", i);
 			int nG = snprintf(strIDGreen, _countof(strIDGreen), "g%d", i);

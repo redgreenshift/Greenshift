@@ -67,7 +67,7 @@ MetaPalette::~MetaPalette()
  *
  ****************************************************************************/
 error_t    MetaPalette::InitializeDerived(
-	MyDictionary<char*>* inMainConfig,
+	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	DWORD    i;

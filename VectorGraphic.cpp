@@ -108,7 +108,7 @@ void    VectorGraphic::Reset(void)
  * Initialize - two stage initialization (USE PARTIAL SIMPLIFICATION!!!!)
  *
  ****************************************************************************/
-error_t    VectorGraphic::Initialize(MyDictionary<char*>* inConfig,
+error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<value_t*>* inValues,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {

@@ -132,15 +132,15 @@ protected:
 	MetaPalette                 m_mpMetaPalette;
 
 
-	MyDictionary<char*>           m_dMainConfig; /* settings found in the main config file */
-	MyDictionary<MyDictionary<char*>*>
+	MyDictionary<mychar_t*>           m_dMainConfig; /* settings found in the main config file */
+	MyDictionary<MyDictionary<mychar_t*>*>
 		m_dExtraConfig;
 	MyDictionary<EXPRESSIONDESCRIPTION*>    /* variables and functions allowed */
 		m_dGlobals; /* in all Greenshift expressions */
-	MyDictionary<char*>           m_dAlias;
-	MyDictionary<char*>           m_dConstant;
-	MyDictionary<char*>           m_dDefaults;
-	MyDictionary<char*>           m_dFunction;
+	MyDictionary<mychar_t*>           m_dAlias;
+	MyDictionary<mychar_t*>           m_dConstant;
+	MyDictionary<mychar_t*>           m_dDefaults;
+	MyDictionary<mychar_t*>           m_dFunction;
 	MyDictionary<value_t*>        m_dValues;
 	value_t* m_pValues = nullptr;
 
@@ -159,10 +159,10 @@ protected:
 	DWORD                       m_dwNumParticles;        /* size of the particle array */
 	DWORD                       m_dwNumPalettes;        /* size of the palette array */
 
-	MyDictionary<char*>* m_pDeltaFieldConfigs;
-	MyDictionary<char*>* m_pWaveShapeConfigs;
-	MyDictionary<char*>* m_pParticleConfigs;
-	MyDictionary<char*>* m_pPaletteConfigs;
+	MyDictionary<mychar_t*>* m_pDeltaFieldConfigs;
+	MyDictionary<mychar_t*>* m_pWaveShapeConfigs;
+	MyDictionary<mychar_t*>* m_pParticleConfigs;
+	MyDictionary<mychar_t*>* m_pPaletteConfigs;
 
 	Expression* m_pFFTTransform = nullptr;
 

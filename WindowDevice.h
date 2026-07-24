@@ -112,7 +112,7 @@ public:
 	static error_t  New(const HINSTANCE hInstance,
 		WindowDevice** outWindowDevice,
 		const char* strWindowTitle,
-		MyDictionary<char*>* inConfig,
+		MyDictionary<mychar_t*>* inConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 		MyDictionary<value_t*>* inValues,
 		const HWND hParentWindow,
@@ -122,7 +122,7 @@ public:
 		const HINSTANCE hInstance,
 		const WNDPROC hWindowMsgHandler,
 		const HWND hParentWindow,
-		MyDictionary<char*>* inConfig,
+		MyDictionary<mychar_t*>* inConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 		MyDictionary<value_t*>* inValues);
 

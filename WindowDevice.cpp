@@ -122,7 +122,7 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 	const HINSTANCE hInstance,
 	const WNDPROC hDefWindowProc,
 	const HWND hParentWindow,
-	MyDictionary<char*>* inConfig,
+	MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 	MyDictionary<value_t*>* inValues)
 {
@@ -1149,7 +1149,7 @@ LRESULT CALLBACK WindowDeviceWindowProcedure(HWND hWindow,
 error_t     WindowDevice::New(const HINSTANCE hInstance,
 	WindowDevice** outWindowDevice,
 	const char* strWindowTitle,
-	MyDictionary<char*>* inConfig,
+	MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 	MyDictionary<value_t*>* inValues,
 

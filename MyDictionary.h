@@ -152,7 +152,7 @@ class MyDictionary : public Set< Association<DataType>* >
 {
 protected:
 	DWORD                   m_dwAliasCount;
-	MyDictionary<char*>*	m_pAlias;
+	MyDictionary<mychar_t*>*	m_pAlias;
 	MyDictionary<DataType>* m_pAlternate;
 	bool                    m_bCaseSensitive;  /* comparisons are case sensitive */
 
@@ -177,7 +177,7 @@ public:
 	 * SetAlias - set the alias lookup MyDictionary
 	 *
 	 ****************************************************************************/
-	void    SetAlias(MyDictionary<char*>* pAlias)
+	void    SetAlias(MyDictionary<mychar_t*>* pAlias)
 	{
 		m_pAlias = pAlias;
 	};
@@ -462,12 +462,12 @@ public:
 	{
 		unsigned int i;
 
-		for (i = 0; i < Capacity(); i++)
+		for (i = 0; i < this->Capacity(); i++)
 		{
-			if (m_pArray[i] != NULL)
+			if (this->m_pArray[i] != NULL)
 			{
-				DumpToFile(strFile, m_pArray[i]->GetKey(), "\n");
-				DumpToFile(strFile, (DataType)m_pArray[i]->GetValue(), "\n\n");
+				DumpToFile(strFile, this->m_pArray[i]->GetKey(), "\n");
+				DumpToFile(strFile, (DataType)this->m_pArray[i]->GetValue(), "\n\n");
 			}
 		}
 	};
@@ -603,7 +603,7 @@ protected:
 
 
 #if EXTREME_DEBUGGING
-static void DumpToFile(const char* fileName, MyDictionary<char*>* pDict, char* anotherString = "")
+static void DumpToFile(const char* fileName, MyDictionary<mychar_t*>* pDict, mychar_t* anotherString = "")
 {
 	FILE* outFile;
 

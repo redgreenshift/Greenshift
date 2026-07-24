@@ -486,7 +486,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 	 /**/
 
 	{
-		Association<char*>** pMainConfig;
+		Association<mychar_t*>** pMainConfig;
 		DWORD   dwSize = 0;
 
 		if ((err = m_dMainConfig.AsArray(&pMainConfig, &dwSize)) == SUCCESS
@@ -495,7 +495,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 			for (i = 0; i < dwSize; i++)
 			{
 				char* variable = pMainConfig[i]->GetKey();
-				char* expression = pMainConfig[i]->GetValue();
+				mychar_t* expression = pMainConfig[i]->GetValue();
 //                    value_t *value   = (value_t*)malloc(sizeof(*value));
 
 //                    if(value==NULL)
@@ -575,10 +575,10 @@ error_t    Greenshift::LoadConfigs(void)
 	error_t err = SUCCESS;
 	DWORD   i;
 	DWORD   dwSize;
-	Association<char*>** pArray = NULL;
+	Association<mychar_t*>** pArray = NULL;
 	char    strModulePath[MAX_PATH];
 	char    strRoot[MAX_PATH];
-	char*   strGForce = NULL;
+	mychar_t*   strGForce = NULL;
 	int     index;
 
 

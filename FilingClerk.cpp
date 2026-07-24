@@ -81,7 +81,7 @@ FilingClerk::~FilingClerk()
   * SetRoot - root directory
   *
   ****************************************************************************/
-error_t    FilingClerk::SetRoot(char* strRoot)
+error_t    FilingClerk::SetRoot(mychar_t* strRoot)
 {
 	SAFE_FREE(m_strRoot);
 	m_strRoot = strdup(strRoot);
@@ -94,7 +94,7 @@ error_t    FilingClerk::SetRoot(char* strRoot)
  * SetFolder - current filing folder to search
  *
  ****************************************************************************/
-error_t    FilingClerk::SetFolder(char* strFolder)
+error_t    FilingClerk::SetFolder(mychar_t* strFolder)
 {
 	SAFE_FREE(m_strFolder);
 	m_strFolder = strdup(strFolder);
@@ -617,14 +617,14 @@ token_t    FilingClerk::GetToken(void)
  *
  ****************************************************************************/
 error_t FilingClerk::LoadConfig(
-	MyDictionary<char*>** ppConfig,
+	MyDictionary<mychar_t*>** ppConfig,
 	DWORD* inoutNumAllocated)
 {
 	error_t				err = SUCCESS;
 	char*				strFile = NULL;
 	DWORD				nConfig = 0;
 	DWORD               nNumConfig = 0;
-	MyDictionary<char*>* pTmpConfig = NULL;
+	MyDictionary<mychar_t*>* pTmpConfig = NULL;
 
 
 	if (ppConfig == NULL || inoutNumAllocated == NULL)
@@ -649,7 +649,7 @@ error_t FilingClerk::LoadConfig(
 		/*
 		 * allocate space for nConfig Dictionaries
 		 */
-		pTmpConfig = new MyDictionary<char*>[nNumConfig];
+		pTmpConfig = new MyDictionary<mychar_t*>[nNumConfig];
 		if (pTmpConfig == NULL)
 			return ERR_MALLOC;
 
@@ -760,14 +760,14 @@ error_t FilingClerk::LoadConfig(
  *        requirements for palettes, color maps, or whatever you call them.
  *
  ****************************************************************************/
-error_t FilingClerk::LoadColorMaps(MyDictionary<char*>** ppConfig,
+error_t FilingClerk::LoadColorMaps(MyDictionary<mychar_t*>** ppConfig,
 	DWORD* inoutNumAllocated)
 {
 	error_t             err = SUCCESS;
 	char* strFile = NULL;
 	DWORD               nConfig = 0;
 	DWORD               nNumConfig = 0;
-	MyDictionary<char*>* pTmpConfig = NULL;
+	MyDictionary<mychar_t*>* pTmpConfig = NULL;
 	//    DWORD    i;
 
 	if (ppConfig == NULL || inoutNumAllocated == NULL)
@@ -793,7 +793,7 @@ error_t FilingClerk::LoadColorMaps(MyDictionary<char*>** ppConfig,
 		/*
 		 * allocate space for nConfig Dictionaries
 		 */
-		pTmpConfig = new MyDictionary<char*>[nNumConfig];
+		pTmpConfig = new MyDictionary<mychar_t*>[nNumConfig];
 		if (pTmpConfig == NULL)
 			return ERR_MALLOC;
 
@@ -903,7 +903,7 @@ error_t FilingClerk::LoadColorMaps(MyDictionary<char*>** ppConfig,
  *            file is just a list of numbers, sets of three, for the RGB parts
  *
  ****************************************************************************/
-error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
+error_t FilingClerk::GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary)
 {
 	char    strID[8];
 	error_t    err;
@@ -1078,8 +1078,8 @@ error_t FilingClerk::GetColorMap(char* id, MyDictionary<char*>* outMyDictionary)
  * GetData - parses the file, and returns file as a MyDictionary
  *
  ****************************************************************************/
-error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
-	MyDictionary<MyDictionary<char*>*>* outExtra)
+error_t    FilingClerk::GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary,
+	MyDictionary<MyDictionary<mychar_t*>*>* outExtra)
 {
 	error_t    err = ERR_FAKE;
 	int        token = 0;
@@ -1090,7 +1090,7 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 	char* strTmp = nullptr;
 	enum { look_for_id, look_for_expression } state = look_for_id;
 	enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
-	MyDictionary<char*>* pIndirectMyDictionary = outMyDictionary;
+	MyDictionary<mychar_t*>* pIndirectMyDictionary = outMyDictionary;
 
 	/*
 	 * outExtra contains extra dictionaries for storing section specific data
@@ -1152,6 +1152,8 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 		{
 			DumpToFile("error.txt",
 				"ERROR: FilingClerk::GetData() -> OpenFile()", "\n");
+			DumpToFile("error.txt",
+				m_strFile, "\n");
 			DumpToFile("error.txt", ErrorString(err), "\n");
 		}
 #endif
@@ -1266,11 +1268,11 @@ error_t    FilingClerk::GetData(char* id, MyDictionary<char*>* outMyDictionary,
 				 * should never be NULL, but just in case...
 				 * keep MyDictionary from dereferencing NULL
 				 */
-				if (strID == NULL)    strID = "";
-				if (strExp == NULL)    strExp = "";
+				//if (strID == NULL)    strID = "";
+				//if (strExp == NULL)    strExp = "";
 
-				//                err = outMyDictionary->SetValue( strID, strExp );
-				err = pIndirectMyDictionary->SetValue(strID, strExp);
+				//err = outMyDictionary->SetValue( strID ? strID : "", strExp ? strExp : "" );
+				err = pIndirectMyDictionary->SetValue(strID ? strID : "", strExp ? strExp : "");
 				if (err != SUCCESS)
 					return err;
 				/*

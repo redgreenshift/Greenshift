@@ -60,7 +60,7 @@ public:
 
 	error_t     Initialize(Palette* palette);
 	error_t     Initialize(Palette* p1, Palette* p2, const value_t nPercent);
-	error_t     Initialize(MyDictionary<char*>* pConfig,
+	error_t     Initialize(MyDictionary<mychar_t*>* pConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* pUserDefined);
 
 	void        SetPaletteEntry(const DWORD nIndex, const COLORREF crColor);

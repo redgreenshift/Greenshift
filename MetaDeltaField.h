@@ -50,7 +50,7 @@ public:
 	virtual                 ~MetaDeltaField();
 
 	virtual error_t         InitializeDerived(
-		MyDictionary<char*>* inMainConfig,
+		MyDictionary<mychar_t*>* inMainConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
 	virtual error_t         UpdateDerived(BitCanvas* pBitCanvas);

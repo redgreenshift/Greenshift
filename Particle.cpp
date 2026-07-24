@@ -103,7 +103,7 @@ void    Particle::SetLifetime(const value_t nLifetime)
  * Initialize - two stage initialization
  *
  ****************************************************************************/
-error_t    Particle::Initialize(MyDictionary<char*>* inConfig,
+error_t    Particle::Initialize(MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<value_t*>* inValues,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {

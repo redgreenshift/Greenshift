@@ -159,7 +159,7 @@ int PASCAL WINMAIN(HINSTANCE hInstance,
 
 	FILE* outFile;
 
-	MyDictionary<char*>    ddTest;
+	MyDictionary<mychar_t*>    ddTest;
 
 	MTRand mtRand;
 
@@ -405,7 +405,7 @@ int PASCAL WINMAIN2(HINSTANCE hInstance,
 {
 	error_t err = SUCCESS;
 	BitCanvas* bitCanvas;
-	MyDictionary<char*> dConfig;
+	MyDictionary<mychar_t*> dConfig;
 
 	dConfig.SetValue("display_width", "640");
 	dConfig.SetValue("display_height", "480");

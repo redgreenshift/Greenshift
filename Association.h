@@ -29,6 +29,8 @@
 #ifndef _Association_H_
 #define _Association_H_
 
+#include <cstring> // strlen
+
   /*
    * an Association represents a link between a string and some data
    *

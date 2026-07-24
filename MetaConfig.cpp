@@ -59,9 +59,9 @@ MetaConfig::~MetaConfig()
  *
  ****************************************************************************/
 error_t    MetaConfig::Initialize(
-	MyDictionary<char*>* pConfigs,
+	MyDictionary<mychar_t*>* pConfigs,
 	const DWORD dwNumConfigs,
-	MyDictionary<char*>* inMainConfig,
+	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 

@@ -50,7 +50,7 @@ public:
 	Particle();
 	virtual             ~Particle();
 
-	virtual error_t     Initialize(MyDictionary<char*>* inConfig,
+	virtual error_t     Initialize(MyDictionary<mychar_t*>* inConfig,
 		MyDictionary<value_t*>* inValues,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 

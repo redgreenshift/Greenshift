@@ -97,7 +97,7 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 	//const DWORD dwHeight,
 	//const DWORD dwBitDepth,
 	BitCanvas** outBitCanvas,
-	MyDictionary<char*>* inConfig,
+	MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 	MyDictionary<value_t*>* inValues)
 {
@@ -2728,7 +2728,7 @@ void    BitCanvas32::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
 		}
 
 		//skip over the cache area
-		(DWORD*)lpSurface2 += nDeadSpace;
+		lpSurface2 += nDeadSpace;
 	}
 }
 

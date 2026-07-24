@@ -122,16 +122,16 @@ public:
 	FilingClerk();
 	~FilingClerk();
 
-	error_t     SetRoot(char* strFolder); /* base directory */
-	error_t     SetFolder(char* strFolder); /* specific section */
+	error_t     SetRoot(mychar_t* strFolder); /* base directory */
+	error_t     SetFolder(mychar_t* strFolder); /* specific section */
 
 	/*
 	 * load config files
 	 */
-	error_t     LoadConfig(MyDictionary<char*>** ppConfig, DWORD* inoutNumAllocated);
-	error_t     LoadColorMaps(MyDictionary<char*>** ppConfig, DWORD* inoutNumAllocated);
-	error_t     GetData(char* id, MyDictionary<char*>* outMyDictionary, MyDictionary<MyDictionary<char*>*>* outExtra = NULL);
-	error_t     GetColorMap(char* id, MyDictionary<char*>* outMyDictionary);
+	error_t     LoadConfig(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     LoadColorMaps(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary, MyDictionary<MyDictionary<mychar_t*>*>* outExtra = NULL);
+	error_t     GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary);
 
 protected:
 	char* m_strRoot;      /* main folder currently working in */
