@@ -376,7 +376,7 @@ protected:
 	 ****************************************************************************/
 	virtual bool    Compare(data_t inValue1, data_t inValue2)
 	{
-		if (IsValid(inValue1) && IsValid(inValue2))
+		if (this->IsValid(inValue1) && this->IsValid(inValue2))
 			return StringsMatch(inValue1->GetKey(), inValue2->GetKey());
 		else
 			return inValue1 == inValue2;  //***************/ IS THIS RIGHT?
