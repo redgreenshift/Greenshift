@@ -51,7 +51,7 @@ TweenThread::TweenThread(const TWEENDESCRIPTION& tween_description) :
 
 	m_pUnalignedBuffer = NULL;
 
-	m_dwState = 0;
+	m_state = TweenState::Serving_NoPendingWork;
 	m_dwCurrentFrame = 0;
 	m_dwPlainRepetition = 0;
 	m_dwTweenRepetition = 0;
@@ -101,11 +101,11 @@ error_t    TweenThread::Initialize(void* pObject1)
 															TweenFramesThreadside
 														 */
 
-														 //    char    strTmp[256];
+	//char    strTmp[256];
 
-															 /*
-															  * what if I just go ahead and allocate all the buffers? as one chunk?
-															  */
+	/*
+	* what if I just go ahead and allocate all the buffers? as one chunk?
+	*/
 
 	err = ContiguousAlignedMemory::Allocate(&m_pUnalignedBuffer,
 		&pPageTable,
@@ -130,7 +130,7 @@ error_t    TweenThread::Initialize(void* pObject1)
 	m_pTweenFramesThreadside = &pPageTable[m_dwMaximumFrames + 1];
 	m_pPlainFramesThreadside = &pPageTable[m_dwMaximumFrames * 2];
 
-	//    PrerenderFrames( 1, m_pPlainFrames, pObject1, NULL );
+	//PrerenderFrames( 1, m_pPlainFrames, pObject1, NULL );
 	ExperimentalPrerenderFrame(m_pPlainFrames[0], pObject1);
 
 	return SUCCESS;
@@ -139,7 +139,8 @@ error_t    TweenThread::Initialize(void* pObject1)
 
 /****************************************************************************
  *
- * ScheduleTween
+ * ScheduleTween - queues and shedules background work to precalculate
+ * interpolated frames between Object1 and Object2.
  *
  ****************************************************************************/
 error_t TweenThread::ScheduleTween(const DWORD dwFrames,
@@ -155,18 +156,18 @@ error_t TweenThread::ScheduleTween(const DWORD dwFrames,
 	else
 	{
 #if EXTREME_DEBUGGING
-		//        hrTweenTimer.Start();
+		//hrTweenTimer.Start();
 #endif
 
 		/*
 		 * SOMETHING is deadlocking, so it's better safe than sorry
 		 */
 		EnterCS();
-		if (m_dwState != 0)
+		if (m_state != TweenState::Serving_NoPendingWork)
 			err = ERR_THREADBUSY;
 		else
 		{
-			m_dwState = 1;  /* tween when ready */
+			m_state = TweenState::Serving_AwaitingTweenData;  /* tween when ready */
 			m_dwNumPlainFramesThreadside = 1;
 			m_pObject2 = pObject2;
 
@@ -189,20 +190,31 @@ error_t TweenThread::ScheduleTween(const DWORD dwFrames,
 
 /****************************************************************************
  *
- * GetFrame -
+ * GetFrame - hands back Field frames.
  *
  ****************************************************************************/
 void* TweenThread::GetFrame(void)
 {
-	DWORD state;
+	TweenState state;
 
 	EnterCS();
-	state = m_dwState;
+	state = m_state;
 	LeaveCS();
 
 	switch (state)
 	{
-	case 0:
+	case TweenState::Serving_NoPendingWork:	// Just serving the source. No pending tasks in flight.
+
+		// I think I was allowing future designing of Fields that change over time, in
+		// addition to the pre-existing work to interpolate or "tween" between two Fields.
+		// That's why I have m_dwCurrentFrame++ iterating across m_pPlainFrames.
+		//
+		// To make it even more complex, I also can repeat each frame multiple times,
+		// so the transition takes longer.That part is m_dwPlainRepetition++
+
+		// Keep handing out the frame(s) for Field1 (This is the "current" field).
+		// There is no pending work for the Background thread to process. This is a
+		// steady state, just handing out frames for Field1 over and over.
 
 		if (m_dwPlainRepetition++ < m_dwPlainFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumPlainFrames)
@@ -215,7 +227,29 @@ void* TweenThread::GetFrame(void)
 
 		return m_pPlainFrames[m_dwCurrentFrame++];
 
-	case 1:
+	case TweenState::Serving_AwaitingTweenData:	// The waiting phase; we are still serving our current field while we wait to sync/receive the next delta field data!
+
+		// This is the "holding pattern" where we finish serving the source field while
+		// waiting for the background thread to finish calculating the next field, and
+		// interpolation frames in between. Once worker completes or it's time to
+		// transition, we swap and go to state 2 (Tween).
+
+		// Another Field (Field2) has been queued for the background thread
+		// to process (the BG thread generates/precalculates the frames between the two
+		// Fields). Keep handing out frames for Field1 until the background
+		// work is done. The first part of this m_state==1 handler is the
+		// **same** as the m_state==0 handler. This is to ensure that any "time dependent"
+		// DeltaFields finish rendering all the frames before starting to hand back
+		// the "tween" frames between DeltaField1 and DeltaField2.
+		//
+		// This is a "holding pattern" state, Waiting for the background work to be done.
+		// Once the work is done, we swap the buffers(the buffers from the background
+		// where the "tween" frames were precalculated m_pPlainFramesThreadside /
+		// m_pTweenFramesThreadside and the foreground buffers m_pTweenFrames /
+		// m_pPlainFrames so that frames from the freshly calculated buffers will now
+		// be handed out by GetFrame), and then transition to m_state = 2.
+
+		// Why do we have state 0 and 1? To distinguish between nothing queued, and Awaiting
 
 		if (m_dwPlainRepetition++ < m_dwPlainFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumPlainFrames)
@@ -238,16 +272,16 @@ void* TweenThread::GetFrame(void)
 		else  /* thread's done calculating */
 		{
 #if EXTREME_DEBUGGING
-			//            float nSeconds;
-			//            hrTimer.Stop();
+			//float nSeconds;
+			//hrTimer.Stop();
 
-			//            hrTimer.Time(&nSeconds);
+			//hrTimer.Time(&nSeconds);
 
-			//            DumpToFile( "tweenlog.txt", "Tween timer: ", hrTweenTimer.Seconds(), "\n" );
+			//DumpToFile( "tweenlog.txt", "Tween timer: ", hrTweenTimer.Seconds(), "\n" );
 #endif
 			/*
 			 * need a safety mechanism that works both ways:
-			 *   thread done... main received
+			 *   thread done... main thread received the data
 			 */
 
 			 /* swap the frame number variables */
@@ -264,12 +298,19 @@ void* TweenThread::GetFrame(void)
 		}
 
 		EnterCS();
-		m_dwState = 2;
+		m_state = TweenState::Tweening;
 		LeaveCS();
 		/* FALLTHROUGH */
 		__fallthrough;
 
-	case 2:
+	case TweenState::Tweening:	// The interpolation/tween motion itself between two fields.
+
+		// We move between fields. Once finished, we return to a "new" steady-state serving of the current field (or reset the cycle).
+
+		// now we use the tween frames, handing them out so the caller can gradually
+		// transition between Field1 and Field2. Once all frames are handed out,
+		// proceed back to the steady state m_state=0 and then we HOLD there,
+		// since there are no more Fields queued for precalculation.
 
 		if (m_dwTweenRepetition++ < m_dwTweenFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumTweenFrames)
@@ -281,7 +322,7 @@ void* TweenThread::GetFrame(void)
 			return m_pTweenFrames[m_dwCurrentFrame++];
 
 		EnterCS();
-		m_dwState = 0;
+		m_state = TweenState::Serving_NoPendingWork;
 		LeaveCS();
 		m_dwCurrentFrame = 1; /*
 							  * the fallthrough does frame 0,
@@ -312,10 +353,12 @@ void* TweenThread::GetFrame(void)
   ****************************************************************************/
 int    TweenThread::ThreadProcedure(void* pData)
 {
-	int        nWorkToDo;  // number of frames to calculate
-	// 0 = no work
-	// 1 = don't tween, just prerender a single frame, isn't used
-	// 2 = prerender the final frame, and then tween the current and final frames
+	enum class WorkType {
+		None = 0,							// No Work To Do
+		RenderOneFrame = 1,					// don't tween, just prerender a single frame
+		RenderTwoAndInterpolateFrames = 2,	// prerender the final frame, and then tween the current and final frames
+	} task = WorkType::None; // number of frames to calculate
+
 
 	while (true)
 	{
@@ -325,15 +368,15 @@ int    TweenThread::ThreadProcedure(void* pData)
 			m_pObject1 != NULL)
 		{
 			if (m_pObject2 != NULL)
-				nWorkToDo = 2;
+				task = WorkType::RenderTwoAndInterpolateFrames;
 			else
-				nWorkToDo = 1;
+				task = WorkType::RenderOneFrame;
 
 		}
 		else
 		{
-			nWorkToDo = 0;
-			//                m_bTweenInProgress = false;
+			task = WorkType::None;
+			//m_bTweenInProgress = false;
 		}
 		LeaveCS();
 
@@ -348,16 +391,16 @@ int    TweenThread::ThreadProcedure(void* pData)
 		 * main handles everything
 		 */
 
-		switch (nWorkToDo)
+		switch (task)
 		{
 		default:
-		case 0:
-			//            DumpToFile("error.txt", "going to sleep", "\n");
+		case WorkType::None:
+			//DumpToFile("error.txt", "going to sleep", "\n");
 			Suspend(); /* wait for work to show up */
-			//            DumpToFile("error.txt", "woke up", "\n");
+			//DumpToFile("error.txt", "woke up", "\n");
 			continue; /* go back to the beginning of the while loop */
 
-		case 1:
+		case WorkType::RenderOneFrame:
 			/*
 			 * calculate the final frame
 			 */
@@ -367,23 +410,23 @@ int    TweenThread::ThreadProcedure(void* pData)
 				NULL);
 			break;
 
-		case 2:
+		case WorkType::RenderTwoAndInterpolateFrames:
 			/*
 			 * calculate the tween frames
 			 */
-			 /*            PrerenderFrames( m_dwNumTweenFramesThreadside,
-										  m_pTweenFramesThreadside,
-										  m_pObject1,
-										  m_pObject2 );
-						 PrerenderFrames( m_dwNumPlainFramesThreadside,
-										  m_pPlainFramesThreadside,
-										  m_pObject2,
-										  NULL );
-						 /*/
-						 //            PrerenderFrames( m_dwNumPlainFramesThreadside,
-						 //                             m_pPlainFramesThreadside,
-						 //                             m_pObject2,
-						 //                             NULL );
+			/*PrerenderFrames( m_dwNumTweenFramesThreadside,
+							m_pTweenFramesThreadside,
+							m_pObject1,
+							m_pObject2 );
+			PrerenderFrames( m_dwNumPlainFramesThreadside,
+							m_pPlainFramesThreadside,
+							m_pObject2,
+							NULL );
+			/*/
+			//PrerenderFrames( m_dwNumPlainFramesThreadside,
+			//					m_pPlainFramesThreadside,
+			//					m_pObject2,
+			//					NULL );
 			ExperimentalPrerenderFrame(
 				m_pPlainFramesThreadside[0],
 				m_pObject2);

@@ -113,13 +113,18 @@ private:
 	const DWORD     m_dwPlainFrameRepeatValue;
 	const DWORD     m_dwFrameSize;
 
-	DWORD           m_dwState;
 	/*
 	 * 0 = loop on delta 1, ready to schedule tween
 	 * 1 = loop on delta 1, tween when ready (also swap d1 and d2)
 	 * 2 = tween once then return to state 0
 	 *
 	 */
+	enum class TweenState
+	{
+		Serving_NoPendingWork = 0,		// Steady state for the current field (ready to schedule tween)
+		Serving_AwaitingTweenData = 1,	// Still serving field 1 (The "holding pattern" serving F1 while waiting for F2 data)
+		Tweening = 2,					// Using the new interpolation data (tween once then return to state 0)
+	} m_state = TweenState::Serving_NoPendingWork;
 
 	DWORD           m_dwCurrentFrame;
 	DWORD           m_dwPlainRepetition;
