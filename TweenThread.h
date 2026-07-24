@@ -107,6 +107,14 @@ protected:
 	};
 
 private:
+	// What is the difference between m_dwMaximumFrames and m_dwDefaultFrames?
+	// m_dwMaximumFrames is used when allocating the frames.
+	// TweenThread::ScheduleTween(const DWORD dwFrames, void* pObject1, void* pObject2)
+	//		-- specifies the number of frames. If dwFrames==0, we use m_dwDefaultFrames
+	//		-- THIS is the **ONLY** usage of m_dwDefaultFrames.
+	//		-- The dwFrames argument is **ALWAYS** 0 right now.
+	// Typically, m_dwMaximumFrames and m_dwDefaultFrames will be the same.
+	// This allows for the possibility to have a variable number of frames.
 	const DWORD     m_dwMaximumFrames;
 	const DWORD     m_dwDefaultFrames;
 	const DWORD     m_dwTweenFrameRepeatValue;

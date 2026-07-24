@@ -172,7 +172,7 @@ error_t TweenThread::ScheduleTween(const DWORD dwFrames,
 			m_pObject2 = pObject2;
 
 			m_dwNumTweenFramesThreadside = (dwFrames == 0)
-				? m_dwDefaultFrames : dwFrames;
+				? m_dwDefaultFrames : min(dwFrames, m_dwMaximumFrames);
 			m_pObject1 = pObject1;
 		}
 		LeaveCS();
@@ -205,64 +205,60 @@ void* TweenThread::GetFrame(void)
 	{
 	case TweenState::Serving_NoPendingWork:	// Just serving the source. No pending tasks in flight.
 
-		// I think I was allowing future designing of Fields that change over time, in
-		// addition to the pre-existing work to interpolate or "tween" between two Fields.
-		// That's why I have m_dwCurrentFrame++ iterating across m_pPlainFrames.
-		//
-		// To make it even more complex, I also can repeat each frame multiple times,
-		// so the transition takes longer.That part is m_dwPlainRepetition++
-
 		// Keep handing out the frame(s) for Field1 (This is the "current" field).
 		// There is no pending work for the Background thread to process. This is a
 		// steady state, just handing out frames for Field1 over and over.
+
+		// The code allows for time dependent Fields (i.e. that change over time), in
+		// addition to the pre-existing work to interpolate or "tween" between two Fields.
+		// Accounting for the future possibility time dependent fields is why
+		// m_dwCurrentFrame++ iterates across m_pPlainFrames.
+		//
+		// Also can repeat each frame multiple times, so the transition takes longer.
+		// That part is m_dwPlainRepetition++
 
 		if (m_dwPlainRepetition++ < m_dwPlainFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumPlainFrames)
 			return m_pPlainFrames[m_dwCurrentFrame];
 		else
-			m_dwPlainRepetition = 1; /* might be off by one */
+			m_dwPlainRepetition = 0;
 
 		if (m_dwCurrentFrame >= m_dwNumPlainFrames)
 			m_dwCurrentFrame = 0;
 
 		return m_pPlainFrames[m_dwCurrentFrame++];
 
-	case TweenState::Serving_AwaitingTweenData:	// The waiting phase; we are still serving our current field while we wait to sync/receive the next delta field data!
+	case TweenState::Serving_AwaitingTweenData:	// The waiting phase; we are still serving our current field while we wait to receive the next field data.
 
-		// This is the "holding pattern" where we finish serving the source field while
-		// waiting for the background thread to finish calculating the next field, and
-		// interpolation frames in between. Once worker completes or it's time to
-		// transition, we swap and go to state 2 (Tween).
-
-		// Another Field (Field2) has been queued for the background thread
-		// to process (the BG thread generates/precalculates the frames between the two
-		// Fields). Keep handing out frames for Field1 until the background
-		// work is done. The first part of this m_state==1 handler is the
-		// **same** as the m_state==0 handler. This is to ensure that any "time dependent"
-		// DeltaFields finish rendering all the frames before starting to hand back
-		// the "tween" frames between DeltaField1 and DeltaField2.
+		// Another Field (Field2) has been queued for the background thread to process.
 		//
-		// This is a "holding pattern" state, Waiting for the background work to be done.
-		// Once the work is done, we swap the buffers(the buffers from the background
-		// where the "tween" frames were precalculated m_pPlainFramesThreadside /
-		// m_pTweenFramesThreadside and the foreground buffers m_pTweenFrames /
-		// m_pPlainFrames so that frames from the freshly calculated buffers will now
-		// be handed out by GetFrame), and then transition to m_state = 2.
+		// This is a "holding pattern" where we continue serving the current Field1 while
+		// waiting for the background thread to finish calculating the next Field2 and
+		// interpolation frames in between. Once the worker completes, it's time to
+		// transition, we swap the buffers (Field2 becomes the primary Field1)
+		// and proceed to state 2 (Tween).
 
-		// Why do we have state 0 and 1? To distinguish between nothing queued, and Awaiting
+		// The first part of this m_state==1 handler is quite similar to the m_state==0
+		// handler, but *NOT* entirely the same. This is to ensure that any
+		// "time dependent" Fields finish rendering in full before starting to hand
+		// back the "tween" frames between Field1 and Field2. That is, to ensure the
+		// transition happens smoothly even after future work is completed.
+
+		// Why do we have state 0 and 1? To distinguish between NothingQueued/Awaiting;
+		// also there are subtle differences between the two, so we can't just combine.
 
 		if (m_dwPlainRepetition++ < m_dwPlainFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumPlainFrames)
 			return m_pPlainFrames[m_dwCurrentFrame];
 		else
-			m_dwPlainRepetition = 1; /* might be off by one */
-
+			m_dwPlainRepetition = 0;
 
 		if (m_dwCurrentFrame < m_dwNumPlainFrames)
 			return m_pPlainFrames[m_dwCurrentFrame++];
 
 		/*
-		 * if the thread's busy, the tween frames aren't done
+		 * if the thread's busy, the tween frames aren't done;
+		 * replay the field1 plain frames loop.
 		 */
 		if (IsBusy())
 		{
@@ -305,18 +301,17 @@ void* TweenThread::GetFrame(void)
 
 	case TweenState::Tweening:	// The interpolation/tween motion itself between two fields.
 
-		// We move between fields. Once finished, we return to a "new" steady-state serving of the current field (or reset the cycle).
-
 		// now we use the tween frames, handing them out so the caller can gradually
 		// transition between Field1 and Field2. Once all frames are handed out,
 		// proceed back to the steady state m_state=0 and then we HOLD there,
 		// since there are no more Fields queued for precalculation.
+		// Field2 has become the new current field (Field1).
 
 		if (m_dwTweenRepetition++ < m_dwTweenFrameRepeatValue
 			&& m_dwCurrentFrame < m_dwNumTweenFrames)
 			return m_pTweenFrames[m_dwCurrentFrame];
 		else
-			m_dwTweenRepetition = 1; /**/
+			m_dwTweenRepetition = 0;
 
 		if (m_dwCurrentFrame < m_dwNumTweenFrames)
 			return m_pTweenFrames[m_dwCurrentFrame++];
