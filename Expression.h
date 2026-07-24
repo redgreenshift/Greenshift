@@ -256,7 +256,7 @@ typedef value_t(*pBinaryFunctionEx_t)(value_t, value_t, void*);
 typedef struct tagEXPRESSIONDESCRIPTION
 {
 	expression_desc_t       edtType;    /* identifies the type of expression */
-	char* strName;    /* the name of the expression */
+	const char* strName;    /* the name of the expression */
 	//    union {
 	value_t             value;
 	//        DWORD               dwValue;
@@ -440,7 +440,7 @@ protected:
 	  /* Scalar */
 	static error_t  NewConstant(const value_t, Expression**);
 	static error_t  NewUserDefined(EXPRESSIONDESCRIPTION*, Expression*, Expression**);
-	static error_t  NewVariable(char*, value_t*, Expression**);
+	static error_t  NewVariable(const char*, value_t*, Expression**);
 
 	/* Unary */
 	static error_t  NewSqrt(Expression*, Expression*, Expression**);

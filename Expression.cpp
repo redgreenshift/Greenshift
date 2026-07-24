@@ -1683,7 +1683,7 @@ error_t Expression::NewUserDefined(EXPRESSIONDESCRIPTION* pExpDescription,
 		return ERR_USERDEFINED;
 }
 
-error_t Expression::NewVariable(char* inName,
+error_t Expression::NewVariable(const char* inName,
 	value_t* inValue,
 	Expression** outExpression)
 {
