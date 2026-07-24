@@ -19,7 +19,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-// WINDOWS
+// WINDOWS -- current, this file is how I started testing the end-to-end graphics in a Windows app harness
+// this is how I currently test the code without having to build/run the DLL with WinAmp
 #include "Greenshift.h"
 
 //#include "Interval.h"
@@ -143,10 +144,11 @@ int PASCAL WinMain(HINSTANCE hInstance,
 /*****************************/
 
 
-int PASCAL WINMAIN(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nCmdShow)
+int PASCAL WINMAIN(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPSTR lpCmdLine,
+	_In_ int nCmdShow)
 {
 	error_t err = SUCCESS;
 	//    int i;

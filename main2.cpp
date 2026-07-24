@@ -18,11 +18,13 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-// CONSOLE
+// CONSOLE -- old, this file is how I started testing the Expression class in a console app
+// this is how I tested the code before building the Windows app harness, probably still works as a "scratch console".
 #include "Project Greenshift.h"
 #include "Expression.h"
 #include <float.h>
-#define printError(num)        printf("%s\n", ErrorString(num)) // TODO: JRDV: I don't understand where errorStrings[num] came from... ErrorString(num) is what I expected
+#define printError(num)        printf("%s\n", ErrorString(num)) // REVIEW: I don't understand where errorStrings[num] came from... ErrorString(num) is what I expected;
+																//I might have been prototyping a different idea and never completed the idea.
 #include "MyDictionary.h"
 
 
@@ -31,7 +33,6 @@ int mainHack(void)
 	return 0;
 }
 
-#if 1 // JRDV: I think this is old code.... but I'm unsure.  It *has* been almost 20 years!  Not old code.  this is how I tested the code before building the DLL for WinAmp
 
 static union {
 	int integer;
@@ -41,7 +42,7 @@ static union {
 int main(void)
 {
 	error_t err;
-	value_t x = 0.2, y = 1.0, somevalue;
+	value_t x = 0.2f, y = 1.0f /*, somevalue*/;
 	MyDictionary<value_t*> dict; // ("x", &x, "y", &y);  // JRDV: I have NO IDEA how this could have possibly compiled earlier...
 	Expression* myExpression;
 	//    Expression *myOtherExpression;

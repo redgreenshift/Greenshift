@@ -66,14 +66,16 @@ void quit(struct winampVisModule* this_mod);   // deinitialization for module
 
 
 // Module header, includes version, description, and address of the module retriever function
-winampVisHeader hdr = { VIS_HDRVER, TITLE, getModule };
+// NOTE: I think the Vis.h header is distributed by WinAmp; modifying it won't change Winamp behavior...
+//		use const_cast to silence the C++20 build issue (consider using a dynamically allocated string)
+winampVisHeader hdr = { VIS_HDRVER, const_cast<char*>(TITLE), getModule};
 
 
 
 // first module (oscilliscope)
 winampVisModule modMain =
 {
-	TITLE,
+	const_cast<char*>(TITLE),
 	NULL,    // hwndParent
 	NULL,    // hDllInstance
 	44100,        // sRate  ////what value goes here?!
