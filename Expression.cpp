@@ -28,6 +28,7 @@
 
 #include "Expression.h"
 #include "TextUtils.hpp"
+#include <cmath> // std::tgamma
 
 
 #ifdef REGULAR_EXPRESSION

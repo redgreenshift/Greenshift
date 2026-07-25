@@ -19,6 +19,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "pch.h"
+#include <format>
+
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
 #include "..\TextUtils.hpp"
@@ -86,6 +88,36 @@ namespace GreenshiftUnitTest
 				value_t fResult = spExpression->Evaluate();
 				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
 			}
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		/********************************************************************
+		* Expression Unary Negation (e.g -x)
+		*/
+
+		TEST_METHOD(TestExpressionUnaryNegation)
+		{
+			error_t err;
+			value_t x = 5;
+			std::string const original = "-x";
+			std::string const expected = "(0-x)";
+			value_t const fExpected = -5;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
 		}
 
@@ -1228,10 +1260,8 @@ namespace GreenshiftUnitTest
 
 				if ((err = Expression::Compile(table[i].original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
 				{
-					std::wstring errPrint(L"PrintString failed for: ");
-					std::wstring errEvaluate(L"Evaluate failed for: ");
-					errPrint += utf8_to_wstring(table[i].original.c_str());
-					errEvaluate += utf8_to_wstring(table[i].original.c_str());
+					std::wstring errPrint = std::format(L"PrintString failed for: {0}", utf8_to_wstring(table[i].original));
+					std::wstring errEvaluate = std::format(L"Evaluate failed for: {0}", utf8_to_wstring(table[i].original));
 					char* pszResult = spExpression->PrintString();
 					Assert::AreEqual(table[i].expected.c_str(), pszResult, errPrint.c_str());
 					SAFE_FREE(pszResult);
@@ -1240,7 +1270,9 @@ namespace GreenshiftUnitTest
 					Assert::AreEqual(table[i].fExpected, fResult, defaultTolerance, errEvaluate.c_str());
 				}
 
-				Assert::IsTrue(err == SUCCESS, L"Compile failed");
+				std::wstring errCompile = std::format(L"Compile failed for: {0}", utf8_to_wstring(table[i].original));
+
+				Assert::IsTrue(err == SUCCESS, errCompile.c_str());
 			}
 		}
 	};
