@@ -2441,16 +2441,29 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 		BINARY("%", Mod),
 		{NULL, },
 
-		// Postfix Factorial
-		// https://brainly.com/question/62906330
-		// Convention is that Exponents are a higher precedence,
-		// and multiplication is lower precedence,
-		// than postfix factorial! Therefore this goes in between.
-		UNARY_POSTFIX("!", Factorial, "fact"),
-		{NULL, },
-
 		// Exponentiation
 		BINARY("^", Power),
+		{NULL, },
+
+		// [Postfix Factorial]
+		// https://brainly.com/question/62906330
+		// Apparently, convention is Power > Factorial > Mult, therefore this goes in between.
+		//
+		// UPDATE!
+		// https://mathworld.wolfram.com/Precedence.html
+		// https://www.reddit.com/r/math/comments/7mphal/how_do_factorials_work_in_order_of_operations/
+		// Other sources place Factorial higher than Power,
+		// and this is where I intutively expected it to land in the Order of Operations
+		// (and I respect Wolfram's opinion on maths, way more than Brainly)
+		//
+		// In the end, it doesn't really matter, as long as we're consistent,
+		// as it's *not* some intrinsic property of math, it's merely a convention.
+		// I recommend using parenthesis to make intentions explicit, especially
+		// given the amount of confusion about what order *is* most "conventional."
+		//
+		// https://www.themathdoctors.org/order-of-operations-neglected-details/
+		// Another source confirms factorial goes with "functions" at the *top* of the FPEMDAS order.
+		UNARY_POSTFIX("!", Factorial, "fact"),
 		{NULL, },
 
 		/* the parser now checks to make sure the beginning of the token is found,

@@ -1294,8 +1294,8 @@ namespace GreenshiftUnitTest
 				},
 				{
 					"3 ^ 2!",
-					"fact((3^2))",
-					362880,
+					"(3^fact(2))",
+					9,
 				},
 				{
 					"3 ^ (4!)",
