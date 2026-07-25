@@ -525,9 +525,10 @@ private:
 		Expression*,
 		Expression**);
 	typedef struct opStruct {
-		const char* opString;
-		creation_function_t    newExpression;
-		int                    opType;
+		const char*			opString;
+		creation_function_t	newExpression;
+		int					opType;
+		const char*			altPrefixFunction = nullptr; // for UNARY_POSTFIX_OP
 	} parsingLogic_t;
 
 

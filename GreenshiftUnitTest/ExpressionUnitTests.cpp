@@ -20,6 +20,7 @@
  */
 #include "pch.h"
 #include <format>
+#include <string>
 
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
@@ -30,9 +31,6 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-// TODO: JRDV: Consider updating to use std::wformat / std::wformat_string whenever updating to C++20
-//#include <format> // The project currently defaults to C++14, and this header is only available in C++20
-std::wstring utf8_to_wstring(const std::string& s);
 namespace GreenshiftUnitTest
 {
 	TEST_CLASS(ExpressionUT)
@@ -95,13 +93,65 @@ namespace GreenshiftUnitTest
 		* Expression Unary Negation (e.g -x)
 		*/
 
-		TEST_METHOD(TestExpressionUnaryNegation)
+		TEST_METHOD(TestExpressionUnaryNegation1)
 		{
 			error_t err;
 			value_t x = 5;
 			std::string const original = "-x";
 			std::string const expected = "(0-x)";
 			value_t const fExpected = -5;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionUnaryNegation2)
+		{
+			error_t err;
+			value_t x = 5;
+			std::string const original = "2+(-x)";
+			std::string const expected = "(2+(0-x))";
+			value_t const fExpected = -3;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionUnaryNegation3)
+		{
+			error_t err;
+			value_t x = 5;
+			std::string const original = "2+-x";
+			std::string const expected = "(2+(0-x))";
+			value_t const fExpected = -3;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -317,12 +367,38 @@ namespace GreenshiftUnitTest
 			Assert::IsTrue(err == SUCCESS, L"Compile failed");
 		}
 
-		TEST_METHOD(TestExpressionFactorial)
+		TEST_METHOD(TestExpressionFactorialFunction)
 		{
 			error_t err;
 			value_t x = 5;
 			std::string const original = "fact(x)";
 			std::string const expected = original;
+			value_t const fExpected = 120;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestExpressionFactorialPostfix)
+		{
+			error_t err;
+			value_t x = 5;
+			std::string const original = "x!";
+			std::string const expected = "fact(x)";
 			value_t const fExpected = 120;
 
 			MyDictionary<value_t*> dict;
@@ -1203,6 +1279,33 @@ namespace GreenshiftUnitTest
 					"2 / 3 % 4 * 5",
 					"(((2/3)%4)*5)",
 					3.333333333333f,
+				},
+
+				// PowerVsFactorial
+				{
+					"3! ^ 4",
+					"(fact(3)^4)",
+					1296,
+				},
+				{
+					"(3!) ^ 4",
+					"(fact(3)^4)",
+					1296,
+				},
+				{
+					"3 ^ 2!",
+					"fact((3^2))",
+					362880,
+				},
+				{
+					"3 ^ (4!)",
+					"(3^fact(4))",
+					282429536481,
+				},
+				{
+					"(3 ^ 2)!",
+					"fact((3^2))",
+					362880,
 				},
 
 				// RelationalVsSubtraction

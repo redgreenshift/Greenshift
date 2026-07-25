@@ -26,9 +26,11 @@
   *
   ****************************************************************************/
 
+#include <cmath> // std::tgamma
+#include <format>
+
 #include "Expression.h"
 #include "TextUtils.hpp"
-#include <cmath> // std::tgamma
 
 
 #ifdef REGULAR_EXPRESSION
@@ -2379,10 +2381,12 @@ bool Expression::AtBeginningOfToken(const char* inString, const char* position)
 #define UNARY_OP 1
 #define BINARY_OP 2
 #define TERNARY_OP 3
+#define UNARY_POSTFIX_OP 4
 
 #define UNARY(str, func)    {    (str), (New##func), UNARY_OP   }
 #define BINARY(str, func)   {    (str), (New##func), BINARY_OP  }
 #define TERNARY(str, func)  {    (str), (New##func), TERNARY_OP }
+#define UNARY_POSTFIX(str, func, altPrefixFn)    {    (str), (New##func), UNARY_POSTFIX_OP, altPrefixFn   }
 
 /****************************************************************************
  * ParsingLogic:
@@ -2435,6 +2439,14 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
 		BINARY("*", Mult),
 		BINARY("/", Div),
 		BINARY("%", Mod),
+		{NULL, },
+
+		// Postfix Factorial
+		// https://brainly.com/question/62906330
+		// Convention is that Exponents are a higher precedence,
+		// and multiplication is lower precedence,
+		// than postfix factorial! Therefore this goes in between.
+		UNARY_POSTFIX("!", Factorial, "fact"),
 		{NULL, },
 
 		// Exponentiation
@@ -2687,8 +2699,11 @@ error_t Expression::Compile(char* inString,
 								else
 									return err1;
 
+							case UNARY_POSTFIX_OP:
 							case BINARY_OP: /* bad things happen when the unary - is matched
 											 * except the unary - isn't currently in the expression...
+											 * OH! I was taling about Unary Negation "-x"
+											 * Unary Negation *works*, and is represented by the Equation "(0-x)"
 											 */
 								*position = '\0';   /* split the string in
 													 * to two substrings.
@@ -2700,28 +2715,44 @@ error_t Expression::Compile(char* inString,
 								strTerm1 = inString;
 								strTerm2 = position + operationLength;
 
-								/*
-								 * The change here is to add unary
-								 * negation, without hardcoding the
-								 * unary negation string into the code
-								 */
-								 /* if( (err1 = Compile( strTerm1, strlen(strTerm1), inMyDictionary, &term1 )) == SUCCESS &&
-								  *    (err2 = Compile( strTerm2, strlen(strTerm2), inMyDictionary, &term2 )) == SUCCESS )
-								  */
-								if (((inString == position && (err1 = NewConstant(0.0f, &term1)) == SUCCESS) ||
-									(err1 = Compile(strTerm1, strlen(strTerm1), &term1, inValues, inGlobals)) == SUCCESS) &&
-									(err2 = Compile(strTerm2, strlen(strTerm2), &term2, inValues, inGlobals)) == SUCCESS)
+								if (currentOperation->opType == UNARY_POSTFIX_OP)
 								{
-									return currentOperation->newExpression(term1, term2, outExpression);
+									// We need to revamp the parser. Postfix unary doesn't work right in all cases.
+									// This is sortof a hack to convert to unary prefix function to allow correct parse.
+									std::string repackedExpression = std::format("{2}({0}){1}", strTerm1, strTerm2, currentOperation->altPrefixFunction);
+									return Expression::Compile(repackedExpression.data(), outExpression, inValues, inGlobals);
 								}
 								else
 								{
-									delete term1;
-									delete term2;
-									return max(err1, err2);
-								}
+									/*
+									 * The first check here is to add unary
+									 * negation, without hardcoding the
+									 * unary negation string into the code.
+									 *
+									 * REVISIT if we ever want to add *other*
+									 * prefix unary operators, as "^x" translates
+									 * to "(0^x)" and we may NOT want that in the
+									 * general case:
+									 * "+x" ==> "(0/x)"
+									 * "*x" ==> "(0*x)"
+									 * "/x" ==> "(0/x)"
+									 */
+									const bool is_unary_prefix_op = (inString == position); // no first operand means this is a unary op
+									if (((is_unary_prefix_op && (err1 = NewConstant(0.0f, &term1)) == SUCCESS) ||
+										(err1 = Compile(strTerm1, strlen(strTerm1), &term1, inValues, inGlobals)) == SUCCESS) &&
+										(err2 = Compile(strTerm2, strlen(strTerm2), &term2, inValues, inGlobals)) == SUCCESS)
+									{
+										return currentOperation->newExpression(term1, term2, outExpression);
+									}
+									else
+									{
+										delete term1;
+										delete term2;
+										return max(err1, err2);
+									}
 
-								return currentOperation->newExpression(term1, term2, outExpression);
+									return currentOperation->newExpression(term1, term2, outExpression);
+								}
 
 							default:
 								return ERR_COMPILE;
