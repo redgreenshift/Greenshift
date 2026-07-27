@@ -1378,5 +1378,31 @@ namespace GreenshiftUnitTest
 				Assert::IsTrue(err == SUCCESS, errCompile.c_str());
 			}
 		}
+
+		TEST_METHOD(TestComplexExpressionTypo2)
+		{
+			error_t err;
+			value_t i = 2;
+			std::string const original = "\x7f\x7f" "2.2* i^(i * 2)";
+			std::string const expected = "(2.2*(i^(i*2)))";
+			value_t const fExpected = 35.2f;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("i", &i);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
 	};
 }

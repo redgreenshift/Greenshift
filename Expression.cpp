@@ -2200,7 +2200,7 @@ error_t Expression::Compile(const char* inString,
 		case '\n':
 		case '\r':
 		case ' ':
-		case '\127':
+		case 127:
 			break;
 		default:
 			if (*strDestination > ' ') /* some configs somehow get weird control characters in them */
