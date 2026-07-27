@@ -1,3 +1,4 @@
+#pragma once
 #ifndef _DirectX_Error_Messages_H_
 #define _DirectX_Error_Messages_H_
 

@@ -1,3 +1,4 @@
+#pragma once
 // notes:
 // any window that remains in foreground should optimally pass 
 // keystrokes to the parent (winamp's) window, so that the user

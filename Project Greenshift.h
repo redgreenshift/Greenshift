@@ -1,3 +1,4 @@
+#pragma once
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *

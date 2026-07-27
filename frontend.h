@@ -1,3 +1,4 @@
+#pragma once
 #ifndef _WAFE_H_
 #define _WAFE_H_
 /*
