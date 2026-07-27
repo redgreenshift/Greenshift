@@ -21,6 +21,7 @@
 #include "pch.h"
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
+#include "..\MyDictionary.h"
 #include "..\LinearMap.h"
 
 #include <array>
@@ -53,6 +54,36 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual("TODO", "TODO");
 		}
 
+		TEST_METHOD(TestFiniteSet)
+		{
+			FiniteSet<const char*, 10> set;
+
+			Assert::AreEqual(set.Size(), 0ul, L"Failed to initialize to empty.");
+
+			set.Add("1");
+			set.Add("2");
+			set.Add("3");
+			set.Add("4");
+			set.Add("5");
+			set.Add("6");
+			set.Add("7");
+			set.Add("8");
+			set.Add("9");
+			set.Add("10");
+			Assert::AreEqual(set.Size(), 10ul, L"Failed to add all values.");
+
+			set.Add("11");
+			Assert::AreEqual(set.Size(), 10ul, L"Failed to maintain specified size");
+			Assert::IsTrue(set.Includes("11"), L"Failed to add the new value");
+			Assert::IsTrue(set.Includes("2"), L"Failed to purge oldest value first");
+			Assert::IsFalse(set.Includes("1"), L"Failed to purge oldest value first");
+
+			set.Add("12");
+			Assert::AreEqual(set.Size(), 10ul, L"Failed to maintain specified size");
+			Assert::IsTrue(set.Includes("12"), L"Failed to add the new value");
+			Assert::IsFalse(set.Includes("2"), L"Failed to purge oldest value first");
+		}
+
 		TEST_METHOD(TestDictionary)
 		{
 			LinearMap<std::string, std::string> dConfig;
@@ -63,7 +94,7 @@ namespace GreenshiftUnitTest
 
 			//dConfig.Grow(20);
 			// 2026-07-21: I was planning to change the various Collections to use Capacity vs Size correctly.
-			// 
+			//
 			// Actually, changing this may lead to instability. Let me rephrase, this Dictionary code is so *VERY* wrong, that it "works by accident." ;-)
 			// Or rather it has "worked" without crashing for so long that I fear /incremental/ changes will break some reason the code "works".
 			// I need to *completely* revamp the collection code. So trying to _incrementally_ change this from Capacity() to Size() may destabalize the code.
