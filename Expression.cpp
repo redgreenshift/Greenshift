@@ -2165,7 +2165,7 @@ error_t Expression::Compile(const char* inString,
 {
 	error_t err = SUCCESS;
 	char* strWithoutWhitespace = NULL;    /* holder for the string without whitespace */
-	char* strSource;        /* keeps the current place in the source string (inString) */
+	const char* strSource;   /* keeps the current place in the source string (inString) */
 	char* strDestination;    /* keeps the current place in the destination string (strCompactString) */
 	MyDictionary<value_t*>                emptyValuesDict, * pDictValues;
 	MyDictionary<EXPRESSIONDESCRIPTION*>    emptyMyDictionary, * pDictGlobals;
@@ -2186,11 +2186,30 @@ error_t Expression::Compile(const char* inString,
 	if (strWithoutWhitespace == NULL)
 		return ERR_MALLOC;
 
+	/*
+	 * Hack to account for a typo in one of the default G-Force configs:
+	 * stray '*' char
+	 */
+	std::string strCopy = inString;
+	std::string::size_type posFound;
+	while ((posFound = strCopy.find("*)")) != std::string::npos)
+	{
+		strCopy.replace(posFound, 1, " ");
+	}
+
+	/*
+	 * Hack to account for a typo in one of the default G-Force configs:
+	 * missing parenthesis, in something like "wrap1-sin(i)"
+	 */
+	if (strCopy.find("wrap") == 0 && strCopy[4] != '(')
+	{
+		strCopy = std::string{ "wrap" } + "(" + strCopy.substr(4) + ")";
+	}
 
 	/*
 	 * strip whitespace
 	 */
-	strSource = (char*)inString;    /* have to cast because compiler complains a (const char *) isn't a (char *) */
+	strSource = strCopy.c_str();
 	strDestination = strWithoutWhitespace;
 	while ((*strDestination = *strSource++) != '\0')
 	{

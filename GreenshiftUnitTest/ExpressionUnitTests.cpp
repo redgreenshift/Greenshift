@@ -29,6 +29,35 @@
 #include "..\Expression.h"
 #include "..\Expression.cpp"
 
+/****************************************************************************
+ *
+ * abs(x)  == |x|
+ *
+ ****************************************************************************/
+value_t My_abs(value_t nValue)
+{
+	return (value_t)fabs(nValue);
+}
+
+/****************************************************************************
+ *
+ * wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 )
+ *
+ ****************************************************************************/
+value_t My_wrap(value_t nValue)
+{
+#ifdef UNDEFINED
+	const value_t nRetVal = nValue - (value_t)floor(nValue);
+
+	if (nRetVal == 0.0f && nValue > 0.0f)
+		return 1.0f;
+	else
+		return nRetVal;
+#else
+	return nValue - (value_t)floor(nValue);
+#endif
+}
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace GreenshiftUnitTest
@@ -36,6 +65,31 @@ namespace GreenshiftUnitTest
 	TEST_CLASS(ExpressionUT)
 	{
 		value_t const defaultTolerance = 0.0001f; // common default float tolerance; accounts for typical rounding errors, unless greater precision is required
+		MyDictionary<EXPRESSIONDESCRIPTION*> m_dGlobals;
+
+		void InitGlobals()
+		{
+			EXPRESSIONDESCRIPTION    edGForceFunctions[] =
+			{
+				{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
+				{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
+
+				{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
+			};
+
+			/************************************************************************
+			 *
+			 * Load Global MyDictionary with GForce functions to maintain compatibility
+			 *
+			 ************************************************************************/
+			for (size_t i = 0; edGForceFunctions[i].edtType != ED_NULL; i++)
+			{
+				error_t err = m_dGlobals.SetValue(edGForceFunctions[i].strName,
+					&edGForceFunctions[i]);
+				if (err != SUCCESS)
+					break;
+			}
+		}
 
 	public:
 
@@ -1300,7 +1354,7 @@ namespace GreenshiftUnitTest
 				{
 					"3 ^ (4!)",
 					"(3^fact(4))",
-					282429536481,
+					static_cast<value_t>(282429536481),
 				},
 				{
 					"(3 ^ 2)!",
@@ -1379,7 +1433,100 @@ namespace GreenshiftUnitTest
 			}
 		}
 
-		TEST_METHOD(TestComplexExpressionTypo2)
+
+		/**************************************************************************
+		 * G-Force functions
+		 */
+
+		TEST_METHOD(TestExpressionAbsoluteValue)
+		{
+			error_t err;
+			value_t x = -5;
+			std::string const original = "abs(x)";
+			std::string const expected = original;
+			value_t const fExpected = 5;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			InitGlobals();
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, &m_dGlobals/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		TEST_METHOD(TestComplexExpressionWrap)
+		{
+			error_t err;
+			value_t x = 2.5f;
+			std::string const original = "wrap(x)";
+			std::string const expected = "wrap(x)";
+			value_t const fExpected = 0.5f;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("x", &x);
+
+			InitGlobals();
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, &m_dGlobals/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		// Account for a typo in one of the default G-Force configs
+		TEST_METHOD(TestTypo1StrayMultiply)
+		{
+			error_t err;
+			value_t b0 = 1;
+			value_t s = 2;
+			value_t t = 3;
+			std::string const original = "(b0*sin(s*15*))+0.05*sin(s*100+t*8)"; // typo with stray '*' char
+			std::string const expected = "((b0*sin((s*15)))+(0.05*sin(((s*100)+(t*8)))))";
+			value_t const fExpected = -1.02861;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("b0", &b0);
+			dict.SetValue("s", &s);
+			dict.SetValue("t", &t);
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		// Account for a typo in one of the default G-Force configs
+		TEST_METHOD(TestTypo2Stray7fChars)
 		{
 			error_t err;
 			value_t i = 2;
@@ -1393,6 +1540,37 @@ namespace GreenshiftUnitTest
 			dict.SetValue("i", &i);
 
 			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, nullptr/*globals*/)) == SUCCESS)
+			{
+				char* pszResult = spExpression->PrintString();
+				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
+				SAFE_FREE(pszResult);
+
+				const value_t fResult = spExpression->Evaluate();
+				Assert::AreEqual(fExpected, fResult, defaultTolerance, L"Evaluate failed");
+			}
+
+			Assert::IsTrue(err == SUCCESS, L"Compile failed");
+		}
+
+		// Account for a typo in one of the default G-Force configs
+		TEST_METHOD(TestTypo3MissingParens)
+		{
+			error_t err;
+			value_t i = 1;
+			value_t t = 2;
+			std::string const original = "wrap1- (sin ((i * 6.28) + (.6 * t) )/2)"; // wrap() without parens
+			std::string const expected = "wrap((1-(sin(((i*6.28)+(0.6*t)))/2)))";
+			value_t const fExpected = 0.53456;
+
+			MyDictionary<value_t*> dict;
+			std::shared_ptr<Expression> spExpression;
+
+			dict.SetValue("i", &i);
+			dict.SetValue("t", &t);
+
+			InitGlobals();
+
+			if ((err = Expression::Compile(original.c_str(), spExpression, &dict, &m_dGlobals/*globals*/)) == SUCCESS)
 			{
 				char* pszResult = spExpression->PrintString();
 				Assert::AreEqual(expected.c_str(), pszResult, L"PrintString failed");
