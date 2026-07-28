@@ -27,6 +27,10 @@
 #ifndef PCH_H
 #define PCH_H
 
+// 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
+// Extremely unlikely to cause a problem. It's more portable to leave it alone,
+// and long term I'd like to move to std::string anyway. Let's just disable this warning.
+#define _CRT_NONSTDC_NO_DEPRECATE
 // add headers that you want to pre-compile here
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // TODO: Delete with codecvt_utf8_utf16
 
