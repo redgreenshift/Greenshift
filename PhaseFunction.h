@@ -584,7 +584,7 @@ public:
 		if (m_pPhases == NULL)
 		{
 			DumpToFile("error.txt", "m_pPhases is NULL!", "\n");
-			MessageBox(NULL, "m_pPhases is NULL!", "ERROR!", MB_OK);
+			MessageBoxA(NULL, "m_pPhases is NULL!", "ERROR!", MB_OK);
 			return ERR_NULL;
 		}
 
@@ -608,7 +608,7 @@ public:
 			if (m_pPhases[dwPhaseNumber].pFunctions == NULL)
 			{
 				DumpToFile("error.txt", "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "\n");
-				MessageBox(NULL, "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "ERROR!", MB_OK);
+				MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "ERROR!", MB_OK);
 				return ERR_NULL;
 			}
 
@@ -621,7 +621,7 @@ public:
 					DumpToFile("error.txt", "dwPhaseNumber = ", dwPhaseNumber, "\n");
 					DumpToFile("error.txt", "i = ", i, "\n");
 					DumpToFile("error.txt", "m_pPhases[dwPhaseNumber].dwPhaseLength = ", m_pPhases[dwPhaseNumber].dwPhaseLength, "\n");
-					MessageBox(NULL, "m_pPhases[dwPhaseNumber].pFunctions[i] is NULL!", "ERROR!", MB_OK);
+					MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions[i] is NULL!", "ERROR!", MB_OK);
 					return ERR_NULL;
 				}
 
