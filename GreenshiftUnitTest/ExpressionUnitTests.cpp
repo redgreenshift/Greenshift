@@ -1503,7 +1503,7 @@ namespace GreenshiftUnitTest
 			value_t t = 3;
 			std::string const original = "(b0*sin(s*15*))+0.05*sin(s*100+t*8)"; // typo with stray '*' char
 			std::string const expected = "((b0*sin((s*15)))+(0.05*sin(((s*100)+(t*8)))))";
-			value_t const fExpected = -1.02861;
+			value_t const fExpected = -1.02861f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
@@ -1560,7 +1560,7 @@ namespace GreenshiftUnitTest
 			value_t t = 2;
 			std::string const original = "wrap1- (sin ((i * 6.28) + (.6 * t) )/2)"; // wrap() without parens
 			std::string const expected = "wrap((1-(sin(((i*6.28)+(0.6*t)))/2)))";
-			value_t const fExpected = 0.53456;
+			value_t const fExpected = 0.53456f;
 
 			MyDictionary<value_t*> dict;
 			std::shared_ptr<Expression> spExpression;
