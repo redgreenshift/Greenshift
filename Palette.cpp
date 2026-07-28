@@ -294,10 +294,38 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	 * compile the three component expressions
 	 */
 	err = Expression::Compile(strExp1, &m_pExp1, &m_dValues, inGlobals);
+	if (err != SUCCESS)
+	{
+		DumpToFile("error.txt", ">>> Palette : ");
+		DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
+		DumpToFile("error.txt", ErrorString(err), " <<<\n");
+		DumpToFile("error.txt", strExp1, "<-- strExpressionID\n");
+		DumpToFile("error.txt", pConfig->GetValue(strExp1, ""), "<--\n");
+	}
 	if (err == SUCCESS)
+	{
 		err = Expression::Compile(strExp2, &m_pExp2, &m_dValues, inGlobals);
+		if (err != SUCCESS)
+		{
+			DumpToFile("error.txt", ">>> Palette : ");
+			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
+			DumpToFile("error.txt", ErrorString(err), " <<<\n");
+			DumpToFile("error.txt", strExp2, "<-- strExpressionID\n");
+			DumpToFile("error.txt", pConfig->GetValue(strExp2, ""), "<--\n");
+		}
+	}
 	if (err == SUCCESS)
+	{
 		err = Expression::Compile(strExp3, &m_pExp3, &m_dValues, inGlobals);
+		if (err != SUCCESS)
+		{
+			DumpToFile("error.txt", ">>> Palette : ");
+			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
+			DumpToFile("error.txt", ErrorString(err), " <<<\n");
+			DumpToFile("error.txt", strExp3, "<-- strExpressionID\n");
+			DumpToFile("error.txt", pConfig->GetValue(strExp3, ""), "<--\n");
+		}
+	}
 	if (err != SUCCESS)
 		return err;
 
