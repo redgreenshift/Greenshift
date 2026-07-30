@@ -296,22 +296,24 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	err = Expression::Compile(strExp1, &m_pExp1, &m_dValues, inGlobals);
 	if (err != SUCCESS)
 	{
+		const char* strID1 = "Rgb / Hsv / Cmy";
 		DumpToFile("error.txt", ">>> Palette : ");
 		DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 		DumpToFile("error.txt", ErrorString(err), " <<<\n");
-		DumpToFile("error.txt", strExp1, "<-- strExpressionID\n");
-		DumpToFile("error.txt", pConfig->GetValue(strExp1, ""), "<--\n");
+		DumpToFile("error.txt", strID1, "<-- strExpressionID 1 hint\n");
+		DumpToFile("error.txt", strExp1, "<-- strExp1\n");
 	}
 	if (err == SUCCESS)
 	{
 		err = Expression::Compile(strExp2, &m_pExp2, &m_dValues, inGlobals);
 		if (err != SUCCESS)
 		{
+			const char* strID2 = "rGb / hSv / cMy";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
-			DumpToFile("error.txt", strExp2, "<-- strExpressionID\n");
-			DumpToFile("error.txt", pConfig->GetValue(strExp2, ""), "<--\n");
+			DumpToFile("error.txt", strID2, "<-- strExpressionID 2 hint\n");
+			DumpToFile("error.txt", strExp2, "<-- strExp2\n");
 		}
 	}
 	if (err == SUCCESS)
@@ -319,11 +321,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 		err = Expression::Compile(strExp3, &m_pExp3, &m_dValues, inGlobals);
 		if (err != SUCCESS)
 		{
+			const char* strID3 = "rgB / hsV / cmY";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
-			DumpToFile("error.txt", strExp3, "<-- strExpressionID\n");
-			DumpToFile("error.txt", pConfig->GetValue(strExp3, ""), "<--\n");
+			DumpToFile("error.txt", strID3, "<-- strExpressionID 3 hint\n");
+			DumpToFile("error.txt", strExp3, "<-- strExp3\n");
 		}
 	}
 	if (err != SUCCESS)

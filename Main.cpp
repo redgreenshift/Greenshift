@@ -329,7 +329,7 @@ int PASCAL WINMAIN(
 	if (err != SUCCESS)
 	{
 		outFile = fopen("error.txt", "a");
-		fprintf(outFile, "%s%s", ErrorString(err), " from Main.cpp in greenshift.Initialize()\n");
+		fprintf(outFile, "%u 0x%x %s%s", err, err, ErrorString(err), " from Main.cpp in greenshift.Initialize()\n");
 		fclose(outFile);
 		return err;
 	}
@@ -382,7 +382,7 @@ int PASCAL WINMAIN(
 	if (err > SUCCESS && err < ERR_UNDEFINED)
 	{
 		outFile = fopen("error.txt", "a");
-		fprintf(outFile, "%s%s", ErrorString(err), " from Main.cpp in greenshift.Render()\n");
+		fprintf(outFile, "%u 0x%x %s%s", err, err, ErrorString(err), " from Main.cpp in greenshift.Render()\n");
 		fclose(outFile);
 	}
 

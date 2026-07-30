@@ -943,6 +943,8 @@ static const char* ErrorString(error_t errCode)
 		return "ExpressionAnd creation failed";
 	case ERR_STAR:
 		return "ExpressionStar creation failed";
+	case ERR_DD_FAILURE:
+		return "Direct Draw failure of some kind";
 		//        case ERR_UNKNOWNOPCODE:
 		//            return "unknown opcode";
 	case ERR_UNDEFINED:
