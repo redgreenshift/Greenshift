@@ -22,12 +22,21 @@
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
 #include "..\MyDictionary.h"
+#include "..\PhaseFunction.h"
 #include "..\LinearMap.h"
 
 #include <array>
 #include <optional>
 #include <string>
 #include <vector>
+
+value_t My_abs(value_t nValue);
+value_t My_wrap(value_t nValue);
+
+value_t My_mag(value_t nValue)
+{
+	return My_abs(nValue);
+}
 
 namespace Microsoft {
 	namespace VisualStudio {
@@ -48,6 +57,32 @@ namespace GreenshiftUnitTest
 	TEST_CLASS(GreenshiftUnitTest)
 	{
 	public:
+		MyDictionary<EXPRESSIONDESCRIPTION*> m_dGlobals;
+
+		void InitGlobals()
+		{
+			EXPRESSIONDESCRIPTION    edGForceFunctions[] =
+			{
+				{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
+				{ ED_FUNCTION,  "mag",        1, My_mag  }, /* waveshape data (fake it for UT) */
+				{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
+
+				{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
+			};
+
+			/************************************************************************
+			 *
+			 * Load Global MyDictionary with GForce functions to maintain compatibility
+			 *
+			 ************************************************************************/
+			for (size_t i = 0; edGForceFunctions[i].edtType != ED_NULL; i++)
+			{
+				error_t err = m_dGlobals.SetValue(edGForceFunctions[i].strName,
+					&edGForceFunctions[i]);
+				if (err != SUCCESS)
+					break;
+			}
+		}
 
 		TEST_METHOD(Test1)
 		{
@@ -181,7 +216,7 @@ namespace GreenshiftUnitTest
 			std::vector < std::tuple<std::string, std::string> > vecAsArrayResult;
 			Assert::AreEqual(SUCCESS, dConfig.AsArray(vecAsArrayResult), L"Failed to serialize back to a sequential list");
 
-			Assert::AreEqual((int)vecAsArrayResult.size(), 20, L"Serializing back to an array/vector should produce the original length");
+			Assert::AreEqual(20, (int)vecAsArrayResult.size(), L"Serializing back to an array/vector should produce the original length");
 
 			// Should be in the SAME ORDER
 			for (uint32_t i = 0; i < vecAsArrayResult.size(); ++i)
@@ -201,7 +236,7 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(SUCCESS, dConfig.SetValue("canvas_aspect", "2"), L"Failed to Add a value");
 
 			Assert::AreEqual(SUCCESS, dConfig.AsArray(vecAsArrayResult), L"Failed to serialize back to a sequential list");
-			Assert::AreEqual((int)vecAsArrayResult.size(), 20, L"Removing and Adding again should produce the original length");
+			Assert::AreEqual(20, (int)vecAsArrayResult.size(), L"Removing and Adding again should produce the original length");
 
 
 			// Should be in the SAME *ORDER*, up to the removed value, then that value should be at the end
@@ -245,8 +280,113 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected_value, result_value, L"BAD VALUE: The moved item should appear last");
 			}
 
+			Assert::AreEqual(SUCCESS, dConfig.SetValue("CANVAS_ASPECT", "3"), L"Failed to Add a value");
+			Assert::AreEqual(SUCCESS, dConfig.AsArray(vecAsArrayResult), L"Failed to serialize back to a sequential list");
+			Assert::AreEqual(20, (int)vecAsArrayResult.size(), L"Setting the same value with different case should produce the original length");
+
 			dConfig.WipeContents();
-			Assert::AreEqual((int)dConfig.Size(), 0, L"Expected to clear values");
+			Assert::AreEqual(0, (int)dConfig.Size(), L"Expected to clear values");
+		}
+		TEST_METHOD(TestPhaseFunction)
+		{
+			value_t s = 2;
+			value_t t = 3;
+			value_t pi = 3.1415926535859f;
+			MyDictionary<value_t*> dict;
+			MyDictionary<mychar_t*> dConfig;
+			PhaseFunction pf;
+			//LinearMap<std::string, std::string> dConfig;
+
+			/*  Question Mark  */
+			std::array< std::tuple<std::string, std::string>, 41> initialValues =
+			{
+				{
+					{"ConB", "1"},
+					{"Aspc", "1"},
+					{"Pen", "1"},
+					{"LWdt", "1"},
+					{"Stps", "100"},
+					{"A0", "2*pi"},
+					{"A1", "0.5*pi"},
+					//Endpoints for "blobs"
+					{"B0", "0.5+ 0.2*cos(-A1)"},
+					{"B1", "0.3+ 0.2*sin(-A1)"},
+
+					{"B2", "0.5+ 0.2*cos(A0*0.75-A1)"},
+					{"B3", "0.3+ 0.2*sin(A0*0.75-A1)"},
+					{"B4", "      0.2*cos(A1)"},
+					{"B5", "-.15+ 0.2*sin(A1)"},
+					{"B6", "      0.2*cos(A0*0.75+A1)"},
+					{"B7", "-.15+ 0.2*sin(A0*0.75+A1)"},
+					//cris cross
+					{"B8", "(B0+B4)*0.5+0.2"},
+					{"B9", "(B1+B5)*0.5"},
+
+					{"C0", "A0*s"},
+					{"C1", "0.1*mag(s)"},
+					{"C2", "0.2*cos(C0)+C1"},
+					{"C3", "0.2*sin(C0)+C1"},
+					//Big surrounding circle
+					{"X0", "0.85*cos(C0)+ C1"},
+					{"Y0", "0.85*sin(C0)+ C1"},
+					//Top left circle
+					{"X1", "-.5+ C2"},
+					{"Y1", "0.3+ C3"},
+					//Top middle circle
+					{"X2", "     C2"},
+					{"Y2", "0.3+ C3"},
+					//Blobs
+						//Top right circle
+						{"X3", "0.5+ 0.2*cos(C0*0.75-A1)+ C1"},
+						{"Y3", "0.3+ 0.2*sin(C0*0.75-A1)+ C1"},
+
+						//Middle circle
+						{"X4", "      0.2*cos(C0*0.75+A1)+ C1"},
+						{"Y4", "-.15+ 0.2*sin(C0*0.75+A1)+ C1+a15"}, // Adding an undefined A15
+
+					//Bottom circle
+					{"X5", "     C2"},
+					{"Y5", "-.6+ C3"},
+
+					{"C4", "(1-s)^2"},
+					{"C5", "(1-s)*s"},
+					{"C6", "s*s"},
+
+					//Bezier curve
+					{"X6", "B0*C4 + B8*C5 + B6*C6 + C1"},
+					{"Y6", "B1*C4 + B9*C5 + B7*C6 + C1"},
+					{"X7", "B2*C4 + B8*C5 + B4*C6 + C1"},
+					{"Y7", "B3*C4 + B9*C5 + B5*C6 + C1"},
+
+					{"Vers", "100"},
+				}
+			};
+
+			for (const std::tuple<std::string, std::string>& pair : initialValues)
+			{
+				const std::string& key = std::get<0>(pair);
+				const std::string& value = std::get<1>(pair);
+				auto assoc = new Association<mychar_t*>();
+				assoc->Initialize(key.c_str(), strdup(value.c_str()));
+				dConfig.Add(assoc);
+				//dConfig.SetValue(key, value);
+			}
+			Assert::AreEqual(41, (int)dConfig.Size(), L"Expected to set values");
+
+
+			dict.SetValue("s", &s);
+			dict.SetValue("t", &t);
+			dict.SetValue("pi", &pi);
+
+			InitGlobals();
+
+			Assert::AreEqual(SUCCESS, pf.Initialize("ABCD", "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
+
+			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize functions");
+			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
+			Assert::AreEqual(8ul, pf.NumFunctions(), L"Failed to initialize functions");
+
+			Assert::AreEqual(67, (int)dict.Size(), L"Failed to add all expected functions");
 		}
 	};
 }

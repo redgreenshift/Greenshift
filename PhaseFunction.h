@@ -87,19 +87,25 @@ public:
 		DWORD    i;
 		DWORD    j;
 
-		for (i = 0; i < NumPhases(); i++)
+		if (m_pPhases != nullptr)
 		{
-			for (j = 0; j < m_pPhases[i].dwPhaseLength; j++)
+			for (i = 0; i < NumPhases(); i++)
 			{
-				SAFE_DELETE(m_pPhases[i].pFunctions[j]);
+				for (j = 0; j < m_pPhases[i].dwPhaseLength; j++)
+				{
+					SAFE_DELETE(m_pPhases[i].pFunctions[j]);
+				}
 			}
 		}
 
-		for (i = 0; i < NumFunctions(); i++)
+		if (m_pFunctions != nullptr)
 		{
-			for (j = 0; j < NumDimensions(); j++)
+			for (i = 0; i < NumFunctions(); i++)
 			{
-				SAFE_DELETE(m_pFunctions[i][j]);
+				for (j = 0; j < NumDimensions(); j++)
+				{
+					SAFE_DELETE(m_pFunctions[i][j]);
+				}
 			}
 		}
 
@@ -195,26 +201,44 @@ public:
 		 * count the number of phase functions (the sum of all the lengths)
 		 */
 		dwPhaseFunctions = 0;
-		for (dwPhase = 0; strPhaseID[dwPhase] != '\0'; dwPhase++)
+		for (dwPhase = 0; strPhaseID[dwPhase] != '\0'; ++dwPhase)
 		{
 			/*
 			 * count the number of expressions in each phase
+			 * The functions are not always contiguous, and sometimes don't exist,
+			 * so we need to treat missing values as "0"
+			 *
+			 * GForce configs don't always assign within a phase sequentially, and
+			 * sometimes even _uses_ *omitted* values. I can only assume such values
+			 * should default to zero. "A15" is the highest undefined-but-used value I
+			 * have seen, so always create at least 15; if contiguous values are
+			 * defined higher, keep reading them in as long as values exist.
 			 */
+			constexpr DWORD highestUndefinedButUsedValue = 15;
 			index = 0;
-			do {
+			while (true)
+			{
+				// Build key: "<phaseChar><index>"
 				int ret = snprintf(strID, _countof(strID),
-									"%c%d",
-									strPhaseID[dwPhase],
-									index++);
+									"%c%d", strPhaseID[dwPhase], index);
 				if (ret < 0 || (size_t)ret >= _countof(strID))
 					return FAILURE;
 
-			} while (inConfig->GetValue(strID) != NULL);
+				if (inConfig->GetValue(strID) == nullptr)
+				{
+					if (index > highestUndefinedButUsedValue)
+						break; // contiguous streak ended
+
+					// Default missing values to ZERO; and then continue counting
+					inConfig->SetValue(strID, strdup("0"));
+				}
+				++index;
+			}
 
 			/*
 			 * add to the tally of Phase Functions
 			 */
-			dwPhaseFunctions += index - 1;
+			dwPhaseFunctions += index;
 		}
 
 
@@ -225,7 +249,7 @@ public:
 													 * may change depending
 													 * on the number used
 													 */
-		for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
+		for (dwDimension = 0; dwDimension < NumDimensions(); ++dwDimension)
 		{
 			int ret = snprintf(strID, _countof(strID), "%c0", strDimensionID[dwDimension]);
 			if (ret < 0 || (size_t)ret >= _countof(strID))
@@ -243,44 +267,40 @@ public:
 			}
 		}
 
-		//        SetNumDimensions( dwDimension );
-
 		if (NumDimensions() != 0)
 		{
 			/*
 			 * count number of functions that have all m_nNumDimensions dimensions
+			 * EXAMPLE: X0,Y0,X1,Y1 would be 2 functions.
+			 * EXAMPLE: X0,Y0,Z0,X1,Y1,Z1 would be 2 functions.
+			 * EXAMPLE: X0,Y0,X1,Y1,X2,Y2 would be 3 functions.
+			 * EXAMPLE: X0,Y0,Z0,X1,Y1 would be 1 function (no Z1).
 			 */
-			index = 0;
-			dwDimension = NumDimensions();
-			//        while( strDimensionID[nDimension] == '\0' )
-			while (dwDimension == NumDimensions())
+			dwFunction = 0;
+			for (bool done = false; !done; ++dwFunction)
 			{
-				//            for( nDimension = 0; strDimensionID[nDimension] != '\0'; nDimension++ )
-				for (dwDimension = 0; dwDimension < NumDimensions(); dwDimension++)
+				for (dwDimension = 0; dwDimension < NumDimensions(); ++dwDimension)
 				{
+					// Build key: "<dimensionChar><fnNumber>"
 					int ret = snprintf(strID, _countof(strID),
-										"%c%d",
-										strDimensionID[dwDimension],
-										index++);
+										"%c%d", strDimensionID[dwDimension], dwFunction);
 					if (ret < 0 || (size_t)ret >= _countof(strID))
 						return FAILURE;
 
-					if (inConfig->GetValue(strID) == NULL)
-						break; /* break out of the for loop */
-					/* nDimension++ isn't evaluated before breaking out,
-					 * so strDimensionID[nDimension] != '\0' and thus
-					 * will exit the while loop
-					 *
-					 * index will be one greater than the
-					 * number we need.  Simply subtract one.
-					 */
+					if (inConfig->GetValue(strID) == nullptr)
+					{
+						if (dwFunction > 0)
+							--dwFunction;
+						done = true;
+						break; // did not match all expected dimensions, so we must have hit the end; stop counting, do not count this iteration.
+					}
 				}
 			}
 
 			/*
 			 * set the number of Functions
 			 */
-			SetNumFunctions(index - 1);
+			SetNumFunctions(dwFunction);
 
 		} /* if( m_nNumDimensions != 0 ) */
 
