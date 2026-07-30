@@ -482,7 +482,7 @@ public:
 				(*outArray)[dwElement++] = m_pArray[i];
 		}
 
-		*outNumElements = Size();
+		*outNumElements = dwElement;
 
 		return SUCCESS;
 	};

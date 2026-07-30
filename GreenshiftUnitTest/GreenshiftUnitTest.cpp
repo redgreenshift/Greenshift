@@ -287,7 +287,7 @@ namespace GreenshiftUnitTest
 			dConfig.WipeContents();
 			Assert::AreEqual(0, (int)dConfig.Size(), L"Expected to clear values");
 		}
-		TEST_METHOD(TestPhaseFunction)
+		TEST_METHOD(TestPhaseFunctionQuestion)
 		{
 			value_t s = 2;
 			value_t t = 3;
@@ -298,9 +298,10 @@ namespace GreenshiftUnitTest
 			//LinearMap<std::string, std::string> dConfig;
 
 			/*  Question Mark  */
-			std::array< std::tuple<std::string, std::string>, 41> initialValues =
+			std::array< std::tuple<std::string, std::string>, 42> initialValues =
 			{
 				{
+					{"NAME", "UnitTestQuestionMark"},
 					{"ConB", "1"},
 					{"Aspc", "1"},
 					{"Pen", "1"},
@@ -371,7 +372,7 @@ namespace GreenshiftUnitTest
 				dConfig.Add(assoc);
 				//dConfig.SetValue(key, value);
 			}
-			Assert::AreEqual(41, (int)dConfig.Size(), L"Expected to set values");
+			Assert::AreEqual(42, (int)dConfig.Size(), L"Expected to set values");
 
 
 			dict.SetValue("s", &s);
@@ -386,7 +387,91 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
 			Assert::AreEqual(8ul, pf.NumFunctions(), L"Failed to initialize functions");
 
-			Assert::AreEqual(67, (int)dict.Size(), L"Failed to add all expected functions");
+			Assert::AreEqual(36, (int)dict.Size(), L"Failed to add all expected functions, and/or eliminate unused omitted values");
 		}
+
+		TEST_METHOD(TestPhaseFunctionBezier)
+		{
+			value_t s = 2;
+			value_t t = 3;
+			value_t pi = 3.1415926535859f;
+			value_t BASS = 0;
+			MyDictionary<value_t*> dict;
+			MyDictionary<mychar_t*> dConfig;
+			PhaseFunction pf;
+			//LinearMap<std::string, std::string> dConfig;
+
+			/*  Bezier.txt  */
+			std::array< std::tuple<std::string, std::string>, 29> initialValues =
+			{
+				{
+					{"NAME", "UnitTestBezier"},
+					{"ConB", "1"},
+					{"Aspc", "1"},
+					{"Pen", "1"},
+					{"LWdt", "1"},
+					{"Stps", "100"},
+					{"A0", "2*pi"},
+					{"A1", "0.5*pi"},
+					//Endpoints for "blobs"
+					{"B0", "-.75+ 0.2*cos(pi*t)-BASS"},
+					{"B1", "-.3+ 0.5*sin(pi*t)"},
+
+					{"B2", "-.25+ 0.7*cos(A0*0.75*t-A1)"},
+					{"B3", "0.6+ 0.2*sin(A0*0.75*t-A1)+BASS"},
+					{"B4", "0.25+ 0.2*cos(A0*t)"},
+					{"B5", "-.15+ 0.5*sin(A0*t)-BASS"},
+					{"B6", "0.75 + 0.2*cos(A0*0.75*t+A1)+BASS"},
+					{"B7", "0.15+ 0.2*sin(A0*0.75*t+A1)"},
+					//cris cross
+					{"B8", "(B0+B4)*0.5+0.2"},
+					{"B9", "(B1+B5)*0.5"},
+
+					{"C0", "0"},
+					{"C1", "0.2*mag(s)"},
+					{"C2", "0"},
+					{"C3", "0"},
+
+					{"C4", "(1-s)^3"},
+					{"C5", "(1-s)^2*s"},
+					{"C6", "(1-s)*s*s"},
+					{"C7", "s*s*s"},
+
+					//Bezier curve
+					{"X0", "B0*C4 + B2*C5 + B4*C6 + B6*C7 + C1"},
+					{"Y0", "B1*C4 + B3*C5 + B5*C6 + B7*C7 + C1"},
+
+					{"Vers", "100"},
+				}
+			};
+
+			for (const std::tuple<std::string, std::string>& pair : initialValues)
+			{
+				const std::string& key = std::get<0>(pair);
+				const std::string& value = std::get<1>(pair);
+				auto assoc = new Association<mychar_t*>();
+				assoc->Initialize(key.c_str(), strdup(value.c_str()));
+				dConfig.Add(assoc);
+				//dConfig.SetValue(key, value);
+			}
+			Assert::AreEqual(29, (int)dConfig.Size(), L"Expected to set values");
+
+
+			dict.SetValue("s", &s);
+			dict.SetValue("t", &t);
+			dict.SetValue("pi", &pi);
+			dict.SetValue("BASS", &BASS);
+
+			InitGlobals();
+
+			Assert::AreEqual(SUCCESS, pf.Initialize("ABCD", "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
+
+			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize phases");
+			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
+			Assert::AreEqual(1ul, pf.NumFunctions(), L"Failed to initialize functions");
+
+			Assert::AreEqual(24, (int)dict.Size(), L"Failed to add all expected functions, and/or eliminate unused omitted values");
+		}
+
 	};
 }

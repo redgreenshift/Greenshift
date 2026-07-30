@@ -345,6 +345,12 @@ public:
 		for (index = 0; index < dwAllocationSize; index++)
 			m_pUnalignedMem[index] = 0;
 
+		// For efficiency, remove from inConfig any unnecessary phase functions
+		// that are "0" and never referenced by any other functions.
+		// Otherwise the workaround above to "Default missing values to ZERO"
+		// adds unnecessary cost to EVERY config!
+		PruneDanglingZeroPhaseFunctions(inConfig, std::string{ strPhaseID });
+
 		/*
 		 * setup the pointers for use
 		 */
@@ -562,6 +568,178 @@ public:
 	};
 
 
+	// Yes this is inefficient, but it's portable and should work
+	// TODO: Consider more efficient approaches, and move to TextUtils.cpp
+	std::string toLower(std::string s) {
+		std::transform(s.begin(), s.end(), s.begin(),
+			[](unsigned char ch) { return std::tolower(ch); });
+		return s;
+	}
+	bool MyStrStrIA(const char* pHaystack, const char* pNeedle)
+	{
+		std::string haystack = { pHaystack };
+		std::string needle = { pNeedle };
+
+		haystack = toLower(haystack);
+		needle = toLower(needle);
+
+		return haystack.find(needle) != std::string::npos;
+	}
+
+	/// <summary>
+	/// Prunes unreferenced zero-valued phase function entries in the config to limit
+	/// unnecessary work and maintain contiguous index values within each phase.
+	///
+	/// <para>---</para>
+	///
+	/// This process identifies zero-valued entries that are not referenced as substrings in any
+	/// other key/value pair and culls the tail of unused functions at the end of each phase.
+	///
+	/// <para>---</para>
+	///
+	/// NOTE: Some unreferenced functions may remain in the middle of a range to maintain
+	/// a contiguous index structure required by existing logic.
+	/// </summary>
+	/// <param name="config">The dictionary to be sanitized in place.</param>
+	/// <param name="phases">A string containing the valid phase characters (e.g., "ABCD").</param>
+	/// <returns>An error code indicating success or failure.</returns>
+	error_t PruneDanglingZeroPhaseFunctions(MyDictionary<mychar_t*>* config, const std::string& phases)
+	{
+		error_t err = SUCCESS;
+		std::map<char, size_t> maxNonzeroInPhase;
+
+		// Pseudocode:
+		// for each value in inConfig->AsArray(&outArray, &dwNumElements)
+		// if (isnumeric(id[1])
+		//		&& id[0] is in strPhaseID
+		//		&& its VALUE == "0")
+		//	{
+		//		Loop through the entire array and look for id in *any* of the values
+		//		if (no matches)
+		//		{
+		//			build a vector of values to cleanse
+		//		}
+		//	}
+		//
+		// for each unused ID that is above the highest used ID, RemoveValue
+		Association<mychar_t*>** configArray = nullptr;
+		DWORD dwNumElements = 0;
+		std::vector<std::string> toDelete;
+		err = config->AsArray(&configArray, &dwNumElements);
+		if (err != SUCCESS)
+			return err;
+
+		for (DWORD i = 0; i < dwNumElements; ++i)
+		{
+			mychar_t* keyID = configArray[i]->GetKey();
+			mychar_t* val = configArray[i]->GetValue();
+
+			if (val[0] == '0' && val[1] == '\0') // Value is exactly "0"
+			{
+				// Determine if Key is a Phase Function ID
+				if (std::isdigit(keyID[1])
+					&& (phases.find(toupper(keyID[0])) != std::string::npos
+						|| phases.find(tolower(keyID[0])) != std::string::npos))
+				{
+					bool found = false;
+					// Iterate through the list and check values,
+					// ALL values including PHASE FUNCTIONS and REGULAR FUNCTIONS like X0,Y1,Z2
+					for (DWORD inner = 0; inner < dwNumElements; ++inner)
+					{
+						mychar_t* valInner = configArray[inner]->GetValue();
+
+						// Determine if the phase function ID is referenced in this value.
+						if (MyStrStrIA(valInner, keyID))
+						{
+							// Yes, this gets some false positives, like key="A2" will match "A22",
+							// but this doesn't matter too much since we would need to preserve "A2"
+							// in this case anyway.
+							//
+							// The intention is to not have to add 40 "dummy" functions to EVERY config.
+							// If there are a couple extra ever now and then, I'm not worried.
+							// We MUST NOT cull used values; unused values are mostly harmless.
+							found = true;
+
+							const char currentPhase = keyID[0];
+							const int currentIndex = atoi(&keyID[1]);
+							auto itFound = maxNonzeroInPhase.find(currentPhase);
+							if (itFound != maxNonzeroInPhase.cend())
+							{
+								if (itFound->second < static_cast<size_t>(currentIndex))
+								{
+									maxNonzeroInPhase.erase(itFound);
+									maxNonzeroInPhase.emplace(currentPhase, currentIndex);
+								}
+							}
+							else
+								maxNonzeroInPhase.emplace(currentPhase, currentIndex);
+
+							break;
+						}
+					}
+
+					// Add the key to delete
+					if (!found)
+						toDelete.emplace_back(std::string{ keyID });
+				}
+			}
+			else
+			{
+				// Value is non-zero: keep track of the highest value per-phase
+				auto pos = phases.find(toupper(keyID[0]));
+				if (pos != std::string::npos)
+				{
+					const char currentPhase = keyID[0];
+					const int currentIndex = atoi(&keyID[1]);
+					auto itFound = maxNonzeroInPhase.find(currentPhase);
+					if (itFound != maxNonzeroInPhase.cend())
+					{
+						if (itFound->second < (size_t)(currentIndex))
+						{
+							maxNonzeroInPhase.erase(itFound);
+							maxNonzeroInPhase.emplace(currentPhase, currentIndex);
+						}
+					}
+					else
+						maxNonzeroInPhase.emplace(currentPhase, currentIndex);
+				}
+			}
+		}
+
+		// Iterate through the Phase functions again, and find the highest value in each phase that is non-zero;
+		// Only delete above that point.
+		// It's hacky, but gets the job done. For the common case, it eliminates all the excess.
+		// For the Configs that have stray variables, just those configs will have extra functions to evaluate.
+		//
+		// Since all the function names are now contiguous, we don't have to modify the code at the end of
+		// PhaseFunction::Initialize to account for non-contiguous ranges where each phase could have a
+		// different bound, because we don't easily know when to stop. Now the stop condition has been restored.
+		for (const std::string& keyID : toDelete)
+		{
+			auto pos = phases.find(toupper(keyID[0]));
+			if (pos != std::string::npos)
+			{
+				const char currentPhase = keyID[0];
+				const int currentIndex = atoi(&keyID[1]);
+				auto itFound = maxNonzeroInPhase.find(currentPhase);
+				if (itFound != maxNonzeroInPhase.cend())
+				{
+					if (size_t(currentIndex) > itFound->second)
+					{
+						config->RemoveValue(keyID.c_str());
+					}
+				}
+				else
+				{
+					config->RemoveValue(keyID.c_str());
+				}
+			}
+		}
+
+		return err;
+	}
+
+
 #if !EXTREME_DEBUGGING
 	/****************************************************************************
 	 *
@@ -597,7 +775,7 @@ public:
 		if (dwPhaseNumber >= NumPhases())
 		{
 			DumpToFile("error.txt", "there are only ", NumPhases(), " phases");
-			DumpToFile("error.txt", " not ", dwPhaseNumber, " phases");
+			DumpToFile("error.txt", " not ", dwPhaseNumber, " phases\n");
 			return FAILURE;
 		}
 
