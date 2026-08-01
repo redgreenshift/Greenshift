@@ -184,7 +184,7 @@ bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8Error
 		{
 			// invalid leading byte
 			if (policy == Utf8ErrorPolicy::Return) return false;
-			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
+			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: invalid leading byte");
 			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
 			++i;
 			continue;
@@ -193,7 +193,7 @@ bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8Error
 		if (i + needed > in.size())
 		{
 			if (policy == Utf8ErrorPolicy::Return) return false;
-			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
+			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: truncated sequence");
 			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
 			break;
 		}
@@ -204,6 +204,7 @@ bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8Error
 			const uint8_t bx = static_cast<uint8_t>(in[i + k]);
 			if ((bx & 0xC0) != 0x80)	// must be 10xxxxxx
 			{
+				if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: invalid continuation byte");
 				ok = false;
 				break;
 			}
@@ -219,13 +220,14 @@ bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8Error
 				(needed == 3 && cp < 0x800) ||
 				(needed == 4 && cp < 0x10000))
 			{
+				if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: overlong byte sequence");
 				ok = false;
 			}
 			// Reject above max code point > U+10FFFF
-			if (cp > 0x10FFFF) ok = false;
+			if (cp > 0x10FFFF) { if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: code point out of range"); else ok = false; }
 
 			// Reject surrogate code points (D800-DFFF)
-			if (cp >= 0xD800 && cp <= 0xDFFF) ok = false;
+			if (cp >= 0xD800 && cp <= 0xDFFF) { if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: surrogate code point"); else ok = false; }
 
 			// NOTE:
 			// Here is where to (optionally) reject U+FFFE/U+FFFF; since they're
