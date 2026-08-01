@@ -42,7 +42,8 @@
 // This used to be the easy way to convert, then it was deprecated,
 // and the suggestion was to use MultiByteToWideChar, but that is Windows specific.
 // I want to at least try to keep as much of Greenshift agnostic about the platform as possible.
-std::wstring CODECVT_utf8_to_wstring(const std::string & s) {
+std::wstring CODECVT_utf8_to_wstring(const std::string & s)
+{
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
 	return conv.from_bytes(s);
 }
@@ -195,11 +196,13 @@ bool isValidUtf8(const uint8_t * data, size_t len)
 {
 	size_t i = 0;
 
-	while (i < len) {
+	while (i < len)
+	{
 		uint8_t b0 = data[i];
 
 		// 1-byte ASCII
-		if (b0 <= 0x7F) {
+		if (b0 <= 0x7F)
+		{
 			i++;
 			continue;
 		}
@@ -208,42 +211,50 @@ bool isValidUtf8(const uint8_t * data, size_t len)
 		uint32_t codepoint = 0;
 		size_t need = 0;
 
-		if (b0 >= 0xC2 && b0 <= 0xDF) {          // 110xxxxx
+		if (b0 >= 0xC2 && b0 <= 0xDF)           // 110xxxxx
+		{
 			need = 1;                           // total 2 bytes
 			codepoint = b0 & 0x1F;
 		}
-		else if (b0 >= 0xE0 && b0 <= 0xEF) {   // 1110xxxx
+		else if (b0 >= 0xE0 && b0 <= 0xEF)      // 1110xxxx
+		{
 			need = 2;                           // total 3 bytes
 			codepoint = b0 & 0x0F;
 		}
-		else if (b0 >= 0xF0 && b0 <= 0xF4) {   // 11110xxx (UTF-8 max is F4 8F BF BF)
+		else if (b0 >= 0xF0 && b0 <= 0xF4)      // 11110xxx (UTF-8 max is F4 8F BF BF)
+		{
 			need = 3;                           // total 4 bytes
 			codepoint = b0 & 0x07;
 		}
-		else {
+		else
+		{
 			return false; // includes 0xC0/0xC1 (overlong starters) and 0xF5-0xFF
 		}
 
 		if (i + need >= len) return false; // not enough bytes
 
 		// Read continuation bytes
-		for (size_t j = 1; j <= need; j++) {
+		for (size_t j = 1; j <= need; j++)
+		{
 			uint8_t bj = data[i + j];
 			if ((bj & 0xC0) != 0x80) return false; // must be 10xxxxxx
 			codepoint = (codepoint << 6) | (bj & 0x3F);
 		}
 
 		// Extra validity checks for overlong / surrogates / range
-		if (need == 1) {
+		if (need == 1)
+		{
 			// 2-byte sequences must be >= 0x80 (already ensured by C2..DF), so ok
 		}
-		else if (need == 2) {
+		else if (need == 2)
+		{
 			// 3-byte sequences must be >= 0x800
 			if (codepoint < 0x800) return false;
 			// Reject surrogate halves U+D800..U+DFFF
 			if (codepoint >= 0xD800 && codepoint <= 0xDFFF) return false;
 		}
-		else { // need == 3
+		else // need == 3
+		{
 			// 4-byte sequences must be >= 0x10000
 			if (codepoint < 0x10000) return false;
 		}
@@ -261,11 +272,13 @@ static bool isValidUtf8WellFormed(const uint8_t * data, size_t len)
 {
 	size_t i = 0;
 
-	while (i < len) {
+	while (i < len)
+	{
 		uint8_t b0 = data[i];
 
 		// ASCII
-		if (b0 <= 0x7F) {
+		if (b0 <= 0x7F)
+		{
 			++i;
 			continue;
 		}
@@ -274,19 +287,23 @@ static bool isValidUtf8WellFormed(const uint8_t * data, size_t len)
 		size_t need = 0;
 
 		// Leading byte determines length (and excludes overlong starters)
-		if (b0 >= 0xC2 && b0 <= 0xDF) {          // 110xxxxx, total 2 bytes
+		if (b0 >= 0xC2 && b0 <= 0xDF)           // 110xxxxx, total 2 bytes
+		{
 			need = 1;
 			codepoint = b0 & 0x1F;
 		}
-		else if (b0 >= 0xE0 && b0 <= 0xEF) { // 1110xxxx, total 3 bytes
+		else if (b0 >= 0xE0 && b0 <= 0xEF)  // 1110xxxx, total 3 bytes
+		{
 			need = 2;
 			codepoint = b0 & 0x0F;
 		}
-		else if (b0 >= 0xF0 && b0 <= 0xF4) { // 11110xxx, total 4 bytes (max F4..)
+		else if (b0 >= 0xF0 && b0 <= 0xF4) // 11110xxx, total 4 bytes (max F4..)
+		{
 			need = 3;
 			codepoint = b0 & 0x07;
 		}
-		else {
+		else
+		{
 			return false; // includes 0xC0/0xC1 and 0xF5..0xFF
 		}
 
@@ -300,15 +317,18 @@ static bool isValidUtf8WellFormed(const uint8_t * data, size_t len)
 		}
 
 		// Reject overlong encodings and invalid code points
-		if (need == 1) {
+		if (need == 1)
+		{
 			// 2-byte sequence: automatically not overlong due to C2..DF rule
 		}
-		else if (need == 2) {
+		else if (need == 2)
+		{
 			// 3-byte: must be >= 0x800 and not a surrogate
 			if (codepoint < 0x800) return false;
 			if (codepoint >= 0xD800 && codepoint <= 0xDFFF) return false;
 		}
-		else { // need == 3
+		else // need == 3
+		{
 			// 4-byte: must be >= 0x10000
 			if (codepoint < 0x10000) return false;
 		}
@@ -326,13 +346,16 @@ Utf8Certainty classifyUtf8(const uint8_t * data, size_t len)
 	if (!data && len != 0) return Utf8Certainty::NotUtf8;
 
 	// If it isn't well-formed UTF-8, it can't be UTF-8.
-	if (!isValidUtf8WellFormed(data, len)) {
+	if (!isValidUtf8WellFormed(data, len))
+	{
 		return Utf8Certainty::NotUtf8;
 	}
 
 	// It is well-formed UTF-8. Now check whether it's only ASCII.
-	for (size_t i = 0; i < len; ++i) {
-		if (data[i] >= 0x80) {
+	for (size_t i = 0; i < len; ++i)
+	{
+		if (data[i] >= 0x80)
+		{
 			return Utf8Certainty::Utf8; // non-ASCII present => unambiguous in intent
 		}
 	}
@@ -347,10 +370,12 @@ Utf8Certainty classifyUtf8(const uint8_t * data, size_t len)
 static inline void appendCodepointToWString(std::wstring& out, uint32_t cp) {
 	// Surrogates are invalid scalar values and should never be produced by our decoder.
 #if WCHAR_MAX <= 0xFFFF
-	if (cp <= 0xFFFF) {
+	if (cp <= 0xFFFF)
+	{
 		out.push_back(static_cast<wchar_t>(cp));
 	}
-	else {
+	else
+	{
 		// UTF-16 surrogate pair
 		cp -= 0x10000;
 		wchar_t hi = static_cast<wchar_t>(0xD800u + (cp >> 10));
@@ -371,7 +396,8 @@ static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
 	auto u = static_cast<unsigned char>(*p);
 	uint32_t cp = 0;
 
-	if (u <= 0x7F) { // 1-byte ASCII
+	if (u <= 0x7F) // 1-byte ASCII
+	{
 		cp = u;
 		++p;
 		return cp;
@@ -379,28 +405,34 @@ static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
 
 	auto need = uint32_t{ 0 };
 
-	if (u >= 0xC2 && u <= 0xDF) {         // 2-byte (110xxxxx), excludes overlong starters C0/C1
+	if (u >= 0xC2 && u <= 0xDF)          // 2-byte (110xxxxx), excludes overlong starters C0/C1
+	{
 		need = 1;
 		cp = u & 0x1F;
 	}
-	else if (u >= 0xE0 && u <= 0xEF) { // 3-byte (1110xxxx)
+	else if (u >= 0xE0 && u <= 0xEF) // 3-byte (1110xxxx)
+	{
 		need = 2;
 		cp = u & 0x0F;
 	}
-	else if (u >= 0xF0 && u <= 0xF4) { // 4-byte (11110xxx) max valid is F4 8F BF BF  ///??? (max U+10FFFF => F4 8F BF BF)
+	else if (u >= 0xF0 && u <= 0xF4) // 4-byte (11110xxx) max valid is F4 8F BF BF  ///??? (max U+10FFFF => F4 8F BF BF)
+	{
 		need = 3;
 		cp = u & 0x07;
 	}
-	else {
+	else
+	{
 		throw std::runtime_error("Invalid UTF-8: invalid leading byte");
 	}
 
-	if (static_cast<size_t>(end - p) < 1 + need) {
+	if (static_cast<size_t>(end - p) < 1 + need)
+	{
 		throw std::runtime_error("Invalid UTF-8: truncated sequence");
 	}
 
 	++p; // consume leading byte
-	for (uint32_t i = 0; i < need; ++i) {
+	for (uint32_t i = 0; i < need; ++i)
+	{
 		auto ub = static_cast<unsigned char>(*p);
 		if ((ub & 0xC0u) != 0x80u) throw std::runtime_error("Invalid UTF-8: invalid continuation byte");
 		cp = (cp << 6) | (ub & 0x3Fu);
@@ -412,15 +444,18 @@ static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
 	if (cp > 0x10FFFFu) throw std::runtime_error("Invalid UTF-8: code point out of range");
 	if (cp >= 0xD800u && cp <= 0xDFFFu) throw std::runtime_error("Invalid UTF-8: surrogate code point");
 
-	if (need == 1) {
+	if (need == 1)
+	{
 		// 2-byte sequences must be >= 0x80
 		if (cp < 0x80u) throw std::runtime_error("Invalid UTF-8: overlong 2-byte sequence");
 	}
-	else if (need == 2) {
+	else if (need == 2)
+	{
 		// 3-byte sequences must be >= 0x800
 		if (cp < 0x800u) throw std::runtime_error("Invalid UTF-8: overlong 3-byte sequence");
 	}
-	else if (need == 3) {
+	else if (need == 3)
+	{
 		// 4-byte sequences must be >= 0x10000
 		if (cp < 0x10000u) throw std::runtime_error("Invalid UTF-8: overlong 4-byte sequence");
 	}
@@ -429,14 +464,16 @@ static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
 }
 
 // UTF-8 -> UTF-16 (as stored in std::wstring: UTF-16 code units if wchar_t is 16-bit)
-inline std::wstring utf8ToUtf16(std::string_view sv) {
+inline std::wstring utf8ToUtf16(std::string_view sv)
+{
 	std::wstring out;
 	out.reserve(sv.size()); // heuristic; may expand with surrogate pairs
 
 	const char* p = sv.data();
 	const char* end = p + sv.size();
 
-	while (p < end) {
+	while (p < end)
+	{
 		uint32_t cp = decodeOneUtf8(p, end);
 		appendCodepointToWString(out, cp);
 	}
@@ -444,18 +481,21 @@ inline std::wstring utf8ToUtf16(std::string_view sv) {
 }
 
 // Accept const char* + length (safe for embedded NULs if you pass length)
-inline std::wstring utf8ToUtf16(const char* s, size_t len) {
+inline std::wstring utf8ToUtf16(const char* s, size_t len)
+{
 	if (!s && len != 0) throw std::runtime_error("utf8ToUtf16: null pointer");
 	return utf8ToUtf16(std::string_view{ s, len });
 }
 
 // Accept std::string
-inline std::wstring utf8ToUtf16(const std::string& s) {
+inline std::wstring utf8ToUtf16(const std::string& s)
+{
 	return utf8ToUtf16(std::string_view{ s });
 }
 
 // Accept null-terminated const char*
-inline std::wstring utf8ToUtf16(const char* s) {
+inline std::wstring utf8ToUtf16(const char* s)
+{
 	if (!s) throw std::runtime_error("utf8ToUtf16: null pointer");
 	return utf8ToUtf16(std::string_view{ s });
 }
