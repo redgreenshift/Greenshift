@@ -50,11 +50,29 @@ std::wstring CODECVT_utf8_to_wstring(const std::string & s)
 #endif // _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 
-// As I explore implementations, I want to be able to swap them out,
+// CORE: As I explore implementations, I want to be able to swap them out,
 // so this is the point to swap out implementations
+std::wstring utf8_to_wstring(const std::string_view svUtf8)
+{
+	return WINDOWS_utf8_to_utf16(svUtf8);
+}
+
+// Accept const char* + length (safe for embedded NULs if you pass length)
+std::wstring utf8_to_wstring(const char* s, size_t len)
+{
+	return utf8_to_wstring(std::string_view{ s, len });
+}
+
+// Accept std::string
 std::wstring utf8_to_wstring(const std::string& s)
 {
-	return WINDOWS_utf8_to_utf16(s);
+	return utf8_to_wstring(std::string_view{ s });
+}
+
+// Accept null-terminated const char*
+std::wstring utf8_to_wstring(const char* s)
+{
+	return utf8_to_wstring(std::string_view{ s });
 }
 
 
@@ -66,7 +84,7 @@ std::wstring utf8_to_wstring(const std::string& s)
 #include <windows.h>
 
 // This is the most straightforward replacement, as I don't have to _implement_ the feature myself... but it's platform specific, which is less than ideal.
-std::wstring WINDOWS_utf8_to_utf16(const std::string & utf8)
+std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8)
 {
 	if (utf8.empty()) return {};
 
@@ -89,19 +107,19 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string & utf8)
 #endif // WIN32
 
 
-// TODO: I don't like this silently converts invalid sequences, consider adding a flag or option to fail/throw on invalid input.
-static void append_codepoint_to_wstring(uint32_t cp, std::wstring & out) {
-	// Reject invalid scalar values
-	if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) {
-		cp = InvalidSequenceReplacementChar; // replacement char
-	}
+static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
+{
+	if (cp > 0x10FFFF) cp = InvalidSequenceReplacementChar;
 
-	if (sizeof(wchar_t) == 2) {
-		// Encode as UTF-16
-		if (cp <= 0xFFFF) {
+	if (sizeof(wchar_t) == 2)
+	{
+		// Encode into UTF-16 code units
+		if (cp <= 0xFFFF)
+		{
 			out.push_back(static_cast<wchar_t>(cp));
 		}
-		else {
+		else
+		{
 			cp -= 0x10000;
 			wchar_t high = static_cast<wchar_t>(0xD800 + (cp >> 10));
 			wchar_t low = static_cast<wchar_t>(0xDC00 + (cp & 0x3FF));
@@ -109,58 +127,83 @@ static void append_codepoint_to_wstring(uint32_t cp, std::wstring & out) {
 			out.push_back(low);
 		}
 	}
-	else {
+	else
+	{
 		// wchar_t is typically 4 bytes => UTF-32
 		out.push_back(static_cast<wchar_t>(cp));
 	}
 }
 
-std::wstring ATTEMPT1_utf8_to_wstring(const std::string & s) {
-	std::wstring out;
-	out.reserve(s.size()); // rough heuristic
+std::wstring ATTEMPT1_utf8_to_wstring(const std::string_view sv)
+{
+	std::wstring result;
+	if (ATTEMPT1_utf8_to_wstring(result, sv, Utf8ErrorPolicy::Return))
+		return result;
+	else
+		return std::wstring{};
 
-	const unsigned char* bytes =
-		reinterpret_cast<const unsigned char*>(s.data());
+}
+
+bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8ErrorPolicy policy)
+{
+	out2.clear();
+
+	std::wstring ret;
+	// Rough estimate: worst-case UTF-8 byte count ~ decoded code units count.
+	ret.reserve(in.size());
 
 	size_t i = 0;
-	while (i < s.size()) {
-		unsigned char b0 = bytes[i];
+	while (i < in.size())
+	{
+		const uint8_t b0 = static_cast<uint8_t>(in[i]);
 
 		uint32_t cp = 0;
 		size_t needed = 0;
 
-		if (b0 <= 0x7F) {             // 0xxxxxxx
+		if (b0 <= 0x7F)					// 0xxxxxxx
+		{
 			cp = b0;
 			needed = 1;
 		}
-		else if ((b0 & 0xE0) == 0xC0) { // 110xxxxx
+		else if ((b0 & 0xE0) == 0xC0)	// 110xxxxx
+		{
 			cp = b0 & 0x1F;
 			needed = 2;
 		}
-		else if ((b0 & 0xF0) == 0xE0) { // 1110xxxx
+		else if ((b0 & 0xF0) == 0xE0)	// 1110xxxx
+		{
 			cp = b0 & 0x0F;
 			needed = 3;
 		}
-		else if ((b0 & 0xF8) == 0xF0) { // 11110xxx
+		else if ((b0 & 0xF8) == 0xF0)	// 11110xxx
+		{
 			cp = b0 & 0x07;
 			needed = 4;
 		}
-		else {
-			// Invalid leading byte
-			append_codepoint_to_wstring(InvalidSequenceReplacementChar, out);
+		else
+		{
+			// invalid leading byte
+			if (policy == Utf8ErrorPolicy::Return) return false;
+			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
+			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
 			++i;
 			continue;
 		}
 
-		if (i + needed > s.size()) {
-			append_codepoint_to_wstring(InvalidSequenceReplacementChar, out);
+		if (i + needed > in.size())
+		{
+			if (policy == Utf8ErrorPolicy::Return) return false;
+			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
+			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
 			break;
 		}
 
 		bool ok = true;
-		for (size_t k = 1; k < needed; ++k) {
-			unsigned char bx = bytes[i + k];
-			if ((bx & 0xC0) != 0x80) { // not 10xxxxxx
+		for (size_t k = 1; k < needed; ++k)
+		{
+			const uint8_t bx = static_cast<uint8_t>(in[i + k]);
+			if ((bx & 0xC0) != 0x80)	// must be 10xxxxxx
+			{
 				ok = false;
 				break;
 			}
@@ -168,25 +211,42 @@ std::wstring ATTEMPT1_utf8_to_wstring(const std::string & s) {
 		}
 
 		// Additional validity checks for overlongs and range:
-		if (ok) {
-			// Overlong checks:
+		// Overlong checks + scalar value constraints
+		if (ok)
+		{
+			// Reject overlong encodings
 			if ((needed == 2 && cp < 0x80) ||
 				(needed == 3 && cp < 0x800) ||
-				(needed == 4 && cp < 0x10000)) {
+				(needed == 4 && cp < 0x10000))
+			{
 				ok = false;
 			}
-			// Max code point
+			// Reject above max code point > U+10FFFF
 			if (cp > 0x10FFFF) ok = false;
-			// Surrogate range
+
+			// Reject surrogate code points (D800-DFFF)
 			if (cp >= 0xD800 && cp <= 0xDFFF) ok = false;
+
+			// NOTE:
+			// Here is where to (optionally) reject U+FFFE/U+FFFF; since they're
+			// typically allowed as scalar values, we'll leave them for now.
 		}
 
-		if (!ok) cp = InvalidSequenceReplacementChar;
-		append_codepoint_to_wstring(cp, out);
+		if (!ok)
+		{
+			if (policy == Utf8ErrorPolicy::Return) return false;
+			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
+			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
+			++i; // advance by 1 to avoid infinite loops on the same byte
+			continue;
+		}
+
+		append_codepoint_as_wchar(ret, cp);
 		i += needed;
 	}
 
-	return out;
+	out2 = std::move(ret);
+	return true;
 }
 
 // Validates that the entire byte sequence is well-formed UTF-8.

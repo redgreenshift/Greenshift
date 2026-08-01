@@ -34,16 +34,19 @@ std::wstring CODECVT_utf8_to_wstring(const std::string& s);
 
 
 #ifdef WIN32
-std::wstring WINDOWS_utf8_to_utf16(const std::string& utf8);
+std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8);
 #endif
 
-std::wstring utf8_to_wstring(const std::string& s);
+std::wstring utf8_to_wstring(const std::string_view svUtf8); // core
+// helpers:
+std::wstring utf8_to_wstring(const char* s, size_t len);
+std::wstring utf8_to_wstring(const char* s);
 
 
 constexpr wchar_t InvalidSequenceReplacementChar = static_cast<wchar_t>(0xFFFD); // standard empty box character signifying an invalid byte sequence
 enum class Utf8ErrorPolicy {
 	Replace,	// append U+FFFD and continue
-	False,		// return false on first invalid sequence, or empty string if using an overload that just returns a string
+	Return,		// return false on first invalid sequence, or empty string if using an overload that just returns a string
 	Throw,		// throw an exception on first invalid sequence
 };
 
@@ -53,7 +56,7 @@ bool utf8_to_wstring(
 	Utf8ErrorPolicy policy);
 
 
-std::wstring ATTEMPT1_utf8_to_wstring(const std::string& s);
+std::wstring ATTEMPT1_utf8_to_wstring(const std::string_view sv);
 bool ATTEMPT1_utf8_to_wstring(std::wstring& out, std::string_view in, Utf8ErrorPolicy policy);
 
 
