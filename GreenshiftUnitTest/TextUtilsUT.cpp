@@ -387,6 +387,12 @@ namespace GreenshiftUnitTest
 			s.push_back((char)0xC0); // invalid leading byte (overlong prefix)
 			s.push_back('B');         // 0x42
 
+			if (ERROR_POLICY == Utf8ErrorPolicy::Throw)
+			{
+				ExpectInvalidInput(s);
+				return;
+			}
+
 			std::wstring out = utf8_to_wstring(s);
 
 			// At minimum, we expect the 'A' and 'B' to appear somewhere in order,
