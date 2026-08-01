@@ -56,6 +56,7 @@ std::wstring utf8_to_wstring(const std::string& s)
 	return WINDOWS_utf8_to_utf16(s);
 }
 
+
 // 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :
 // std::wbuffer_convert, std::wstring_convert, and the <codecvt> header(containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17.
 // (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead.
@@ -86,7 +87,6 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string & utf8)
 }
 #endif // WIN32
 
-constexpr wchar_t InvalidSequenceReplacementChar = static_cast<wchar_t>(0xFFFD); // standard empty box character signifying an invalid byte sequence
 
 // TODO: I don't like this silently converts invalid sequences, consider adding a flag or option to fail/throw on invalid input.
 static void append_codepoint_to_wstring(uint32_t cp, std::wstring & out) {

@@ -22,13 +22,9 @@
  */
 
 #include <string>
+#include <string_view>
+#include <cstdint>
 
-enum class Utf8Certainty
-{
-	NotUtf8,	// invalid UTF-8 byte sequence
-	MaybeUtf8,	// only ASCII bytes: valid UTF-8 but ambiguous intent/encoding
-	Utf8,		// valid UTF-8 with at least one byte >= 0x80
-};
 
 // BEGIN -- Delete with codecvt_utf8_utf16
 #ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
@@ -43,7 +39,32 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string& utf8);
 
 std::wstring utf8_to_wstring(const std::string& s);
 
+
+constexpr wchar_t InvalidSequenceReplacementChar = static_cast<wchar_t>(0xFFFD); // standard empty box character signifying an invalid byte sequence
+enum class Utf8ErrorPolicy {
+	Replace,	// append U+FFFD and continue
+	False,		// return false on first invalid sequence, or empty string if using an overload that just returns a string
+	Throw,		// throw an exception on first invalid sequence
+};
+
+bool utf8_to_wstring(
+	std::wstring& out,
+	std::string_view in,
+	Utf8ErrorPolicy policy);
+
+
 std::wstring ATTEMPT1_utf8_to_wstring(const std::string& s);
+bool ATTEMPT1_utf8_to_wstring(std::wstring& out, std::string_view in, Utf8ErrorPolicy policy);
+
+
+enum class Utf8Certainty
+{
+	NotUtf8,	// invalid UTF-8 byte sequence
+	MaybeUtf8,	// only ASCII bytes: valid UTF-8 but ambiguous intent/encoding
+	Utf8,		// valid UTF-8 with at least one byte >= 0x80
+};
+
+
 bool isValidUtf8(const uint8_t* data, size_t len);
 Utf8Certainty classifyUtf8(const uint8_t* data, size_t len);
 
