@@ -26,18 +26,19 @@
 // https://en.wikipedia.org/wiki/UTF-8
 // https://en.wikipedia.org/wiki/Shift-JIS
 
-#include <string> // append_codepoint_to_wstring
-#include <cstdint> // isValidUtf8, append_codepoint_to_wstring
-#include <limits> // append_codepoint_to_wstring
+#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
+#include <codecvt> // Delete with codecvt_utf8_utf16
+
 #include <cstddef> // isValidUtf8
-#include <string_view>
+#include <cstdint> // isValidUtf8, append_codepoint_to_wstring
+#include <istream>
+#include <limits> // append_codepoint_to_wstring
 #include <stdexcept>
+#include <string> // append_codepoint_to_wstring
+#include <string_view>
 
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
 #include "TextUtils.hpp"
-
-#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
-#include <codecvt> // Delete with codecvt_utf8_utf16
 
 // This used to be the easy way to convert, then it was deprecated,
 // and the suggestion was to use MultiByteToWideChar, but that is Windows specific.
@@ -526,7 +527,7 @@ static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
 }
 
 // UTF-8 -> UTF-16 (as stored in std::wstring: UTF-16 code units if wchar_t is 16-bit)
-inline std::wstring utf8ToUtf16(std::string_view sv)
+inline std::wstring ATTEMPT3_utf8ToUtf16(std::string_view sv)
 {
 	std::wstring out;
 	out.reserve(sv.size()); // heuristic; may expand with surrogate pairs
@@ -543,21 +544,21 @@ inline std::wstring utf8ToUtf16(std::string_view sv)
 }
 
 // Accept const char* + length (safe for embedded NULs if you pass length)
-inline std::wstring utf8ToUtf16(const char* s, size_t len)
+inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s, size_t len)
 {
 	if (!s && len != 0) throw std::runtime_error("utf8ToUtf16: null pointer");
-	return utf8ToUtf16(std::string_view{ s, len });
+	return ATTEMPT3_utf8ToUtf16(std::string_view{ s, len });
 }
 
 // Accept std::string
-inline std::wstring utf8ToUtf16(const std::string& s)
+inline std::wstring ATTEMPT3_utf8ToUtf16(const std::string& s)
 {
-	return utf8ToUtf16(std::string_view{ s });
+	return ATTEMPT3_utf8ToUtf16(std::string_view{ s });
 }
 
 // Accept null-terminated const char*
-inline std::wstring utf8ToUtf16(const char* s)
+inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s)
 {
 	if (!s) throw std::runtime_error("utf8ToUtf16: null pointer");
-	return utf8ToUtf16(std::string_view{ s });
+	return ATTEMPT3_utf8ToUtf16(std::string_view{ s });
 }

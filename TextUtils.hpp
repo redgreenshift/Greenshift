@@ -72,7 +72,7 @@ bool isValidUtf8(const uint8_t* data, size_t len);
 Utf8Certainty classifyUtf8(const uint8_t* data, size_t len);
 
 // Replacement Attempt 3:
-inline std::wstring utf8ToUtf16(std::string_view sv);
-inline std::wstring utf8ToUtf16(const char* s, size_t len);
-inline std::wstring utf8ToUtf16(const std::string& s);
-inline std::wstring utf8ToUtf16(const char* s);
+inline std::wstring ATTEMPT3_utf8ToUtf16(std::string_view sv);
+inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s, size_t len);
+inline std::wstring ATTEMPT3_utf8ToUtf16(const std::string& s);
+inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s);
