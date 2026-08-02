@@ -144,7 +144,7 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(expected, result, L"Failed to match exactly with no modification");
 		}
 
-		TEST_METHOD(EmbeddedNul_IsPreservedAsCodeUnitZero)
+		TEST_METHOD(EmbeddedNul_IsPreservedAsCodeUnitZero_STRING)
 		{
 			// "A\0B"
 			std::string s;
@@ -154,7 +154,20 @@ namespace GreenshiftUnitTest
 
 			const std::wstring result = utf8_to_wstring(s);
 
-			Assert::AreEqual(result.size(), 3u);
+			Assert::AreEqual(3u, result.size());
+			Assert::AreEqual(L'A', result[0]);
+			Assert::AreEqual(L'\0', result[1]);
+			Assert::AreEqual(L'B', result[2]);
+		}
+
+		TEST_METHOD(EmbeddedNul_IsPreservedAsCodeUnitZero_CHAR)
+		{
+			// "A\0B"
+			const char s[] = {'A', '\0', 'B', '\0'};
+
+			const std::wstring result = utf8_to_wstring(s, _countof(s) - 1);
+
+			Assert::AreEqual(3u, result.size());
 			Assert::AreEqual(L'A', result[0]);
 			Assert::AreEqual(L'\0', result[1]);
 			Assert::AreEqual(L'B', result[2]);

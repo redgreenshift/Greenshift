@@ -51,15 +51,13 @@ enum class Utf8ErrorPolicy {
 };
 
 inline std::wstring utf8_to_wstring(std::istream& utf8, Utf8ErrorPolicy policy);
-inline std::wstring utf8_to_wstring(std::string_view utf8, Utf8ErrorPolicy policy);
 inline std::wstring utf8_to_wstring(const std::string& utf8, Utf8ErrorPolicy policy);
 inline std::wstring utf8_to_wstring(const char* utf8, Utf8ErrorPolicy policy);
 
 inline std::wstring utf8_to_wstring(std::istream& utf8);
-inline std::wstring utf8_to_wstring(std::string_view utf8);
 inline std::wstring utf8_to_wstring(const std::string& utf8);
 inline std::wstring utf8_to_wstring(const char* utf8);
-
+inline std::wstring utf8_to_wstring(const char* pszUtf8, size_t cchUtf8);
 
 enum class Utf8Certainty
 {

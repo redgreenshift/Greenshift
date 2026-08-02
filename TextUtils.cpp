@@ -35,6 +35,7 @@
 #include <limits> // append_codepoint_to_wstring
 #include <sstream>
 #include <stdexcept>
+#include <streambuf>
 #include <string> // append_codepoint_to_wstring
 #include <string_view>
 
@@ -62,15 +63,6 @@ inline std::wstring utf8_to_wstring(std::istream& stm, Utf8ErrorPolicy policy)
 	return ATTEMPT4_utf8_to_wstring(stm, policy);
 }
 
-inline std::wstring utf8_to_wstring(const std::string_view svUtf8, Utf8ErrorPolicy policy)
-{
-	// istringstream needs an owning string (string_view is non-owning).
-	// copy to a std::string.
-	std::string owned(svUtf8);
-
-	return utf8_to_wstring(owned, policy);
-}
-
 inline std::wstring utf8_to_wstring(const std::string& strUtf8, Utf8ErrorPolicy policy)
 {
 	// istringstream needs an owning string (string is owning).
@@ -88,27 +80,45 @@ inline std::wstring utf8_to_wstring(const char* pszUtf8, Utf8ErrorPolicy policy)
 	return utf8_to_wstring(in, policy);
 }
 
+// Accept std::istream
 inline std::wstring utf8_to_wstring(std::istream& stm)
 {
 	return utf8_to_wstring(stm, Utf8ErrorDefaultPolicy);
 }
 
-inline std::wstring utf8_to_wstring(const std::string_view svUtf8)
-{
-	return utf8_to_wstring(svUtf8, Utf8ErrorDefaultPolicy);
-}
-
+// Accept std::string
 inline std::wstring utf8_to_wstring(const std::string& strUtf8)
 {
 	return utf8_to_wstring(strUtf8, Utf8ErrorDefaultPolicy);
 }
 
+// Accept null-terminated const char*
 inline std::wstring utf8_to_wstring(const char* pszUtf8)
 {
 	return utf8_to_wstring(pszUtf8, Utf8ErrorDefaultPolicy);
 }
 
 
+class utf8_bytes_rangebuf : public std::streambuf
+{
+public:
+	utf8_bytes_rangebuf(const char* data, std::size_t len)
+	{
+		// streambuf wants char*; reading doesn't modify the buffer.
+		char* b = const_cast<char*>(data); // streambuf uses char* internally
+		char* e = b + len;
+		setg(b, b, e); // [gptr(), egptr()) is the readable range
+	}
+	// No overrides required for peek/get-based decoding.
+};
+
+// Accept const char* + length (safe for embedded NULs if you pass length)
+inline std::wstring utf8_to_wstring(const char* pszUtf8, size_t cchUtf8)
+{
+	utf8_bytes_rangebuf buf(pszUtf8, cchUtf8); // Important lifetime rule, this avoids an extra std::string copy, pszUtf8 must remain valid (and unchanged) for the duration of `utf8_to_wstring(in)`
+	std::istream in(&buf);
+	return utf8_to_wstring(in);
+}
 
 
 // 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :
