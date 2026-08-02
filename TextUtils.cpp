@@ -112,27 +112,29 @@ static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
 {
 	if (cp > 0x10FFFF) cp = InvalidSequenceReplacementChar;
 
-	if (sizeof(wchar_t) == 2)
+#if WCHAR_MAX <= 0xFFFF
+	static_assert(sizeof(wchar_t) == 2, "Expected 2-byte wchar_t on this platform");
+
+	// Encode into UTF-16 code units
+	if (cp <= 0xFFFF)
 	{
-		// Encode into UTF-16 code units
-		if (cp <= 0xFFFF)
-		{
-			out.push_back(static_cast<wchar_t>(cp));
-		}
-		else
-		{
-			cp -= 0x10000;
-			wchar_t high = static_cast<wchar_t>(0xD800 + (cp >> 10));
-			wchar_t low = static_cast<wchar_t>(0xDC00 + (cp & 0x3FF));
-			out.push_back(high);
-			out.push_back(low);
-		}
+		out.push_back(static_cast<wchar_t>(cp));
 	}
 	else
 	{
-		// wchar_t is typically 4 bytes => UTF-32
-		out.push_back(static_cast<wchar_t>(cp));
+		cp -= 0x10000;
+		wchar_t high = static_cast<wchar_t>(0xD800 + (cp >> 10));
+		wchar_t low = static_cast<wchar_t>(0xDC00 + (cp & 0x3FF));
+		out.push_back(high);
+		out.push_back(low);
 	}
+#else
+	static_assert(sizeof(wchar_t) == 4, "Expected 4-byte wchar_t on this platform");
+
+	// wchar_t wide enough: store the code point directly
+	// If wchar_t is 32-bit, std::wstring can hold full code points directly.
+	out.push_back(static_cast<wchar_t>(cp));
+#endif
 }
 
 std::wstring ATTEMPT1_utf8_to_wstring(const std::string_view sv)
