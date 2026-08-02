@@ -209,6 +209,7 @@ error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 		&m_pSource1,
 		&m_dictValues,
 		inGlobals);
+#if EXTREME_DEBUGGING
 	if (err != SUCCESS)
 	{
 		const char* strID1 = m_bIsPolar ? "SourceRadius or srcR" : "SourceX  or srcX";
@@ -218,12 +219,14 @@ error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 		DumpToFile("error.txt", strID1, "<-- strExpressionID\n");
 		DumpToFile("error.txt", strSource1, "<-- strSource1\n");
 	}
+#endif
 	if (err == SUCCESS)
 	{
 		err = Expression::Compile(strSource2,
 			&m_pSource2,
 			&m_dictValues,
 			inGlobals);
+#if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
 			const char* strID2 = m_bIsPolar ? "SourceTheta or srcT" : "SourceY or srcY";
@@ -233,6 +236,7 @@ error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 			DumpToFile("error.txt", strID2, "<-- strExpressionID\n");
 			DumpToFile("error.txt", strSource2, "<-- strSource2\n");
 		}
+#endif
 	}
 
 	return err;

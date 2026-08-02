@@ -294,6 +294,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	 * compile the three component expressions
 	 */
 	err = Expression::Compile(strExp1, &m_pExp1, &m_dValues, inGlobals);
+#if EXTREME_DEBUGGING
 	if (err != SUCCESS)
 	{
 		const char* strID1 = "Rgb / Hsv / Cmy";
@@ -303,9 +304,11 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 		DumpToFile("error.txt", strID1, "<-- strExpressionID 1 hint\n");
 		DumpToFile("error.txt", strExp1, "<-- strExp1\n");
 	}
+#endif
 	if (err == SUCCESS)
 	{
 		err = Expression::Compile(strExp2, &m_pExp2, &m_dValues, inGlobals);
+#if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
 			const char* strID2 = "rGb / hSv / cMy";
@@ -315,10 +318,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 			DumpToFile("error.txt", strID2, "<-- strExpressionID 2 hint\n");
 			DumpToFile("error.txt", strExp2, "<-- strExp2\n");
 		}
+#endif
 	}
 	if (err == SUCCESS)
 	{
 		err = Expression::Compile(strExp3, &m_pExp3, &m_dValues, inGlobals);
+#if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
 			const char* strID3 = "rgB / hsV / cmY";
@@ -328,6 +333,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 			DumpToFile("error.txt", strID3, "<-- strExpressionID 3 hint\n");
 			DumpToFile("error.txt", strExp3, "<-- strExp3\n");
 		}
+#endif
 	}
 	if (err != SUCCESS)
 		return err;
