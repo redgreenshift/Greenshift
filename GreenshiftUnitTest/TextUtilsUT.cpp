@@ -62,7 +62,8 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestEnglish)
 		{
 			const char original[] = "This is a test in ASCII English!";
-			const std::wstring expected = { L"This is a test in ASCII English!" };
+			const std::string original2 = original;
+			const std::wstring expected{ original2.begin(), original2.end()};
 			std::wstring result;
 
 			// Original code
@@ -73,17 +74,12 @@ namespace GreenshiftUnitTest
 			const std::wstring winResult = WINDOWS_utf8_to_utf16(original);
 			Assert::AreEqual(expected, winResult, L"Failed to match MultiByteToWideChar");
 
-			// Try1 -- First Reimplementation exploration
-			result = ATTEMPT1_utf8_to_wstring(original);
-			Assert::AreEqual(expected, result, L"Failed to convert to 2 `UnicodeReplacementChar`");
+			// Reimplementation exploration
+			result = utf8_to_wstring(original, Utf8ErrorPolicy::Replace /*ERROR_POLICY*/);
+			Assert::AreEqual(expected, result, L"Replaced chars it shouldn't have");
 
-			// Try2 -- Classification check
-			Assert::IsTrue(Utf8Certainty::MaybeUtf8 == classifyUtf8((uint8_t*)original, _countof(original) - 1), L"Maybe valid UTF8");
-			Assert::IsTrue(isValidUtf8((uint8_t*)original, _countof(original) - 1), L"Invalid UTF8");
-
-			// Try3 -- Second Reimplementation exploration
-			result = utf8ToUtf16(original);
-			Assert::AreEqual(expected, result, L"Try 3 Failed to convert to 2 `UnicodeReplacementChar`");
+			// Classification check
+			Assert::IsTrue(Utf8Certainty::MaybeUtf8 == is_valid_utf8((uint8_t*)original, _countof(original) - 1), L"Failed to detect ASCII is 'maybe' valid UTF8");
 		}
 
 		TEST_METHOD(TestShiftJIS)
@@ -107,34 +103,22 @@ namespace GreenshiftUnitTest
 			const std::wstring winResult = WINDOWS_utf8_to_utf16(original);
 			Assert::AreEqual(std::wstring{ L"" }, winResult, L"Failed to match MultiByteToWideChar");
 
-			bool ATTEMPT1_utf8_to_wstring_Threw = false;
+			bool utf8_to_wstring_Threw = false;
 			try {
-				result = ATTEMPT1_utf8_to_wstring(original);
+				result = utf8_to_wstring(original, ERROR_POLICY);
 			}
 			catch (...)
 			{
-				ATTEMPT1_utf8_to_wstring_Threw = true;
+				utf8_to_wstring_Threw = true;
 			}
 			if (ERROR_POLICY == Utf8ErrorPolicy::Throw)
-				Assert::IsTrue(ATTEMPT1_utf8_to_wstring_Threw, L"Failed to detect invalid sequence and reject conversion via throw");
+				Assert::IsTrue(utf8_to_wstring_Threw, L"Failed to detect invalid sequence and reject conversion via throw");
 			else if (ERROR_POLICY == Utf8ErrorPolicy::Replace)
 				Assert::AreEqual(expected, result, L"Failed to convert to 2 `UnicodeReplacementChar`");
 			else
 				Assert::AreEqual(std::wstring{/*empty*/}, result, L"Failed to detect invalid sequence and reject conversion");
 
-			Assert::IsTrue(Utf8Certainty::NotUtf8 == classifyUtf8((uint8_t*)original, _countof(original) - 1), L"Maybe valid UTF8");
-			Assert::IsFalse(isValidUtf8((uint8_t*)original, _countof(original) - 1), L"Invalid UTF8");
-
-
-			bool utf8ToUtf16Threw = false;
-			try {
-				result = utf8ToUtf16(original);
-			}
-			catch (...)
-			{
-				utf8ToUtf16Threw = true;
-			}
-			Assert::IsTrue(utf8ToUtf16Threw, L"Try 3 Successfully converted?");
+			Assert::IsTrue(Utf8Certainty::NotUtf8 == is_valid_utf8((uint8_t*)original, _countof(original) - 1), L"Failed to detect Invalid UTF8");
 		}
 
 

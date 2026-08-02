@@ -29,10 +29,11 @@
 #ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
 #include <codecvt> // Delete with codecvt_utf8_utf16
 
-#include <cstddef> // isValidUtf8
-#include <cstdint> // isValidUtf8, append_codepoint_to_wstring
+#include <cstddef> // is_valid_utf8
+#include <cstdint> // is_valid_utf8, append_codepoint_to_wstring
 #include <istream>
 #include <limits> // append_codepoint_to_wstring
+#include <sstream>
 #include <stdexcept>
 #include <string> // append_codepoint_to_wstring
 #include <string_view>
@@ -51,30 +52,63 @@ std::wstring CODECVT_utf8_to_wstring(const std::string & s)
 #endif // _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 
+static constexpr Utf8ErrorPolicy Utf8ErrorDefaultPolicy = Utf8ErrorPolicy::Return;
+static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorPolicy policy);
+
 // CORE: As I explore implementations, I want to be able to swap them out,
 // so this is the point to swap out implementations
-std::wstring utf8_to_wstring(const std::string_view svUtf8)
+inline std::wstring utf8_to_wstring(std::istream& stm, Utf8ErrorPolicy policy)
 {
-	return WINDOWS_utf8_to_utf16(svUtf8);
+	return ATTEMPT4_utf8_to_wstring(stm, policy);
 }
 
-// Accept const char* + length (safe for embedded NULs if you pass length)
-std::wstring utf8_to_wstring(const char* s, size_t len)
+inline std::wstring utf8_to_wstring(const std::string_view svUtf8, Utf8ErrorPolicy policy)
 {
-	return utf8_to_wstring(std::string_view{ s, len });
+	// istringstream needs an owning string (string_view is non-owning).
+	// copy to a std::string.
+	std::string owned(svUtf8);
+
+	return utf8_to_wstring(owned, policy);
 }
 
-// Accept std::string
-std::wstring utf8_to_wstring(const std::string& s)
+inline std::wstring utf8_to_wstring(const std::string& strUtf8, Utf8ErrorPolicy policy)
 {
-	return utf8_to_wstring(std::string_view{ s });
+	// istringstream needs an owning string (string is owning).
+	// No conversion necessary
+	std::istringstream in(strUtf8);
+
+	return utf8_to_wstring(in, policy);
 }
 
-// Accept null-terminated const char*
-std::wstring utf8_to_wstring(const char* s)
+inline std::wstring utf8_to_wstring(const char* pszUtf8, Utf8ErrorPolicy policy)
 {
-	return utf8_to_wstring(std::string_view{ s });
+	// istringstream needs an owning string (char* is owning).
+	std::istringstream in(pszUtf8);
+
+	return utf8_to_wstring(in, policy);
 }
+
+inline std::wstring utf8_to_wstring(std::istream& stm)
+{
+	return utf8_to_wstring(stm, Utf8ErrorDefaultPolicy);
+}
+
+inline std::wstring utf8_to_wstring(const std::string_view svUtf8)
+{
+	return utf8_to_wstring(svUtf8, Utf8ErrorDefaultPolicy);
+}
+
+inline std::wstring utf8_to_wstring(const std::string& strUtf8)
+{
+	return utf8_to_wstring(strUtf8, Utf8ErrorDefaultPolicy);
+}
+
+inline std::wstring utf8_to_wstring(const char* pszUtf8)
+{
+	return utf8_to_wstring(pszUtf8, Utf8ErrorDefaultPolicy);
+}
+
+
 
 
 // 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :
@@ -108,6 +142,10 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8)
 #endif // WIN32
 
 
+/****************************************************************************
+ * Helpers for decoding UTF-8 sequences and appending to std::wstring
+ */
+
 static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
 {
 	if (cp > 0x10FFFF) cp = InvalidSequenceReplacementChar;
@@ -137,430 +175,287 @@ static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
 #endif
 }
 
-std::wstring ATTEMPT1_utf8_to_wstring(const std::string_view sv)
+// continuation byte
+static inline bool is_cont_byte(uint8_t b)
 {
-	std::wstring result;
-	if (ATTEMPT1_utf8_to_wstring(result, sv, Utf8ErrorPolicy::Return))
-		return result;
-	else
-		return std::wstring{};
-
+	return (b & 0xC0) == 0x80; // 10xxxxxx
 }
 
-bool ATTEMPT1_utf8_to_wstring(std::wstring& out2, std::string_view in, Utf8ErrorPolicy policy)
+static inline bool is_valid_unicode_scalar(uint32_t cp)
 {
-	out2.clear();
-
-	std::wstring ret;
-	// Rough estimate: worst-case UTF-8 byte count ~ decoded code units count.
-	ret.reserve(in.size());
-
-	size_t i = 0;
-	while (i < in.size())
-	{
-		const uint8_t b0 = static_cast<uint8_t>(in[i]);
-
-		uint32_t cp = 0;
-		size_t needed = 0;
-
-		if (b0 <= 0x7F)					// 0xxxxxxx
-		{
-			cp = b0;
-			needed = 1;
-		}
-		else if ((b0 & 0xE0) == 0xC0)	// 110xxxxx
-		{
-			cp = b0 & 0x1F;
-			needed = 2;
-		}
-		else if ((b0 & 0xF0) == 0xE0)	// 1110xxxx
-		{
-			cp = b0 & 0x0F;
-			needed = 3;
-		}
-		else if ((b0 & 0xF8) == 0xF0)	// 11110xxx
-		{
-			cp = b0 & 0x07;
-			needed = 4;
-		}
-		else
-		{
-			// invalid leading byte
-			if (policy == Utf8ErrorPolicy::Return) return false;
-			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: invalid leading byte");
-			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
-			++i;
-			continue;
-		}
-
-		if (i + needed > in.size())
-		{
-			if (policy == Utf8ErrorPolicy::Return) return false;
-			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: truncated sequence");
-			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
-			break;
-		}
-
-		bool ok = true;
-		for (size_t k = 1; k < needed; ++k)
-		{
-			const uint8_t bx = static_cast<uint8_t>(in[i + k]);
-			if ((bx & 0xC0) != 0x80)	// must be 10xxxxxx
-			{
-				if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: invalid continuation byte");
-				ok = false;
-				break;
-			}
-			cp = (cp << 6) | (bx & 0x3F);
-		}
-
-		// Additional validity checks for overlongs and range:
-		// Overlong checks + scalar value constraints
-		if (ok)
-		{
-			// Reject overlong encodings
-			if ((needed == 2 && cp < 0x80) ||
-				(needed == 3 && cp < 0x800) ||
-				(needed == 4 && cp < 0x10000))
-			{
-				if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: overlong byte sequence");
-				ok = false;
-			}
-			// Reject above max code point > U+10FFFF
-			if (cp > 0x10FFFF) { if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: code point out of range"); else ok = false; }
-
-			// Reject surrogate code points (D800-DFFF)
-			if (cp >= 0xD800 && cp <= 0xDFFF) { if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8: surrogate code point"); else ok = false; }
-
-			// NOTE:
-			// Here is where to (optionally) reject U+FFFE/U+FFFF; since they're
-			// typically allowed as scalar values, we'll leave them for now.
-		}
-
-		if (!ok)
-		{
-			if (policy == Utf8ErrorPolicy::Return) return false;
-			if (policy == Utf8ErrorPolicy::Throw) throw std::runtime_error("Invalid UTF-8 sequence");
-			append_codepoint_as_wchar(ret, InvalidSequenceReplacementChar);
-			++i; // advance by 1 to avoid infinite loops on the same byte
-			continue;
-		}
-
-		append_codepoint_as_wchar(ret, cp);
-		i += needed;
-	}
-
-	out2 = std::move(ret);
+	if (cp > 0x10FFFF) return false;
+	// Reject surrogate code points (Unicode scalar values exclude them)
+	if (cp >= 0xD800 && cp <= 0xDFFF) return false;
 	return true;
 }
 
-// Validates that the entire byte sequence is well-formed UTF-8.
-// Rejects: invalid leading bytes, wrong continuation bytes,
-// overlong encodings, surrogate code points, and values > U+10FFFF.
-bool isValidUtf8(const uint8_t * data, size_t len)
+static inline bool peek_byte(std::istream& in, uint8_t& outByte)
 {
-	size_t i = 0;
-
-	while (i < len)
-	{
-		uint8_t b0 = data[i];
-
-		// 1-byte ASCII
-		if (b0 <= 0x7F)
-		{
-			i++;
-			continue;
-		}
-
-		// Determine expected length and seed code point bits
-		uint32_t codepoint = 0;
-		size_t need = 0;
-
-		if (b0 >= 0xC2 && b0 <= 0xDF)           // 110xxxxx
-		{
-			need = 1;                           // total 2 bytes
-			codepoint = b0 & 0x1F;
-		}
-		else if (b0 >= 0xE0 && b0 <= 0xEF)      // 1110xxxx
-		{
-			need = 2;                           // total 3 bytes
-			codepoint = b0 & 0x0F;
-		}
-		else if (b0 >= 0xF0 && b0 <= 0xF4)      // 11110xxx (UTF-8 max is F4 8F BF BF)
-		{
-			need = 3;                           // total 4 bytes
-			codepoint = b0 & 0x07;
-		}
-		else
-		{
-			return false; // includes 0xC0/0xC1 (overlong starters) and 0xF5-0xFF
-		}
-
-		if (i + need >= len) return false; // not enough bytes
-
-		// Read continuation bytes
-		for (size_t j = 1; j <= need; j++)
-		{
-			uint8_t bj = data[i + j];
-			if ((bj & 0xC0) != 0x80) return false; // must be 10xxxxxx
-			codepoint = (codepoint << 6) | (bj & 0x3F);
-		}
-
-		// Extra validity checks for overlong / surrogates / range
-		if (need == 1)
-		{
-			// 2-byte sequences must be >= 0x80 (already ensured by C2..DF), so ok
-		}
-		else if (need == 2)
-		{
-			// 3-byte sequences must be >= 0x800
-			if (codepoint < 0x800) return false;
-			// Reject surrogate halves U+D800..U+DFFF
-			if (codepoint >= 0xD800 && codepoint <= 0xDFFF) return false;
-		}
-		else // need == 3
-		{
-			// 4-byte sequences must be >= 0x10000
-			if (codepoint < 0x10000) return false;
-		}
-
-		if (codepoint > 0x10FFFF) return false;
-
-		// All good; advance
-		i += need + 1;
-	}
-
+	int ch = in.peek();
+	if (ch == EOF) return false;
+	outByte = static_cast<uint8_t>(ch);
 	return true;
 }
 
-static bool isValidUtf8WellFormed(const uint8_t * data, size_t len)
+static inline uint8_t get_byte(std::istream& in)
 {
-	size_t i = 0;
-
-	while (i < len)
-	{
-		uint8_t b0 = data[i];
-
-		// ASCII
-		if (b0 <= 0x7F)
-		{
-			++i;
-			continue;
-		}
-
-		uint32_t codepoint = 0;
-		size_t need = 0;
-
-		// Leading byte determines length (and excludes overlong starters)
-		if (b0 >= 0xC2 && b0 <= 0xDF)           // 110xxxxx, total 2 bytes
-		{
-			need = 1;
-			codepoint = b0 & 0x1F;
-		}
-		else if (b0 >= 0xE0 && b0 <= 0xEF)  // 1110xxxx, total 3 bytes
-		{
-			need = 2;
-			codepoint = b0 & 0x0F;
-		}
-		else if (b0 >= 0xF0 && b0 <= 0xF4) // 11110xxx, total 4 bytes (max F4..)
-		{
-			need = 3;
-			codepoint = b0 & 0x07;
-		}
-		else
-		{
-			return false; // includes 0xC0/0xC1 and 0xF5..0xFF
-		}
-
-		if (i + need >= len) return false; // not enough continuation bytes
-
-		// Continuation bytes: must be 10xxxxxx
-		for (size_t j = 1; j <= need; ++j) {
-			uint8_t bj = data[i + j];
-			if ((bj & 0xC0) != 0x80) return false;
-			codepoint = (codepoint << 6) | (bj & 0x3F);
-		}
-
-		// Reject overlong encodings and invalid code points
-		if (need == 1)
-		{
-			// 2-byte sequence: automatically not overlong due to C2..DF rule
-		}
-		else if (need == 2)
-		{
-			// 3-byte: must be >= 0x800 and not a surrogate
-			if (codepoint < 0x800) return false;
-			if (codepoint >= 0xD800 && codepoint <= 0xDFFF) return false;
-		}
-		else // need == 3
-		{
-			// 4-byte: must be >= 0x10000
-			if (codepoint < 0x10000) return false;
-		}
-
-		if (codepoint > 0x10FFFF) return false;
-
-		i += need + 1;
-	}
-
-	return true;
+	int ch = in.get();
+	// Caller must ensure in.peek() != EOF before calling.
+	return static_cast<uint8_t>(ch);
 }
 
-Utf8Certainty classifyUtf8(const uint8_t * data, size_t len)
+enum class DecodeOneResult {
+	Ok,		// cpOut is valid
+	Eof,	// no byte was available to decode
+	Invalid	// invalid sequence encountered (cpOut set only for Replace)
+};
+
+static DecodeOneResult handle_invalid(
+	uint32_t& cpOut,
+	std::istream& /*in*/,
+	Utf8ErrorPolicy policy,
+	const char* message)
 {
-	if (!data && len != 0) return Utf8Certainty::NotUtf8;
-
-	// If it isn't well-formed UTF-8, it can't be UTF-8.
-	if (!isValidUtf8WellFormed(data, len))
+	if (policy == Utf8ErrorPolicy::Throw)
 	{
-		return Utf8Certainty::NotUtf8;
+		throw std::runtime_error(message);
 	}
-
-	// It is well-formed UTF-8. Now check whether it's only ASCII.
-	for (size_t i = 0; i < len; ++i)
+	if (policy == Utf8ErrorPolicy::Replace)
 	{
-		if (data[i] >= 0x80)
-		{
-			return Utf8Certainty::Utf8; // non-ASCII present => unambiguous in intent
-		}
+		cpOut = InvalidSequenceReplacementChar;
 	}
-
-	return Utf8Certainty::MaybeUtf8; // ASCII-only => ambiguous intent
+	return DecodeOneResult::Invalid;
 }
 
-// Convert UTF-8 bytes to std::wstring.
-// - If wchar_t is 16-bit (typical Windows), result is UTF-16 code units (surrogate pairs included).
-// - If wchar_t is 32-bit, result is UTF-32 code points (no surrogate pairs).
-// TODO: I don't like that this approach throws, consider returning a value to indicate failure.
-static inline void appendCodepointToWString(std::wstring& out, uint32_t cp) {
-	// Surrogates are invalid scalar values and should never be produced by our decoder.
-#if WCHAR_MAX <= 0xFFFF
-	if (cp <= 0xFFFF)
+#pragma region ATTEMPT4_utf8_to_wstring
+
+// Decodes one UTF-8 code point from `inStream`.
+// On Ok: cpOut is a valid Unicode scalar value.
+// On Eof: no byte consumed.
+// On Invalid: stream is advanced (at least past the leading byte it found).
+static DecodeOneResult decode_one_utf8_cp(
+	uint32_t& cpOut,
+	std::istream& inStream,
+	Utf8ErrorPolicy policy)
+{
+	cpOut = 0;
+
+	uint8_t b0 = 0;
+	if (!peek_byte(inStream, b0))
 	{
-		out.push_back(static_cast<wchar_t>(cp));
+		return DecodeOneResult::Eof;
+	}
+
+	// Consume leading byte
+	b0 = get_byte(inStream);
+
+	// ASCII fast path
+	if (b0 <= 0x7F)
+	{
+		cpOut = b0;
+		return DecodeOneResult::Ok;
+	}
+
+	// Reject continuation bytes as leading bytes (0x80..0xBF)
+	if ((b0 & 0xC0) == 0x80)
+	{
+		return handle_invalid(
+			cpOut, inStream, policy,
+			"Invalid UTF-8: invalid leading byte (found continuation byte 10xxxxxx)"
+		);
+	}
+
+	int needed = 0;
+	uint32_t acc = 0;
+
+	if ((b0 & 0xE0) == 0xC0)		// 110xxxxx
+	{
+		needed = 2;
+		acc = b0 & 0x1Fu;
+	}
+	else if ((b0 & 0xF0) == 0xE0)	// 1110xxxx
+	{
+		needed = 3;
+		acc = b0 & 0x0Fu;
+	}
+	else if ((b0 & 0xF8) == 0xF0)	// 11110xxx
+	{
+		needed = 4;
+		acc = b0 & 0x07u;
 	}
 	else
 	{
-		// UTF-16 surrogate pair
-		cp -= 0x10000;
-		wchar_t hi = static_cast<wchar_t>(0xD800u + (cp >> 10));
-		wchar_t lo = static_cast<wchar_t>(0xDC00u + (cp & 0x3FFu));
-		out.push_back(hi);
-		out.push_back(lo);
-	}
-#else
-	// wchar_t wide enough: store the code point directly
-	// If wchar_t is 32-bit, std::wstring can hold full code points directly.
-	out.push_back(static_cast<wchar_t>(cp));
-#endif
-}
-
-static inline uint32_t decodeOneUtf8(const char*& p, const char* end) {
-	if (p >= end) throw std::runtime_error("Invalid UTF-8: unexpected end");
-
-	auto u = static_cast<unsigned char>(*p);
-	uint32_t cp = 0;
-
-	if (u <= 0x7F) // 1-byte ASCII
-	{
-		cp = u;
-		++p;
-		return cp;
+		// Includes patterns like 11111xxx, 111110xx etc, i.e., > 0xF4
+		return handle_invalid(
+			cpOut, inStream, policy,
+			"Invalid UTF-8: invalid leading byte (unsupported 4+ byte start)"
+		);
 	}
 
-	auto need = uint32_t{ 0 };
-
-	if (u >= 0xC2 && u <= 0xDF)          // 2-byte (110xxxxx), excludes overlong starters C0/C1
+	// Additional immediate leading-byte restrictions
+	// These are the standard overlong-avoidance bounds:
+	// - For 2-byte sequences, b0 must be >= 0xC2 (reject C0/C1 overlongs)
+	// - For 3-byte sequences:
+	//     b0=0xE0 requires b1>=0xA0
+	//     b0=0xED requires b1<=0x9F (to avoid surrogates)
+	// - For 4-byte sequences:
+	//     b0=0xF0 requires b1>=0x90
+	//     b0=0xF4 requires b1<=0x8F
+	//     b0>0xF4 is out of range
+	if (needed == 2 && b0 < 0xC2)
 	{
-		need = 1;
-		cp = u & 0x1F;
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: overlong 2-byte sequence (leading byte too small)");
 	}
-	else if (u >= 0xE0 && u <= 0xEF) // 3-byte (1110xxxx)
+	if (needed == 4 && b0 > 0xF4)
 	{
-		need = 2;
-		cp = u & 0x0F;
-	}
-	else if (u >= 0xF0 && u <= 0xF4) // 4-byte (11110xxx) max valid is F4 8F BF BF  ///??? (max U+10FFFF => F4 8F BF BF)
-	{
-		need = 3;
-		cp = u & 0x07;
-	}
-	else
-	{
-		throw std::runtime_error("Invalid UTF-8: invalid leading byte");
-	}
-
-	if (static_cast<size_t>(end - p) < 1 + need)
-	{
-		throw std::runtime_error("Invalid UTF-8: truncated sequence");
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: code point out of range (leading byte > 0xF4)");
 	}
 
-	++p; // consume leading byte
-	for (uint32_t i = 0; i < need; ++i)
+	// Read continuation bytes
+	uint8_t b1 = 0, b2 = 0, b3 = 0;
+	uint8_t cont[3] = { 0,0,0 };
+
+	for (int i = 1; i < needed; ++i)
 	{
-		auto ub = static_cast<unsigned char>(*p);
-		if ((ub & 0xC0u) != 0x80u) throw std::runtime_error("Invalid UTF-8: invalid continuation byte");
-		cp = (cp << 6) | (ub & 0x3Fu);
-		++p;
+		uint8_t bi = 0;
+		if (!peek_byte(inStream, bi))
+		{
+			// We already consumed b0; stream advanced past at least b0.
+			return handle_invalid(cpOut, inStream, policy,
+				"Invalid UTF-8: truncated sequence (EOF in the middle of a code point)");
+		}
+		bi = get_byte(inStream);
+
+		if (!is_cont_byte(bi))
+		{
+			return handle_invalid(cpOut, inStream, policy,
+				"Invalid UTF-8: invalid continuation byte (expected 10xxxxxx)");
+		}
+
+		cont[i - 1] = bi;
+		acc = (acc << 6) | (static_cast<uint32_t>(bi & 0x3F));
 	}
 
-	// Reject surrogates and overlongs / out-of-range.
-	// (These checks complement the leading-byte exclusions.)
-	if (cp > 0x10FFFFu) throw std::runtime_error("Invalid UTF-8: code point out of range");
-	if (cp >= 0xD800u && cp <= 0xDFFFu) throw std::runtime_error("Invalid UTF-8: surrogate code point");
+	// Now apply overlong + surrogate + range constraints using the actual decoded scalar.
+	uint32_t cp = acc;
 
-	if (need == 1)
+	// Overlong checks based on final cp value:
+	if (needed == 2 && cp < 0x80)
 	{
-		// 2-byte sequences must be >= 0x80
-		if (cp < 0x80u) throw std::runtime_error("Invalid UTF-8: overlong 2-byte sequence");
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: overlong 2-byte sequence");
 	}
-	else if (need == 2)
+	if (needed == 3 && cp < 0x800)
 	{
-		// 3-byte sequences must be >= 0x800
-		if (cp < 0x800u) throw std::runtime_error("Invalid UTF-8: overlong 3-byte sequence");
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: overlong 3-byte sequence");
 	}
-	else if (need == 3)
+	if (needed == 4 && cp < 0x10000)
 	{
-		// 4-byte sequences must be >= 0x10000
-		if (cp < 0x10000u) throw std::runtime_error("Invalid UTF-8: overlong 4-byte sequence");
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: overlong 4-byte sequence");
 	}
 
-	return cp;
+	if (!is_valid_unicode_scalar(cp))
+	{
+		// Reject above max code point > U+10FFFF
+		if (cp > 0x10FFFF)
+		{
+			return handle_invalid(cpOut, inStream, policy,
+				"Invalid UTF-8: decoded code point is out of range (> U+10FFFF)");
+		}
+		// Reject surrogate code points (D800-DFFF)
+		// Surrogates
+		return handle_invalid(cpOut, inStream, policy,
+			"Invalid UTF-8: decoded value is a surrogate code point (D800-DFFF)");
+	}
+
+	// NOTE:
+	// Here is where to (optionally) reject U+FFFE/U+FFFF; since they're
+	// typically allowed as scalar values, we'll leave them for now.
+
+	// If needed==3 or 4, we can also enforce the special b0/b1 boundary checks
+	// that prevent surrogates and additional overlong forms.
+	// (These checks are redundant with the scalar + overlong checks above, but they give
+	// more precise rejection points if you want them.)
+	//
+	// For correctness they are not required here because the overlong + surrogate checks
+	// already reject all invalid code points. So we keep this simple.
+
+	cpOut = cp;
+	return DecodeOneResult::Ok;
 }
 
 // UTF-8 -> UTF-16 (as stored in std::wstring: UTF-16 code units if wchar_t is 16-bit)
-inline std::wstring ATTEMPT3_utf8ToUtf16(std::string_view sv)
+static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorPolicy policy)
 {
 	std::wstring out;
-	out.reserve(sv.size()); // heuristic; may expand with surrogate pairs
 
-	const char* p = sv.data();
-	const char* end = p + sv.size();
+	uint32_t cp = 0;
 
-	while (p < end)
+	while (true)
 	{
-		uint32_t cp = decodeOneUtf8(p, end);
-		appendCodepointToWString(out, cp);
+		DecodeOneResult r = decode_one_utf8_cp(cp, in, policy);
+		if (r == DecodeOneResult::Eof)
+		{
+			break;
+		}
+		if (r == DecodeOneResult::Ok)
+		{
+			append_codepoint_as_wchar(out, cp);
+			continue;
+		}
+
+		// r == Invalid:
+		if (policy == Utf8ErrorPolicy::Replace)
+		{
+			// decode_one_utf8_cp should have set cp to U+FFFD
+			append_codepoint_as_wchar(out, InvalidSequenceReplacementChar);
+			continue;
+		}
+
+		// policy == Return: stop immediately (Throw would already be handled inside decode_one_utf8_cp)
+		out.clear();
+		break;
 	}
+
 	return out;
 }
 
-// Accept const char* + length (safe for embedded NULs if you pass length)
-inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s, size_t len)
+Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len)
 {
-	if (!s && len != 0) throw std::runtime_error("utf8ToUtf16: null pointer");
-	return ATTEMPT3_utf8ToUtf16(std::string_view{ s, len });
+	Utf8Certainty ret = Utf8Certainty::MaybeUtf8; // Assume ASCII-only until proven otherwise
+	// istringstream needs an owning string (string_view is non-owning).
+	std::string_view sv(reinterpret_cast<const char*>(data), len);
+	std::string owned(sv);
+	std::istringstream in(owned);
+
+	uint32_t cp = 0;
+
+	while (true)
+	{
+		DecodeOneResult r = decode_one_utf8_cp(cp, in, Utf8ErrorPolicy::Return);
+		if (r == DecodeOneResult::Eof)
+		{
+			break;
+		}
+		if (r == DecodeOneResult::Ok)
+		{
+			// So far, it is well-formed UTF-8.
+			// If we see any non-ASCII code point, the result will be unambiguous:
+			// either fully valid UTF-8, or Invalid ("Maybe" is no longer an option)
+			if (cp > 0x7F)
+				ret = Utf8Certainty::Utf8;
+			continue;
+		}
+
+		// stop immediately, invalid UTF-8 sequence encountered
+		return Utf8Certainty::NotUtf8;
+	}
+
+	return ret;
 }
 
-// Accept std::string
-inline std::wstring ATTEMPT3_utf8ToUtf16(const std::string& s)
-{
-	return ATTEMPT3_utf8ToUtf16(std::string_view{ s });
-}
-
-// Accept null-terminated const char*
-inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s)
-{
-	if (!s) throw std::runtime_error("utf8ToUtf16: null pointer");
-	return ATTEMPT3_utf8ToUtf16(std::string_view{ s });
-}
+#pragma endregion // ATTEMPT4_utf8_to_wstring

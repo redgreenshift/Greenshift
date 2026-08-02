@@ -50,14 +50,15 @@ enum class Utf8ErrorPolicy {
 	Throw,		// throw an exception on first invalid sequence
 };
 
-bool utf8_to_wstring(
-	std::wstring& out,
-	std::string_view in,
-	Utf8ErrorPolicy policy);
+inline std::wstring utf8_to_wstring(std::istream& utf8, Utf8ErrorPolicy policy);
+inline std::wstring utf8_to_wstring(std::string_view utf8, Utf8ErrorPolicy policy);
+inline std::wstring utf8_to_wstring(const std::string& utf8, Utf8ErrorPolicy policy);
+inline std::wstring utf8_to_wstring(const char* utf8, Utf8ErrorPolicy policy);
 
-
-std::wstring ATTEMPT1_utf8_to_wstring(const std::string_view sv);
-bool ATTEMPT1_utf8_to_wstring(std::wstring& out, std::string_view in, Utf8ErrorPolicy policy);
+inline std::wstring utf8_to_wstring(std::istream& utf8);
+inline std::wstring utf8_to_wstring(std::string_view utf8);
+inline std::wstring utf8_to_wstring(const std::string& utf8);
+inline std::wstring utf8_to_wstring(const char* utf8);
 
 
 enum class Utf8Certainty
@@ -67,12 +68,5 @@ enum class Utf8Certainty
 	Utf8,		// valid UTF-8 with at least one byte >= 0x80
 };
 
+Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len);
 
-bool isValidUtf8(const uint8_t* data, size_t len);
-Utf8Certainty classifyUtf8(const uint8_t* data, size_t len);
-
-// Replacement Attempt 3:
-inline std::wstring ATTEMPT3_utf8ToUtf16(std::string_view sv);
-inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s, size_t len);
-inline std::wstring ATTEMPT3_utf8ToUtf16(const std::string& s);
-inline std::wstring ATTEMPT3_utf8ToUtf16(const char* s);
