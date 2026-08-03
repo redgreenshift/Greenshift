@@ -240,10 +240,22 @@ static DecodeOneResult handle_invalid(
 
 #pragma region ATTEMPT4_utf8_to_wstring
 
-// Decodes one UTF-8 code point from `inStream`.
-// On Ok: cpOut is a valid Unicode scalar value.
-// On Eof: no byte consumed.
-// On Invalid: stream is advanced (at least past the leading byte it found).
+/**
+ * @brief Decodes a single UTF-8 code point from the provided input stream.
+ *
+ * Consumes one or more bytes from the input stream to produce a Unicode scalar value.
+ * The stream is advanced at least once if an invalid sequence is encountered.
+ *
+ * @param[out] cpOut    Receives the decoded code point on success, or the
+ *                      replacement character (U+FFFD) if policy is Replace.
+ * @param[in]  inStream The input stream to read bytes from.
+ * @param[in]  policy   The error handling strategy used when a sequence is invalid.
+ * @return DecodeOneResult:
+ *         - Ok: Success; `cpOut` contains the valid Unicode scalar value.
+ *         - Eof: No bytes were available in the stream at the start of the call.
+ *         - Invalid: The sequence was malformed or truncated; the stream has been
+ *                    advanced past the invalid leading byte(s).
+ */
 static DecodeOneResult decode_one_utf8_cp(
 	uint32_t& cpOut,
 	std::istream& inStream,
