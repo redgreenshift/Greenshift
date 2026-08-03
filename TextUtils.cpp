@@ -26,9 +26,6 @@
 // https://en.wikipedia.org/wiki/UTF-8
 // https://en.wikipedia.org/wiki/Shift-JIS
 
-#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
-#include <codecvt> // Delete with codecvt_utf8_utf16
-
 #include <cstddef> // is_valid_utf8
 #include <cstdint> // is_valid_utf8, append_codepoint_to_wstring
 #include <istream>
@@ -41,6 +38,9 @@
 
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
 #include "TextUtils.hpp"
+
+#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
+#include <codecvt> // Delete with codecvt_utf8_utf16
 
 // This used to be the easy way to convert, then it was deprecated,
 // and the suggestion was to use MultiByteToWideChar, but that is Windows specific.
@@ -177,7 +177,8 @@ static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
 		out.push_back(low);
 	}
 #else
-	static_assert(sizeof(wchar_t) == 4, "Expected 4-byte wchar_t on this platform");
+	// On UTF-8 systems where wchar_t is >= 4 bytes, full Unicode scalars are preserved directly.
+	static_assert(sizeof(wchar_t) >= 4, "Expected at least 4-byte wchar_t on this platform");
 
 	// wchar_t wide enough: store the code point directly
 	// If wchar_t is 32-bit, std::wstring can hold full code points directly.
@@ -434,13 +435,11 @@ static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorP
 	return out;
 }
 
-Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len)
+Utf8Certainty is_valid_utf8(const uint8_t* pszUtf8, size_t len)
 {
 	Utf8Certainty ret = Utf8Certainty::MaybeUtf8; // Assume ASCII-only until proven otherwise
-	// istringstream needs an owning string (string_view is non-owning).
-	std::string_view sv(reinterpret_cast<const char*>(data), len);
-	std::string owned(sv);
-	std::istringstream in(owned);
+	utf8_bytes_rangebuf buf(reinterpret_cast<const char*>(pszUtf8), len); // Important lifetime rule, this avoids an extra std::string copy, pszUtf8 must remain valid (and unchanged) for the duration of this call
+	std::istream in(&buf);
 
 	uint32_t cp = 0;
 
