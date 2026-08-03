@@ -21,8 +21,8 @@
  */
 
 // TODO: Investigate various approaches to detect/convert UTF8
-// Want an IsUTF8 function with yes/no/maybe
-// Unit Tests for ShiftJIS, include encodings that do and DO NOT conform to UTF8.
+// DONE: Want an IsUTF8 function with yes/no/maybe
+// DONE: Unit Tests for ShiftJIS, include encodings that do and DO NOT conform to UTF8.
 // https://en.wikipedia.org/wiki/UTF-8
 // https://en.wikipedia.org/wiki/Shift-JIS
 
@@ -222,7 +222,7 @@ enum class DecodeOneResult {
 };
 
 static DecodeOneResult handle_invalid(
-	uint32_t& cpOut,
+	uint32_t& cpOut, // Out parameter for the invalid codepoint result
 	std::istream& /*in*/,
 	Utf8ErrorPolicy policy,
 	const char* message)
@@ -235,7 +235,7 @@ static DecodeOneResult handle_invalid(
 	{
 		cpOut = InvalidSequenceReplacementChar;
 	}
-	return DecodeOneResult::Invalid;
+	return DecodeOneResult::Invalid; // Caller handles replacing U+FFFD if policy is Replace
 }
 
 #pragma region ATTEMPT4_utf8_to_wstring
@@ -299,7 +299,7 @@ static DecodeOneResult decode_one_utf8_cp(
 		// Includes patterns like 11111xxx, 111110xx etc, i.e., > 0xF4
 		return handle_invalid(
 			cpOut, inStream, policy,
-			"Invalid UTF-8: invalid leading byte (unsupported 4+ byte start)"
+			"Invalid UTF-8: invalid leading byte (unsupported above U+10FFFF)"
 		);
 	}
 
@@ -320,6 +320,8 @@ static DecodeOneResult decode_one_utf8_cp(
 	}
 	if (needed == 4 && b0 > 0xF4)
 	{
+		// Note: This should have been caught and rejected above in the invalid leading byte check;
+		// theoretically this code block is dead code, but included as a safety net.
 		return handle_invalid(cpOut, inStream, policy,
 			"Invalid UTF-8: code point out of range (leading byte > 0xF4)");
 	}
@@ -334,6 +336,11 @@ static DecodeOneResult decode_one_utf8_cp(
 		if (!peek_byte(inStream, bi))
 		{
 			// We already consumed b0; stream advanced past at least b0.
+			//	NOTE: we do NOT return DecodeOneResult::Eof here because
+			//	we already consumed the leading byte (EOF means nothing
+			//	consumed), so we must return Invalid here and let the caller
+			//	handle it (potentially emitting the replacement character).
+			//	We'll return EOF on the next call.
 			return handle_invalid(cpOut, inStream, policy,
 				"Invalid UTF-8: truncated sequence (EOF in the middle of a code point)");
 		}
@@ -378,7 +385,6 @@ static DecodeOneResult decode_one_utf8_cp(
 				"Invalid UTF-8: decoded code point is out of range (> U+10FFFF)");
 		}
 		// Reject surrogate code points (D800-DFFF)
-		// Surrogates
 		return handle_invalid(cpOut, inStream, policy,
 			"Invalid UTF-8: decoded value is a surrogate code point (D800-DFFF)");
 	}
@@ -428,6 +434,7 @@ static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorP
 		}
 
 		// policy == Return: stop immediately (Throw would already be handled inside decode_one_utf8_cp)
+		// Currently no value to indicate failure to caller, therefore we MUST NOT hand back silently truncated data.
 		out.clear();
 		break;
 	}

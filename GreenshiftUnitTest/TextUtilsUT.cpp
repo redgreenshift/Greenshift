@@ -408,15 +408,15 @@ namespace GreenshiftUnitTest
 
 			std::wstring result = utf8_to_wstring(original);
 
-			// At minimum, we expect the 'A' and 'B' to appear somewhere in order,
-			// or at least that the output length isn't nonsense.
-			// Exact replacement strategy varies, so we validate a weaker property:
 			if (ERROR_POLICY == Utf8ErrorPolicy::Return)
 			{
-				Assert::IsTrue(result.empty(), L"expected empty");
+				Assert::IsTrue(result.empty(), L"expected empty (currently no value to indicate failure)");
 			}
 			else if (ERROR_POLICY == Utf8ErrorPolicy::Replace)
 			{
+				// At minimum, we expect the 'A' and 'B' to appear somewhere in order,
+				// or at least that the output length isn't nonsense.
+				// Exact replacement strategy varies, so we validate a weaker property:
 				Assert::IsTrue(result.size() >= 2u, L"Length should be at least 2");
 				Assert::AreEqual(L'A', result.front(), L"Expected 'A'");
 				Assert::AreEqual(L'B', result.back(), L"Expected 'B'");
