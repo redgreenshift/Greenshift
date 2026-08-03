@@ -223,7 +223,6 @@ enum class DecodeOneResult {
 
 static DecodeOneResult handle_invalid(
 	uint32_t& cpOut, // Out parameter for the invalid codepoint result
-	std::istream& /*in*/,
 	Utf8ErrorPolicy policy,
 	const char* message)
 {
@@ -282,10 +281,8 @@ static DecodeOneResult decode_one_utf8_cp(
 	// Reject continuation bytes as leading bytes (0x80..0xBF)
 	if ((b0 & 0xC0) == 0x80)
 	{
-		return handle_invalid(
-			cpOut, inStream, policy,
-			"Invalid UTF-8: invalid leading byte (found continuation byte 10xxxxxx)"
-		);
+		return handle_invalid(cpOut, policy,
+			"Invalid UTF-8: invalid leading byte (found continuation byte 10xxxxxx)");
 	}
 
 	int needed = 0;
@@ -309,10 +306,8 @@ static DecodeOneResult decode_one_utf8_cp(
 	else
 	{
 		// Includes patterns like 11111xxx, 111110xx etc, i.e., > 0xF4
-		return handle_invalid(
-			cpOut, inStream, policy,
-			"Invalid UTF-8: invalid leading byte (unsupported above U+10FFFF)"
-		);
+		return handle_invalid(cpOut, policy,
+			"Invalid UTF-8: invalid leading byte (unsupported above U+10FFFF)");
 	}
 
 	// Additional immediate leading-byte restrictions
@@ -327,14 +322,14 @@ static DecodeOneResult decode_one_utf8_cp(
 	//     b0>0xF4 is out of range
 	if (needed == 2 && b0 < 0xC2)
 	{
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: overlong 2-byte sequence (leading byte too small)");
 	}
 	if (needed == 4 && b0 > 0xF4)
 	{
 		// Note: This should have been caught and rejected above in the invalid leading byte check;
 		// theoretically this code block is dead code, but included as a safety net.
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: code point out of range (leading byte > 0xF4)");
 	}
 
@@ -353,14 +348,14 @@ static DecodeOneResult decode_one_utf8_cp(
 			//	consumed), so we must return Invalid here and let the caller
 			//	handle it (potentially emitting the replacement character).
 			//	We'll return EOF on the next call.
-			return handle_invalid(cpOut, inStream, policy,
+			return handle_invalid(cpOut, policy,
 				"Invalid UTF-8: truncated sequence (EOF in the middle of a code point)");
 		}
 		bi = get_byte(inStream);
 
 		if (!is_cont_byte(bi))
 		{
-			return handle_invalid(cpOut, inStream, policy,
+			return handle_invalid(cpOut, policy,
 				"Invalid UTF-8: invalid continuation byte (expected 10xxxxxx)");
 		}
 
@@ -374,17 +369,17 @@ static DecodeOneResult decode_one_utf8_cp(
 	// Overlong checks based on final cp value:
 	if (needed == 2 && cp < 0x80)
 	{
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: overlong 2-byte sequence");
 	}
 	if (needed == 3 && cp < 0x800)
 	{
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: overlong 3-byte sequence");
 	}
 	if (needed == 4 && cp < 0x10000)
 	{
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: overlong 4-byte sequence");
 	}
 
@@ -393,11 +388,11 @@ static DecodeOneResult decode_one_utf8_cp(
 		// Reject above max code point > U+10FFFF
 		if (cp > 0x10FFFF)
 		{
-			return handle_invalid(cpOut, inStream, policy,
+			return handle_invalid(cpOut, policy,
 				"Invalid UTF-8: decoded code point is out of range (> U+10FFFF)");
 		}
 		// Reject surrogate code points (D800-DFFF)
-		return handle_invalid(cpOut, inStream, policy,
+		return handle_invalid(cpOut, policy,
 			"Invalid UTF-8: decoded value is a surrogate code point (D800-DFFF)");
 	}
 

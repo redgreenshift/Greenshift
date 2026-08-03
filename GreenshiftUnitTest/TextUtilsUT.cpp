@@ -397,7 +397,7 @@ namespace GreenshiftUnitTest
 			// "A" + invalid byte + "B"
 			std::string original;
 			original.push_back('A');         // 0x41
-			original.push_back((char)0xC0); // invalid leading byte (overlong prefix)
+			original.push_back((char)0xC0);  // invalid leading byte (overlong prefix)
 			original.push_back('B');         // 0x42
 
 			if (ERROR_POLICY == Utf8ErrorPolicy::Throw)
