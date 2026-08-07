@@ -25,6 +25,7 @@
 #include "..\PhaseFunction.h"
 #include "..\LinearMap.h"
 
+#include "..\StaticFifoSet.hpp"
 #include <array>
 #include <optional>
 #include <string>
@@ -115,6 +116,36 @@ namespace GreenshiftUnitTest
 
 			set.Add("12");
 			Assert::AreEqual(set.Size(), 10ul, L"Failed to maintain specified size");
+			Assert::IsTrue(set.Includes("12"), L"Failed to add the new value");
+			Assert::IsFalse(set.Includes("2"), L"Failed to purge oldest value first");
+		}
+
+		TEST_METHOD(TestRollingSet)
+		{
+			StaticFifoSet<const char*, 10> set;
+
+			Assert::AreEqual(set.Size(), 0u, L"Failed to initialize to empty.");
+
+			set.Add("1");
+			set.Add("2");
+			set.Add("3");
+			set.Add("4");
+			set.Add("5");
+			set.Add("6");
+			set.Add("7");
+			set.Add("8");
+			set.Add("9");
+			set.Add("10");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to add all values.");
+
+			set.Add("11");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to maintain specified size");
+			Assert::IsTrue(set.Includes("11"), L"Failed to add the new value");
+			Assert::IsTrue(set.Includes("2"), L"Failed to purge oldest value first");
+			Assert::IsFalse(set.Includes("1"), L"Failed to purge oldest value first");
+
+			set.Add("12");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to maintain specified size");
 			Assert::IsTrue(set.Includes("12"), L"Failed to add the new value");
 			Assert::IsFalse(set.Includes("2"), L"Failed to purge oldest value first");
 		}

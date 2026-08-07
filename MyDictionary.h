@@ -25,6 +25,7 @@
   *
   * MyDictionary - set of associations of two objects
   *
+  * DEPRECATED: Use LinearMap instead. This class is a legacy class that has been replaced by LinearMap... or will be soon.
   ****************************************************************************/
 
 #ifndef _MyDictionary_H_
@@ -489,8 +490,13 @@ public:
 
 /****************************************************************************
  *
- * FiniteSet - has a predetermined size
+ * FiniteSet - A fixed-size collection for tracking a rolling set of unique
+ *             elements. When the capacity limit is reached, it performs an
+ *             eviction of the oldest element to make room for new entries.
  *
+ *             In other words, it's a FIFO MRU List.
+ *
+ * DEPRECATED: Use StaticFifoSet instead. It has a better implementation and is more efficient.
  ****************************************************************************/
 template<class DataType, DWORD MaximumSize>
 //class FiniteSet : public ArrayedCollection<DataType, FiniteSize>, public Set<DataType>
@@ -536,6 +542,16 @@ public:
 
 
 protected:
+	/**
+	 * @brief Ensures capacity by evicting the oldest element in the set.
+	 *
+	 * This method implements the 'Oldest-Out' eviction policy:
+	 * 1. If the set is at maximum capacity, the oldest entry (at index 0) is removed.
+	 * 2. The remaining elements are shifted left to maintain a contiguous structure.
+	 * 3. This ensures space is available for the next 'Add' operation.
+	 *
+	 * @return error_t returns SUCCESS once the set has been prepared/re-indexed.
+	 */
 	virtual error_t FullCheck(void)
 	{
 		DWORD    i;
