@@ -151,7 +151,7 @@ namespace GreenshiftUnitTest
 
 		TEST_METHOD(TestDictionary)
 		{
-			LinearMap<std::string, std::string> dConfig;
+			InsertionOrderedMap<std::string, std::string> dConfig;
 			//MyDictionary<mychar_t*> dConfig;
 			//dict.Add(new Association<mychar_t*>());
 

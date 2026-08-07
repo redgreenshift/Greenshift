@@ -29,18 +29,33 @@
 #include <map>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 
+struct CaseInsensitiveLess {
+	bool operator()(const std::string& a, const std::string& b) const {
+		size_t i = 0;
+		size_t n = std::min(a.size(), b.size());
+
+		for (; i < n; ++i) {
+			unsigned char ca = static_cast<unsigned char>(a[i]);
+			unsigned char cb = static_cast<unsigned char>(b[i]);
+			ca = static_cast<unsigned char>(std::tolower(ca));
+			cb = static_cast<unsigned char>(std::tolower(cb));
+			if (ca != cb) return ca < cb;
+		}
+		return a.size() < b.size();
+	}
+};
+
 /****************************************************************************
  *
- * LinearMap
+ * InsertionOrderedMap
  *
  ****************************************************************************/
  /****************************************************************************
   *
-  * LinearMap
+  * InsertionOrderedMap
   *
   * I represent a set of elements that can be viewed as
   * 1) a map from Keys to a Values, or
@@ -49,12 +64,31 @@
   * NOW you can remove vars
   *
   ****************************************************************************/
-template<class KeyType, class DataType>
-class LinearMap
+/**
+ * @brief Key/value container that preserves insertion order for ordered export.
+ *
+ * Stores unique keys and associated values addressable by key. The container does
+ * not provide native iteration; callers observe the insertion order only through
+ * AsArray(...), which outputs key/value pairs in the order the keys were originally
+ * inserted (FIFO by insertions).
+ *
+ * Duplicate keys are not allowed:
+ * - Reinserting an existing key updates the stored value but must not change the
+ *   key's position in the exported insertion order.
+ * - If a key is removed and later reinserted, it will appear at the end of the
+ *   exported insertion order.
+ *
+ * @tparam KeyType         Key type.
+ * @tparam DataType        Value type.
+ * @tparam LessThanCompare Comparison functor used to define key ordering
+ *                          (e.g., CaseInsensitiveLess).
+ */
+template<class KeyType, class DataType, class LessThanCompare = CaseInsensitiveLess>
+class InsertionOrderedMap
 {
 	typedef int SequenceType;
-	typedef LinearMap<KeyType, DataType /*, DefaultValue, DefaultKey*/ > this_t;
-	std::unordered_map<KeyType, std::tuple<DataType, SequenceType> > m_map;
+	typedef InsertionOrderedMap<KeyType, DataType > this_t;
+	std::map<KeyType, std::tuple<DataType, SequenceType>, LessThanCompare > m_map;
 	SequenceType m_sequence = 0;
 
 public:
@@ -67,21 +101,21 @@ public:
 
 protected:
 	DWORD							m_dwAliasCount = 0;
-	LinearMap<KeyType, KeyType>*	m_mapAlias = nullptr;
-	LinearMap<KeyType, DataType>*	m_mapAlternate = nullptr;
+	InsertionOrderedMap<KeyType, KeyType>*	m_mapAlias = nullptr;
+	InsertionOrderedMap<KeyType, DataType>*	m_mapAlternate = nullptr;
 	bool							m_bCaseSensitive = false;  /* comparisons are case sensitive */
 
 	//typedef    Association<DataType>* data_t;
 
 public:
-	LinearMap()
+	InsertionOrderedMap()
 	{
 		m_mapAlias = nullptr;
 		m_mapAlternate = nullptr;
 		m_bCaseSensitive = false;
 		m_dwAliasCount = 0;
 	};
-	virtual ~LinearMap()
+	virtual ~InsertionOrderedMap()
 	{
 	};
 
