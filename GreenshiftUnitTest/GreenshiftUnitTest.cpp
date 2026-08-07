@@ -23,8 +23,7 @@
 #include "CppUnitTest.h"
 #include "..\MyDictionary.h"
 #include "..\PhaseFunction.h"
-#include "..\LinearMap.h"
-
+#include "..\InsertionOrderedMap.hpp"
 #include "..\StaticFifoSet.hpp"
 #include <array>
 #include <optional>

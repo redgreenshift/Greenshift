@@ -681,7 +681,7 @@
     <ClInclude Include="ContiguousAlignedMemoryAllocator.h" />
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
-    <ClInclude Include="LinearMap.h" />
+    <ClInclude Include="InsertionOrderedMap.hpp" />
     <ClInclude Include="MyDictionary.h" />
     <ClInclude Include="DXError.h" />
     <ClInclude Include="Expression.h" />
@@ -702,6 +702,7 @@
     <ClInclude Include="PhaseFunction.h" />
     <ClInclude Include="PointRotation.h" />
     <ClInclude Include="Project Greenshift.h" />
+    <ClInclude Include="StaticFifoSet.hpp" />
     <ClInclude Include="TextUtils.hpp" />
     <ClInclude Include="ThreadedEntity.h" />
     <ClInclude Include="TweenThread.h" />

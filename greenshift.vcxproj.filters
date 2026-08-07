@@ -197,10 +197,13 @@
     <ClInclude Include="MyDictionary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LinearMap.h">
+    <ClInclude Include="InsertionOrderedMap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TextUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticFifoSet.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
