@@ -156,6 +156,20 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8)
  * Helpers for decoding UTF-8 sequences and appending to std::wstring
  */
 
+
+ /**
+  * @brief Appends a Unicode codepoint to a wide string, handling encoding based on platform wchar_t size.
+  *
+  * Encodes the given codepoint into the output's character representation. If the codepoint is
+  * invalid (above U+10FFFF), it is replaced with the replacement character.
+  *
+  * On platforms where `wchar_t` is 2 bytes, this performs UTF-16 encoding (surrogate pairs for non-BMP).
+  *
+  * On platforms where `wchar_t` is 4 bytes, the codepoint is stored directly as a single unit.
+  *
+  * @param[in,out] out  The destination wide string buffer to which the codepoint is appended.
+  * @param[in]     cp   The Unicode codepoint to encode.
+  */
 static void append_codepoint_as_wchar(std::wstring& out, uint32_t cp)
 {
 	if (cp > 0x10FFFF) cp = InvalidSequenceReplacementChar;
@@ -413,6 +427,28 @@ static DecodeOneResult decode_one_utf8_cp(
 }
 
 // UTF-8 -> UTF-16 (as stored in std::wstring: UTF-16 code units if wchar_t is 16-bit)
+
+
+/**
+ * @brief Decodes an entire UTF-8 encoded input stream into a wide string (std::wstring).
+ *
+ * Iteratively reads bytes from the provided `in` stream, decoding them as UTF-8 code points.
+ * Each decoded code point is appended to the output buffer via `append_codepoint_as_wchar`.
+ *
+ * The process terminates when:
+ *
+ * - EOF is reached in the input stream (the source is exhausted).
+ *
+ * - An invalid UTF-8 sequence is encountered, which is handled according to the provided `policy`;
+ *       a 'Return' or 'Throw' policy triggers a termination of the decoding process due to an error state.
+ *
+ * @param[in,out] in     The input stream providing the UTF-8 encoded bytes.
+ * @param[in]     policy The error handling strategy used when an invalid sequence is encountered;
+ *                       a 'Replace' policy emits a replacement character and attempts to "resynchronize"
+ *                       at the next valid leading byte.
+ * @return The decoded wide string as a `std::wstring`. If a fatal error occurs
+ *         (e.g., via the 'Return' policy), returns an empty string.
+ */
 static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorPolicy policy)
 {
 	std::wstring out;
@@ -449,6 +485,21 @@ static inline std::wstring ATTEMPT4_utf8_to_wstring(std::istream& in, Utf8ErrorP
 	return out;
 }
 
+/**
+ * @brief Validates whether a given buffer of bytes represents valid UTF-8.
+ *
+ * Iteratively decodes the provided byte range into Unicode code points using a stream interface.
+ * If any invalid sequence is encountered, validation fails immediately.
+ *
+ * @param[in] pszUtf8 Pointer to the start of the UTF-8 encoded buffer.
+ * @param[in] len     The size of the input buffer in bytes.
+ * @return The certainty level of the result:
+ *         - `Utf8Certainty::NotUtf8`: An invalid/malformed sequence was found within the buffer.
+ *         - `Utf8Certainty::Utf8`: The buffer is valid UTF-8 and contains at least one non-ASCII character (detectable).
+ *         - `Utf8Certainty::MaybeUtf8`: The buffer is valid UTF-8 and consists entirely of ASCII characters;
+ *           it remains 'maybe' because without a byte >127, we cannot distinguish between pure ASCII text and
+ *           an encoding like ANSI (which would require an external codepage to differentiate/decode properly).
+ */
 Utf8Certainty is_valid_utf8(const uint8_t* pszUtf8, size_t len)
 {
 	Utf8Certainty ret = Utf8Certainty::MaybeUtf8; // Assume ASCII-only until proven otherwise
