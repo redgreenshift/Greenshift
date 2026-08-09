@@ -261,10 +261,33 @@ namespace GreenshiftUnitTest
 				Assert::AreEqual(expected_value, result_value, L"BAD VALUE: Serializing back to an array/vector should produce the original order");
 			}
 
-			// Removing a value and adding another value should result in
+
+			// TEST update a value IN PLACE
+			vecAsArrayResult.clear();
+			const std::string new_value = "3";
+			Assert::AreEqual(SUCCESS, dConfig.SetValue("canvas_aspect", new_value), L"Failed to Add (*UPDATE) a value");
+			Assert::AreEqual(SUCCESS, dConfig.AsArray(vecAsArrayResult), L"Failed to serialize back to a sequential list");
+			Assert::AreEqual(20u, vecAsArrayResult.size(), L"Removing and Adding again should produce the original length");
+
+			// Should *STILL* be in the SAME ORDER (modifying one value)
+			for (uint32_t i = 0; i < vecAsArrayResult.size(); ++i)
+			{
+				const std::tuple<std::string, std::string>& pair = initialValues[i];
+				const std::string& expected_key = std::get<0>(pair);
+				const std::string& expected_value = i == 6 /* ORDER of expected_key == "canvas_aspect" */ ? new_value : std::get<1>(pair);
+				const std::string& result_key = std::get<0>(vecAsArrayResult[i]);
+				const std::string& result_value = std::get<1>(vecAsArrayResult[i]);
+
+				Assert::AreEqual(expected_key, result_key, L"BAD KEY2: Serializing back to an array/vector should produce the original order");
+				Assert::AreEqual(expected_value, result_value, L"BAD VALUE2: Serializing back to an array/vector should produce the original order");
+			}
+
+
+			// Removing a value and adding another value should result in moving that value to the end.
 			Assert::AreEqual(SUCCESS, dConfig.RemoveValue("canvas_aspect"), L"Failed to remove a value");
 			Assert::AreEqual(SUCCESS, dConfig.SetValue("canvas_aspect", "2"), L"Failed to Add a value");
 
+			vecAsArrayResult.clear();
 			Assert::AreEqual(SUCCESS, dConfig.AsArray(vecAsArrayResult), L"Failed to serialize back to a sequential list");
 			Assert::AreEqual(20, (int)vecAsArrayResult.size(), L"Removing and Adding again should produce the original length");
 
@@ -281,8 +304,8 @@ namespace GreenshiftUnitTest
 				const std::string& result_key = std::get<0>(vecAsArrayResult[i]);
 				const std::string& result_value = std::get<1>(vecAsArrayResult[i]);
 
-				Assert::AreEqual(expected_key, result_key, L"BAD KEY: Moving an item should NOT disturb prior items");
-				Assert::AreEqual(expected_value, result_value, L"BAD VALUE: Moving an item should NOT disturb prior items");
+				Assert::AreEqual(expected_key, result_key, L"BAD KEY3: Moving an item should NOT disturb prior items");
+				Assert::AreEqual(expected_value, result_value, L"BAD VALUE3: Moving an item should NOT disturb prior items");
 			}
 
 			// Subsequent items should shift indicies by -1
@@ -294,8 +317,8 @@ namespace GreenshiftUnitTest
 				const std::string& result_key = std::get<0>(vecAsArrayResult[i-1]);
 				const std::string& result_value = std::get<1>(vecAsArrayResult[i-1]);
 
-				Assert::AreEqual(expected_key, result_key, L"BAD KEY: Moving an item SHOULD move subsequent items");
-				Assert::AreEqual(expected_value, result_value, L"BAD VALUE: Moving an item SHOULD move subsequent items");
+				Assert::AreEqual(expected_key, result_key, L"BAD KEY4: Moving an item SHOULD move subsequent items");
+				Assert::AreEqual(expected_value, result_value, L"BAD VALUE4: Moving an item SHOULD move subsequent items");
 			}
 
 			// The moved item should now be at the end
@@ -325,7 +348,6 @@ namespace GreenshiftUnitTest
 			MyDictionary<value_t*> dict;
 			MyDictionary<mychar_t*> dConfig;
 			PhaseFunction pf;
-			//LinearMap<std::string, std::string> dConfig;
 
 			/*  Question Mark  */
 			std::array< std::tuple<std::string, std::string>, 42> initialValues =
@@ -429,7 +451,6 @@ namespace GreenshiftUnitTest
 			MyDictionary<value_t*> dict;
 			MyDictionary<mychar_t*> dConfig;
 			PhaseFunction pf;
-			//LinearMap<std::string, std::string> dConfig;
 
 			/*  Bezier.txt  */
 			std::array< std::tuple<std::string, std::string>, 29> initialValues =

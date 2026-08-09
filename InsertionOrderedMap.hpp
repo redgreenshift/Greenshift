@@ -92,9 +92,27 @@ class InsertionOrderedMap
 	SequenceType m_sequence = 0;
 
 public:
+	/**
+	 * @brief Inserts or updates a key-value pair while preserving insertion order.
+	 *
+	 * For existing keys, only the value is updated; the original position in the
+	 * sequence remains unchanged. New keys are appended to the end of the order.
+	 *
+	 * @param inKey The key to add/update.
+	 * @param inData The data to be stored.
+	 * @return SUCCESS upon successful insertion or update.
+	 */
 	error_t Add(const KeyType& key, const DataType& data)
 	{
-		m_map.emplace(key, std::make_tuple(data, m_sequence++));
+		auto const it = m_map.find(key);
+		if (it != m_map.cend())
+		{
+			m_map.insert_or_assign(key, std::make_tuple(data, std::get<1>(it->second)));
+		}
+		else
+		{
+			m_map.emplace(key, std::make_tuple(data, m_sequence++));
+		}
 
 		return SUCCESS;
 	}
@@ -178,7 +196,8 @@ public:
 
 	/****************************************************************************
 	 *
-	 * SetValue - add a value to the MyDictionary
+	 * SetValue - add a value to the collection, or update an existing associated
+	 * value for a key
 	 *
 	 ****************************************************************************/
 	error_t        SetValue(const KeyType & inKey, const DataType & inValue)
@@ -199,7 +218,8 @@ public:
 
 	/****************************************************************************
 	 *
-	 * RemoveValue - remove a value from the MyDictionary
+	 * RemoveValue - remove a value from the collection by key. If the key does
+	 * not exist, it is considered a success.
 	 *
 	 ****************************************************************************/
 	error_t        RemoveValue(const KeyType & inKey)
@@ -213,7 +233,8 @@ public:
 
 	/****************************************************************************
 	 *
-	 * GetValue - find a value stored in the MyDictionary
+	 * GetValue - find a value stored in the collection by key. If the key does
+	 * not exist, return the specified default value (std::nullopt if unspecified).
 	 *
 	 ****************************************************************************/
 	std::optional<DataType> GetValue(const KeyType& inKey,
@@ -264,7 +285,7 @@ public:
 public:
 	/****************************************************************************
 	 *
-	 * AsArray - create an array representing my contents, and return the size
+	 * AsArray - create a vector representing my contents
 	 *
 	 ****************************************************************************/
 	virtual error_t AsArray(std::vector < std::tuple<KeyType, DataType> > & outArray)
