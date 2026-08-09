@@ -25,7 +25,7 @@
   *
   * MyDictionary - set of associations of two objects
   *
-  * DEPRECATED: Use LinearMap instead. This class is a legacy class that has been replaced by LinearMap... or will be soon.
+  * DEPRECATED: Use LinearMap (or rather InsertionOrderedMap) instead. This class is a legacy class that has been replaced by LinearMap... or will be soon renamed to InsertionOrderedMap.
   ****************************************************************************/
 
 #ifndef _MyDictionary_H_
@@ -148,6 +148,7 @@ protected:
  *
  * hmmm... you cannot remove vars... oops!
  *
+ * DEPRECATED: Use LinearMap (or rather InsertionOrderedMap) instead. This class is a legacy class that has been replaced by LinearMap... or will be soon renamed to InsertionOrderedMap.
  ****************************************************************************/
 template<class DataType>
 class MyDictionary : public Set< Association<DataType>* >

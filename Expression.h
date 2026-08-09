@@ -836,7 +836,7 @@ class ExpressionUserDefined : public ExpressionUnary
 {
 protected:
 	char* m_strName = nullptr;
-	EXPRESSIONDESCRIPTION   m_edExpressionDescription;
+	EXPRESSIONDESCRIPTION   m_edExpressionDescription = {};
 public:
 	ExpressionUserDefined(EXPRESSIONDESCRIPTION* pExpDescription,
 		Expression* inExpression1);
