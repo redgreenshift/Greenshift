@@ -25,7 +25,6 @@
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
 #include "..\TextUtils.hpp"
-#include "..\TextUtils.cpp"
 #include "..\Expression.h"
 #include "..\Expression.cpp"
 
@@ -66,26 +65,25 @@ namespace GreenshiftUnitTest
 	{
 		value_t const defaultTolerance = 0.0001f; // common default float tolerance; accounts for typical rounding errors, unless greater precision is required
 		MyDictionary<EXPRESSIONDESCRIPTION*> m_dGlobals;
+		EXPRESSIONDESCRIPTION    m_edGForceFunctions[3] =
+		{
+			{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
+			{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
+
+			{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
+		};
 
 		void InitGlobals()
 		{
-			EXPRESSIONDESCRIPTION    edGForceFunctions[] =
-			{
-				{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
-				{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
-
-				{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
-			};
-
 			/************************************************************************
 			 *
 			 * Load Global MyDictionary with GForce functions to maintain compatibility
 			 *
 			 ************************************************************************/
-			for (size_t i = 0; edGForceFunctions[i].edtType != ED_NULL; i++)
+			for (size_t i = 0; m_edGForceFunctions[i].edtType != ED_NULL; i++)
 			{
-				error_t err = m_dGlobals.SetValue(edGForceFunctions[i].strName,
-					&edGForceFunctions[i]);
+				error_t err = m_dGlobals.SetValue(m_edGForceFunctions[i].strName,
+					&m_edGForceFunctions[i]);
 				if (err != SUCCESS)
 					break;
 			}
