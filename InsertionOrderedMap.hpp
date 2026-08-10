@@ -102,9 +102,10 @@ public:
 	 * For existing keys, only the value is updated; the original position in the
 	 * sequence remains unchanged. New keys are appended to the end of the order.
 	 *
-	 * @param inKey - The key to add/update.
-	 * @param inData - The data to be stored.
-	 * @return error_t: SUCCESS upon successful insertion or update.
+	 * @param[in]	inKey - The key to add/update.
+	 * @param[in]	inData - The data to be stored.
+	 * @return error_t:
+	 *			SUCCESS upon successful insertion or update.
 	 */
 	error_t Add(const KeyType& key, const DataType& data)
 	{
@@ -163,7 +164,7 @@ public:
 	/**
 	 * @brief Set the alias lookup collection
 	 *
-	 * @param mapAlias - collection containing mappings
+	 * @param[in]	mapAlias - collection containing mappings
 	 */
 	void SetAlias(this_t * mapAlias)
 	{
@@ -173,8 +174,8 @@ public:
 	/**
 	 * @brief Set the alternate lookup collection
 	 *
-	 * @param mapAlternate - alternate collection to search when
-	 * failing to find the value in "this" collection.
+	 * @param[in]	mapAlternate - alternate collection to search when
+	 *				failing to find the value in "this" collection.
 	 */
 	void SetAlternate(this_t * mapAlternate)
 	{
@@ -184,8 +185,9 @@ public:
 	/**
 	 * @brief import the contents of another collection
 	 *
-	 * @param src - the source collection
-	 * @return error_t: SUCCESS upon successful import; otherwise failure.
+	 * @param[in]	src - the source collection
+	 * @return error_t:
+	 *			SUCCESS upon successful import; otherwise failure.
 	 */
 	error_t Import(this_t& src)
 	{
@@ -219,9 +221,10 @@ public:
 	 * @brief add a value to the collection, or update an existing associated
 	 * value for a key
 	 *
-	 * @param inKey - The key to add/update.
-	 * @param inValue - The data to be stored.
-	 * @return error_t: SUCCESS upon successful insertion or update.
+	 * @param[in]	inKey - The key to add/update.
+	 * @param[in]	inValue - The data to be stored.
+	 * @return error_t:
+	 *			SUCCESS upon successful insertion or update.
 	 */
 	error_t SetValue(const KeyType & inKey, const DataType & inValue)
 	{
@@ -252,8 +255,9 @@ public:
 	 * @brief remove a value from the collection by key. If the key does
 	 * not exist, it is considered a success.
 	 *
-	 * @param inKey - the key to remove
-	 * @return error_t: SUCCESS upon finding and deleting the value; ERR_NOTFOUND otherwise.
+	 * @param[in]	inKey - the key to remove
+	 * @return error_t:
+	 *			SUCCESS upon finding and deleting the value; ERR_NOTFOUND otherwise.
 	 */
 	error_t RemoveValue(const KeyType & inKey)
 	{
@@ -264,17 +268,18 @@ public:
 			return SUCCESS;
 		}
 
-		return ERR_NOTFOUND;
+		return ERR_NOTFOUND; // SUCCESS; /* if not found, it was "successfully" removed */
 	}
 
 	/**
 	 * @brief find a value stored in the collection by key. If the key does
 	 * not exist, return the specified default value (std::nullopt if unspecified).
 	 *
-	 * @param inKey - the key identifying the value to retrieve.
-	 * @param returnValueIfNotFound - default value to return if key is not found.
-	 * @return std::optional<DataType>: the associated value if found;
-	 * returnValueIfNotFound/std::nullopt otherwise.
+	 * @param[in]		inKey - the key identifying the value to retrieve.
+	 * @param[in,opt]	returnValueIfNotFound - default value to return if key is not found.
+	 * @return std::optional<DataType>:
+	 *			the associated value if found;
+	 *			returnValueIfNotFound/std::nullopt otherwise.
 	 */
 	std::optional<DataType> GetValue(const KeyType& inKey,
 		std::optional<DataType> returnValueIfNotFound = std::nullopt)
@@ -288,10 +293,11 @@ protected:
 	 * @brief find a value stored in the collection by key. If the key does
 	 * not exist, return the specified default value (std::nullopt if unspecified).
 	 *
-	 * @param inKey - the key identifying the value to retrieve.
-	 * @param returnValueIfNotFound - default value to return if key is not found.
-	 * @return std::optional<DataType>: the associated value if found;
-	 * returnValueIfNotFound/std::nullopt otherwise.
+	 * @param[in]		inKey - the key identifying the value to retrieve.
+	 * @param[in,opt]	returnValueIfNotFound - default value to return if key is not found.
+	 * @return std::optional<DataType>:
+	 *			the associated value if found;
+	 *			returnValueIfNotFound/std::nullopt otherwise.
 	 */
 	std::optional<DataType> GetValue_Helper(const KeyType& inKey,
 		std::optional<DataType> returnValueIfNotFound = std::nullopt)
@@ -335,8 +341,9 @@ public:
 	/**
 	 * @brief create a vector representing my contents
 	 *
-	 * @param outArray - receives the data exported in original insertion order
-	 * @return error_t: SUCCESS upon exporting the contents; failure otherwise.
+	 * @param[out]	outArray - receives the data exported in original insertion order
+	 * @return error_t:
+	 *			SUCCESS upon exporting the contents; failure otherwise.
 	 */
 	virtual error_t AsArray(std::vector < std::tuple<KeyType, DataType> > & outArray)
 	{

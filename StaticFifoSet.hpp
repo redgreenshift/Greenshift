@@ -66,8 +66,9 @@ public:
 	 * If the set is at capacity (count == MaximumSize), it replaces the current oldest element
 	 * and shifts the head index forward to maintain the rolling window.
 	 *
-	 * @param val - The value to add; ignored if already present.
-	 * @returns SUCCESS always, since an existing value is a no-op success.
+	 * @param[in]	val - The value to add; ignored if already present.
+	 * @return error_t:
+	 *			SUCCESS always, since an existing value is a no-op success.
 	 */
 	virtual error_t Add(const DataType& val) override
 	{
@@ -95,8 +96,9 @@ public:
 	/**
 	 * @brief Removes `val` from the set, preserving FIFO order of remaining elements.
 	 *
-	 * @param val - element value to remove.
-	 * @returns SUCCESS if the element was found and removed; ERR_NOTFOUND otherwise.
+	 * @param[in]	val - element value to remove.
+	 * @return error_t:
+	 *			SUCCESS if the element was found and removed; ERR_NOTFOUND otherwise.
 	 */
 	virtual error_t Remove(const DataType& val) override
 	{
