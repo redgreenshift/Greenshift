@@ -36,6 +36,41 @@
 
 #include "Association.h"
 
+/**
+ * @brief Abstract interface defining essential collection operations.
+ */
+template<class DataType> class ICollectionContract
+{
+public:
+	virtual ~ICollectionContract() = default;
+
+	// Capacity
+	virtual bool Empty() const = 0;
+	virtual size_t Size() const = 0;
+	virtual size_t Capacity() const = 0;
+
+	// Modifiers
+	virtual void Clear() = 0;
+	virtual error_t Add(const DataType& data) = 0;
+	virtual error_t Remove(const DataType& data) = 0;
+
+	// Lookup
+	virtual bool Contains(const DataType& data) const = 0;
+
+	// DEPRECATED:
+	// These are deprecated, but provided as aliases; a convenience to make switching to the new collection implementations easier.
+	// Eventyally I would like to remove them, but this makes it so I don't have to define them in all the various classes.
+	virtual bool Includes(const DataType& data) const // DEPRECATED
+	{
+		return Contains(data);
+	}
+	virtual void WipeContents() // DEPRECATED
+	{
+		Clear();
+	}
+};
+
+
   /****************************************************************************
    ****************************************************************************
    ****************************************************************************

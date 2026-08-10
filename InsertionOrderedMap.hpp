@@ -21,6 +21,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "CollectionsAbstract.h"
+
 #pragma push_macro("min")
 #pragma push_macro("max")
 #undef min
@@ -84,9 +86,10 @@ struct CaseInsensitiveLess {
  *                          (e.g., CaseInsensitiveLess).
  */
 template<class KeyType, class DataType, class LessThanCompare = CaseInsensitiveLess>
-class InsertionOrderedMap
+class InsertionOrderedMap : public ICollectionContract<std::tuple<KeyType, DataType> >
 {
 	typedef int SequenceType;
+	typedef std::tuple<KeyType, DataType> KeyValueTuple_t;
 	typedef InsertionOrderedMap<KeyType, DataType > this_t;
 	std::map<KeyType, std::tuple<DataType, SequenceType>, LessThanCompare > m_map;
 	SequenceType m_sequence = 0;
@@ -98,9 +101,9 @@ public:
 	 * For existing keys, only the value is updated; the original position in the
 	 * sequence remains unchanged. New keys are appended to the end of the order.
 	 *
-	 * @param inKey The key to add/update.
-	 * @param inData The data to be stored.
-	 * @return SUCCESS upon successful insertion or update.
+	 * @param inKey - The key to add/update.
+	 * @param inData - The data to be stored.
+	 * @return error_t: SUCCESS upon successful insertion or update.
 	 */
 	error_t Add(const KeyType& key, const DataType& data)
 	{
@@ -116,6 +119,27 @@ public:
 
 		return SUCCESS;
 	}
+
+	virtual error_t Add(const KeyValueTuple_t& kv) override
+	{
+		return Add(std::get<0>(kv), std::get<1>(kv));
+	}
+
+	virtual bool Contains(const KeyValueTuple_t& kv) const override
+	{
+		return Contains(std::get<0>(kv));
+	}
+
+	virtual error_t Remove(const KeyValueTuple_t& kv) override
+	{
+		return RemoveValue(std::get<0>(kv));
+	}
+
+	bool Contains(const KeyType& key) const
+	{
+		return m_map.contains(key);
+	}
+
 
 protected:
 	DWORD							m_dwAliasCount = 0;
@@ -133,48 +157,50 @@ public:
 		m_bCaseSensitive = false;
 		m_dwAliasCount = 0;
 	};
-	virtual ~InsertionOrderedMap()
+	virtual ~InsertionOrderedMap() override
 	{
 	};
 
 
-	/****************************************************************************
+	/**
+	 * @brief Set the alias lookup collection
 	 *
-	 * SetAlias - set the alias lookup MyDictionary
-	 *
-	 ****************************************************************************/
-	void    SetAlias(this_t * mapAlias)
+	 * @param mapAlias - collection containing mappings
+	 */
+	void SetAlias(this_t * mapAlias)
 	{
 		m_mapAlias = mapAlias;
 	};
 
-	/****************************************************************************
+	/**
+	 * @brief Set the alternate lookup collection
 	 *
-	 * SetAlternate - set the alternate lookup MyDictionary
-	 *
-	 ****************************************************************************/
-	void    SetAlternate(this_t * mapAlternate)
+	 * @param mapAlternate - alternate collection to search when
+	 * failing to find the value in "this" collection.
+	 */
+	void SetAlternate(this_t * mapAlternate)
 	{
 		m_mapAlternate = mapAlternate;
 	};
 
-	/****************************************************************************
+	/**
+	 * @brief import the contents of another collection
 	 *
-	 * Import - import the contents of another MyDictionary
-	 *
-	 ****************************************************************************/
-	error_t    Import(this_t& srcMyDictionary)
+	 * @param src - the source collection
+	 * @return error_t: SUCCESS upon successful import; otherwise failure.
+	 */
+	error_t Import(this_t& src)
 	{
 		error_t    err;
 		DWORD    i;
 		std::vector < std::tuple<KeyType, DataType> > pArray;
 
-		err = srcMyDictionary.AsArray(pArray);
+		err = src.AsArray(pArray);
 		if (err != SUCCESS)
 			return err;
 
 
-		DWORD    dwNumElements = pArray.size();
+		DWORD dwNumElements = pArray.size();
 
 		for (i = 0; i < dwNumElements; i++)
 		{
@@ -194,49 +220,68 @@ public:
 
 
 
-	/****************************************************************************
-	 *
-	 * SetValue - add a value to the collection, or update an existing associated
+	/**
+	 * @brief add a value to the collection, or update an existing associated
 	 * value for a key
 	 *
-	 ****************************************************************************/
-	error_t        SetValue(const KeyType & inKey, const DataType & inValue)
+	 * @param inKey - The key to add/update.
+	 * @param inValue - The data to be stored.
+	 * @return error_t: SUCCESS upon successful insertion or update.
+	 */
+	error_t SetValue(const KeyType & inKey, const DataType & inValue)
 	{
 		error_t    err;
 
 		err = Add(inKey, inValue);
 
 		return err;
-	};
+	}
 
 
-	size_t Size()
+	virtual size_t Size() const override
 	{
 		return m_map.size();
 	}
 
+	virtual size_t Capacity() const override
+	{
+		return m_map.max_size();
+	}
 
-	/****************************************************************************
-	 *
-	 * RemoveValue - remove a value from the collection by key. If the key does
+	virtual bool Empty() const override
+	{
+		return m_map.empty();
+	}
+
+
+	/**
+	 * @brief remove a value from the collection by key. If the key does
 	 * not exist, it is considered a success.
 	 *
-	 ****************************************************************************/
-	error_t        RemoveValue(const KeyType & inKey)
+	 * @param inKey - the key to remove
+	 * @return error_t: SUCCESS upon finding and deleting the value; ERR_NOTFOUND otherwise.
+	 */
+	error_t RemoveValue(const KeyType & inKey)
 	{
 		auto it = m_map.find(inKey);
 		if (it != m_map.cend())
+		{
 			m_map.erase(it);
+			return SUCCESS;
+		}
 
-		return SUCCESS; /* if not found, it was "successfully" removed */
-	};
+		return ERR_NOTFOUND;
+	}
 
-	/****************************************************************************
-	 *
-	 * GetValue - find a value stored in the collection by key. If the key does
+	/**
+	 * @brief find a value stored in the collection by key. If the key does
 	 * not exist, return the specified default value (std::nullopt if unspecified).
 	 *
-	 ****************************************************************************/
+	 * @param inKey - the key identifying the value to retrieve.
+	 * @param returnValueIfNotFound - default value to return if key is not found.
+	 * @return std::optional<DataType>: the associated value if found;
+	 * returnValueIfNotFound/std::nullopt otherwise.
+	 */
 	std::optional<DataType> GetValue(const KeyType& inKey,
 		std::optional<DataType> returnValueIfNotFound = std::nullopt)
 	{
@@ -244,6 +289,16 @@ public:
 		return GetValue_Helper(inKey, returnValueIfNotFound);
 	};
 
+protected:
+	/**
+	 * @brief find a value stored in the collection by key. If the key does
+	 * not exist, return the specified default value (std::nullopt if unspecified).
+	 *
+	 * @param inKey - the key identifying the value to retrieve.
+	 * @param returnValueIfNotFound - default value to return if key is not found.
+	 * @return std::optional<DataType>: the associated value if found;
+	 * returnValueIfNotFound/std::nullopt otherwise.
+	 */
 	std::optional<DataType> GetValue_Helper(const KeyType& inKey,
 		std::optional<DataType> returnValueIfNotFound = std::nullopt)
 	{
@@ -273,7 +328,7 @@ public:
 
 		if (!dtTemp.has_value()
 			&& m_dwAliasCount <= 33 /* keep it from checking 32 times as the recursion unwinds */
-			&& m_mapAlternate != NULL)
+			&& m_mapAlternate != nullptr)
 			dtTemp = m_mapAlternate->GetValue_Helper(inKey, returnValueIfNotFound);
 
 		return dtTemp;
@@ -281,13 +336,13 @@ public:
 
 
 
-
 public:
-	/****************************************************************************
+	/**
+	 * @brief create a vector representing my contents
 	 *
-	 * AsArray - create a vector representing my contents
-	 *
-	 ****************************************************************************/
+	 * @param outArray - receives the data exported in original insertion order
+	 * @return error_t: SUCCESS upon exporting the contents; failure otherwise.
+	 */
 	virtual error_t AsArray(std::vector < std::tuple<KeyType, DataType> > & outArray)
 	{
 		std::vector < std::tuple<KeyType, DataType> > retVal;
@@ -327,11 +382,8 @@ public:
 		return SUCCESS;
 	}
 
-	virtual void    WipeContents(void)
+	virtual void Clear(void) override
 	{
-		/*
-		 * if should free the elements, do so before delete[]'ing the array
-		 */
 		m_map.clear();
 	}
 };
