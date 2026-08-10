@@ -27,13 +27,13 @@
 // https://en.wikipedia.org/wiki/Shift-JIS
 
 #include <cstddef> // is_valid_utf8
-#include <cstdint> // is_valid_utf8, append_codepoint_to_wstring
+#include <cstdint> // is_valid_utf8, append_codepoint_as_wchar
 #include <istream>
-#include <limits> // append_codepoint_to_wstring
+#include <limits> // append_codepoint_as_wchar
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
-#include <string> // append_codepoint_to_wstring
+#include <string> // append_codepoint_as_wchar
 #include <string_view>
 
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
