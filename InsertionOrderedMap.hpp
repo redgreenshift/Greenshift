@@ -28,6 +28,7 @@
 #undef min
 #undef max
 
+#include <cctype>
 #include <map>
 #include <optional>
 #include <string>
