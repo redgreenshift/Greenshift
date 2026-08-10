@@ -127,6 +127,7 @@ public:
 
 	virtual bool Contains(const KeyValueTuple_t& kv) const override
 	{
+		// "Contains" for a map specifically means the KEY exists with any value
 		return Contains(std::get<0>(kv));
 	}
 
@@ -145,16 +146,12 @@ protected:
 	DWORD							m_dwAliasCount = 0;
 	InsertionOrderedMap<KeyType, KeyType>*	m_mapAlias = nullptr;
 	InsertionOrderedMap<KeyType, DataType>*	m_mapAlternate = nullptr;
-	bool							m_bCaseSensitive = false;  /* comparisons are case sensitive */
-
-	//typedef    Association<DataType>* data_t;
 
 public:
 	InsertionOrderedMap()
 	{
 		m_mapAlias = nullptr;
 		m_mapAlternate = nullptr;
-		m_bCaseSensitive = false;
 		m_dwAliasCount = 0;
 	};
 	virtual ~InsertionOrderedMap() override
@@ -212,9 +209,6 @@ public:
 		if (err != SUCCESS)
 			return err;
 
-		//m_bCaseSensitive = srcMyDictionary->m_bCaseSensitive;
-		m_bCaseSensitive = false;
-
 		return SUCCESS;
 	};
 
@@ -230,13 +224,8 @@ public:
 	 */
 	error_t SetValue(const KeyType & inKey, const DataType & inValue)
 	{
-		error_t    err;
-
-		err = Add(inKey, inValue);
-
-		return err;
+		return Add(inKey, inValue);
 	}
-
 
 	virtual size_t Size() const override
 	{
@@ -253,6 +242,10 @@ public:
 		return m_map.empty();
 	}
 
+	virtual void Clear(void) override
+	{
+		m_map.clear();
+	}
 
 	/**
 	 * @brief remove a value from the collection by key. If the key does
@@ -323,7 +316,8 @@ protected:
 			auto valAlias = m_mapAlias->GetValue_Helper(inKey);
 			if (valAlias.has_value())
 				dtTemp = GetValue_Helper(valAlias.value(), returnValueIfNotFound);
-			m_dwAliasCount++;
+			m_dwAliasCount++; // REVIEW: legacy behavior; we're incrementing twice,
+							  // net effect is we support 16 hops, which is enough.
 		}
 
 		if (!dtTemp.has_value()
@@ -346,14 +340,10 @@ public:
 	virtual error_t AsArray(std::vector < std::tuple<KeyType, DataType> > & outArray)
 	{
 		std::vector < std::tuple<KeyType, DataType> > retVal;
-
 		const DWORD size = m_map.size();
 
-		//retVal.reserve(size);
-		retVal.resize(size);
-
 		/*
-		 * create the array to copy the contents
+		 * sort by sequence number (via map)
 		 */
 		std::map< SequenceType, std::tuple<KeyType, DataType> > sequenceMap;
 
@@ -367,24 +357,22 @@ public:
 			sequenceMap.emplace(sequence, std::make_tuple(key, data));
 		}
 
-		int index = 0;
-		for (auto& kvPair : sequenceMap)
+		/*
+		 * iterate across in sequence order, building the final collection to copy the contents
+		 */
+		retVal.reserve(size);
+		for (/*intentionally not-const*/auto& kvPair : sequenceMap)
 		{
 			std::tuple<KeyType, DataType>& value = kvPair.second;
 
-			retVal[index++] = std::move(value);
+			retVal.emplace_back(std::move(value));
 		}
 
-		if (index != size)
-			return FAILURE;
+		if (retVal.size() != size)
+			return ERR_BOUNDS;
 
 		outArray = std::move(retVal);
 		return SUCCESS;
-	}
-
-	virtual void Clear(void) override
-	{
-		m_map.clear();
 	}
 };
 
