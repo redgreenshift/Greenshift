@@ -357,7 +357,7 @@ inline void MTRand::seed()
 inline void MTRand::unique_seed()
 {
 	uint64_t t = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
-	uint64_t global_event = g_seed_event_counter.fetch_add(1, std::memory_order_relaxed);
+	uint64_t global_event = g_seed_event_counter.fetch_add(1, std::memory_order_acq_rel);
 	uint64_t local_reseed = ++reseed_counter;
 
 	uint64_t addr = (uint64_t)(uintptr_t)this; // extra decorrelation
@@ -375,13 +375,20 @@ inline void MTRand::unique_seed()
 
 
 /**
- * @brief Completely seed the generator with high-entropy values, using a single integer as input.
+ * @brief Initializes the internal state array from a 64-bit seed.
+ *
+ * Deterministically expands the seed into 624 independent 32-bit samples
+ * using the SplitMix64 algorithm. Truncation is used for each sample to
+ * ensure that every element of the state vector is an independent and
+ * identically distributed (i.i.d.) value.
  *
  * NOTE: Using SplitMix64 to fill the Mersenne Twister (MT) array is the gold standard for
  * this process because it solves a known weakness of the MT: if seeded with a simple
  * integer or a value with too many zeros, the MT can take a long time to "warm up" and
  * produce statistically sound numbers. SplitMix64 ensures the initial state is thoroughly
  * "shuffled."
+ *
+ * @param seed64 The 64-bit seed used to initialize the generator.
  */
 inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 {
@@ -390,8 +397,7 @@ inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 	uint64_t x = seed64;
 	for (int i = 0; i < N; ++i)
 	{
-		// NOTE: I considered splitting the 64bit value into 2 UINT32 values,
-		// but truncation is the superior choice.
+		// NOTE: Do not split the 64bit value into 2 UINT32 values, truncation is the superior choice.
 		//
 		// In a mathematically perfect random sequence, every single 32-bit word in the
 		// 624-element array should be an independent and identically distributed (i.i.d.) sample.
@@ -410,8 +416,9 @@ inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 
 inline void MTRand::deterministic_seed_u32(uint32 seed32)
 {
-	// SplitMix64 is the superior algorithm, so just call that instead of SplitMix32
-	deterministic_seed_u64(static_cast<uint32_t>(seed32));
+	// SplitMix64 is the superior algorithm, so just call that instead of SplitMix32;
+	// in a 64-bit space, there is far more "room" for the avalanche effect to occur.
+	deterministic_seed_u64(seed32);
 }
 
 inline void MTRand::deterministic_seed_f32(float seedFloat)
