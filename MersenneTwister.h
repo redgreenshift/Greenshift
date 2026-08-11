@@ -17,17 +17,17 @@
 // Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
 
 // Copyright (C) 2001  Richard J. Wagner
-// 
+//
 // This library is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation; either
 // version 2.1 of the License, or (at your option) any later version.
-// 
+//
 // This library is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU Lesser General Public
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -66,17 +66,17 @@ class MTRand {
 // Data
 public:
 	typedef unsigned long uint32;  // unsigned integer type, at least 32 bits
-	
-	enum { N = 624 };              // length of state vector
+
+	enum { N = 624 };              // length of state vector -- MT19937 internal state words
 	enum { SAVE = N + 1 };         // length of array for save()
 
 protected:
 	enum { M = 397 };              // period parameter
 	enum { MAGIC = 0x9908b0dfU };  // magic constant
-	
-	uint32 state[N];  // internal state
-	uint32 *pNext;    // next value to get from state
-	int left;         // number of values left before reload needed
+
+	uint32 state[N];       // internal state
+	uint32 *pNext = state; // next value to get from state
+	int left = 0;          // number of values left before reload needed
 
 
 //Methods
@@ -84,7 +84,7 @@ public:
 	MTRand( const uint32& oneSeed );  // initialize with a simple uint32
 	MTRand( uint32 *const bigSeed );  // initialize with an array of N uint32's
 	MTRand();  // auto-initialize with /dev/urandom or time() and clock()
-	
+
 	// Access to 32-bit random numbers
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
 	// values together, otherwise the generator state can be learned after
@@ -96,12 +96,12 @@ public:
 	uint32 randInt();                       // integer in [0,2^32-1]
 	uint32 randInt( const uint32& n );      // integer in [0,n] for n < 2^32
 	double operator()() { return rand(); }  // same as rand()
-	
+
 	// Re-seeding functions with same behavior as initializers
 	void seed( uint32 oneSeed );
 	void seed( uint32 *const bigSeed );
 	void seed();
-	
+
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
@@ -131,7 +131,7 @@ inline MTRand::MTRand()
 	{ seed(); }
 
 inline double MTRand::rand()
-    { return double(randInt()) * 2.3283064370807974e-10; }
+	{ return double(randInt()) * 2.3283064370807974e-10; }
 
 inline double MTRand::rand( const double& n )
 	{ return rand() * n; }
@@ -146,7 +146,7 @@ inline MTRand::uint32 MTRand::randInt()
 {
 	if( left == 0 ) reload();
 	--left;
-		
+
 	register uint32 s1;
 	s1 = *pNext++;
 	s1 ^= (s1 >> 11);
@@ -162,7 +162,7 @@ inline MTRand::uint32 MTRand::randInt( const uint32& n )
 	uint32 used = ~0;
 	for( uint32 m = n; m; used <<= 1, m >>= 1 ) {}
 	used = ~used;
-	
+
 	// Draw numbers until one is found in [0,n]
 	uint32 i;
 	do
@@ -178,7 +178,7 @@ inline void MTRand::seed( uint32 oneSeed )
 	register uint32 *s;
 	register int i;
 	for( i = N, s = state;
-	     i--;
+		 i--;
 		 *s    = oneSeed & 0xffff0000,
 		 *s++ |= ( (oneSeed *= 69069U)++ & 0xffff0000 ) >> 16,
 		 (oneSeed *= 69069U)++ ) {}  // hard to read, but fast
@@ -206,7 +206,7 @@ inline void MTRand::seed()
 {
 	// Seed the generator with an array from /dev/urandom if available
 	// Otherwise use a hash of time() and clock() values
-	
+
 	// First try getting an array from /dev/urandom
 	FILE* urandom = fopen( "/dev/urandom", "rb" );
 	if( urandom )
@@ -229,7 +229,7 @@ inline void MTRand::seed()
 			return;
 		}
 	}
-	
+
 	// Was not successful, so use time() and clock() instead
 	seed( hash( time(NULL), clock() ) );
 }
