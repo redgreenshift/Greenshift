@@ -46,6 +46,7 @@ FilingClerk::FilingClerk()
 	m_nUsedLength = 0;
 
 	m_hFindHandle = 0;
+	m_wFindData = { 0 };
 }
 
 
