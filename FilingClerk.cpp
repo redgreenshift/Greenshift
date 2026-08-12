@@ -681,10 +681,10 @@ error_t FilingClerk::LoadConfig(
 			{
 				if (handleColorMaps && EndsIn(strFile, ".map"))
 				{
-					err = GetColorMap(strFile, &pTmpConfig[nConfig]);
+					err = GetColorMap(strFile, &pTmpConfig[nConfig]); // Load into slot at current index
 				}
 				else
-					err = GetData(strFile, &pTmpConfig[nConfig]);
+					err = GetData(strFile, &pTmpConfig[nConfig]); // Load into slot at current index
 
 				/*
 				#if EXTREME_DEBUGGING
@@ -700,9 +700,9 @@ error_t FilingClerk::LoadConfig(
 						"NAME", strdup(strFile));
 
 				if (err == SUCCESS)
-					nConfig++;
+					nConfig++; // Only advance on success!
 				else
-					pTmpConfig[nConfig].WipeContents();
+					pTmpConfig[nConfig].WipeContents(); // Wiped, but index NOT incremented
 			}
 
 			strFile = GetNextFile();
