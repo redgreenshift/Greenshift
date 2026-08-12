@@ -129,7 +129,7 @@ public:
 	/*
 	 * load config files
 	 */
-	error_t     LoadConfig(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     LoadConfig(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated, bool handleColorMaps = false);
 	error_t     LoadColorMaps(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated);
 	error_t     GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary, MyDictionary<MyDictionary<mychar_t*>*>* outExtra = NULL);
 	error_t     GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary);

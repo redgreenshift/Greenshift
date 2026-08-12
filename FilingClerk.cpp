@@ -616,22 +616,30 @@ token_t    FilingClerk::GetToken(void)
  *        file it was from, this is so it can be used to display the name of a
  *        particle or whatnot
  *
+ * @param[in,out] ppConfig - the array containing the old configs,
+ *							 which receives the new configs
+ * @param[in,out] inoutNumAllocated - pre: number of old configs (nOldConfigs)
+ *									- post:total number of configs
+ *
  ****************************************************************************/
 error_t FilingClerk::LoadConfig(
 	MyDictionary<mychar_t*>** ppConfig,
-	DWORD* inoutNumAllocated)
+	DWORD* inoutNumAllocated,
+	bool handleColorMaps /* = false */)
 {
 	error_t				err = SUCCESS;
 	char*				strFile = NULL;
 	DWORD				nConfig = 0;
-	DWORD               nNumConfig = 0;
+	DWORD				nNewConfigs = 0; // number of new configs found in current folder
 	MyDictionary<mychar_t*>* pTmpConfig = NULL;
-
 
 	if (ppConfig == NULL || inoutNumAllocated == NULL)
 		return ERR_NULL;
 
-	nNumConfig = 0;
+	// if (*inoutNumAllocated > 0) then we're currently loading the G-Force Configs after the Greenshift configs
+	// This doesn't result in duplicated configs, or rather, if configs are duplicated between folders, then duplicates are expected.
+	DWORD const nOldConfigs = *inoutNumAllocated; // number of old configs passed in
+
 	strFile = GetFirstFile("*.*");
 
 	/*
@@ -640,20 +648,19 @@ error_t FilingClerk::LoadConfig(
 	while (strFile != NULL)
 	{
 		if (!EndsIn(strFile, ".zip"))
-			nNumConfig++;
+			nNewConfigs++;
 		strFile = GetNextFile();
 	}
 
-	if (nNumConfig > 0)
+	if (nNewConfigs > 0)
 	{
-		nNumConfig = nNumConfig + *inoutNumAllocated;
+		DWORD nTotalConfigs = nNewConfigs + nOldConfigs; // calculate total needed
 		/*
-		 * allocate space for nConfig Dictionaries
+		 * allocate space for nTotalConfigs Dictionaries
 		 */
-		pTmpConfig = new MyDictionary<mychar_t*>[nNumConfig];
+		pTmpConfig = new MyDictionary<mychar_t*>[nTotalConfigs];
 		if (pTmpConfig == NULL)
 			return ERR_MALLOC;
-
 
 		/*
 		 * now find all the files over again
@@ -661,17 +668,23 @@ error_t FilingClerk::LoadConfig(
 
 		strFile = GetFirstFile("*.*");
 
-		nConfig = *inoutNumAllocated;
-
 		/*
 		 * loop through the files again, but in case the number of files
 		 * changed (for whatever reason), use the extra check
 		 */
-		while ((strFile != NULL) && (nConfig < nNumConfig))
+
+		// Load files from disk, store in slots [N to N+nNewConfigs] of pTmpConfig
+		nConfig = nOldConfigs; // start at the index after nOldConfigs (we'll fill in the front half later)
+		while ((strFile != NULL) && (nConfig < nTotalConfigs))
 		{
 			if (!EndsIn(strFile, ".zip"))
 			{
-				err = GetData(strFile, &pTmpConfig[nConfig]);
+				if (handleColorMaps && EndsIn(strFile, ".map"))
+				{
+					err = GetColorMap(strFile, &pTmpConfig[nConfig]);
+				}
+				else
+					err = GetData(strFile, &pTmpConfig[nConfig]);
 
 				/*
 				#if EXTREME_DEBUGGING
@@ -692,43 +705,39 @@ error_t FilingClerk::LoadConfig(
 					pTmpConfig[nConfig].WipeContents();
 			}
 
-
 			strFile = GetNextFile();
 		}
-#ifdef UNDEFINED
-	}
 
-	nNumConfig = nConfig;
+		if (nConfig < nTotalConfigs)
+			nTotalConfigs = nConfig; // Adjust down if fewer files found than counted initially
 
-	for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
-	{
-		err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
-		if (err != SUCCESS)
-			break;
-	}
+		// CURRENTLY: slots 0 to N-1 are uninitialized, slots N onward are filled from disk
 
-
-	if (err == SUCCESS)
-	{
-		if (*inoutNumAllocated > 0)
-			delete[] * ppConfig;
-
-		*inoutNumAllocated = nNumConfig;
-		*ppConfig = pTmpConfig;
-
-		return SUCCESS;
-	}
-	else
-	{
-		delete[] pTmpConfig;
-		return err;
-	}
-#else
-		nNumConfig = nConfig;
-
-		for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
+		// Import old configs from *ppConfig into the first half, slots [0 to nOldConfigs-1] of pTmpConfig
+		for (nConfig = 0; nConfig < nOldConfigs && nConfig < nTotalConfigs; ++nConfig)
 		{
-			err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
+			// NOTE: The above check should be unnecessary: "&& nConfig < nTotalConfigs"
+			// but I get a warning on the following line
+			// WARNING C6385: Reading invalid data from 'pTmpConfig':  the readable size is '(unsigned int)*36' bytes, but '72' bytes may be read.
+			//
+			// The static analyzer is wrong.
+			//
+			// It's saying consider when:
+			// 1) the first while loop increments nNewConfigs to nonzero
+			// 2) the second while condition is false, so we never increment nConfig
+			// 3) and nConfig < nTotalConfigs is false so we don't set nTotalConfigs lower.
+			//
+			// THIS CANNOT BE TRUE.
+			// Either we read in zero files, and reset nTotalConfigs to account for the smaller list,
+			// OR we read in all the expected files and nTotalConfigs is accurate without modification.
+			//
+			// But in either case, I don't see how *this* affects the length of pTmpConfig
+			// (i.e. the original/large value of nTotalConfigs) which is **ALWAYS**
+			// STRICTLY GREATER THAN inoutNumAllocated, therefore
+			// filling in the first inoutNumAllocated values should *always* be safe!
+			//
+			// Adding an unnecessary check for "&& nConfig < nTotalConfigs" to address the issue without suppressing
+			err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]); // valid read, just no obvious size hint to analyzer
 			if (err != SUCCESS)
 				break;
 		}
@@ -736,10 +745,10 @@ error_t FilingClerk::LoadConfig(
 
 		if (err == SUCCESS)
 		{
-			if (*inoutNumAllocated > 0)
-				delete[] * ppConfig;
+			if (nOldConfigs > 0)
+				delete[] *ppConfig;
 
-			*inoutNumAllocated = nNumConfig;
+			*inoutNumAllocated = nTotalConfigs;
 			*ppConfig = pTmpConfig;
 
 			return SUCCESS;
@@ -750,7 +759,7 @@ error_t FilingClerk::LoadConfig(
 			return err;
 		}
 	}
-#endif
+
 	return err;
 }
 
@@ -761,140 +770,11 @@ error_t FilingClerk::LoadConfig(
  *        requirements for palettes, color maps, or whatever you call them.
  *
  ****************************************************************************/
-error_t FilingClerk::LoadColorMaps(MyDictionary<mychar_t*>** ppConfig,
+error_t FilingClerk::LoadColorMaps(
+	MyDictionary<mychar_t*>** ppConfig,
 	DWORD* inoutNumAllocated)
 {
-	error_t             err = SUCCESS;
-	char* strFile = NULL;
-	DWORD               nConfig = 0;
-	DWORD               nNumConfig = 0;
-	MyDictionary<mychar_t*>* pTmpConfig = NULL;
-	//    DWORD    i;
-
-	if (ppConfig == NULL || inoutNumAllocated == NULL)
-		return ERR_NULL;
-
-
-	nNumConfig = 0;
-	strFile = GetFirstFile("*.*");
-
-	/*
-	 * count the number of files
-	 */
-	while (strFile != NULL)
-	{
-		if (!EndsIn(strFile, ".zip"))
-			nNumConfig++;
-		strFile = GetNextFile();
-	}
-
-	if (nNumConfig > 0)
-	{
-		nNumConfig = nNumConfig + *inoutNumAllocated;
-		/*
-		 * allocate space for nConfig Dictionaries
-		 */
-		pTmpConfig = new MyDictionary<mychar_t*>[nNumConfig];
-		if (pTmpConfig == NULL)
-			return ERR_MALLOC;
-
-		/*
-		 * now find all the files over again
-		 */
-
-		strFile = GetFirstFile("*.*");
-
-		nConfig = *inoutNumAllocated;
-
-		/*
-		 * loop through the files again, but in case the number of files
-		 * changed (for whatever reason), use the extra check
-		 */
-		while ((strFile != NULL) && (nConfig < nNumConfig))
-		{
-			if (!EndsIn(strFile, ".zip"))
-			{
-				if (EndsIn(strFile, ".map"))
-				{
-					err = GetColorMap(strFile, &pTmpConfig[nConfig]);
-				}
-				else
-					err = GetData(strFile, &pTmpConfig[nConfig]);
-
-
-				if (err == SUCCESS)
-					err = pTmpConfig[nConfig].SetValue(
-						"NAME", strdup(strFile));
-
-				if (err == SUCCESS)
-					nConfig++;
-				else
-					pTmpConfig[nConfig].WipeContents();
-			}
-
-			strFile = GetNextFile();
-		}
-#ifdef UNDEFINED
-	}
-
-	nNumConfig = nConfig;
-
-
-
-	for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
-	{
-		err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
-		if (err != SUCCESS)
-			break;
-	}
-
-
-	if (err == SUCCESS)
-	{
-		if (*inoutNumAllocated > 0)
-			delete[] * ppConfig;
-
-		*inoutNumAllocated = nNumConfig;
-		*ppConfig = pTmpConfig;
-
-		return SUCCESS;
-	}
-	else
-	{
-		delete[] pTmpConfig;
-		return err;
-	}
-#else
-		nNumConfig = nConfig;
-
-
-
-		for (nConfig = 0; nConfig < *inoutNumAllocated; nConfig++)
-		{
-			err = pTmpConfig[nConfig].Import((*ppConfig)[nConfig]);
-			if (err != SUCCESS)
-				break;
-		}
-
-
-		if (err == SUCCESS)
-		{
-			if (*inoutNumAllocated > 0)
-				delete[] * ppConfig;
-
-			*inoutNumAllocated = nNumConfig;
-			*ppConfig = pTmpConfig;
-
-			return SUCCESS;
-		}
-		else
-		{
-			delete[] pTmpConfig;
-			return err;
-		}
-	}
-#endif
-	return err;
+	return LoadConfig(ppConfig, inoutNumAllocated, true /*handleColorMaps*/);
 }
 
 

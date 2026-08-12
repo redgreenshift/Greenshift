@@ -435,9 +435,15 @@ public:
 		/*
 		 * compile the Expressions
 		 */
-		for (dwPhase = 0; dwPhase < NumPhases(); dwPhase++)
+		for (dwPhase = 0; dwPhase < NumPhases() && dwPhase < (dwAllocationSize / sizeof(*m_pPhases)); ++dwPhase)
 		{
-			for (index = 0; index < m_pPhases[dwPhase].dwPhaseLength; index++)
+			// NOTE: The above check should be unnecessary: "&& dwPhase < (dwAllocationSize/sizeof(*m_pPhases))"
+			// but I get a warning on the following line
+			// WARNING C6385: Reading invalid data from 'm_pPhases':  the readable size is 'dwAllocationSize*1' bytes, but '24' bytes may be read.
+			// The initial part of the check "dwPhase < NumPhases()" should already be sufficient, but the static analyzer can't figure it out.
+			//
+			// Adding an unnecessary check to address the issue without suppressing.
+			for (index = 0; index < m_pPhases[dwPhase].dwPhaseLength; ++index)
 			{
 				/* dis I forget to do tolower? */
 				int ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index);
