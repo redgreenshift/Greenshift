@@ -193,14 +193,15 @@ protected:
 
 //Methods
 public:
-	MTRand( const uint32& oneSeed );  // initialize with a simple uint32
+	MTRand( const uint32& oneSeed );  // low-entropy - LEGACY constructor: initialize with a simple uint32 (prefer other constructors)
 	MTRand( uint32 *const bigSeed );  // initialize with an array of N uint32's
-	MTRand();  // auto-initialize with /dev/urandom or time() and clock()
+	MTRand();  // HIGH-ENTROPY: auto-initialize with /dev/urandom or unique_seed() -- RECOMMENDED for new code
 
 	// Access to 32-bit random numbers
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
 	// values together, otherwise the generator state can be learned after
 	// reading 624 consecutive values.
+
 	double rand();                      // real number in [0,1]
 	double rand( const double& n );     // real number in [0,n]
 	double randExc();                   // real number in [0,1)
@@ -210,17 +211,17 @@ public:
 	double operator()() { return rand(); }  // same as rand()
 
 	// Re-seeding functions with same behavior as initializers
-	void seed( uint32 oneSeed );
-	void seed( uint32 *const bigSeed );
-	void seed();
-	void unique_seed(); // nondeterministically seeds the whole array with high entropy
-	void deterministic_seed_f32(float seed);   // deterministically seed with high entropy
-	void deterministic_seed_u32(uint32 seed);  // deterministically seed with high entropy
-	void deterministic_seed_f64(double seed);  // deterministically seed with high entropy
-	void deterministic_seed_u64(uint64_t seed);// deterministically seed with high entropy
-	void init_genrand(uint32 s);
-	void init_by_array(uint32 init_key[], int key_length);
 
+	void seed( uint32 oneSeed );               // low-entropy - LEGACY - prefer deterministic_seed_u64() for full entropy
+	void seed( uint32 *const bigSeed );
+	void seed();                      // DEFAULT: HIGH-ENTROPY: auto-seed with /dev/urandom (if available) or system entropy -- Recommended for new code
+	void unique_seed();                        // HIGH-ENTROPY: nondeterministic seed interface based on system state
+	void deterministic_seed_u64(uint64_t seed);// HIGH-ENTROPY: deterministic seed interface
+	void deterministic_seed_f64(double seed);  // HIGH-ENTROPY: deterministic seed interface
+	void deterministic_seed_u32(uint32 seed);  // low-entropy : LEGACY INTEGRATION ONLY - prefer deterministic_seed_u64() for full entropy
+	void deterministic_seed_f32(float seed);   // low-entropy : LEGACY INTEGRATION ONLY - prefer deterministic_seed_f64() for full entropy
+
+public:
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
@@ -236,6 +237,9 @@ protected:
 		{ return hiBit(u) | loBits(v); }
 	uint32 twist( const uint32& m, const uint32& s0, const uint32& s1 ) const
 		{ return m ^ (mixBits(s0,s1)>>1) ^ (loBit(s1) ? MAGIC : 0U); }
+
+	void init_genrand(uint32 s); // low-entropy - NOT LEGACY - is how the mt19937ar-cok algorithm initializes the buffer with nonzero data before seeding
+	void init_by_array(uint32 init_key[], int key_length); // used by the full entropy seeding functions
 };
 
 
@@ -248,18 +252,33 @@ inline MTRand::MTRand( uint32 *const bigSeed )
 inline MTRand::MTRand()
 	{ seed(); }
 
+// @returns real number in [0,1]
 inline double MTRand::rand()
-	{ return double(randInt()) * 2.3283064370807974e-10; }
+{
+	constexpr double RAND_MAGIC = 2.3283064370807974e-10;
+	static_assert(double(UINT_MAX) * RAND_MAGIC == 1.0,
+		"[0,1] bounds: MAX uint32 produces EXACTLY 1.0 via this scaling factor");
+	return double(randInt()) * RAND_MAGIC;
+}
 
+// @returns real number in [0,n]
 inline double MTRand::rand( const double& n )
 	{ return rand() * n; }
 
+// @returns real number in [0,1)
 inline double MTRand::randExc()
-	{ return double(randInt()) * 2.3283064365386963e-10; }
+{
+	constexpr double RANDEXC_MAGIC = 2.3283064365386963e-10;
+	static_assert(double(UINT_MAX) * RANDEXC_MAGIC < 1.0,
+		"[0,1) bounds: scaled value is GUARANTEED < 1.0 at maximum input");
+	return double(randInt()) * RANDEXC_MAGIC;
+}
 
+// @returns real number in [0,n)
 inline double MTRand::randExc( const double& n )
 	{ return randExc() * n; }
 
+// @returns integer in [0,2^32-1]
 inline MTRand::uint32 MTRand::randInt()
 {
 	if( left == 0 ) reload();
@@ -273,7 +292,7 @@ inline MTRand::uint32 MTRand::randInt()
 	return ( s1 ^ (s1 >> 18) );
 }
 
-
+// @returns integer in [0,n] for n < 2^32
 inline MTRand::uint32 MTRand::randInt( const uint32& n )
 {
 	// Find which bits are used in n
@@ -289,12 +308,57 @@ inline MTRand::uint32 MTRand::randInt( const uint32& n )
 	return i;
 }
 
+#pragma region LEGACY SEED INTERFACES
+// ============================================================================
+// Seed Functions (for legacy integration & initialization)
+// ============================================================================
+// These functions exist primarily for legacy code integration where random
+// generators were seeded via simple uint32_t values (like srand()). They wrap
+// poor-quality seeds with SplitMix64 to expand them into statistically-sound
+// Mersenne Twister state before init.
+//
+// NEW CODE should prefer: unique_seed(), deterministic_seed_u64(), deterministic_seed_f64() for full entropy
+//
+// LEGACY INTEGRATION uses: seed(uint32_t), deterministic_seed_f32(), deterministic_seed_u32()
 
+/**
+ * @brief Legacy seed interface - Seed the generator with a simple uint32
+ *
+ * Accepts simple integer values for backward compatibility.
+ * Internally promoted to SplitMix64-based seeding, but max entropy remains 32-bit.
+ */
 inline void MTRand::seed( uint32 oneSeed )
 {
-	// Seed the generator with a simple uint32
 	deterministic_seed_u32(oneSeed);
 }
+
+/**
+ * @brief Legacy seed interface - for integrating with old code using simple integer seeds.
+ *
+ * Integrates with legacy code using basic srand() style seeding (e.g., time(NULL) or constant int).
+ * Internally promoted to high-quality SplitMix64 expansion, but max entropy capped at input value bits.
+ */
+inline void MTRand::deterministic_seed_u32(uint32 seedU32)
+{
+	// SplitMix64 is the superior algorithm, so just call that instead of SplitMix32;
+	// in a 64-bit space, there is far more "room" for the avalanche effect to occur.
+	// So, this is an improvement, even though max entropy remains capped at 32-bits.
+	deterministic_seed_u64(seedU32);
+}
+
+/**
+ * @brief Legacy seed interface - for integrating with old code using simple float seeds.
+ *
+ * Integrates with legacy code using basic srand() style seeding (e.g., time(NULL) or constant float).
+ * Internally promoted to high-quality SplitMix64 expansion, but max entropy capped at input value bits.
+ */
+inline void MTRand::deterministic_seed_f32(float seedF32)
+{
+	const uint32_t seedU32 = float_to_u32_bits(seedF32);
+
+	return deterministic_seed_u32(seedU32);
+}
+#pragma endregion // LEGACY SEED INTERFACES
 
 
 inline void MTRand::seed( uint32 *const bigSeed )
@@ -313,11 +377,16 @@ inline void MTRand::seed( uint32 *const bigSeed )
 }
 
 
+/**
+ * @brief DEFAULT High-entropy seeding interface -- automatically seed the generator with high-entropy values.
+ *
+ * Seed the generator with an array from /dev/urandom if available;
+ * Otherwise fallback to unique_seed()
+ *
+ * RECOMMENDED for new code.
+ */
 inline void MTRand::seed()
 {
-	// Seed the generator with an array from /dev/urandom if available
-	// Otherwise use a fallback
-
 	// First try getting an array from /dev/urandom
 	FILE* urandom = fopen( "/dev/urandom", "rb" );
 	if( urandom )
@@ -348,11 +417,13 @@ inline void MTRand::seed()
 
 
 /**
- * @brief Completely seed the generator with high-entropy values.
+ * @brief High-entropy seeding interface -- automatically seed the generator with high-entropy values.
  *
  * Generates a unique, high-entropy seed array derived from a combination of system time,
  * global/local counters, instance identity, and thread context. This ensures that no two
  * calls produce identical seeds, even when executed simultaneously on multiple threads.
+ *
+ * RECOMMENDED for new code.
  */
 inline void MTRand::unique_seed()
 {
@@ -375,12 +446,14 @@ inline void MTRand::unique_seed()
 
 
 /**
- * @brief Initializes the internal state array from a 64-bit seed.
+ * @brief High-entropy deterministic seeding interface
  *
- * Deterministically expands the seed into 624 independent 32-bit samples
+ * Deterministically expands 64-bit int into 624 independent 32-bit samples
  * using the SplitMix64 algorithm. Truncation is used for each sample to
  * ensure that every element of the state vector is an independent and
  * identically distributed (i.i.d.) value.
+ *
+ * -------------------
  *
  * NOTE: Using SplitMix64 to fill the Mersenne Twister (MT) array is the gold standard for
  * this process because it solves a known weakness of the MT: if seeded with a simple
@@ -388,7 +461,11 @@ inline void MTRand::unique_seed()
  * produce statistically sound numbers. SplitMix64 ensures the initial state is thoroughly
  * "shuffled."
  *
- * @param seed64 The 64-bit seed used to initialize the generator.
+ * -------------------
+ *
+ * RECOMMENDED for new code that requires repeatable results.
+ *
+ * @param seed64 - The 64-bit seed used to initialize the generator.
  */
 inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 {
@@ -414,25 +491,20 @@ inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 	init_by_array(seed_array, N);
 }
 
-inline void MTRand::deterministic_seed_u32(uint32 seed32)
+/**
+ * @brief High-entropy deterministic seeding interface
+ *
+ * Uses deterministic_seed_u64() with 64-bit float converted to 64-bit integer.
+ *
+ * Recommended for new code that needs to behave identically across different runs.
+ *
+ * @param seedF64 - The 64-bit seed used to initialize the generator.
+ */
+inline void MTRand::deterministic_seed_f64(double seedF64)
 {
-	// SplitMix64 is the superior algorithm, so just call that instead of SplitMix32;
-	// in a 64-bit space, there is far more "room" for the avalanche effect to occur.
-	deterministic_seed_u64(seed32);
-}
+	const uint64_t seedU64 = double_to_u64_bits(seedF64);
 
-inline void MTRand::deterministic_seed_f32(float seedFloat)
-{
-	const uint32_t seed32 = float_to_u32_bits(seedFloat);
-
-	return deterministic_seed_u32(seed32);
-}
-
-inline void MTRand::deterministic_seed_f64(double seedFloat)
-{
-	const uint64_t seed64 = double_to_u64_bits(seedFloat);
-
-	return deterministic_seed_u64(seed64);
+	return deterministic_seed_u64(seedU64);
 }
 
 
@@ -639,3 +711,5 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 //        and data race condition for `static uint32 differ`);
 //      - Replace the body of the low entropy function `MTRand::seed(uint32 oneSeed)`
 //        with the high-entropy `MTRand::deterministic_seed_u32(oneSeed);`
+//      - added comments clarifying which implementations are RECOMMENDED (high-entropy)
+//        and which methods are lower-entropy (included for LEGACY reasons)
