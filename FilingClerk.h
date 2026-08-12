@@ -144,7 +144,7 @@ protected:
 	int     m_nBufferLength; /* length of space allocated for token buffer */
 	int     m_nUsedLength;   /* length of used space in token buffer */
 
-	_finddata_t     m_wFindData;
+	_finddata_t     m_wFindData = {};
 	long            m_hFindHandle;
 
 	/**** Tokenization ****/
