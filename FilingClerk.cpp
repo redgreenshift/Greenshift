@@ -362,7 +362,7 @@ char* FilingClerk::EndSearch(void)
  * GetToken - return the type of the next token matched on the input stream
  *
  ****************************************************************************/
-token_t    FilingClerk::GetToken(void)
+FilingClerk::token_t    FilingClerk::GetToken(void)
 {
 	int    c;
 	int delimiter;

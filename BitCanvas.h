@@ -270,13 +270,19 @@ DECAY256(255)
 
  /****************************************************************************
   *
-  * BitCanvas
+  * @brief A Bit Canvas is an internal representation of pixel data used for
+  * high-performance manipulation at various bit depths (8, 16, or 32 bits).
+  * It acts as an intelligent bitmap that uses delta-based transition tables
+  * to smoothly manage color shifts, fades, and other dynamic visual transitions.
+  *
+  * -----
   *
   * BitCanvas is neither a screen nor a device.
+  *
   * It's more like an intelligent bitmap.
+  *
   * It just manipulates a bunch of bits, presumably to display somewhere,
   * but not necessarily on screen.
-  *
   *
   ****************************************************************************/
 class BitCanvas

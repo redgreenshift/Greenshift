@@ -113,12 +113,9 @@
 
   fstream, strstream are iostreams
  ****************************************************************************/
-
-typedef int token_t;
-
-
 class FilingClerk
 {
+	typedef int token_t;
 public:
 	FilingClerk();
 	~FilingClerk();

@@ -168,10 +168,12 @@
   *
   ****************************************************************************/
 
-  /*
-   * pixel map is a value that maps a pixel to another pixel
-   * its value is the offset into the buffer (x + y * width)
-   */
+ /**
+  * @brief A PIXELMAP represents a single pixel's memory offset within a linear buffer, acting as the numerical tool used to map one position to another.
+  *
+  * pixel map is a value that maps a pixel to another pixel
+  * its value is the offset into the buffer (x + y * width)
+  */
 typedef unsigned long   PIXELMAP;
 typedef unsigned long* PPIXELMAP;
 

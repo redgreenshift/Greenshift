@@ -654,9 +654,9 @@ error_t    Greenshift::LoadConfigs(void)
 			&m_dwNumPalettes)) == SUCCESS
 		)
 	{
-		/*
+		/*************************
 		 * load G-Force configs
-		 */
+		 *************************/
 		if (   strcpy_s(strRoot, _countof(strRoot), strModulePath) != 0
 			|| strcat_s(strRoot, _countof(strRoot), strGForce) != 0)
 		{

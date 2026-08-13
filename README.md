@@ -2,7 +2,7 @@
 
 A high-performance visualization engine with 4D graphing capabilities.
 
-Greenshift was designed to achieve the speed of Geiss without resorting to assembly, and attempted to outdo G-Force with smooth transitions between effects. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations via user-defined mathematical expressions.
+Greenshift was designed to achieve the speed of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations via user-defined mathematical expressions.
 
 Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient Winamp visualization plugin.
 
@@ -12,7 +12,7 @@ Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was ada
 * **Mathematically Rich Syntax:** Supports complex mathematical expressions, including hyperbolic trigonometric functions.
 * **Dynamic Expression Engine:** Allows for an infinite range of behaviors via user-defined formulas in external text files, evaluated in real-time without needing to recompile.
 * **Color Space Support:** Built-in support for RGB, HSV, HLS, and CMY palettes.
-* **Efficient Rendering:** Designed to maintain high framerates when switching between pre-calculated delta fields.
+* **Efficient Rendering:** Designed to maintain high framerates while smoothly transitioning between pre-calculated delta fields — the code that moves every pixel on the screen.
 
 ## Controls (Hotkeys)
 

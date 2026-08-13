@@ -64,11 +64,13 @@ typedef struct tagPHASEDESCRIPTOR
  */
 
 
- /****************************************************************************
-  *
-  * PhaseFunction -
-  *
-  ****************************************************************************/
+ /**
+  * @brief A Phase Function is an N-dimensional function structure designed to
+  * manage sets of mathematical subexpressions organized into "phases" which
+  * can be evaluated in batches. It allows for the definition of complex,
+  * multi-variable functions by uniquely indexing expressions using both
+  * dimension/phase identifiers and their respective indices within those phases.
+  */
 class PhaseFunction
 {
 public:

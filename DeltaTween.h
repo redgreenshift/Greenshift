@@ -40,13 +40,13 @@ typedef struct tagPIXELMAPDESCRIPTION
 } PIXELMAPDESCRIPTION;
 
 
-/****************************************************************************
- *
- * DeltaTween
- *
- * answers a pixel map
- *
- ****************************************************************************/
+/**
+ * @brief A DeltaTween is a class derived from TweenThread that precalculates
+ * transition frames between two DeltaField sources. It generates smooth motion
+ * paths by interpolating the displacement-based coordinate values (deltas) of
+ * each pixel provided by the input fields, facilitating a gradual transition
+ * between the two input fields over a given range of frames.
+ */
 class DeltaTween : public TweenThread
 {
 public:
@@ -65,8 +65,13 @@ protected:
 
 public:
 	DeltaTween(const TWEENDESCRIPTION& tween_description);
-	virtual         ~DeltaTween();
+	virtual         ~DeltaTween() override;
 
+	/**
+	 * Returns a pointer to the precalculated pixel map buffer for the current frame.
+	 *
+	 * @return PIXELMAP*: a pointer to the pixel map; each value is an absolute buffer offset.
+	 */
 	inline PIXELMAP* GetPixelMap(void) { return (PIXELMAP*)GetFrame(); };
 
 protected:
@@ -74,14 +79,14 @@ protected:
 	virtual void    PrerenderFrames(const DWORD dwFrames,
 		void** pFrames,
 		void* pObject1,
-		void* pObject2);
+		void* pObject2) override;
 	virtual void    ExperimentalPrerenderFrames(const DWORD dwFrames,
 		void** pFrames,
 		void* pFirstFrame,
-		void* pLastFrame);
+		void* pLastFrame) override;
 	virtual void    ExperimentalPrerenderFrame(
 		void* pFrame,
-		void* pObject1);
+		void* pObject1) override;
 
 	inline long    ConvertToScreen(const value_t nPhysicalValue,
 		const long nHalfDimension,

@@ -22,7 +22,7 @@
 
  /****************************************************************************
   *
-  * DeltaField
+  * DeltaField - parametric equation describing how every pixel moves on the screen between frames.
   *
   ****************************************************************************/
 

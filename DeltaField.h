@@ -34,11 +34,12 @@
 #include "PhaseFunction.h"
 
 
-  /****************************************************************************
-   *
-   * DeltaField
-   *
-   ****************************************************************************/
+/**
+ * @brief A DeltaField is a parametric equation used to calculate pixel displacement
+ * (delta X and delta Y) for visual effects. It uses mathematical expressions
+ * based on source coordinates (either Cartesian or Polar) to determine how
+ * much each pixel should move.
+ */
 class DeltaField
 {
 public:
@@ -74,8 +75,8 @@ private:
 	value_t                 m_nTheta;
 	value_t                 m_nAspect;
 
-	Expression* m_pSource1 = nullptr;
-	Expression* m_pSource2 = nullptr;
+	Expression* m_pSource1 = nullptr; // SourceRadius or SourceX
+	Expression* m_pSource2 = nullptr; // SourceTheta or SourceY
 
 	PhaseFunction           m_pfValues;
 	MyDictionary<value_t*>  m_dictValues;

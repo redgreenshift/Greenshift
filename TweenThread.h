@@ -52,13 +52,22 @@ typedef struct tagTWEENDESCRIPTION
  * answers a logical palette
  *
  ****************************************************************************/
+
+/**
+* @brief A TweenThread is an abstract class that inherits from ThreadedEntity,
+* designed to precalculate interpolation frames between two data states
+* (represented by m_pObject1 and m_pObject2). It manages a background thread
+* that transitions between "plain" frames of the current state and interpolated
+* "tween" frames, providing a seamless visual transition when requested via
+* ScheduleTween.
+*/
 class TweenThread : public ThreadedEntity
 {
 public:
 	TweenThread(const TWEENDESCRIPTION& tween_description);
-	virtual         ~TweenThread();
+	virtual         ~TweenThread() override;
 
-	virtual int     ThreadProcedure(void* pData);
+	virtual int     ThreadProcedure(void* pData) override;
 
 
 	error_t         Initialize(void* pObject1);

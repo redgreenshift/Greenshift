@@ -43,6 +43,13 @@
   THREAD_PRIORITY_HIGHEST
   */
 
+/**
+* @brief A ThreadedEntity is an abstract base class that provides a structured
+* framework for managing a single Windows-based thread. It encapsulates the
+* lifecycle of the thread — including creation, termination, and state tracking —
+* while delegating its core task logic to a specialized subclass via the pure
+* virtual ThreadProcedure method.
+*/
 class ThreadedEntity
 {
 public:
