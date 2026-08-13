@@ -673,7 +673,7 @@ error_t FilingClerk::LoadConfig(
 		 * changed (for whatever reason), use the extra check
 		 */
 
-		// Load files from disk, store in slots [N to N+nNewConfigs] of pTmpConfig
+		// Load files from disk, store in slots [nOldConfigs to nTotalConfigs-1] of pTmpConfig
 		nConfig = nOldConfigs; // start at the index after nOldConfigs (we'll fill in the front half later)
 		while ((strFile != NULL) && (nConfig < nTotalConfigs))
 		{
