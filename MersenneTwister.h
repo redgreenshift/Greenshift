@@ -53,6 +53,9 @@
 
 #include <algorithm>
 #include <atomic>
+#if __cpp_lib_bit_cast >= 201806L
+#include <bit>
+#endif
 #include <chrono>
 #include <cstdint> // uint32_t
 #if __cpp_lib_bit_cast < 201806L

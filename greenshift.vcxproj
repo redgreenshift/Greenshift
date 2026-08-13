@@ -682,6 +682,7 @@
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
     <ClInclude Include="InsertionOrderedMap.hpp" />
+    <ClInclude Include="MersenneTwister.h" />
     <ClInclude Include="MyDictionary.h" />
     <ClInclude Include="DXError.h" />
     <ClInclude Include="Expression.h" />
