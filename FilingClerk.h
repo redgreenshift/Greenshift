@@ -113,6 +113,15 @@
 
   fstream, strstream are iostreams
  ****************************************************************************/
+
+/**
+ * @class FilingClerk
+ * @brief Manages filesystem access and character-level tokenization.
+ *
+ * It facilitates directory traversal and file stream management through a state-driven
+ * parser. Its primary role is to scan disk directories and parse files into structured
+ * key-value dictionaries (MyDictionary) for the project's configuration system.
+ */
 class FilingClerk
 {
 	typedef int token_t;
