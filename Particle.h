@@ -23,7 +23,7 @@
 
  /****************************************************************************
   *
-  * Particle - Abstract class
+  * Particle
   *
   ****************************************************************************/
 
@@ -39,12 +39,18 @@
 #include "VectorGraphic.h"
 
 
+ //class Particle : public GraphicalEntity
 /****************************************************************************
  *
- * Particle - root class for dynamic display objects?
+ * @brief Particle - root class for dynamic display objects.
+ *
+ * Particle is the base class for dynamic visual objects, managing
+ * lifetime, timing, and instance-based data like aspect ratio and zoom.
+ * It manages an array of VectorGraphic instances that define the particle's
+ * geometry and handle the actual rendering parameters (such as position and
+ * color) through evaluated expressions.
  *
  ****************************************************************************/
- //class Particle : public GraphicalEntity
 class Particle
 {
 public:
@@ -151,20 +157,23 @@ private:
 
 
 /****************************************************************************
+ * @brief WaveShape - special particle, only one onscreen at a time.
  *
- * WaveShape - special particle, only one onscreen at a time, and has a "running" flag so Greenshift knows when to replace it?
+ * A WaveShape is a specialized subclass of Particle designed to represent a
+ * single, discrete geometric entity. By grouping multiple VectorGraphic
+ * components into one cohesive object, it provides a singular structure
+ * used by more complex systems like MetaWaveShape.
+ *
+ * Currently is IDENTICAL to a Particle. I had some ideas to add a "running"
+ * flag so Greenshift knows when to replace it, but that is something to
+ * consider for the future.
  *
  ****************************************************************************/
 class WaveShape : public Particle
 {
 public:
-	/****************************************************************************
-	 *
-	 * WaveShape - is IDENTICAL to a Particle
-	 *
-	 ****************************************************************************/
 	WaveShape() {};
-	virtual             ~WaveShape() {};
+	virtual ~WaveShape() override {};
 };
 
 

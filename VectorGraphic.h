@@ -41,9 +41,13 @@
 enum { VG_PARAMETRIC, VG_4D };
 
 /****************************************************************************
+ * @brief VectorGraphic - base for dynamic objects composed of points and lines
  *
- * VectorGraphic - base for dynamic objects composed of points and lines
- *
+ * A VectorGraphic is a base class for geometric entities that uses mathematical
+ * functions to define points in 2D or 3D space. It provides mechanisms to
+ * evaluate complex, multi-dimensional expressions (via PhaseFunction) and
+ * translate those coordinates into visual positions on a screen through
+ * rotation and perspective projection.
  ****************************************************************************/
 class VectorGraphic
 {

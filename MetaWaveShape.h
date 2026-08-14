@@ -34,7 +34,12 @@
 #include "Particle.h"
 
 
-
+/**
+ * @brief MetaWaveShape is a class that manages a collection of WaveShape objects
+ * by periodically selecting new shapes using configurable time intervals. It
+ * supports smooth, cross-fading transitions (tweens) between the current and
+ * next wave shapes during the rendering loop in BitCanvas.
+ */
 class MetaWaveShape : public MetaParticleAbstract
 {
 protected:

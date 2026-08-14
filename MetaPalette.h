@@ -35,7 +35,12 @@
 
 
 
-
+/**
+ * @brief MetaPalette is a class that manages a collection of Palette objects.
+ * It handles the periodic selection of new palettes via configurable
+ * intervals and supports smooth transitions (tweens) between them when
+ * updated through a BitCanvas.
+ */
 class MetaPalette : public MetaConfig
 {
 protected:

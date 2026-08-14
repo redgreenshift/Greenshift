@@ -37,13 +37,18 @@
 
 #define MAX_RUNNING_PARTICLES 4
 
-  /*
-   * MetaParticleAbstract provides the smarts for drawing and tweening
-   */
-   /*
-	* MetaParticle and MetaWaveShape provide the smarts for _selection_
-	*/
-
+/**
+ * @brief MetaParticleAbstract provides the smarts for drawing and tweening;
+ * MetaParticle and MetaWaveShape provide the smarts for _selection_.
+ *
+ * -----
+ *
+ * MetaParticleAbstract provides the core lifecycle and geometric logic common
+ * to all particles, handling parameters like lifetime and scaling. Crucially,
+ * it manages the mathematical interpolation (tweening) between current and
+ * next states, allowing distinct visual configurations to transition smoothly
+ * through the Get methods during rendering.
+ */
 class MetaParticleAbstract : public MetaConfig
 {
 protected:
@@ -65,14 +70,14 @@ protected:
 	value_t* m_pLastX;
 	value_t* m_pLastY;
 
-	//    char                m_strDefaultAspect[32];
+	//char                m_strDefaultAspect[32];
 
 	bool                m_bTweening;
 	bool                m_bConnected;
 
 public:
 	MetaParticleAbstract();
-	virtual             ~MetaParticleAbstract();
+	virtual ~MetaParticleAbstract();
 
 protected:
 	inline void         GetNums(DWORD* outInstances, DWORD* outFunctions, DWORD* outSteps)
@@ -89,21 +94,21 @@ protected:
 		m_bConnected = m_pCurrent->GetConnected();
 
 		if (m_bTweening)
-			//    {
-			//        *outInstances = dwInstances;
-			//        *outFunctions = dwFunctions;
-			//        *outSteps     = dwSteps;
-			//    }
-			//    else
+		//{
+		//    *outInstances = dwInstances;
+		//    *outFunctions = dwFunctions;
+		//    *outSteps     = dwSteps;
+		//}
+		//else
 		{
 			dwInstances2 = m_pNext->GetNumInstances();
 			dwFunctions2 = m_pNext->GetNumFunctions();
 			dwSteps2 = m_pNext->GetNumSteps();
 			*outInstances = max(dwInstances, dwInstances2);
 			*outFunctions = max(dwFunctions, dwFunctions2);
-			//        *outSteps     = max( dwSteps, dwSteps2 );
-			//        *outInstances = dwInstances * (1.0f - m_nPercent) + m_nPercent * dwInstances2;
-			//        *outFunctions = dwFunctions * (1.0f - m_nPercent) + m_nPercent * dwFunctions2;
+			//*outSteps     = max( dwSteps, dwSteps2 );
+			//*outInstances = dwInstances * (1.0f - m_nPercent) + m_nPercent * dwInstances2;
+			//*outFunctions = dwFunctions * (1.0f - m_nPercent) + m_nPercent * dwFunctions2;
 			*outSteps = LCLIP(dwSteps * (1.0f - m_nPercent) + m_nPercent * dwSteps2);
 			if (m_nPercent > 0.5f)
 				m_bConnected = m_pNext->GetConnected();
@@ -125,10 +130,15 @@ protected:
 
 	void        DrawParametric(BitCanvas* pBitCanvas);
 	void        Draw4d(BitCanvas* pBitCanvas);
-
 };
 
 
+/**
+ * @brief MetaParticle is a class used to manage the lifecycle and
+ * probabilistic spawning of particle systems within the graphical engine. It
+ * provides the logic for defining particle lifetimes and spawn intervals, as
+ * well as handling smooth transitions (tweens) between active particle states.
+ */
 class MetaParticle : public MetaParticleAbstract
 {
 protected:
@@ -148,11 +158,9 @@ protected:
 	HighResolutionTimer     m_hrParticleTimer;
 	MyDictionary<value_t*>    m_dValues;
 
-
-
 public:
 	MetaParticle();
-	virtual             ~MetaParticle();
+	virtual ~MetaParticle() override;
 
 	virtual error_t     InitializeDerived(
 		MyDictionary<mychar_t*>* inMainConfig,

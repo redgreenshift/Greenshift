@@ -39,6 +39,14 @@
 
 #include "MersenneTwister.h"
 
+/**
+ * @brief MetaConfig is an abstract base class designed to manage multiple sets
+ * of config data through its derived subclasses. It provides common
+ * functionality such as random selection of configs, timing management via a
+ * high-resolution timer, and interfaces for initializing and updating
+ * specific system components (like the BitCanvas or WindowDevice) with
+ * provided config dictionaries.
+ */
 class MetaConfig
 {
 private:
@@ -46,7 +54,7 @@ private:
 protected:
 	MTRand              m_mtRand;
 	//    MTRand::uint32      m_dwNumConfigs;
-	DWORD               m_dwNumConfigs;
+	DWORD               m_dwNumConfigs = 0;
 private:
 	FiniteSet<void*, 61> m_fsRecentList;  /* hmm, tryint to make it private */
 protected:

@@ -53,6 +53,13 @@ enum {
 	PALETTE_CMYK
 };
 
+/**
+ * @brief A Palette is an object that manages a set of color values, providing
+ * methods to initialize and access them from various color models like RGB,
+ * HSV, HLS, or CMY. It serves as the visual lookup table for rendering
+ * components, allowing colors to be procedurally generated based on
+ * user-provided expressions and timing constraints.
+ */
 class Palette
 {
 public:
@@ -107,10 +114,14 @@ private:
 
 	/* these three expressions are for each of the */
 	/* components, whether it be                   */
-	Expression* m_pExp1;   /* (RGB) Red-Green-Blue,                       */
-	Expression* m_pExp2;   /* (HSV) Hue-Saturation-Value,                 */
-	Expression* m_pExp3;   /* (HLS) Hue-Lightness-Saturation, or          */
-	/* another representation not supported yet    */
+	/* (RGB) Red-Green-Blue,                       */
+	/* (HSV) Hue-Saturation-Value,                 */
+	/* (HLS) Hue-Lightness-Saturation,             */
+	/* (CMY) Cyan-Magenta-Yellow,                  */
+	/* or another representation not supported yet */
+	Expression* m_pExp1 = nullptr; // Component1 (Red, Hue, or Cyan)
+	Expression* m_pExp2 = nullptr; // Component2 (Green, Saturation, Lightness, or Magenta)
+	Expression* m_pExp3 = nullptr; // component3 (Blue, Value, Saturation, or Yellow)
 };
 
 

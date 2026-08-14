@@ -33,7 +33,12 @@
 #include "MetaConfig.h"
 #include "DeltaField.h"
 
-
+/**
+ * @brief MetaDeltaField is a class that manages a collection of DeltaField objects
+ * by initializing them with provided config data. It facilitates the periodic
+ * selection and rotation between these configured delta fields, using timer-based
+ * intervals to trigger updates within a BitCanvas.
+ */
 class MetaDeltaField : public MetaConfig
 {
 protected:
