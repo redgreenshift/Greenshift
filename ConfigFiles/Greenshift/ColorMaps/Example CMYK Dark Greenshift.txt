@@ -1,0 +1,5 @@
+C="i + sqwv(i*255)",
+M="(i*(sgn(i - 200/255) + 1)) + sqwv(i*255)",
+Y="i + sqwv(i*255)",
+K="i + sqwv(i*255)",
+Vers=100

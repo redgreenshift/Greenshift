@@ -268,6 +268,25 @@ I will need to revisit my ideas and see what I actually want to implement.
  *
 \****************************************************************************/
 
+Modernization:
+    UNIT TESTS / UNIT TESTS / UNIT TESTS before making major behavior modifications.
+    Update to C++17, address any issues/warnings (small).
+    Update to C++20, address all issues/warnings (MANY).
+    UTF8->UTF16 conversion
+    UTF8 detection (relatively easy once I had conversion)
+    More logging
+
+Compatibility changes to be able to load some G-Force Configs that had nonstandard formatting
+
+Add Relational Expressions (>, <, >=, <=, ==, !=)
+Added ExpressionFactorial (fact, !)
+Added CMYK palette support (specifically adding the blacK component)
+
+Created replacement collections for MyDictionary/FiniteSet -> InsertionOrderedMap/StaticFifoSet
+MersenneTwister.h random seed code.
+ - Guarantee unique even for seed at same time code.
+ - use a much higher-entropy algorithm by default.
+
 Final:
 ------
 2001 / ?? / ?? - ??:??

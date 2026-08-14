@@ -142,10 +142,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	mychar_t* strCyan = NULL;
 	mychar_t* strMagenta = NULL;
 	mychar_t* strYellow = NULL;
+	mychar_t* strblacK = nullptr;
 
 	mychar_t* strExp1 = NULL;
 	mychar_t* strExp2 = NULL;
 	mychar_t* strExp3 = NULL;
+	mychar_t* strExp4 = nullptr;
 
 
 	/*
@@ -166,7 +168,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 
 	/*
 	 * determine palette type
-	 * Partial order, RGB, HSV, HLS, CMY(K?)
+	 * Partial order, RGB, HSV, HLS, CMY[K])
 	 */
 	m_nPaletteType = PALETTE_UNKNOWN;
 	if ((strRed = pConfig->GetValue("R")) != NULL
@@ -195,9 +197,8 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	{
 		m_nPaletteType = PALETTE_CMY;
 
-		// CMYK is probably unnecessary, considering it's for printing
-//        if( (strBlacK = pConfig->GetValue("K")) != NULL )
-//            m_nPaletteType = PALETTE_CMYK;
+		if ((strblacK = pConfig->GetValue("K")) != nullptr)
+			m_nPaletteType = PALETTE_CMYK;
 	}
 
 
@@ -264,6 +265,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 		strExp1 = strCyan;
 		strExp2 = strMagenta;
 		strExp3 = strYellow;
+		strExp4 = strblacK;
 		break;
 
 	default:
@@ -289,6 +291,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	SAFE_DELETE(m_pExp1);
 	SAFE_DELETE(m_pExp2);
 	SAFE_DELETE(m_pExp3);
+	SAFE_DELETE(m_pExp4);
 
 	/*
 	 * compile the three component expressions
@@ -297,7 +300,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 	if (err != SUCCESS)
 	{
-		const char* strID1 = "Rgb / Hsv / Cmy";
+		const char* strID1 = "Rgb / Hsv / Cmy / Cmyk";
 		DumpToFile("error.txt", ">>> Palette : ");
 		DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 		DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -311,7 +314,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
-			const char* strID2 = "rGb / hSv / cMy";
+			const char* strID2 = "rGb / hSv / cMy / cMyk";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -326,7 +329,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
-			const char* strID3 = "rgB / hsV / cmY";
+			const char* strID3 = "rgB / hsV / cmY / cmYk";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -337,8 +340,23 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	}
 	if (err != SUCCESS)
 		return err;
+	if (strExp4 != nullptr)
+	{
+		err = Expression::Compile(strExp4, &m_pExp4, &m_dValues, inGlobals);
+#if EXTREME_DEBUGGING
+		if (err != SUCCESS)
+		{
+			const char* strID4 = "cmyK (definitely the color BLACK)";
+			DumpToFile("error.txt", ">>> Palette : ");
+			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
+			DumpToFile("error.txt", ErrorString(err), " <<<\n");
+			DumpToFile("error.txt", strID4, "<-- strExpressionID 4 hint\n");
+			DumpToFile("error.txt", strExp4, "<-- strExp4\n");
+		}
+#endif
+	}
 
-	return SUCCESS;
+	return err;
 }
 
 
@@ -526,7 +544,7 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 LOGPALETTE& Palette::GetLogicalPalette(void)
 {
 	DWORD       i;
-	value_t     c1, c2, c3;
+	value_t     c1, c2, c3, c4;
 	COLORREF    crColor;
 
 
@@ -557,6 +575,13 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 		m_pfValues.EvaluatePhase(3);
 		c3 = m_pExp3->Evaluate();
 
+		if (m_pExp4)
+		{
+			m_pfValues.EvaluatePhase(3);
+			c4 = m_pExp4->Evaluate();
+		}
+		else
+			c4 = 0;
 
 		switch (m_nPaletteType)
 		{
@@ -578,10 +603,20 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 			break;
 
 		case PALETTE_CMY:
-		case PALETTE_CMYK: /* bleh, for now ignore K */
-			c1 = 1.0f - c1;
-			c2 = 1.0f - c2;
-			c3 = 1.0f - c3;
+		case PALETTE_CMYK:
+			if (m_nPaletteType == PALETTE_CMYK)
+			{
+				c4 = (1.0f - c4);
+				c1 = (1.0f - c1) * c4;
+				c2 = (1.0f - c2) * c4;
+				c3 = (1.0f - c3) * c4;
+			}
+			else
+			{
+				c1 = 1.0f - c1;
+				c2 = 1.0f - c2;
+				c3 = 1.0f - c3;
+			}
 			Clip(&c1);
 			Clip(&c2);
 			Clip(&c3);
