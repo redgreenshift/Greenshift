@@ -647,7 +647,7 @@ error_t FilingClerk::LoadConfig(
 	 */
 	while (strFile != NULL)
 	{
-		if (!EndsIn(strFile, ".zip"))
+		if (!EndsIn(strFile, ".zip") && !EndsIn(strFile, ".bak"))
 			nNewConfigs++;
 		strFile = GetNextFile();
 	}
@@ -677,7 +677,7 @@ error_t FilingClerk::LoadConfig(
 		nConfig = nOldConfigs; // start at the index after nOldConfigs (we'll fill in the front half later)
 		while ((strFile != NULL) && (nConfig < nTotalConfigs))
 		{
-			if (!EndsIn(strFile, ".zip"))
+			if (!EndsIn(strFile, ".zip") && !EndsIn(strFile, ".bak"))
 			{
 				if (handleColorMaps && EndsIn(strFile, ".map"))
 				{
