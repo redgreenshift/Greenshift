@@ -698,6 +698,7 @@
     <ClInclude Include="MetaPalette.h" />
     <ClInclude Include="MetaParticle.h" />
     <ClInclude Include="MetaWaveShape.h" />
+    <ClInclude Include="OKLab.hpp" />
     <ClInclude Include="Palette.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="PhaseFunction.h" />

@@ -26,6 +26,7 @@
   *
   ****************************************************************************/
 
+#include "OKLab.hpp"
 #include "Palette.h"
 
   /****************************************************************************
@@ -507,6 +508,8 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 			pal2->palPalEntry[i].peBlue * (nPercent));
 
 		GetPalette().palPalEntry[i].peFlags = pal2->palPalEntry[i].peFlags;
+#elif 1
+		GetPalette().palPalEntry[i] = OKLab::interpolate(pal1->palPalEntry[i], pal2->palPalEntry[i], nPercent);
 #else
 		BYTE    tmp1;
 		BYTE    tmp2;
