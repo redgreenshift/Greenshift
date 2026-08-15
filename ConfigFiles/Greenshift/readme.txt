@@ -287,6 +287,8 @@ MersenneTwister.h random seed code.
  - Guarantee unique even for seed at same time code.
  - use a much higher-entropy algorithm by default.
 
+Added OKLab Color Space interpolation -- When morphing between palettes, interpolate through OKLab Color Space to avoid muddy colors that can occur when interpolating through RGB space.
+
 Final:
 ------
 2001 / ?? / ?? - ??:??
