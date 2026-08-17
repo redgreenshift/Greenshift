@@ -45,7 +45,7 @@ namespace OKLab
 	inline Lab interpolate_oklab(const Lab& start, const Lab& end, value_t t)
 	{
 		// Clamp t to [0, 1] to prevent overshooting the colors
-		t = std::clamp(t, 0.0, 1.0);
+		t = std::clamp<value_t>(t, 0.0f, 1.0f);
 
 		Lab result;
 
@@ -140,12 +140,12 @@ namespace OKLab
 	// Helper to convert Linear RGB back to sRGB (gamma encoding)
 	inline value_t linear_to_SRGB(value_t color)
 	{
-		color = std::clamp(color, 0.0, 1.0);
-		if (color <= 0.0031308) {
-			return 12.92 * color;
+		color = std::clamp<value_t>(color, 0.0f, 1.0f);
+		if (color <= 0.0031308f) {
+			return 12.92f * color;
 		}
 		else {
-			return 1.055 * std::pow(color, 1.0 / 2.4) - 0.055;
+			return 1.055f * std::pow(color, 1.0f / 2.4f) - 0.055f;
 		}
 	}
 
@@ -154,9 +154,9 @@ namespace OKLab
 		RGB lin = oklab_to_linear_srgb(c);
 		// 4. Linear RGB -> sRGB (Gamma encoding) and Clamp to [0, 1]
 		RGB result;
-		result.r = std::clamp(linear_to_SRGB(lin.r), 0.0, 1.0);
-		result.g = std::clamp(linear_to_SRGB(lin.g), 0.0, 1.0);
-		result.b = std::clamp(linear_to_SRGB(lin.b), 0.0, 1.0);
+		result.r = std::clamp<value_t>(linear_to_SRGB(lin.r), 0.0f, 1.0f);
+		result.g = std::clamp<value_t>(linear_to_SRGB(lin.g), 0.0f, 1.0f);
+		result.b = std::clamp<value_t>(linear_to_SRGB(lin.b), 0.0f, 1.0f);
 
 		return result;
 	}
@@ -165,8 +165,8 @@ namespace OKLab
 		return static_cast<value_t>(b) / 255.0f;
 	}
 	static inline uint8_t toU8(value_t x01) {
-		x01 = std::clamp(x01, 0.0, 1.0);
-		return static_cast<uint8_t>(std::lround(x01 * 255.0));
+		x01 = std::clamp<value_t>(x01, 0.0f, 1.0f);
+		return static_cast<uint8_t>(std::lround(x01 * 255.0f));
 	}
 
 	/**
