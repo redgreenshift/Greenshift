@@ -28,6 +28,8 @@
    *
    *
    * _Everything_ in Project Greenshift must include this file in the first line.
+   * (not strictly true anymore, just the idea I had initially.
+   * The copyright notices largely serve that function now)
    *
    * Yes, it seems redundant and unnecessary, but this is for a couple reasons.
    *
@@ -180,12 +182,18 @@ typedef unsigned long* PPIXELMAP;
 
 /*
  * the floating point value type
+ *
+ * Configuration: Set to 1 for double, 0 for float
  */
- /*
- typedef double    value_t;
- /*/
-typedef float   value_t;
-/**/
+#define USE_HIGH_PRECISION_FLOAT 0
+
+#if USE_HIGH_PRECISION_FLOAT
+typedef double value_t;
+#define VALUE_T_SIZE 8
+#else
+typedef float value_t;
+#define VALUE_T_SIZE 4
+#endif
 
 typedef const char mychar_t;
 

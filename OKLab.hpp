@@ -73,7 +73,7 @@ namespace OKLab
 		value_t s = 0.0883024619f * c.r + 0.2817188376f * c.g + 0.6299787005f * c.b;
 
 		// 3. Non-linear transformation (Cube Root)
-#ifdef USE_HIGH_PRECISION
+#ifdef USE_HIGH_PRECISION_FLOAT
 		value_t l_ = std::cbrt(l);
 		value_t m_ = std::cbrt(m);
 		value_t s_ = std::cbrt(s);
