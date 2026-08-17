@@ -22,7 +22,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 
 #include "Project Greenshift.h"
 #include "Palette.h"
