@@ -48,16 +48,16 @@ Palette::Palette()
 	/*
 	 * testing to see if this is the reason for the black screen
 	 */
-	DWORD i;
-	for (i = 0; i < PALETTE_SIZE; i++)
-	{
-		GetPalette().palPalEntry[i].peRed = 255;
-		GetPalette().palPalEntry[i].peGreen = 255;
-		GetPalette().palPalEntry[i].peBlue = 255;
-		GetPalette().palPalEntry[i].peFlags = 0;
-		//        GetPalette().palPalEntry[i].peFlags = PC_NOCOLLAPSE;
+	//DWORD i;
+	//for (i = 0; i < PALETTE_SIZE; i++)
+	//{
+	//	GetPalette().palPalEntry[i].peRed = 255;
+	//	GetPalette().palPalEntry[i].peGreen = 255;
+	//	GetPalette().palPalEntry[i].peBlue = 255;
+	//	GetPalette().palPalEntry[i].peFlags = 0;
+	//	//        GetPalette().palPalEntry[i].peFlags = PC_NOCOLLAPSE;
 
-	}
+	//}
 
 }
 
@@ -494,43 +494,7 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 
 	for (i = 0; i < nEntries; i++)
 	{
-#ifdef UNDEFINED
-		GetPalette().palPalEntry[i].peRed = (BYTE)(
-			pal1->palPalEntry[i].peRed * (1.0f - nPercent) +
-			pal2->palPalEntry[i].peRed * (nPercent));
-
-		GetPalette().palPalEntry[i].peGreen = (BYTE)(
-			pal1->palPalEntry[i].peGreen * (1.0f - nPercent) +
-			pal2->palPalEntry[i].peGreen * (nPercent));
-
-		GetPalette().palPalEntry[i].peBlue = (BYTE)(
-			pal1->palPalEntry[i].peBlue * (1.0f - nPercent) +
-			pal2->palPalEntry[i].peBlue * (nPercent));
-
-		GetPalette().palPalEntry[i].peFlags = pal2->palPalEntry[i].peFlags;
-#elif 1
 		GetPalette().palPalEntry[i] = OKLab::interpolate(pal1->palPalEntry[i], pal2->palPalEntry[i], nPercent);
-#else
-		BYTE    tmp1;
-		BYTE    tmp2;
-		PALETTEENTRY tmpPE;
-
-		tmp1 = pal1->palPalEntry[i].peRed;
-		tmp2 = pal2->palPalEntry[i].peRed;
-		tmpPE.peRed = (BYTE)(tmp1 + (tmp2 - tmp1) * nPercent);
-
-		tmp1 = pal1->palPalEntry[i].peGreen;
-		tmp2 = pal2->palPalEntry[i].peGreen;
-		tmpPE.peGreen = (BYTE)(tmp1 + (tmp2 - tmp1) * nPercent);
-
-		tmp1 = pal1->palPalEntry[i].peBlue;
-		tmp2 = pal2->palPalEntry[i].peBlue;
-		tmpPE.peBlue = (BYTE)(tmp1 + (tmp2 - tmp1) * nPercent);
-
-		tmpPE.peFlags = pal2->palPalEntry[i].peFlags;
-
-		GetPalette().palPalEntry[i] = tmpPE;
-#endif
 	}
 
 	return SUCCESS;
@@ -541,7 +505,7 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 
 /****************************************************************************
  *
- * GetLogicalPalette -
+ * GetLogicalPalette - DOES re-evaluate the palette
  *
  ****************************************************************************/
 LOGPALETTE& Palette::GetLogicalPalette(void)
@@ -607,25 +571,16 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 
 		case PALETTE_CMY:
 		case PALETTE_CMYK:
-			if (m_nPaletteType == PALETTE_CMYK)
-			{
-				c4 = (1.0f - c4);
-				c1 = (1.0f - c1) * c4;
-				c2 = (1.0f - c2) * c4;
-				c3 = (1.0f - c3) * c4;
-			}
-			else
-			{
-				c1 = 1.0f - c1;
-				c2 = 1.0f - c2;
-				c3 = 1.0f - c3;
-			}
+			c4 = (1.0f - c4);
+			c1 = (1.0f - c1) * c4;
+			c2 = (1.0f - c2) * c4;
+			c3 = (1.0f - c3) * c4;
 			Clip(&c1);
 			Clip(&c2);
 			Clip(&c3);
 			crColor = RGB(PercentToByte(c1),
-				PercentToByte(c2),
-				PercentToByte(c3));
+						  PercentToByte(c2),
+						  PercentToByte(c3));
 			break;
 
 		default:

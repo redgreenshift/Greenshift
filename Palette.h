@@ -72,13 +72,13 @@ public:
 		MyDictionary<EXPRESSIONDESCRIPTION*>* pUserDefined);
 
 	void        SetPaletteEntry(const DWORD nIndex, const COLORREF crColor);
-	void        SetPalette(value_t* nIndex, Expression* pHue,
-		Expression* pSaturation,
-		Expression* pValue);
+	//void        SetPalette(value_t* nIndex, Expression* pHue,
+	//	Expression* pSaturation,
+	//	Expression* pValue);
 
 	/* Does not re-evaluate the palette */
 	inline LOGPALETTE* PGetLogicalPalette(void) { return &(GetPalette()); };
-	LOGPALETTE& GetLogicalPalette(void);
+	LOGPALETTE& GetLogicalPalette(void); // DOES re-evaluate the palette!
 	void          ResetTimer(void) /* restart the timer for time dependent palettes */
 	{
 		m_hrTimer.Start();
