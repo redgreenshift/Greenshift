@@ -23,6 +23,7 @@
 #include "CppUnitTest.h"
 #include "..\MyDictionary.h"
 #include "..\PhaseFunction.h"
+#include "..\TextUtils.hpp"
 #include "..\InsertionOrderedMap.hpp"
 #include "..\StaticFifoSet.hpp"
 #include <array>
@@ -33,7 +34,6 @@
 
 #include "..\MersenneTwister.h"
 
-std::wstring utf8_to_wstring(const std::string& s);
 value_t My_abs(value_t nValue);
 value_t My_wrap(value_t nValue);
 
@@ -48,7 +48,8 @@ namespace Microsoft {
 			template<>
 			std::wstring ToString<error_t>(const error_t& v)
 			{
-				return std::to_wstring(v) + L" : " + utf8_to_wstring(ErrorString(v));
+				// I don't know why the char* version of utf8_to_wstring decided to be an unresolved external; switching to the std::string version works for now.
+				return std::to_wstring(v) + L" : " + utf8_to_wstring(std::string{ ErrorString(v) });
 			}
 		}
 	}
@@ -61,28 +62,28 @@ namespace GreenshiftUnitTest
 	TEST_CLASS(GreenshiftUnitTest)
 	{
 	public:
+		value_t const defaultTolerance = 0.0001f; // common default float tolerance; accounts for typical rounding errors, unless greater precision is required
 		MyDictionary<EXPRESSIONDESCRIPTION*> m_dGlobals;
+		EXPRESSIONDESCRIPTION    m_edGForceFunctions[4] =
+		{
+			{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
+			{ ED_FUNCTION,  "mag",        1, My_mag  }, /* waveshape data (fake it for UT) */
+			{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
+
+			{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
+		};
 
 		void InitGlobals()
 		{
-			EXPRESSIONDESCRIPTION    edGForceFunctions[] =
-			{
-				{ ED_FUNCTION,  "abs",        1, My_abs  }, /* abs(x)  == |x| */
-				{ ED_FUNCTION,  "mag",        1, My_mag  }, /* waveshape data (fake it for UT) */
-				{ ED_FUNCTION,  "wrap",       1, My_wrap }, /* wrap(x) == x - flor( x )  (ex: wrap( .3 ) = .3, wrap( 4.12 ) = .12, wrap( - 2.7 ) = .3 ) */
-
-				{ ED_NULL,NULL, 0, NULL }, /* the NULL terminator */
-			};
-
 			/************************************************************************
 			 *
 			 * Load Global MyDictionary with GForce functions to maintain compatibility
 			 *
 			 ************************************************************************/
-			for (size_t i = 0; edGForceFunctions[i].edtType != ED_NULL; i++)
+			for (size_t i = 0; m_edGForceFunctions[i].edtType != ED_NULL; i++)
 			{
-				error_t err = m_dGlobals.SetValue(edGForceFunctions[i].strName,
-					&edGForceFunctions[i]);
+				error_t err = m_dGlobals.SetValue(m_edGForceFunctions[i].strName,
+					&m_edGForceFunctions[i]);
 				if (err != SUCCESS)
 					break;
 			}
