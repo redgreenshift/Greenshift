@@ -128,6 +128,7 @@ protected:
 		value_t* outLineWidth,
 		value_t* outColor);
 
+	void		UpdateStep(value_t s);
 	void        DrawParametric(BitCanvas* pBitCanvas);
 	void        Draw4d(BitCanvas* pBitCanvas);
 };

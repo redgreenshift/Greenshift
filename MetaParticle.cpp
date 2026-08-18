@@ -88,7 +88,7 @@ error_t    MetaParticle::InitializeDerived(
 	 * set variables
 	 */
 	if ((err = m_dValues.SetValue("NUM_PARTICLES", &m_nNumParticles)) != SUCCESS
-		|| (err = m_dValues.SetValue("s", &m_nStep)) != SUCCESS
+		|| (err = m_dValues.SetValue("s", &m_nStep)) != SUCCESS // Call Evaluate_C_Vars every time m_nStep is updated
 		|| (err = m_dValues.SetValue("x", &m_nX)) != SUCCESS
 		|| (err = m_dValues.SetValue("z", &m_nZ)) != SUCCESS)
 	{
@@ -496,6 +496,17 @@ void    MetaParticleAbstract::GetNums(DWORD* outInstances, DWORD* outFunctions, 
 }
 #endif
 
+/**
+ * @brief Re-evaluate the Phase Functions that depend on the STEP [range: 0.0 to 1.0]
+ */
+void MetaParticleAbstract::UpdateStep(value_t s)
+{
+	m_nStep = s;
+	m_pCurrent->Evaluate_C_Vars();
+	if (m_pNext)
+		m_pNext->Evaluate_C_Vars();
+}
+
 /****************************************************************************
  *
  * DrawParametric - pBitCanvas is not NULL
@@ -537,7 +548,7 @@ void    MetaParticleAbstract::DrawParametric(BitCanvas* pBitCanvas)
 
 		for (f = 0; f < m_dwNumFunctions; f++)
 		{
-			m_nStep = 0.0f;
+			UpdateStep(0.0f);
 			Get(m_nPercent, i, f, &x, &y, &line_width, &color);
 
 			//                pBitCanvas->DrawDot( x, -y, line_width, color );
@@ -546,7 +557,7 @@ void    MetaParticleAbstract::DrawParametric(BitCanvas* pBitCanvas)
 
 			for (s = 1; s < m_dwNumSteps; s++)
 			{
-				m_nStep = s / (value_t)(m_dwNumSteps - 1);
+				UpdateStep(static_cast<value_t>(s) / (m_dwNumSteps - 1));
 
 				lastX = x;
 				lastY = -y;
@@ -604,7 +615,7 @@ void    MetaParticleAbstract::Draw4d(BitCanvas* pBitCanvas)
 				m_nX = -1.0f;
 				m_nZ = dwZ * 2 / (value_t)(m_dwNumSteps - 1) - 1.0f;
 				//                m_nStep = (value_t)sqrt( m_nX * m_nX + m_nZ * m_nZ );
-				m_nStep = (value_t)_hypot(m_nX, m_nZ);
+				UpdateStep(static_cast<value_t>(_hypot(m_nX, m_nZ)));
 				//                Get(m_nPercent, i, f, &x, &y, &line_width, &color);
 				m_pCurrent->Get4d(i, f, m_nX, m_nZ, &x, &y, &line_width, &color);
 
@@ -627,7 +638,7 @@ void    MetaParticleAbstract::Draw4d(BitCanvas* pBitCanvas)
 				{
 					m_nX = dwX * 2 / (value_t)(m_dwNumSteps - 1) - 1.0f;
 					//                    m_nStep = (value_t)sqrt( m_nX * m_nX + m_nZ * m_nZ );
-					m_nStep = (value_t)_hypot(m_nX, m_nZ);
+					UpdateStep(static_cast<value_t>(_hypot(m_nX, m_nZ)));
 
 					lastX = x;
 					lastY = -y;

@@ -438,7 +438,7 @@ namespace GreenshiftUnitTest
 
 			InitGlobals();
 
-			Assert::AreEqual(SUCCESS, pf.Initialize("ABCD", "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
+			Assert::AreEqual(SUCCESS, pf.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
 
 			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize functions");
 			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
@@ -520,7 +520,7 @@ namespace GreenshiftUnitTest
 
 			InitGlobals();
 
-			Assert::AreEqual(SUCCESS, pf.Initialize("ABCD", "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
+			Assert::AreEqual(SUCCESS, pf.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
 
 			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize phases");
 			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");

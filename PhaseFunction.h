@@ -46,6 +46,54 @@
 
 #include <stdio.h>  /* for sprintf() */
 
+	/**
+	 * @brief Defines the rhythmic, timing-based levels of evaluation of phase variables defined in a single config.
+	 *
+	 * ---
+	 *
+	 * It provides clear boundaries between different granularities in our calculation logic: from
+	 * static initialization to frame pulses, index groups (N), and the individual unit-level evaluations.
+	 *
+	 * The PhaseCadence defines exactly when a value is refreshed or uniquely calculated in our engine's render pipeline logic.
+	 */
+namespace ConfigPhaseCadence
+{
+	/**
+	 * @brief A character-based lookup array mapping to the ConfigPhaseCadence levels.
+	 *
+	 * Each character at a given index represents the identifier for the corresponding
+	 * level in the ConfigPhaseCadence enum, allowing for quick character-based indexing.
+	 * // in the RenderPipeline
+	 */
+	constexpr mychar_t ConfigPhaseVars[] = "ABCD";
+
+	/**
+	 * @brief Defines the rhythmic, timing-based levels of evaluation of phase variables defined in a single config.
+	 *
+	 * ---
+	 *
+	 * It provides clear boundaries between different granularities in our calculation logic: from
+	 * static initialization to frame pulses, step along waveform, index groups (N), and the individual unit-level evaluations.
+	 *
+	 * The PhaseCadence defines exactly when a value is refreshed or uniquely calculated in our engine's render pipeline logic.
+	 */
+	enum ConfigPhaseCadence : DWORD
+	{
+		A_Init,		// Once per object lifetime at initialization
+		B_Frame,	// Once per frame pulse within the render loop; re-evaluated when 't' is updated
+		C_Step,		// Once per Step when rendering a Particle/WaveShape/VectorGraphic; eval when 's' is updated
+
+		// Once per indexed group (N) of functions, i.e. per index [N]
+		// All dimensions within a given index share this value;
+		// EXAMPLE:
+		//	- once before all the zeros are evaluated as a set:  X0/Y0/Z0;
+		//	- then the phase is reevaluated before all the ones: X1/Y1/Z1;
+		//	- and then reevaluated again, before all the twos:   X2/Y2/Z2;
+		D_Group, // Typically used by DeltaField; re-evaluated when 'x', 'y', 'r', and 'theta' are updated
+	};
+};
+
+
 /*
  * length = number of abstract entities
  * size   = number of bytes

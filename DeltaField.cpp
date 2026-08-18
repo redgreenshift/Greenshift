@@ -95,11 +95,11 @@ void    DeltaField::GetDeltaXY(const value_t destX,
 		m_nY = destY;
 		m_nRadius = (value_t)_hypot(destX, destY);
 		m_nTheta = (value_t)atan2(destY, destX);
-
-		m_pfValues.EvaluatePhase(2);
-		m_pfValues.EvaluatePhase(3);
+		m_pfValues.EvaluatePhase(ConfigPhaseCadence::C_Step); /* C# vars - once per STEP (typically unused by DF) */
+		m_pfValues.EvaluatePhase(ConfigPhaseCadence::D_Group); /* D# vars - before every FUNCTION GROUP */
 
 		nSource1 = m_pSource1->Evaluate();
+		//m_pfValues.EvaluatePhase(ConfigPhaseCadence::D_Eval); /* DO NOT REEVALUATE "D" IN BETWEEN -- consider adding E_Eval */
 		nSource2 = m_pSource2->Evaluate();
 
 		if (m_bIsPolar)
@@ -185,7 +185,7 @@ error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 		}
 
 	if (err == SUCCESS)
-		err = m_pfValues.Initialize("ABCD",
+		err = m_pfValues.Initialize(ConfigPhaseCadence::ConfigPhaseVars,
 			"",  /* DeltaF's don't have multiple XY vars,
 				  * but PhaseFunction needs something */
 			inDeltaConfig,
@@ -201,8 +201,8 @@ error_t    DeltaField::Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 	if (err != SUCCESS)
 		return err;
 
-	m_pfValues.EvaluatePhase(0);
-	m_pfValues.EvaluatePhase(1); /* this is wrong, but I'm not sure how to tell the DF how many frames have elapsed */
+	m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init);
+	m_pfValues.EvaluatePhase(ConfigPhaseCadence::B_Frame); /* this is wrong, but I'm not sure how to tell the DF how many frames have elapsed */
 
 
 	err = Expression::Compile(strSource1,

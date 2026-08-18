@@ -92,8 +92,7 @@ public:
 	void                SetInstance(const DWORD dwInstance)
 	{
 		m_nID = (value_t)(dwInstance % m_dwNumInstances);
-		m_pVectorGraphics[(dwInstance % m_dwNumInstances)].BVars();
-		m_pVectorGraphics[(dwInstance % m_dwNumInstances)].BeginFrame();
+		m_pVectorGraphics[(dwInstance % m_dwNumInstances)].BeginFrame(); // This call calls Evaluate_B_Vars() internally; handles re-evaluate for m_nTime change
 	};
 
 	inline void         Get(const DWORD dwInstance,
@@ -139,11 +138,19 @@ protected:
 	bool                    m_bZoom;
 
 
-	//    PhaseFunction           m_pfValues;
-	//    inline error_t          Evaluate_A_Vars( void ) { return m_pfValues.EvaluatePhase(0); };
-	//    inline error_t          Evaluate_B_Vars( void ) { return m_pfValues.EvaluatePhase(1); };
-	//    inline error_t          Evaluate_C_Vars( void ) { return m_pfValues.EvaluatePhase(2); };
-	//    inline error_t          Evaluate_D_Vars( void ) { return m_pfValues.EvaluatePhase(3); };
+	//PhaseFunction           m_pfValues;
+	//inline error_t          Evaluate_A_Vars( void ) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init); };
+	//inline error_t          Evaluate_B_Vars( void ) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::B_Frame); };
+	inline error_t          Evaluate_C_Vars( void )
+	{
+		for (size_t i = 0; i < GetNumInstances(); ++i)
+		{
+			m_pVectorGraphics[i].Evaluate_C_Vars();
+		}
+
+		return SUCCESS;
+	};
+	//inline error_t          Evaluate_D_Vars( void ) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::D_Group); };
 
 public:
 	void                    SetLifetime(const value_t nLifetime);

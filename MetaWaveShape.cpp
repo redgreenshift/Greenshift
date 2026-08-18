@@ -92,7 +92,7 @@ error_t    MetaWaveShape::InitializeDerived(
 		 * set variables
 		 */
 	if (    //(err = m_dValues.SetValue( "NUM_PARTICLES", &m_nNumParticles )) != SUCCESS        ||
-		(err = m_dValues.SetValue("s", &m_nStep)) != SUCCESS
+		(err = m_dValues.SetValue("s", &m_nStep)) != SUCCESS // Call Evaluate_C_Vars every time m_nStep is updated
 		|| (err = m_dValues.SetValue("x", &m_nX)) != SUCCESS
 		|| (err = m_dValues.SetValue("z", &m_nZ)) != SUCCESS)
 	{

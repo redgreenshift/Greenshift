@@ -152,10 +152,10 @@ error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
 	{
 	default:
 	case VG_PARAMETRIC:
-		err = m_pfValues.Initialize("ABCD", "XYZ", inConfig, &m_dValues, inGlobals);
+		err = m_pfValues.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "XYZ", inConfig, &m_dValues, inGlobals);
 		break;
 	case VG_4D:
-		err = m_pfValues.Initialize("ABCD", "Y", inConfig, &m_dValues, inGlobals);
+		err = m_pfValues.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "Y", inConfig, &m_dValues, inGlobals);
 
 		if (err == SUCCESS)
 			err = Expression::Compile(inConfig->GetValue("x_rotation"),//"-pi/4"),
@@ -279,12 +279,10 @@ error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
  ****************************************************************************/
 void    VectorGraphic::EvaluateXY_Pair(const DWORD dwIndex, value_t* outX, value_t* outY)
 {
-	Evaluate_C_Vars();  /* C# vars - once per function */
+	//Evaluate_C_Vars();  /* C# vars - once per STEP (wrong place to call this; moved to UpdateStep) */
+	Evaluate_D_Vars();  /* D# vars - before every FUNCTION GROUP (typically unused by Particle/WaveShape) */
 
-	Evaluate_D_Vars();  /* D# vars - before every evaluation */
 	*outX = m_pfValues.EvaluateFunction(dwIndex, 0);
-
-	//    Evaluate_D_Vars();  /* D# vars - before every evaluation */
 	*outY = m_pfValues.EvaluateFunction(dwIndex, 1);
 }
 
@@ -398,15 +396,11 @@ void    VectorGraphic::Draw2dFrameOn(Graph* lpGraph)
  ****************************************************************************/
 void    VectorGraphic::EvaluateXYZ_Tuple(const DWORD dwIndex, value_t* outX, value_t* outY, value_t* outZ)
 {
-	Evaluate_C_Vars();  /* C# vars - once per function */
+	//Evaluate_C_Vars();  /* C# vars - once per STEP (wrong place to call this; moved to UpdateStep) */
+	Evaluate_D_Vars();  /* D# vars - before every FUNCTION GROUP (typically unused by Particle/WaveShape) */
 
-	Evaluate_D_Vars();  /* D# vars - before every evaluation */
 	*outX = m_pfValues.EvaluateFunction(dwIndex, 0);
-
-	//    Evaluate_D_Vars();  /* D# vars - before every evaluation */
 	*outY = m_pfValues.EvaluateFunction(dwIndex, 1);
-
-	//    Evaluate_D_Vars();  /* D# vars - before every evaluation */
 	*outZ = m_pfValues.EvaluateFunction(dwIndex, 2);
 }
 

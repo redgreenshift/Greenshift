@@ -298,11 +298,11 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 		return err;
 
 
-	err = m_pfValues.Initialize("ABCD", "", pConfig, &m_dValues, inGlobals);
+	err = m_pfValues.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "", pConfig, &m_dValues, inGlobals);
 	if (err != SUCCESS)
 		return err;
 
-	m_pfValues.EvaluatePhase(0);
+	m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init);
 
 
 	/*
@@ -539,7 +539,7 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 	if (m_nPaletteType == PALETTE_STATIC_COLOR_MAP)
 		return GetPalette();
 
-	m_pfValues.EvaluatePhase(1);
+	m_pfValues.EvaluatePhase(ConfigPhaseCadence::B_Frame); // m_nTime updated, evaluate time dependent vars
 
 	/*
 	 * I know having the loop outside is slower but
@@ -550,20 +550,15 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 	{
 		m_nIntensity = i / (value_t)(PALETTE_SIZE - 1);
 
-		m_pfValues.EvaluatePhase(2);
+		m_pfValues.EvaluatePhase(ConfigPhaseCadence::C_Step); // typically unused for Palettes, but eval just in case
+		m_pfValues.EvaluatePhase(ConfigPhaseCadence::D_Group);// typically unused for Palettes, but eval just in case
 
-		m_pfValues.EvaluatePhase(3);
 		c1 = m_pExp1->Evaluate();
-
-		m_pfValues.EvaluatePhase(3);
 		c2 = m_pExp2->Evaluate();
-
-		m_pfValues.EvaluatePhase(3);
 		c3 = m_pExp3->Evaluate();
 
 		if (m_pExp4)
 		{
-			m_pfValues.EvaluatePhase(3);
 			c4 = m_pExp4->Evaluate();
 		}
 		else

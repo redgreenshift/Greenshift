@@ -67,9 +67,8 @@ public:
 	DWORD       GetNumFunctions(void) { return m_pfValues.NumFunctions(); };
 	DWORD       GetNumSteps(void) { return m_dwResolution; };
 	DWORD       GetMode(void) { return m_dwMode; };
-	void        BVars(void) { Evaluate_B_Vars(); };
 	bool        GetConnected(void) { return m_bConnected; };
-	void        BeginFrame(void) { EvaluateRotation(); };
+	void        BeginFrame(void) { Evaluate_B_Vars(); EvaluateRotation(); };
 	inline void         Get(const DWORD dwFunction,
 		value_t* outX,
 		value_t* outY,
@@ -150,6 +149,12 @@ protected:
 
 	void                EvaluateRotation(void);
 
+public:
+	inline error_t          Evaluate_A_Vars(void) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init); };
+	inline error_t          Evaluate_B_Vars(void) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::B_Frame); };
+	inline error_t          Evaluate_C_Vars(void) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::C_Step); };
+	inline error_t          Evaluate_D_Vars(void) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::D_Group); };
+
 protected:
 	bool                    m_bConnected;
 	MyDictionary<value_t*>    m_dValues;
@@ -176,10 +181,6 @@ protected:
 
 	value_t                 m_nScale;
 
-	inline error_t          Evaluate_A_Vars(void) { return m_pfValues.EvaluatePhase(0); };
-	inline error_t          Evaluate_B_Vars(void) { return m_pfValues.EvaluatePhase(1); };
-	inline error_t          Evaluate_C_Vars(void) { return m_pfValues.EvaluatePhase(2); };
-	inline error_t          Evaluate_D_Vars(void) { return m_pfValues.EvaluatePhase(3); };
 	void                    EvaluateXY_Pair(const DWORD dwIndex,
 		value_t* outX,
 		value_t* outY);

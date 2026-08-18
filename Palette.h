@@ -84,7 +84,8 @@ public:
 	{
 		m_hrTimer.Start();
 		m_nTime = 0.0f;
-		m_pfValues.EvaluatePhase(0);
+		if (m_nPaletteType != PALETTE_STATIC_COLOR_MAP)
+			m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init);
 	};
 protected:
 	inline LOGPALETTE& GetPalette(void) { return m_union.LogicalPalette; };
