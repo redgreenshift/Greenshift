@@ -533,3 +533,21 @@ Utf8Certainty is_valid_utf8(const uint8_t* pszUtf8, size_t len)
 }
 
 #pragma endregion // ATTEMPT4_utf8_to_wstring
+//// TODO: JRDV: Consider more efficient approaches
+std::string toLower(std::string s)
+{
+	std::transform(s.begin(), s.end(), s.begin(),
+		[](unsigned char ch) { return std::tolower(ch); });
+	return s;
+}
+bool MyStrStrIA(const char* pHaystack, const char* pNeedle)
+{
+	std::string haystack = { pHaystack };
+	std::string needle = { pNeedle };
+
+	haystack = toLower(haystack);
+	needle = toLower(needle);
+
+	return haystack.find(needle) != std::string::npos;
+}
+

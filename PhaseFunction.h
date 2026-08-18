@@ -33,7 +33,7 @@
 
 #include "Expression.h"
 #include "MyDictionary.h"
-  //#include "ContiguousAlignedMemoryAllocator.h"
+#include "TextUtils.hpp"
 
 #if EXTREME_DEBUGGING
 #include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
@@ -573,24 +573,6 @@ public:
 		return SUCCESS;
 	};
 
-
-	// Yes this is inefficient, but it's portable and should work
-	// TODO: Consider more efficient approaches, and move to TextUtils.cpp
-	std::string toLower(std::string s) {
-		std::transform(s.begin(), s.end(), s.begin(),
-			[](unsigned char ch) { return std::tolower(ch); });
-		return s;
-	}
-	bool MyStrStrIA(const char* pHaystack, const char* pNeedle)
-	{
-		std::string haystack = { pHaystack };
-		std::string needle = { pNeedle };
-
-		haystack = toLower(haystack);
-		needle = toLower(needle);
-
-		return haystack.find(needle) != std::string::npos;
-	}
 
 	/// <summary>
 	/// Prunes unreferenced zero-valued phase function entries in the config to limit

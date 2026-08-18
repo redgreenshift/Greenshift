@@ -63,3 +63,6 @@ enum class Utf8Certainty
 
 Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len);
 
+
+std::string toLower(std::string s);
+bool MyStrStrIA(const char* pHaystack, const char* pNeedle);
