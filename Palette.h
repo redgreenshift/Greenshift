@@ -51,6 +51,7 @@ enum {
 	PALETTE_HLS,
 	PALETTE_CMY,
 	PALETTE_CMYK,
+	PALETTE_OKLAB,
 };
 
 /**

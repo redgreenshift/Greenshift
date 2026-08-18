@@ -77,7 +77,7 @@ protected:
 
 public:
 	MetaParticleAbstract();
-	virtual ~MetaParticleAbstract();
+	virtual ~MetaParticleAbstract() override;
 
 protected:
 	inline void         GetNums(DWORD* outInstances, DWORD* outFunctions, DWORD* outSteps)

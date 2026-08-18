@@ -59,7 +59,7 @@ protected:
 
 public:
 	MetaPalette();
-	virtual             ~MetaPalette();
+	virtual             ~MetaPalette() override;
 
 	virtual error_t     InitializeDerived(
 		MyDictionary<mychar_t*>* inMainConfig,

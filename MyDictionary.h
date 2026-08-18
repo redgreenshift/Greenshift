@@ -23,7 +23,7 @@
 
  /****************************************************************************
   *
-  * MyDictionary - set of associations of two objects
+  * MyDictionary - set of associations of two things
   *
   * DEPRECATED: Use LinearMap (or rather InsertionOrderedMap) instead. This class is a legacy class that has been replaced by LinearMap... or will be soon renamed to InsertionOrderedMap.
   ****************************************************************************/
@@ -226,7 +226,7 @@ public:
 		if (err != SUCCESS)
 			return err;
 
-		//            m_bCaseSensitive = srcMyDictionary->m_bCaseSensitive;
+		//m_bCaseSensitive = srcMyDictionary->m_bCaseSensitive;
 		m_bCaseSensitive = false;
 		this->m_bDeleteElements = true;
 

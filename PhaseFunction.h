@@ -444,10 +444,10 @@ public:
 			// WARNING C6385: Reading invalid data from 'm_pPhases':  the readable size is 'dwAllocationSize*1' bytes, but '24' bytes may be read.
 			// The initial part of the check "dwPhase < NumPhases()" should already be sufficient, but the static analyzer can't figure it out.
 			//
-			// Adding an unnecessary check to address the issue without suppressing.
+			// Adding an unnecessary check to address the issue without suppressing the warning.
 			for (index = 0; index < m_pPhases[dwPhase].dwPhaseLength; ++index)
 			{
-				/* dis I forget to do tolower? */
+				/* did I forget to do tolower? */
 				int ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index);
 				if (ret < 0 || (size_t)ret >= _countof(strID))
 					return FAILURE;
@@ -490,8 +490,6 @@ public:
 		/*
 		 * check for the dimensions WITHOUT a number, just in case
 		 */
-
-
 		if (NumDimensions() == 0)
 			return SUCCESS; /* doesn't have X or Y vars, so ignore the rest */
 

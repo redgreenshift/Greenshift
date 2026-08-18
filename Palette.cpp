@@ -145,6 +145,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	mychar_t* strYellow = NULL;
 	mychar_t* strblacK = nullptr;
 
+	// L(Lightness) : Controls how bright the color is, independent of the hue.You can create a palette that shifts colors wildly while keeping the exact same "visual weight" on screen.
+	// a(Green to Red) : A coordinate for the red - green axis.
+	// b(Blue to Yellow) : A coordinate for the blue - yellow axis.
+	mychar_t* strA_Green2Red = nullptr;
+	mychar_t* strB_Blue2Yellow = nullptr;
+
 	mychar_t* strExp1 = NULL;
 	mychar_t* strExp2 = NULL;
 	mychar_t* strExp3 = NULL;
@@ -202,6 +208,13 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 			m_nPaletteType = PALETTE_CMYK;
 	}
 
+	if (m_nPaletteType == PALETTE_UNKNOWN
+		&& ((strLightness != nullptr) || (strLightness = pConfig->GetValue("L")) != nullptr)
+		&& (strA_Green2Red = pConfig->GetValue("A")) != NULL
+		&& (strB_Blue2Yellow = pConfig->GetValue("B")) != NULL)
+	{
+		m_nPaletteType = PALETTE_OKLAB;
+	}
 
 	if (m_nPaletteType == PALETTE_UNKNOWN)
 		m_nPaletteType = PALETTE_STATIC_COLOR_MAP;
@@ -269,6 +282,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 		strExp4 = strblacK;
 		break;
 
+	case PALETTE_OKLAB:
+		strExp1 = strLightness;
+		strExp2 = strA_Green2Red;
+		strExp3 = strB_Blue2Yellow;
+		break;
+
 	default:
 		return ERR_UNKNOWNPALETTETYPE;
 	}
@@ -301,7 +320,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 	if (err != SUCCESS)
 	{
-		const char* strID1 = "Rgb / Hsv / Cmy / Cmyk";
+		const char* strID1 = "Rgb / Hsv / Cmy / Cmyk / Lab";
 		DumpToFile("error.txt", ">>> Palette : ");
 		DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 		DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -315,7 +334,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
-			const char* strID2 = "rGb / hSv / cMy / cMyk";
+			const char* strID2 = "rGb / hSv / cMy / cMyk / lAb";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -330,7 +349,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 #if EXTREME_DEBUGGING
 		if (err != SUCCESS)
 		{
-			const char* strID3 = "rgB / hsV / cmY / cmYk";
+			const char* strID3 = "rgB / hsV / cmY / cmYk / laB";
 			DumpToFile("error.txt", ">>> Palette : ");
 			DumpToFile("error.txt", pConfig->GetValue("NAME", ""), " <<<\n");
 			DumpToFile("error.txt", ErrorString(err), " <<<\n");
@@ -581,6 +600,19 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 			crColor = RGB(PercentToByte(c1),
 						  PercentToByte(c2),
 						  PercentToByte(c3));
+			break;
+
+		case PALETTE_OKLAB:
+			Clip(&c1);
+			Clip(&c2);
+			Clip(&c3);
+			{
+				OKLab::Lab lab = { c1, c2, c3 };
+				OKLab::RGB rgb = OKLab::oklab_to_rgb(lab);
+				crColor = RGB(PercentToByte(rgb.r),
+					PercentToByte(rgb.g),
+					PercentToByte(rgb.b));
+			}
 			break;
 
 		default:

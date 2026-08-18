@@ -113,11 +113,11 @@ protected:
 protected:
 	//MTRand                      m_mtRand;
 
-	/* ?!  I have two forms?!  I should remove one! */
-	unsigned char               m_cWaveformData[2][SOUND_DATA_LENGTH];
-	unsigned char               m_cSpectrumData[2][SOUND_DATA_LENGTH];
-	value_t                     m_nWaveformData[2][SOUND_DATA_LENGTH];
-	value_t                     m_nSpectrumData[2][SOUND_DATA_LENGTH];
+	/* ?!  I have two forms?!  I should remove one! NO! */
+	unsigned char               m_cWaveformData[2][SOUND_DATA_LENGTH] = { 0 };
+	unsigned char               m_cSpectrumData[2][SOUND_DATA_LENGTH] = { 0 };
+	value_t                     m_nWaveformData[2][SOUND_DATA_LENGTH] = { 0 };
+	value_t                     m_nSpectrumData[2][SOUND_DATA_LENGTH] = { 0 };
 	HINSTANCE                   m_hInstance;    /* reference to module instance */
 	HWND                        m_hParentWindow;
 	FilingClerk                 m_fcFilingClerk;
@@ -133,16 +133,16 @@ protected:
 	MetaPalette                 m_mpMetaPalette;
 
 
-	MyDictionary<mychar_t*>           m_dMainConfig; /* settings found in the main config file */
+	MyDictionary<mychar_t*>				m_dMainConfig; /* settings found in the main config file */
 	MyDictionary<MyDictionary<mychar_t*>*>
 		m_dExtraConfig;
 	MyDictionary<EXPRESSIONDESCRIPTION*>    /* variables and functions allowed */
-		m_dGlobals; /* in all Greenshift expressions */
-	MyDictionary<mychar_t*>           m_dAlias;
-	MyDictionary<mychar_t*>           m_dConstant;
-	MyDictionary<mychar_t*>           m_dDefaults;
-	MyDictionary<mychar_t*>           m_dFunction;
-	MyDictionary<value_t*>        m_dValues;
+										m_dGlobals; /* in all Greenshift expressions */
+	MyDictionary<mychar_t*>				m_dAlias; // Aliases for compatibility
+	MyDictionary<mychar_t*>				m_dConstant;
+	MyDictionary<mychar_t*>				m_dDefaults;
+	MyDictionary<mychar_t*>				m_dFunction;
+	MyDictionary<value_t*>				m_dValues;
 	value_t* m_pValues = nullptr;
 
 

@@ -259,7 +259,7 @@ bitwise and boolean operators?
 solve an equality for a variable?
 
 2026-07-17 NOTE: These sections are very old, and may be very inaccurate.
-I will need to revisit my ideas and see what I actually want to implement.
+I will need to revisit my ideas and see what I _actually_ want to implement.
 
 
 /****************************************************************************\
@@ -280,7 +280,8 @@ Compatibility changes to be able to load some G-Force Configs that had nonstanda
 
 Add Relational Expressions (>, <, >=, <=, ==, !=)
 Added ExpressionFactorial (fact, !)
-Added CMYK palette support (specifically adding the blacK component)
+Added CMYK color palette config support (specifically adding the blacK component)
+Added OKLab color palette config support
 
 Created replacement collections for MyDictionary/FiniteSet -> InsertionOrderedMap/StaticFifoSet
 MersenneTwister.h random seed code.

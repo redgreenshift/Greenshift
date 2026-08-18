@@ -68,7 +68,7 @@ protected:
 
 public:
 	MetaWaveShape();
-	virtual             ~MetaWaveShape();
+	virtual             ~MetaWaveShape() override;
 
 	virtual error_t     InitializeDerived(
 		MyDictionary<mychar_t*>* inMainConfig,
