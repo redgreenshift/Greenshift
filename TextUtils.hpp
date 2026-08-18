@@ -39,8 +39,8 @@ std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8);
 
 constexpr wchar_t InvalidSequenceReplacementChar = static_cast<wchar_t>(0xFFFD); // standard empty box character signifying an invalid byte sequence
 enum class Utf8ErrorPolicy {
-	Replace,	// append U+FFFD and continue
-	Return,		// return false on first invalid sequence, or empty string if using an overload that just returns a string
+	Replace,	// append U+FFFD for invalid sequences, and continue processing
+	Return,		// halt processing and return on first invalid sequence; false/Invalid or empty string if using an overload that just returns a string
 	Throw,		// throw an exception on first invalid sequence
 };
 
@@ -64,5 +64,5 @@ enum class Utf8Certainty
 Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len);
 
 
-std::string toLower(std::string s);
-bool MyStrStrIA(const char* pHaystack, const char* pNeedle);
+std::string makeLowercase(std::string& s);
+bool StrContainsStrI(const char* pHaystack, const char* pNeedle);

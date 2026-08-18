@@ -574,23 +574,24 @@ public:
 	};
 
 
-	/// <summary>
-	/// Prunes unreferenced zero-valued phase function entries in the config to limit
-	/// unnecessary work and maintain contiguous index values within each phase.
-	///
-	/// <para>---</para>
-	///
-	/// This process identifies zero-valued entries that are not referenced as substrings in any
-	/// other key/value pair and culls the tail of unused functions at the end of each phase.
-	///
-	/// <para>---</para>
-	///
-	/// NOTE: Some unreferenced functions may remain in the middle of a range to maintain
-	/// a contiguous index structure required by existing logic.
-	/// </summary>
-	/// <param name="config">The dictionary to be sanitized in place.</param>
-	/// <param name="phases">A string containing the valid phase characters (e.g., "ABCD").</param>
-	/// <returns>An error code indicating success or failure.</returns>
+	/**
+	 * @brief Prunes unreferenced zero-valued phase function entries in the config to limit
+	 * unnecessary work and maintain contiguous index values within each phase.
+	 *
+	 * ---
+	 *
+	 * This process identifies zero-valued entries that are not referenced as substrings in any
+	 * other key/value pair and culls the tail of unused functions at the end of each phase.
+	 *
+	 * ---
+	 *
+	 * NOTE: Some unreferenced functions may remain in the middle of a range to maintain
+	 * a contiguous index structure required by existing logic.
+	 *
+	 * @param config - The dictionary to be sanitized in place.
+	 * @param phases - A string containing the valid phase characters (e.g., "ABCD")
+	 * @returns error_t: An error code indicating success or failure.
+	 */
 	error_t PruneDanglingZeroPhaseFunctions(MyDictionary<mychar_t*>* config, const std::string& phases)
 	{
 		error_t err = SUCCESS;
@@ -637,7 +638,7 @@ public:
 						mychar_t* valInner = configArray[inner]->GetValue();
 
 						// Determine if the phase function ID is referenced in this value.
-						if (MyStrStrIA(valInner, keyID))
+						if (StrContainsStrI(valInner, keyID))
 						{
 							// Yes, this gets some false positives, like key="A2" will match "A22",
 							// but this doesn't matter too much since we would need to preserve "A2"
