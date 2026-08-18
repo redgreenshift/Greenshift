@@ -26,6 +26,7 @@
 // https://en.wikipedia.org/wiki/UTF-8
 // https://en.wikipedia.org/wiki/Shift-JIS
 
+#include <algorithm> // std::transform
 #include <cstddef> // is_valid_utf8
 #include <cstdint> // is_valid_utf8, append_codepoint_as_wchar
 #include <istream>
