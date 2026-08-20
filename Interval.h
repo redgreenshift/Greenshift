@@ -31,11 +31,13 @@
 #define _Interval_H_
 
 
-  /****************************************************************************
-   *
-   * Interval - represents a finite arithmetic progression
-   *
-   ****************************************************************************/
+/**
+ * @brief A linear mapping between a unit interval [0, 1] and a target range [start, stop].
+ *
+ * This class defines a range between two values, providing methods for
+ * linear interpolation (mapping a 0..1 value to the range) and
+ * normalization (mapping a value within the range to 0..1).
+ */
 class Interval
 {
 public:
@@ -92,7 +94,6 @@ protected:
 	value_t        m_nNormalizationFactor;
 	value_t        m_nStart;
 	value_t        m_nStop;
-
 };
 
 
