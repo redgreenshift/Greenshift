@@ -269,21 +269,15 @@ DECAY256(255)
 
 
  /****************************************************************************
+  * @brief BitCanvas is a raster graphics surface that stores pixel data and provides low-level drawing operations.
   *
-  * @brief A Bit Canvas is an internal representation of pixel data used for
-  * high-performance manipulation at various bit depths (8, 16, or 32 bits).
-  * It acts as an intelligent bitmap that uses delta-based transition tables
-  * to smoothly manage color shifts, fades, and other dynamic visual transitions.
+  * Neither a screen nor a device, BitCanvas is the target for a 2D-raster-graphics-renderer.
+  * It serves as a sink for the processes of geometry-driven-visuals, facilitating smooth,
+  * delta-based transitions between frames.
   *
-  * -----
-  *
-  * BitCanvas is neither a screen nor a device.
-  *
-  * It's more like an intelligent bitmap.
-  *
-  * It just manipulates a bunch of bits, presumably to display somewhere,
-  * but not necessarily on screen.
-  *
+  * Designed for efficient, high-performance manipulation, it provides specialized
+  * handling of various bit depths (8, 16, or 32 bits) as the final buffer for
+  * the visual rendering pipeline.
   ****************************************************************************/
 class BitCanvas
 {
