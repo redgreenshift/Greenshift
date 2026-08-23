@@ -894,12 +894,29 @@ void    BitCanvas::PlotLineBresenham(
 }
 #endif
 
-/****************************************************************************
+/**
+ * @brief Draws a line segment using Bresenham's line-drawing algorithm.
  *
- * PlotLineBresenham - plots without the internal multiply
+ * Plots a line from (x0, y0) to (x1, y1) using integer-only arithmetic to
+ * determine the closest pixel coordinates, ensuring high performance by
+ * avoiding floating-point operations.
  *
- ****************************************************************************/
-void    BitCanvas::PlotLineBresenham(
+ * This implementation supports all slopes (horizontal, vertical, and diagonal).
+ * For optimization, it converts 2D coordinates into a 1D linear buffer offset
+ * to minimize multiplication operations within the drawing loop. Coordinates
+ * falling outside the canvas boundaries are clipped.
+ *
+ * @param[in] x0    - The starting X-coordinate.
+ * @param[in] y0    - The starting Y-coordinate.
+ * @param[in] x1    - The ending X-coordinate.
+ * @param[in] y1    - The ending Y-coordinate.
+ * @param[in] color - The color value used to draw the line.
+ *
+ * @note Vertical positions are handled as absolute buffer offsets to
+ *       minimize multiplication; the drawable area is constrained by
+ *       BufferWidth() and BufferHeight().
+ */
+void BitCanvas::PlotLineBresenham(
 	long x0,
 	long y0,
 	const long x1,
