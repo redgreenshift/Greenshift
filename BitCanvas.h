@@ -291,11 +291,11 @@ private:
 	value_t     m_nDrawingAspect;
 	value_t     m_nWidthFactor;
 	value_t     m_nHeightFactor;
-	//    value_t     m_nWidthFactorInverse;
-	//    value_t     m_nHeightFactorInverse;
+	//value_t     m_nWidthFactorInverse;
+	//value_t     m_nHeightFactorInverse;
 
-	//    value_t     m_nWidthOffset;
-	//    value_t     m_nHeightOffset;
+	//value_t     m_nWidthOffset;
+	//value_t     m_nHeightOffset;
 
 
 public:
@@ -473,42 +473,35 @@ protected:
 public:
 	//    inline void     CopyLastLine( void );
 
-						/*
-						 * line drawing routine (only worry about 2D!)
-						 */
-	void            DrawLine(const value_t x1,
+	/*
+	 * line drawing routine (only worry about 2D!)
+	 */
+	void DrawLine(const value_t x1,
 		const value_t y1,
 		const value_t x2,
 		const value_t y2,
 		const value_t line_width_parameter,
 		const value_t color);
-	void            DrawDot(const value_t x,
+	void DrawDot(const value_t x,
 		const value_t y,
 		const value_t dot_size,
 		const value_t color);
 
 protected:
-	/*    void            PlotLineBresenham(
-								  long x0,
-								  long y0,
-								  const long x1,
-								  long y1,
-								  const BYTE color );/**/
-	void            PlotLineBresenham(
+	void PlotLineBresenham(
 		long x0,
 		long y0,
 		const long x1,
 		long y1,
 		const BYTE color);
-	void            PlotLineBresenhamThick(
+	void PlotLineBresenhamThick(
 		long x0,
 		long y0,
 		long x1,
 		long y1,
 		const long line_width,
 		const BYTE color);
-protected:
-	void            PlotDot(const value_t x,
+	void PlotDot(const value_t x,
 		const value_t y,
 		const value_t dot_size,
 		const value_t color);
@@ -702,22 +695,21 @@ protected:
 
 
 private:
-	opt_level_t     m_nDeltaOptimizationLevel;
-	Interval        m_logicalX;
-	Interval        m_logicalY;
-	Interval        m_visibleX;
-	Interval        m_visibleY;
-	DeltaField* m_pDelta;
-	DeltaTween      m_hTransitionTable;
+	opt_level_t		m_nDeltaOptimizationLevel;
+	Interval		m_logicalX;
+	Interval		m_logicalY;
+	Interval		m_visibleX;
+	Interval		m_visibleY;
+	DeltaField*		m_pDelta;
+	DeltaTween		m_hTransitionTable;
 
 	void* m_pUnalignedDoubleBuffer;
-	void            ReleaseBuffers(void);    /* free allocated memory */
+	void ReleaseBuffers(void);    /* free allocated memory */
 
 protected:
 
 	const DWORD     m_dwBitDepth;    /* number of bits per pixel
 									 */
-protected:
 	const DWORD     m_dwBufferWidth; /* the width in pixels
 									 * of ReadOnlyBuffer and WriteOnlyBuffer
 									 */
@@ -743,18 +735,18 @@ protected:
 
 	union {
 		void* m_pWriteOnlyBuffer;/* the frame currently being drawn
-										 */
+								  */
 		BYTE* m_pWriteBuffer8;   /* accessor for BitCanvas8  */
 		WORD* m_pWriteBuffer16;  /* accessor for BitCanvas16 */
-		DWORD* m_pWriteBuffer32;  /* accessor for BitCanvas32 */
+		DWORD* m_pWriteBuffer32; /* accessor for BitCanvas32 */
 	};
 
 	union {
 		void* m_pReadOnlyBuffer; /* the completed frame
-										 */
+								  */
 		BYTE* m_pReadBuffer8;    /* accessor for BitCanvas8  */
 		WORD* m_pReadBuffer16;   /* accessor for BitCanvas16 */
-		DWORD* m_pReadBuffer32;   /* accessor for BitCanvas32 */
+		DWORD* m_pReadBuffer32;  /* accessor for BitCanvas32 */
 	};
 
 	Palette         m_pPalette;
@@ -773,8 +765,6 @@ protected:
 	HBITMAP         m_hReadOnlyBitmap;
 #endif // Double Bitmap
 #endif // Use Bitmap
-
-
 };
 
 
@@ -855,8 +845,8 @@ protected:
 		const DWORD b)
 	{
 		m_pWriteBuffer32[pixelOffset] = RGB32(r, g, b);
-		//        m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
-		//        DumpToFile( "error.txt", "blah!", "");
+		//m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
+		//DumpToFile( "error.txt", "blah!", "");
 	};
 
 	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
@@ -866,7 +856,7 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
 #endif
-	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
+	//void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
 	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
 	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
 	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
