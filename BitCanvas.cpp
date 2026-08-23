@@ -1052,7 +1052,8 @@ void BitCanvas::SetDrawingAspect(value_t nAspect, const bool bZoom)
 {
 	const value_t        nWidth = (value_t)BufferWidth();
 	const value_t        nHeight = (value_t)BufferHeight();
-	const value_t        nBlah = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
+	// It is the dimension used to normalize the aspect-ratio-adjusted width.
+	const value_t        nScaleDimention = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
 
 	// nAspect is a term with units   width/height
 	// so to compare screenwidth and screen height, you have to convert the units to match
@@ -1093,10 +1094,10 @@ void BitCanvas::SetDrawingAspect(value_t nAspect, const bool bZoom)
 		m_logicalY.SetBounds( -(value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
 							   (value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
 	/**/
-	m_logicalX.SetBounds(-(value_t)BufferWidth() / nAspect / nBlah,
-		(value_t)BufferWidth() / nAspect / nBlah);
-	m_logicalY.SetBounds(-(value_t)BufferHeight() / nAspect / nBlah,
-		(value_t)BufferHeight() / nAspect / nBlah);
+	m_logicalX.SetBounds(-(value_t)BufferWidth() / nAspect / nScaleDimention,
+		(value_t)BufferWidth() / nAspect / nScaleDimention);
+	m_logicalY.SetBounds(-(value_t)BufferHeight() / nAspect / nScaleDimention,
+		(value_t)BufferHeight() / nAspect / nScaleDimention);
 }
 
 //#define USE_INTERVAL
