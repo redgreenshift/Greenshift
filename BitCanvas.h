@@ -299,86 +299,6 @@ private:
 
 
 public:
-	void    SetDrawingAspect(value_t nAspect, const bool bZoom, const value_t nAspect2, const bool bZoom2, const value_t nPercent)
-	{
-		const value_t        nWidth = (value_t)BufferWidth();
-		const value_t        nHeight = (value_t)BufferHeight();
-		const value_t        nBufferAspect = nWidth / nHeight;
-		const value_t nAs = nAspect == 0.0f ? nBufferAspect : nAspect;
-		const value_t nAs2 = nAspect2 == 0.0f ? nBufferAspect : nAspect2;
-
-		SetDrawingAspect(nAs + (nAs2 - nAs) * nPercent, nPercent < 0.5f ? bZoom : bZoom2);
-	}
-	void    SetDrawingAspect(value_t nAspect, const bool bZoom)
-	{
-		const value_t        nWidth = (value_t)BufferWidth();
-		const value_t        nHeight = (value_t)BufferHeight();
-		const value_t        nBlah = (value_t)(bZoom ? (max(BufferWidth(), BufferHeight())) : (min(BufferWidth(), BufferHeight())));
-
-		// nAspect is a term with units   width/height
-		// so to compare screenwidth and screen height, you have to convert the units to match
-		// screenwidth/aspect == screenheight
-
-
-		if (nAspect == 0.0f)
-			nAspect = nWidth / nHeight;
-
-
-		/* Jared's way            */   /*     Andy's way            */
-		if (bZoom ? (nAspect > nWidth / nHeight) : (nAspect <= nWidth / nHeight))
-		{
-			m_nWidthFactor = 0.5f * nHeight * nAspect;
-			m_nHeightFactor = 0.5f * nHeight;
-		}
-		else
-		{
-			m_nWidthFactor = 0.5f * nWidth;
-			m_nHeightFactor = 0.5f * nWidth / nAspect;
-		}
-
-
-
-		/*
-			m_visibleX.SetBounds( 0.0f, (value_t)(BufferWidth()  - 1) );
-			m_visibleY.SetBounds( 0.0f, (value_t)(BufferHeight() - 1) );
-		//    m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
-		//    m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
-
-		//    /*
-		//     * why is this right again?  I need to verify its correctness.
-		//     *
-		//     * It's wrong, it should be based on SCREEN dimensions and aspect
-		//     * /
-			m_logicalX.SetBounds( -(value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
-								   (value_t)BufferWidth()  * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
-			m_logicalY.SetBounds( -(value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()),
-								   (value_t)BufferHeight() * 1.0f / (value_t)min(BufferWidth(), BufferHeight()) );
-		/**/
-		m_logicalX.SetBounds(-(value_t)BufferWidth() / nAspect / nBlah,
-			(value_t)BufferWidth() / nAspect / nBlah);
-		m_logicalY.SetBounds(-(value_t)BufferHeight() / nAspect / nBlah,
-			(value_t)BufferHeight() / nAspect / nBlah);
-	}
-
-
-
-
-
-
-
-
-public:
-	void    FramerateWarning(void)
-	{
-		m_hTransitionTable.m_bFramerateTooLow = true;
-	};
-	error_t SetDelta(DeltaField* pDelta);
-	void    DoDelta(void)
-	{
-		DoDelta(m_hTransitionTable.GetPixelMap());
-	};
-
-public:
 	/*
 	 * Optimization Level Type
 	 */
@@ -389,7 +309,7 @@ public:
 		const DWORD dwHeight,
 		const DWORD dwBitDepth,
 		const TWEENDESCRIPTION& tween_description);
-	virtual         ~BitCanvas();
+	virtual ~BitCanvas();
 
 	/*
 	 * instance creation
@@ -418,7 +338,20 @@ public:
 	/*
 	 * swap the buffer pointers
 	 */
-	void            FlipBuffers(void);
+	void FlipBuffers(void);
+
+	void FramerateWarning(void)
+	{
+		m_hTransitionTable.m_bFramerateTooLow = true;
+	};
+	error_t SetDelta(DeltaField* pDelta);
+	void    DoDelta(void)
+	{
+		DoDelta(m_hTransitionTable.GetPixelMap());
+	};
+
+	void    SetDrawingAspect(value_t nAspect, const bool bZoom, const value_t nAspect2, const bool bZoom2, const value_t nPercent);
+	void    SetDrawingAspect(value_t nAspect, const bool bZoom);
 
 protected:
 	/*
@@ -447,7 +380,7 @@ protected:
 		const DWORD   dwWidth,
 		const DWORD   dwHeight,
 		const DWORD   dwPitch)
-		//                              const DWORD   dwPixelFormat )
+		//const DWORD   dwPixelFormat )
 	{
 		static const DWORD dwBufferDWORDPitch = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
 		const DWORD dwSurfaceDWORDPitch = dwPitch / sizeof(DWORD);
@@ -458,7 +391,7 @@ protected:
 
 		for (DWORD j = m_dwBufferHeight; j != 0; j--)
 		{
-			//            for( i = 0;  i < dwBufferDWORDPitch;  i++ )
+			//for( i = 0;  i < dwBufferDWORDPitch;  i++ )
 			for (DWORD i = dwBufferDWORDPitch; i != 0; i--)
 			{
 				//assign the value to the surface
@@ -471,7 +404,7 @@ protected:
 	};
 
 public:
-	//    inline void     CopyLastLine( void );
+	//inline void     CopyLastLine( void );
 
 	/*
 	 * line drawing routine (only worry about 2D!)
