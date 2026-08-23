@@ -208,7 +208,7 @@ protected:
 
 private:
 	char                m_strWindowTitle[256];
-	WNDCLASSEX          m_hWindowClass;
+	WNDCLASSEXA          m_hWindowClass;
 	HWND                m_hWindow;
 	HWND                m_hParentWindow;
 	WNDPROC             m_hDefWindowProc;    /* default window procedure  */

@@ -96,7 +96,7 @@ void    VectorGraphic::Reset(void)
 	if (err != SUCCESS)
 	{
 		DumpToFile("error.txt", ErrorString(err), "\n");
-		MessageBox(NULL, "Reset failed!", "\n", MB_OK);
+		MessageBoxA(NULL, "Reset failed!", "\n", MB_OK);
 	}
 #endif
 }

@@ -106,7 +106,7 @@ WindowDevice::~WindowDevice()
 {
 	//    SetBitCanvas( NULL );
 
-	UnregisterClass(m_hWindowClass.lpszClassName, m_hWindowClass.hInstance);
+	UnregisterClassA(m_hWindowClass.lpszClassName, m_hWindowClass.hInstance);
 
 	DeleteCriticalSection(&m_csSwitchingModes);
 }
@@ -204,7 +204,7 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 	m_hWindowClass.hInstance = hInstance;
 
 
-	if (!RegisterClassEx(&m_hWindowClass))
+	if (!RegisterClassExA(&m_hWindowClass))
 		err = ERR_WINDOWDEVICE;
 
 
@@ -273,7 +273,7 @@ int        WindowDevice::ThreadProcedure(void* pData)
 	if (!AdjustWindowRectEx(&hRect, Style(), false, StyleEx()))
 		err = ERR_WINDOWDEVICE;
 	else
-		m_hWindow = CreateWindowEx(
+		m_hWindow = CreateWindowExA(
 			StyleEx(),
 			m_hWindowClass.lpszClassName,
 			m_strWindowTitle,
@@ -698,12 +698,12 @@ error_t    WindowDevice::PrintPrivate(const int x, const int y, const char* stri
 		if (x == -2)
 		{
 			SetTextAlign(hdc, TA_CENTER);
-			TextOut(hdc, xValue, yValue, string, strlen(string));
+			TextOutA(hdc, xValue, yValue, string, strlen(string));
 			SetTextAlign(hdc, TA_LEFT);
 		}
 		else
 		{
-			TextOut(hdc, xValue, yValue, string, strlen(string));
+			TextOutA(hdc, xValue, yValue, string, strlen(string));
 		}
 
 
@@ -724,12 +724,12 @@ error_t    WindowDevice::PrintPrivate(const int x, const int y, const char* stri
 			if (x == -2)
 			{
 				SetTextAlign(hdc, TA_CENTER);
-				TextOut(hdc, xValue, yValue, string, strlen(string));
+				TextOutA(hdc, xValue, yValue, string, strlen(string));
 				SetTextAlign(hdc, TA_LEFT);
 			}
 			else
 			{
-				TextOut(hdc, xValue, yValue, string, strlen(string));
+				TextOutA(hdc, xValue, yValue, string, strlen(string));
 			}
 
 
