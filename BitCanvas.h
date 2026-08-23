@@ -552,7 +552,7 @@ public:
 	{
 		const DWORD    pixelOffset = BufferWidth() * y + x;
 
-		//        if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
+		//if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
 		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
 		{
 			const long wid = pixel_width - (long)BufferWidth() + x;
@@ -750,7 +750,7 @@ protected:
 	};
 
 	Palette         m_pPalette;
-	//    PALETTEENTRY    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
+	//PALETTEENTRY    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
 
 
 #ifdef USE_BITMAP
@@ -778,25 +778,25 @@ protected:
 	/*
 	 * removed inline next to Get/PutPixel since it's in the base class
 	 */
-	DWORD           GetPixel(const DWORD pixelOffset);
-	void            PutPixel(const DWORD pixelOffset, const BYTE color);
-	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
-	void     BlahPutPixel(const DWORD pixelOffset,
+	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
+	virtual void     BlahPutPixel(const DWORD pixelOffset,
 		const DWORD r,
 		const DWORD g,
-		const DWORD b)
+		const DWORD b) override
 	{   /* hack for graphics project */
 		m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32(r, g, b);
 	};
 
-	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
-	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
-	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
-	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
+	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
+	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
+	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
+	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
 };
 
 
@@ -807,25 +807,25 @@ public:
 	BitCanvas16(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	DWORD           GetPixel(const DWORD pixelOffset);
-	void            PutPixel(const DWORD pixelOffset, const BYTE color);
-	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
-	void     BlahPutPixel(const DWORD pixelOffset,
+	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
+	virtual void     BlahPutPixel(const DWORD pixelOffset,
 		const DWORD r,
 		const DWORD g,
-		const DWORD b)
+		const DWORD b) override
 	{
 		m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16(r, g, b);
 	};
 
-	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
-	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
-	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
-	//    void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
+	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
+	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
+	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
+	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
 };
 
 
@@ -836,31 +836,31 @@ public:
 	BitCanvas32(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	DWORD           GetPixel(const DWORD pixelOffset);
-	void            PutPixel(const DWORD pixelOffset, const BYTE color);
-	void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color);
-	void     BlahPutPixel(const DWORD pixelOffset,
+	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
+	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
+	virtual void     BlahPutPixel(const DWORD pixelOffset,
 		const DWORD r,
 		const DWORD g,
-		const DWORD b)
+		const DWORD b) override
 	{
 		m_pWriteBuffer32[pixelOffset] = RGB32(r, g, b);
 		//m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
 		//DumpToFile( "error.txt", "blah!", "");
 	};
 
-	void            DoDelta_cpp(const PIXELMAP* lpTransitionTable);
+	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 #ifdef USE_MMX_INTRINSICS
-	void            DoDelta_x86(const PIXELMAP* lpTransitionTable);
+	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 #endif
 #ifdef USE_MMX_ASSEMBLY
-	void            DoDelta_MMX(const PIXELMAP* lpTransitionTable);
+	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
-	//void            DoDelta_SSE( const PIXELMAP *lpTransitionTable );
-	void            CopyTo8(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo16(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo24(void* lpSurface, const DWORD nDeadSpace);
-	void            CopyTo32(void* lpSurface, const DWORD nDeadSpace);
+	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
 };
 
 
