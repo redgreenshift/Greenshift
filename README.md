@@ -6,7 +6,7 @@ A high-performance visualization engine with 4D graphing capabilities.
 [![MMX optional](https://img.shields.io/badge/MMX-optional-555555.svg)](https://en.wikipedia.org/wiki/MMX_(instruction_set))
 [![MSVC 19.x](https://img.shields.io/badge/MSVC-19.x-blue.svg)](https://devblogs.microsoft.com/cppblog/)
 [![MSBuild](https://img.shields.io/badge/MSBuild-v17.14-blue.svg)](https://learn.microsoft.com/en-us/visualstudio/msbuild/)
-[![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-2D6CDF.svg)](LICENSE)
+[![License: GPL-2.0-only](https://img.shields.io/badge/License-GPL--2.0--only-2D6CDF.svg)](LICENSE)
 
 [![Windows](https://img.shields.io/badge/Windows-0078D6.svg?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
 
