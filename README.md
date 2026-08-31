@@ -8,7 +8,7 @@ A high-performance visualization engine with 4D graphing capabilities.
 [![MSBuild](https://img.shields.io/badge/MSBuild-v17.14-blue.svg)](https://learn.microsoft.com/en-us/visualstudio/msbuild/)
 [![License: GPL-2.0-only](https://img.shields.io/badge/License-GPL--2.0--only-2D6CDF.svg)](LICENSE)
 
-[![Windows](https://img.shields.io/badge/Windows-0078D6.svg?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+[![Windows](https://img.shields.io/badge/Windows-0078D6.svg?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMyAyMyI+PHBhdGggZmlsbD0iI2YzZjNmMyIgZD0iTTAgMGgyM3YyM0gweiIvPjxwYXRoIGZpbGw9IiNmMzUzMjUiIGQ9Ik0xIDFoMTB2MTBIMXoiLz48cGF0aCBmaWxsPSIjODFiYzA2IiBkPSJNMTIgMWgxMHYxMEgxMnoiLz48cGF0aCBmaWxsPSIjMDVhNmYwIiBkPSJNMSAxMmgxMHYxMEgxeiIvPjxwYXRoIGZpbGw9IiNmZmJhMDgiIGQ9Ik0xMiAxMmgxMHYxMEgxMnoiLz48L3N2Zz4=)](https://www.microsoft.com/windows)
 
 Greenshift was designed to achieve the speed of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations via user-defined mathematical expressions.
 
