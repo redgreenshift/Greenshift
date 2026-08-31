@@ -6,6 +6,13 @@ Greenshift was designed to achieve the speed of Geiss without resorting to assem
 
 Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient Winamp visualization plugin.
 
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
+[![MSVC 19.x](https://img.shields.io/badge/MSVC-19.x-blue.svg)](https://devblogs.microsoft.com/cppblog/)
+[![MSBuild](https://img.shields.io/badge/MSBuild-v17.14-blue.svg)](https://learn.microsoft.com/en-us/visualstudio/msbuild/)
+[![License: GPL-2.0](https://img.shields.io/badge/License-GPL--2.0-2D6CDF.svg)](LICENSE)
+
+[![Windows](https://img.shields.io/badge/Windows-0078D6.svg?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+
 ## Key Features
 
 * **4D Function Graphing:** Supports $y(x, z, t)$ where the third parameter is time, allowing for dynamic spatial-temporal visualizations.
