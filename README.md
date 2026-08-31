@@ -45,9 +45,15 @@ The name was inspired by a technical quirk discovered during development. When w
 
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
-### AI Policy
+## AI Policy
 
-Contributions from AI agents are welcome so long as they're reviewed by humans before committing — all changes MUST be approved by a real person, not merely accepted by an automated process or another agent.
+Contributions from AI agents are welcome, provided they are reviewed by a
+human before being committed. Every change MUST be approved by a real person;
+approval by an automated process or another AI agent alone is insufficient.
+
+AI tools may be used to suggest code ideas or help draft comments, but all
+code is reviewed by the project author before committing. Code that the
+author does not fully understand is not committed.
 
 ## License
 
