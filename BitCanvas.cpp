@@ -1580,9 +1580,18 @@ DWORD BitCanvas8::GetPixel(const DWORD pixelOffset)
 
 
 
+/*
+Function	Read Method				Math Approach				Loop Structure
+DoDelta_cpp	4 separate BYTE reads	(p1+p2+p3+p4) DECAY8		Nested for (H × W)
+DoDelta_x86	2 WORD reads			Bitmasking -> DECAY8		Single do-while
+DoDelta_MMX	2 WORD reads			Bitmasking -> decay256[]	Single do-while
+*/
+
 /****************************************************************************
+ * @brief This is a baseline/REFERENCE implementation of the straightforward
+ * algorithm for 8bit color.
  *
- * DoDelta
+ * I expect to use one of the more optimized implementations.
  *
  * pre: delta fields are precalculated
  *
@@ -1629,7 +1638,14 @@ void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 
 /****************************************************************************
  *
- * DoDelta_x86 - experimental merge of CPP and x86
+ * @brief DEFAULT for 8bit color
+ *
+ * I tried coding x86 assembly by hand, but I found that the compiler is much
+ * better then me at assembly optimization, but I did optimize this code by
+ * looking at the disassembly, identified points that could be faster, and
+ * then tweaked code in the corresponding area to influence the generated code.
+ *
+ * Of course, measuring performance and only keeping tweaks that actually had a benefit.
  *
  ****************************************************************************/
 void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
@@ -1691,7 +1707,8 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 
 /****************************************************************************
  *
- * DoDelta_MMX - experimental merge of CPP and x86
+ * @brief EXPERIMENTAL, place to explore potential optimizations;
+ * NOT actually tied to MMX intrinsics/assembly
  *
  ****************************************************************************/
 void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
@@ -1928,8 +1945,10 @@ DWORD BitCanvas16::GetPixel(const DWORD pixelOffset)
 
 
 /****************************************************************************
+ * @brief This is a baseline/REFERENCE implementation of the straightforward
+ * algorithm for 16bit color.
  *
- * DoDelta -
+ * I expect to use one of the more optimized implementations.
  *
  * pre: delta fields are precalculated
  *
@@ -1975,8 +1994,8 @@ void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 
 
 /****************************************************************************
- *
- * DoDelta - with decay
+ * @brief This is the DEFAULT implementation used for 16bit color;
+ * optimized
  *
  * pre: delta fields are precalculated
  *
@@ -2151,7 +2170,9 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 
 /****************************************************************************
  *
- * DoDelta - no decay
+ * @brief EXPERIMENTAL, place to explore potential 16bit optimizations;
+ * NOT actually tied to MMX intrinsics/assembly;
+ * do not use as default without testing/measuring.
  *
  * pre: delta fields are precalculated
  *
@@ -2506,8 +2527,11 @@ DWORD BitCanvas32::GetPixel(const DWORD pixelOffset)
 
 
 /****************************************************************************
+ * @brief This is a baseline/reference implementation of the straightforward
+ * algorithm for 32bit color, unoptimized, other than compiler optimizations.
  *
- * DoDelta
+ * IMPORTANT: This is also the DEFAULT for 32bit color! (NOT DoDelta_x86)
+ * This is the implementation used if the processor doesn't support MMX.
  *
  * pre: delta fields are precalculated
  *
@@ -2546,7 +2570,6 @@ void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 		m_pWriteBuffer32[pixelOffset] = m_pWriteBuffer32[i];
 		pixelOffset++;
 	}
-
 }
 
 
@@ -2562,7 +2585,14 @@ void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 #ifdef USE_MMX_INTRINSICS
 /****************************************************************************
  *
- * DoDelta_x86
+ * @brief Optimized using MMX intrinsics
+ *
+ * EXPERIMENTAL, NOT USED by default. Only the MMX or CPP implementations
+ * are used in 32bit color, depending on the CPU capabilities.
+ *
+ * I *think* this was slower than the MMX assembly version, but that measurement
+ * was decades ago; what I know for sure is this implementation was to explore
+ * and learn to use intrinsics, and compare performance between.
  *
  * pre: delta fields are precalculated
  *
@@ -2597,16 +2627,16 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 		pixel3 = pixel + m_dwBufferWidth;
 
 		pixels_12 = *((__m64*) & (readBase[pixel]));    /* read in pixels 1 & 2 using a single memory read operation */
-		pixels_34 = *((__m64*) & (readBase[pixel3]));    /* read in pixels 3 & 4 using a single memory read operation */
+		pixels_34 = *((__m64*) & (readBase[pixel3]));   /* read in pixels 3 & 4 using a single memory read operation */
 
-		px1 = _m_punpckhbw(pixels_12, m_zero);    /* unpack pixel 1 */
+		px1 = _m_punpckhbw(pixels_12, m_zero);  /* unpack pixel 1 */
 		px2 = _m_punpcklbw(pixels_12, m_zero);  /* unpack pixel 1 */
-		upper_pixel_sum = _m_paddw(px1, px2);    /* sum the top 2 pixels */
+		upper_pixel_sum = _m_paddw(px1, px2);   /* sum the top 2 pixels */
 
 
 		px3 = _m_punpckhbw(pixels_34, m_zero);  /* unpack pixel 3 */
 		px4 = _m_punpcklbw(pixels_34, m_zero);  /* unpack pixel 4 */
-		lower_pixel_sum = _m_paddw(px3, px4);    /* sum the bottom two pixels */
+		lower_pixel_sum = _m_paddw(px3, px4);   /* sum the bottom two pixels */
 
 
 		final_pixel = _m_paddw(upper_pixel_sum, lower_pixel_sum);    /* sum the 2 sums */
@@ -2655,7 +2685,9 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 #ifdef USE_MMX_ASSEMBLY
 /****************************************************************************
  *
- * DoDelta_MMX
+ * @brief Optimized using MMX assembly.
+ *
+ * This is the version used if the processor supports MMX instructions
  *
  ****************************************************************************/
 void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
@@ -2706,11 +2738,11 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 		punpcklbw mmx_p1, mmx_zero;    /* unpack pixel 1 */
 		punpckhbw mmx_p2, mmx_zero;    /* unpack pixel 2 */
-		paddw     mmx_p1, mmx_p2;    /* sum top two pixels */
+		paddw     mmx_p1, mmx_p2;      /* sum top two pixels */
 
 		punpcklbw mmx_p3, mmx_zero;    /* unpack pixel 3 */
 		punpckhbw mmx_p4, mmx_zero;    /* unpack pixel 4 */
-		paddw     mmx_p3, mmx_p4;    /* sum bottom two pixels */
+		paddw     mmx_p3, mmx_p4;      /* sum bottom two pixels */
 
 		paddw     mmx_p1, mmx_p3;    //sum top and bottom rows */
 
