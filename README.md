@@ -1,4 +1,4 @@
-# ![Greenshift](assets/greenshift-logo-left-underlined-fit.svg)
+# ![Greenshift](assets/project-greenshift-underlined-fit.svg)
 
 A free, open-source Winamp visualization plugin designed to graph four-dimensional mathematical functions at high speed while offering greater flexibility than comparable visualizers.
 
