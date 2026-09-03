@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="417"
+     height="68"
+     viewBox="8 12 417 68"
+     role="img"
+     aria-label="Project Greenshift">
+
+  <defs>
+    <linearGradient id="logoGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%">
+      <stop offset="0%"   stop-color="#003300"/>
+      <stop offset="18%"  stop-color="#008800"/>
+      <stop offset="40%"  stop-color="#00dd00"/>
+      <stop offset="50%"  stop-color="#00ff00"/>
+      <stop offset="68%"  stop-color="#00bb00"/>
+      <stop offset="86%"  stop-color="#006600"/>
+      <stop offset="100%" stop-color="#002800"/>
+    </linearGradient>
+
+    <filter id="greenGlow"
+            x="-20%"
+            y="-25%"
+            width="140%"
+            height="175%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="textShadow"
+            x="-20%"
+            y="-25%"
+            width="140%"
+            height="175%">
+      <feOffset dx="1.5" dy="2" result="offset"/>
+      <feGaussianBlur in="offset"
+                      stdDeviation="1.5"
+                      result="shadow"/>
+      <feFlood flood-color="#000000"
+               flood-opacity="0.95"
+               result="shadowColor"/>
+      <feComposite in="shadowColor"
+                   in2="shadow"
+                   operator="in"
+                   result="shadowResult"/>
+      <feMerge>
+        <feMergeNode in="shadowResult"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="425"
+        height="80"
+        fill="transparent"/>
+
+  <!-- Moved upward -->
+  <text x="212.5"
+        y="60"
+        text-anchor="middle"
+        textLength="398"
+        lengthAdjust="spacingAndGlyphs"
+        font-family="'Monotype Corsiva', 'Apple Chancery', 'URW Chancery L', cursive"
+        font-size="58"
+        fill="#001900"
+        stroke="#001900"
+        stroke-width="5"
+        opacity="0.9">
+    Project Greenshift
+  </text>
+
+  <text x="212.5"
+        y="58"
+        text-anchor="middle"
+        textLength="398"
+        lengthAdjust="spacingAndGlyphs"
+        font-family="'Monotype Corsiva', 'Apple Chancery', 'URW Chancery L', cursive"
+        font-size="58"
+        fill="url(#logoGradient)"
+        stroke="#005500"
+        stroke-width="1.2"
+        paint-order="stroke fill"
+        filter="url(#textShadow)">
+    Project Greenshift
+  </text>
+
+  <text x="212.5"
+        y="57"
+        text-anchor="middle"
+        textLength="398"
+        lengthAdjust="spacingAndGlyphs"
+        font-family="'Monotype Corsiva', 'Apple Chancery', 'URW Chancery L', cursive"
+        font-size="58"
+        fill="none"
+        stroke="#00aa00"
+        stroke-width="0.6"
+        opacity="0.8"
+        filter="url(#greenGlow)">
+    Project Greenshift
+  </text>
+
+  <!-- Underline also moved upward -->
+<path d="M 14,68
+         C 110,67 318,67 415,68"
+      fill="none"
+      stroke="#003d00"
+      stroke-width="5"/>
+
+<path d="M 14,66
+         C 110,65 318,65 415,66"
+      fill="none"
+      stroke="url(#logoGradient)"
+      stroke-width="2.2"
+      filter="url(#greenGlow)"/>
+</svg>
