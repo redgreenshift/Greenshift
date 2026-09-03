@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="500"
+     height="100"
+     viewBox="0 0 500 100"
+     role="img"
+     aria-label="Project Greenshift">
+
+  <defs>
+    <!-- Dark green → bright green → dark green -->
+    <linearGradient id="logoGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%">
+      <stop offset="0%"   stop-color="#003300"/>
+      <stop offset="18%"  stop-color="#008800"/>
+      <stop offset="40%"  stop-color="#00dd00"/>
+      <stop offset="50%"  stop-color="#00ff00"/>
+      <stop offset="68%"  stop-color="#00bb00"/>
+      <stop offset="86%"  stop-color="#006600"/>
+      <stop offset="100%" stop-color="#002800"/>
+    </linearGradient>
+
+    <!-- Subtle green glow -->
+    <filter id="greenGlow"
+            x="-20%"
+            y="-30%"
+            width="140%"
+            height="170%">
+      <feGaussianBlur stdDeviation="2.2"
+                      result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft shadow/outline -->
+    <filter id="textShadow"
+            x="-20%"
+            y="-30%"
+            width="140%"
+            height="170%">
+      <feOffset dx="1.5" dy="2"
+                 result="offset"/>
+      <feGaussianBlur in="offset"
+                      stdDeviation="1.5"
+                      result="shadow"/>
+      <feFlood flood-color="#000000"
+               flood-opacity="0.95"
+               result="shadowColor"/>
+      <feComposite in="shadowColor"
+                    in2="shadow"
+                    operator="in"
+                    result="shadowResult"/>
+      <feMerge>
+        <feMergeNode in="shadowResult"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Transparent background; add fill="#000" for a black rectangle -->
+  <rect width="500"
+        height="100"
+        fill="transparent"/>
+
+  <!-- Dark outer glow -->
+  <text x="250"
+        y="66"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="49"
+        font-style="italic"
+        font-weight="normal"
+        letter-spacing="-1.2"
+        fill="#001900"
+        stroke="#001900"
+        stroke-width="5"
+        opacity="0.9">
+    Project Greenshift
+  </text>
+
+  <!-- Main logo text -->
+  <text x="250"
+        y="64"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="49"
+        font-style="italic"
+        font-weight="normal"
+        letter-spacing="-1.2"
+        fill="url(#logoGradient)"
+        stroke="#005500"
+        stroke-width="1.2"
+        paint-order="stroke fill"
+        filter="url(#textShadow)">
+    Project Greenshift
+  </text>
+
+  <!-- Green highlight -->
+  <text x="250"
+        y="63"
+        text-anchor="middle"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="49"
+        font-style="italic"
+        font-weight="normal"
+        letter-spacing="-1.2"
+        fill="none"
+        stroke="#00aa00"
+        stroke-width="0.6"
+        opacity="0.8"
+        filter="url(#greenGlow)">
+    Project Greenshift
+  </text>
+
+  <!-- Underline -->
+  <path d="M 27,76
+           C 135,75 255,75 459,75"
+        fill="none"
+        stroke="#003d00"
+        stroke-width="5"
+        opacity="0.9"/>
+
+  <path d="M 27,74
+           C 135,73 255,73 459,73"
+        fill="none"
+        stroke="url(#logoGradient)"
+        stroke-width="2.2"
+        filter="url(#greenGlow)"/>
+</svg>
