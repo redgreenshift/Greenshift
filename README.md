@@ -16,7 +16,7 @@ extended via user-defined mathematical expressions stored in external config fil
 
 Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient, extensible Winamp visualization plugin.
 
-![Example images](assets/assets/Greenshift275x464.jpg)
+![Example images](assets/Greenshift275x464.jpg)
 
 ## Key Features
 
