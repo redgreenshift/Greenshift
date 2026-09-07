@@ -10,8 +10,8 @@
 A free, open-source Winamp visualization plugin designed to graph four-dimensional mathematical functions at high speed while offering greater flexibility than comparable visualizers.
 
 ![Example screenshot 1](assets/UntitledExample1.png)
-![Example screenshot 2](assets/UntitledExample2.png)
 ![Example screenshot 3](assets/UntitledExample3.png)
+![Example screenshot 2](assets/UntitledExample2.png)
 
 Greenshift was designed to achieve the performance of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects,
 more palettes, and greater extensibility. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations
@@ -50,6 +50,8 @@ The name was inspired by a technical quirk discovered during development. When w
 
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
+![Example screenshot 1](assets/Untitled1.png)
+
 ## AI Policy
 
 Contributions from AI agents are welcome, provided they are reviewed by a
@@ -59,6 +61,8 @@ approval by an automated process or another AI agent alone is insufficient.
 AI tools may be used to suggest code ideas or help draft comments, but all
 code is reviewed by the project author before committing. Code that the
 author does not fully understand is not committed.
+
+![Example screenshot 2](assets/Untitled2.png)
 
 ## License
 
@@ -77,3 +81,5 @@ Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licens
 * [GitHub Repository](https://github.com/redgreenshift/greenshift)
 * [Website](http://greenshift.net)
 * **Author:** [Jared Ivey](mailto:jared.ivey+greenshift@outlook.com)
+
+![Example screenshot 3](assets/Untitled3.png)
