@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="250"
-     height="64"
-     viewBox="0 0 250 64"
+     width="194"
+     height="38"
+     viewBox="0 7 194 38"
      role="img"
      aria-label="Greenshift">
 
   <defs>
-    <!-- Bright green → dark green -->
     <linearGradient id="greenshiftGradient"
                     x1="0"
                     y1="0"
