@@ -43,7 +43,7 @@ Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was ada
 
 ## About this project's development
 
-### The Name "Greenshift"
+### The Name "![Greenshift](assets/greenshift-text-h3-fit.svg)"
 The name was inspired by a technical quirk discovered during development. When working in 16-bit color (5 bits Red, 6 bits Green, 5 bits Blue), repeatedly averaging the color channels of adjacent pixels leads to precision loss. Because green has one more bit of precision, it stays brighter slightly longer—causing a shift toward the green "end" of the spectrum. I dubbed this phenomenon "greenshift," and the name has stuck ever since.
 
 ![screenshot of the greenshift effect](assets/ProjectGreenshift.jpg)
