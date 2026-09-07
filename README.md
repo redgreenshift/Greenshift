@@ -1,6 +1,4 @@
-# ![Greenshift](assets/project-greenshift-recreated.svg)
-
-A free, open-source Winamp visualization plugin designed to graph four-dimensional mathematical functions at high speed while offering greater flexibility than comparable visualizers.
+![Greenshift](assets/project-greenshift-vectorized.svg)
 
 [![Winamp](https://img.shields.io/badge/Winamp-F93821.svg?logo=winamp&logoColor=white)](https://www.winamp.com)
 [![Windows](https://img.shields.io/badge/Windows-0078D4.svg?logo=data:image/svg%2bxml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIE9yaWdpbmFsIGZyb206IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHM7IGhhbmQgbW9kaWZpZWQgdG8gd2hpdGUgbW9ub2Nocm9tZSAtLT4KPHN2ZyBmaWxsPSIjRkZGRkZGIiB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBpZD0iaWNvbnMiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTMxLjg3LDMwLjU4SDI0NC43VjI0My4zOUgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDMwLjU4SDQ3OS43VjI0My4zOUgyNjYuODlaIi8+PHBhdGggZD0iTTMxLjg3LDI2NS42MUgyNDQuN3YyMTIuOEgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDI2NS42MUg0NzkuN3YyMTIuOEgyNjYuODlaIi8+PC9zdmc+)](https://www.microsoft.com/windows)
@@ -9,14 +7,17 @@ A free, open-source Winamp visualization plugin designed to graph four-dimension
 [![DirectDraw 7](https://img.shields.io/badge/DirectDraw-7-107C10.svg)](https://en.wikipedia.org/wiki/DirectDraw)
 [![License: GPL-2.0-only](https://img.shields.io/badge/License-GPL--2.0--only-F58220.svg)](LICENSE)
 
+A free, open-source Winamp visualization plugin designed to graph four-dimensional mathematical functions at high speed while offering greater flexibility than comparable visualizers.
+
+![Example screenshot 1](assets/UntitledExample1.png)
+![Example screenshot 3](assets/UntitledExample3.png)
+![Example screenshot 2](assets/UntitledExample2.png)
 
 Greenshift was designed to achieve the performance of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects,
 more palettes, and greater extensibility. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations
 extended via user-defined mathematical expressions stored in external config files.
 
 Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient, extensible Winamp visualization plugin.
-
-![Example images](assets/Greenshift275x464.jpg)
 
 ## Key Features
 
@@ -49,6 +50,8 @@ The name was inspired by a technical quirk discovered during development. When w
 
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
+![Example screenshot 1](assets/Untitled1.png)
+
 ## AI Policy
 
 Contributions from AI agents are welcome, provided they are reviewed by a
@@ -58,6 +61,8 @@ approval by an automated process or another AI agent alone is insufficient.
 AI tools may be used to suggest code ideas or help draft comments, but all
 code is reviewed by the project author before committing. Code that the
 author does not fully understand is not committed.
+
+![Example screenshot 2](assets/Untitled2.png)
 
 ## License
 
@@ -76,3 +81,5 @@ Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licens
 * [GitHub Repository](https://github.com/redgreenshift/greenshift)
 * [Website](http://greenshift.net)
 * **Author:** [Jared Ivey](mailto:jared.ivey+greenshift@outlook.com)
+
+![Example screenshot 3](assets/Untitled3.png)
