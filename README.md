@@ -56,6 +56,8 @@ The design philosophy behind Greenshift centers on an attempt to preserve the vi
 
 ## AI Policy
 
+![A humorous image summarizing the project's policy against unreviewed vibe coding: “Vibe coding? We don't do that here.”](assets/no-vibe-coding.jpg)
+
 Contributions from AI agents are welcome, provided they are reviewed by a
 human before being committed. Every change MUST be approved by a real person;
 approval by an automated process or another AI agent alone is insufficient.
