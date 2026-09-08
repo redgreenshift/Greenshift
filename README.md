@@ -1,5 +1,5 @@
-[![Previous: 4D Symbolic Function Graphing](https://img.shields.io/badge/←_PREV-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/symbolic-function-graphing)
-[![Next: Fire Demo](https://img.shields.io/badge/NEXT_→-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/firedemo)
+[![Previous: 4D Symbolic Function Graphing](https://img.shields.io/badge/←_PREV-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/symbolic-function-graphing/blob/main/README.md)
+[![Next: Fire Demo](https://img.shields.io/badge/NEXT_→-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/firedemo/blob/main/README.md)
 
 ![Greenshift](assets/project-greenshift-vectorized-3d-fit.svg)
 
