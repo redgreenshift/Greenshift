@@ -35,6 +35,21 @@ Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was ada
 | `F` | Toggle framerate display |
 | `Esc` | Close Greenshift |
 | `Alt + Enter` / Double Click | Toggle fullscreen |
+| `1` | Force CPP only implementation (least optimizations) |
+| `2` | Force x86 assembly optimization (uses MMX intrinsics in 32bit color; MAY CRASH if unsupported) |
+| `3` | Force MMX assembly optimization (only in 32bit color; MAY CRASH if unsupported; experimental non-MMX implementation in 8/16bit color) |
+| `4` | Force SSE assembly optimization (currently hard coded to call the MMX implementation) |
+
+## Performance
+
+Greenshift is primarily written in C++20, with a small amount of C. MMX assembly is used for selected performance-critical operations. At runtime, Greenshift detects the available instruction sets and selects an appropriate implementation:
+
+- Portable C++ implementations are used as fallbacks when optimized instruction sets are unavailable.
+- A compiler-tuned x86 implementation uses carefully structured C++ code designed to encourage more efficient machine-code generation. Its inner loop was refined through extensive repeated benchmarking rather than by writing x86 assembly directly, retaining changes only when they produced measurable speedups.
+- MMX-optimized routines are used when supported, particularly for integer color-processing operations.
+- The current SSE path calls the MMX implementation rather than using dedicated floating-point SSE instructions.
+
+MMX is well suited to Greenshift's integer-based color-processing workloads, while SSE is primarily designed for floating-point operations.
 
 ## Getting Started
 
