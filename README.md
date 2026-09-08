@@ -81,7 +81,7 @@ Greenshift is distributed in the hope that it will be useful, but WITHOUT ANY WA
 
 You should have received a copy of the GNU General Public License along with this program; see LICENSE.
 
-Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See `MersenneTwister.h` and `licenses/LGPL-2.1-or-later.txt` for details.
+Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See <a href="MersenneTwister.h">`MersenneTwister.h`</a> and <a href="licenses/LGPL-2.1-or-later.txt">`licenses/LGPL-2.1-or-later.txt`</a> for details.
 
 ---
 
