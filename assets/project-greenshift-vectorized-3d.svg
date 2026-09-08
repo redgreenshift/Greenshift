@@ -107,10 +107,11 @@
 
 <!-- Dark underline extrusion -->
 <!-- LINE: Dark upper edge of the underline -->
+<!-- Deep upper shadow -->
 <path
-  d="M 220 578 H 3735"
+  d="M 220 570 H 3735"
   fill="none"
-  stroke="#002b08"
+  stroke="#001f08"
   stroke-width="38"
   stroke-linecap="butt"
 />
@@ -127,6 +128,15 @@
   stroke-linejoin="round"
 />
 
+<!-- LINE: Blue-gray intermediate side -->
+<path
+  d="M 220 582 H 3735"
+  fill="none"
+  stroke="#2F4F5D"
+  stroke-width="30"
+  stroke-linecap="butt"
+/>
+  
 <!-- LINE: Bright lower portion of the UNDERLINE -->
 <path
   d="M 220 590 H 3735"
@@ -141,8 +151,8 @@
   href="#logo-shape"
   xlink:href="#logo-shape"
   transform="translate(9 -12)"
-  fill="#12a832"
-  stroke="#00751d"
+  fill="#2F4F5D"
+  stroke="#3C6678"
   stroke-width="12"
   stroke-linejoin="round"
 />
