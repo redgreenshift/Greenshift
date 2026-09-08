@@ -61,13 +61,13 @@ MMX is well suited to Greenshift's integer-based color-processing workloads, whi
 ### The Name "![Greenshift](assets/greenshift-text-h3-fit.svg)"
 The name was inspired by a technical quirk discovered during development. When working in 16-bit color (5 bits Red, 6 bits Green, 5 bits Blue), repeatedly averaging the color channels of adjacent pixels leads to precision loss. Because green has one more bit of precision, it stays brighter slightly longer—causing a shift toward the green "end" of the spectrum. I dubbed this phenomenon "greenshift," and the name has stuck ever since.
 
-![screenshot of the greenshift effect](assets/ProjectGreenshift.jpg)
+![screenshot illustrating the greenshift effect](assets/ProjectGreenshift.jpg)
 
 ### Design Philosophy: Preserving the "Feel"
 
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
-![Example screenshot 1](assets/Untitled1.png)
+![Example screenshot, showing debug output including FPS, currently playing song, and which configs are loaded and/or transitioning (DeltaFields, Palettes, WaveShapes, and Particles)](assets/Untitled1.png)
 
 ## AI Policy
 
