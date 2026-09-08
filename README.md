@@ -1,3 +1,6 @@
+[![Previous: 4D Symbolic Function Graphing](https://img.shields.io/badge/←_PREV-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/symbolic-function-graphing)
+[![Next: Fire Demo](https://img.shields.io/badge/NEXT_→-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/firedemo)
+
 ![Greenshift](assets/project-greenshift-vectorized-3d-fit.svg)
 
 [![Winamp](https://img.shields.io/badge/Winamp-F93821.svg?logo=winamp&logoColor=white)](https://www.winamp.com)
@@ -68,6 +71,30 @@ The name was inspired by a technical quirk discovered during development. When w
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
 ![Example screenshot, showing debug output including FPS, currently playing song, and which configs are loaded and/or transitioning (DeltaFields, Palettes, WaveShapes, and Particles)](assets/Untitled1.png)
+
+## Project History
+
+Greenshift began as the convergence of two ideas: the symbolic graphing of
+four-dimensional mathematical functions and the creation of a Winamp
+visualization. It was designed from the beginning to combine those ideas,
+rather than being a graphing project that was retrofitted into a visualization
+plugin.
+### Related Projects
+
+#### Predecessor Projects
+
+Greenshift grew out of [4D Symbolic Function Graphing](https://github.com/redgreenshift/symbolic-function-graphing), which was itself part of a direct lineage from [XYZ](https://github.com/redgreenshift/XYZ), an earlier project for three-dimensional function graphing.
+
+The `4D Symbolic Function Graphing` project was where I developed the design for the `Expression` class hierarchy. I first implemented and tested that design in [Smalltalk-80](https://en.wikipedia.org/wiki/Smalltalk), whose more flexible type system made it easier to prototype the object relationships and get the hierarchy working. Once the design was functional, I translated it into C++, where the stronger type system made the implementation more involved but also provided useful benefits for the finished project.
+
+By the time I began implementing the `Expression` classes in C++, I was already planning to combine the four-dimensional graphing project with the idea of a Winamp visualization. Greenshift was the result of adapting the 4D symbolic function-graphing engine into that visualization format.
+
+The `Expression` hierarchy became central to Greenshift. It allows user-defined mathematical functions to be represented and evaluated symbolically, forming the foundation for Greenshift's configurable expression engine. The project expanded around that foundation to support real-time visualization, color processing, efficient rendering, and transitions between visual effects.
+
+#### Successor Projects
+
+[FireDemo](https://github.com/redgreenshift/firedemo) is a looser successor to Greenshift. It carries forward ideas including `BitCanvas`, frame-to-frame decay values, and configurable color palettes, while exploring a broader range of real-time lighting effects.
+
 
 ## AI Policy
 
