@@ -24,6 +24,30 @@
     <stop offset="100%" stop-color="#003b0c"/>
   </linearGradient>
 
+<linearGradient
+  id="intermediate-gradient"
+  gradientUnits="userSpaceOnUse"
+  x1="220"
+  y1="0"
+  x2="3735"
+  y2="0"
+>
+  <!-- Dark left edge -->
+  <stop offset="0%"   stop-color="#243D49"/>
+
+  <!-- Gradual brightening -->
+  <stop offset="30%"  stop-color="#2F4F5D"/>
+  <stop offset="42%"  stop-color="#3C6678"/>
+
+  <!-- Brightest central area -->
+  <stop offset="50%"  stop-color="#4A788A"/>
+
+  <!-- Darkening toward the right -->
+  <stop offset="58%"  stop-color="#3C6678"/>
+  <stop offset="70%"  stop-color="#2F4F5D"/>
+  <stop offset="100%" stop-color="#243D49"/>
+</linearGradient>
+ 
   <linearGradient
     id="highlight-gradient"
     gradientUnits="userSpaceOnUse"
@@ -132,7 +156,7 @@
 <path
   d="M 220 582 H 3735"
   fill="none"
-  stroke="#2F4F5D"
+  stroke="url(#intermediate-gradient)"
   stroke-width="30"
   stroke-linecap="butt"
 />
@@ -151,8 +175,8 @@
   href="#logo-shape"
   xlink:href="#logo-shape"
   transform="translate(9 -12)"
-  fill="#2F4F5D"
-  stroke="#3C6678"
+  fill="url(#intermediate-gradient)"
+  stroke="url(#intermediate-gradient)"
   stroke-width="12"
   stroke-linejoin="round"
 />
