@@ -79,6 +79,7 @@ four-dimensional mathematical functions and the creation of a Winamp
 visualization. It was designed from the beginning to combine those ideas,
 rather than being a graphing project that was retrofitted into a visualization
 plugin.
+
 ### Related Projects
 
 #### Predecessor Projects
