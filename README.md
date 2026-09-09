@@ -16,11 +16,11 @@ A free, open-source Winamp visualization plugin designed to graph four-dimension
 ![Example screenshot 3](assets/UntitledExample3.png)
 ![Example screenshot 2](assets/UntitledExample2.png)
 
-Greenshift was designed to achieve the performance of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects,
-more palettes, and greater extensibility. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations
-extended via user-defined mathematical expressions stored in external config files.
+## Overview
 
-Originally conceived as a tool for 4D function graphing (X, Y, Z, T), it was adapted into its current form: an efficient, extensible Winamp visualization plugin.
+Greenshift was designed to achieve the performance of Geiss without resorting to assembly, and aims to surpass G-Force with smooth transitions between effects,
+more palettes, and greater extensibility. It is a C++ project that provides a powerful engine for generating dynamic particle and wave visualizations,
+extended via user-defined mathematical expressions stored in external config files.
 
 ## Key Features
 
@@ -74,23 +74,54 @@ The design philosophy behind Greenshift centers on an attempt to preserve the vi
 
 ## Project History
 
-Greenshift began as the convergence of two ideas: the symbolic graphing of
+The original concept was a four-dimensional graphing tool intended to function as
+a screensaver; the project itself was designed from the outset as a Winamp
+visualization plugin.
+
+Greenshift began with a long-standing concept for graphing four-dimensional
+mathematical functions using X, Y, Z, and T. An initial attempt to prototype
+the `Expression` class in C++ proved difficult because C++ is a strongly typed
+language, which made it challenging to explore the object relationships and
+class hierarchy I had envisioned. I therefore pursued a detour through
+[Smalltalk-80](https://en.wikipedia.org/wiki/Smalltalk), a weakly typed language,
+where I developed and tested the design in a more flexible environment.
+
+That detour provided time to refine the graphing system, listen to music while
+watching Winamp visualizations, and recognize that I could create one myself
+using the `Expression` class as its foundation. The original screensaver concept
+was consequently reframed before the Greenshift design phase began. I then
+spent several semesters designing the project in a physical notebook between
+college lectures, working through its architecture, rendering model,
+expression system, configurable effects, and performance goals before beginning
+the C++ implementation.
+
+Greenshift is the convergence of two ideas: the symbolic graphing of
 four-dimensional mathematical functions and the creation of a Winamp
-visualization. It was designed from the beginning to combine those ideas,
-rather than being a graphing project that was retrofitted into a visualization
-plugin.
+visualization. Those ideas were combined during the design phase, before
+Greenshift's substantive implementation began, and the project was designed
+from the ground up around both.
 
 ### Related Projects
 
 #### Predecessor Projects
 
-Greenshift directly grew out of [4D Symbolic Function Graphing](https://github.com/redgreenshift/symbolic-function-graphing), which was itself part of a direct lineage from [XYZ](https://github.com/redgreenshift/XYZ), an earlier project for three-dimensional function graphing.
+Greenshift directly grew out of [4D Symbolic Function Graphing](https://github.com/redgreenshift/4d-symbolic-function-graphing), which was itself part of a direct lineage from [XYZ](https://github.com/redgreenshift/XYZ), an earlier project for three-dimensional function graphing.
 
-The `4D Symbolic Function Graphing` project was where I developed the design for the `Expression` class hierarchy. I first implemented and tested that design in [Smalltalk-80](https://en.wikipedia.org/wiki/Smalltalk), whose more flexible type system made it easier to prototype the object relationships and get the hierarchy working. Once the design was functional, I translated it into C++, where the stronger type system made the implementation more involved but also provided useful benefits for the finished project.
+The `4D Symbolic Function Graphing` project was where I developed the design for
+the `Expression` class hierarchy. I first implemented and tested that design in
+[Smalltalk-80](https://en.wikipedia.org/wiki/Smalltalk), whose more flexible
+type system made it easier to explore the object relationships and refine the
+hierarchy. Once the design was functional, I implemented it in C++, where
+working from an already-established design made the strongly typed language
+much easier to work with.
 
-By the time I began implementing the `Expression` classes in C++, I was already planning to combine the four-dimensional graphing project with the idea of a Winamp visualization. Greenshift was the result of adapting the 4D symbolic function-graphing engine into that visualization format.
+The `Expression` hierarchy is central to Greenshift. It allows user-defined
+mathematical functions to be represented and evaluated symbolically, forming the
+foundation for Greenshift's configurable expression engine. The project expanded
+around that foundation to support real-time visualization, color processing,
+efficient rendering, and transitions between visual effects.
 
-The `Expression` hierarchy became central to Greenshift. It allows user-defined mathematical functions to be represented and evaluated symbolically, forming the foundation for Greenshift's configurable expression engine. The project expanded around that foundation to support real-time visualization, color processing, efficient rendering, and transitions between visual effects.
+The original name for Project Greenshift was “expressionconsole,” reflecting the central role of this technology.
 
 #### Successor Projects
 
