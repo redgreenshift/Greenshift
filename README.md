@@ -83,7 +83,7 @@ plugin.
 
 #### Predecessor Projects
 
-Greenshift grew out of [4D Symbolic Function Graphing](https://github.com/redgreenshift/symbolic-function-graphing), which was itself part of a direct lineage from [XYZ](https://github.com/redgreenshift/XYZ), an earlier project for three-dimensional function graphing.
+Greenshift directly grew out of [4D Symbolic Function Graphing](https://github.com/redgreenshift/symbolic-function-graphing), which was itself part of a direct lineage from [XYZ](https://github.com/redgreenshift/XYZ), an earlier project for three-dimensional function graphing.
 
 The `4D Symbolic Function Graphing` project was where I developed the design for the `Expression` class hierarchy. I first implemented and tested that design in [Smalltalk-80](https://en.wikipedia.org/wiki/Smalltalk), whose more flexible type system made it easier to prototype the object relationships and get the hierarchy working. Once the design was functional, I translated it into C++, where the stronger type system made the implementation more involved but also provided useful benefits for the finished project.
 
@@ -121,7 +121,7 @@ Greenshift is free software; you can redistribute it and/or modify it under the 
 
 Greenshift is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; see LICENSE.
+You should have received a copy of the GNU General Public License along with this program; see [LICENSE](LICENSE).
 
 Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See <a href="MersenneTwister.h">`MersenneTwister.h`</a> and <a href="licenses/LGPL-2.1-or-later.txt">`licenses/LGPL-2.1-or-later.txt`</a> for details.
 
