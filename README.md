@@ -105,8 +105,8 @@ from the ground up around both.
 
 #### Predecessor Projects
 
-Greenshift directly grew out of <a href="https://github.com/redgreenshift/4d-symbolic-function-graphing">`4D Symbolic Function Graphing`</a>,
-which was itself part of a direct lineage from <a href="https://github.com/redgreenshift/XYZ">`XYZ`</a>,
+Greenshift directly grew out of [`4D Symbolic Function Graphing`](https://github.com/redgreenshift/4d-symbolic-function-graphing),
+which was itself part of a direct lineage from [`XYZ`](https://github.com/redgreenshift/XYZ),
 an earlier project for three-dimensional function graphing.
 
 The `4D Symbolic Function Graphing` project was where I developed the design for
@@ -127,7 +127,7 @@ The original name for Project Greenshift was “expressionconsole,” reflecting
 
 #### Successor Projects
 
-<a href="https://github.com/redgreenshift/firedemo">`FireDemo`</a> is a looser successor to Greenshift. It carries forward ideas including `BitCanvas`, frame-to-frame decay values, and configurable color palettes, while exploring a broader range of real-time lighting effects.
+[`FireDemo`](https://github.com/redgreenshift/firedemo) is a looser successor to Greenshift. It carries forward ideas including `BitCanvas`, frame-to-frame decay values, and configurable color palettes, while exploring a broader range of real-time lighting effects.
 
 
 ## AI Policy
@@ -155,7 +155,7 @@ Greenshift is free software; you can redistribute it and/or modify it under the 
 
 Greenshift is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program; see <a href="LICENSE">`LICENSE`</a>.
+You should have received a copy of the GNU General Public License along with this program; see [`LICENSE`](LICENSE).
 
 Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See <a href="MersenneTwister.h">`MersenneTwister.h`</a> and <a href="licenses/LGPL-2.1-or-later.txt">`licenses/LGPL-2.1-or-later.txt`</a> for details.
 
