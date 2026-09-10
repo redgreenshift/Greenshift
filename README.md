@@ -74,9 +74,10 @@ The design philosophy behind Greenshift centers on an attempt to preserve the vi
 
 ## Project History
 
-The original concept was a four-dimensional graphing tool intended to function as
-a screensaver; the project itself was designed from the outset as a Winamp
-visualization plugin.
+The original concept, dating to 1998, was a 4D graphing tool intended for use as a
+screensaver. By the time serious design work began in 2000, the vision had evolved;
+it was reimagined as a Winamp visualization plugin from the outset of design, with
+formal implementation beginning in 2001.
 
 Greenshift began with a long-standing concept for graphing four-dimensional
 mathematical functions using X, Y, Z, and T. An initial attempt to prototype
