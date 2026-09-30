@@ -1,7 +1,7 @@
 [![Previous: 4D Symbolic Function Graphing](https://img.shields.io/badge/←_PREV-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/4d-symbolic-function-graphing/blob/main/README.md)
 [![Next: Fire Demo](https://img.shields.io/badge/NEXT_→-gray.svg?style=for-the-badge)](https://github.com/redgreenshift/firedemo/blob/main/README.md)
 
-![Greenshift](assets/project-greenshift-vectorized-3d-fit.svg)
+![Greenshift](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/project-greenshift-vectorized-3d-fit.svg)
 
 [![Winamp](https://img.shields.io/badge/Winamp-F93821.svg?logo=winamp&logoColor=white)](https://www.winamp.com)
 [![Windows](https://img.shields.io/badge/Windows-0078D4.svg?logo=data:image/svg%2bxml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz48IS0tIE9yaWdpbmFsIGZyb206IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHM7IGhhbmQgbW9kaWZpZWQgdG8gd2hpdGUgbW9ub2Nocm9tZSAtLT4KPHN2ZyBmaWxsPSIjRkZGRkZGIiB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBpZD0iaWNvbnMiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTMxLjg3LDMwLjU4SDI0NC43VjI0My4zOUgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDMwLjU4SDQ3OS43VjI0My4zOUgyNjYuODlaIi8+PHBhdGggZD0iTTMxLjg3LDI2NS42MUgyNDQuN3YyMTIuOEgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDI2NS42MUg0NzkuN3YyMTIuOEgyNjYuODlaIi8+PC9zdmc+)](https://www.microsoft.com/windows)
@@ -12,9 +12,9 @@
 
 A free, open-source Winamp visualization plugin designed to graph four-dimensional mathematical functions at high speed while offering greater flexibility than comparable visualizers.
 
-![Example screenshot 1](assets/UntitledExample1.png)
-![Example screenshot 3](assets/UntitledExample3.png)
-![Example screenshot 2](assets/UntitledExample2.png)
+![Example screenshot 1](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/UntitledExample1.png)
+![Example screenshot 3](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/UntitledExample3.png)
+![Example screenshot 2](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/UntitledExample2.png)
 
 ## Overview
 
@@ -61,16 +61,16 @@ MMX is well suited to Greenshift's integer-based color-processing workloads, whi
 
 ## About this project's development
 
-### The Name "![Greenshift](assets/greenshift-text-h3-fit.svg)"
+### The Name "![Greenshift](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/greenshift-text-h3-fit.svg)"
 The name was inspired by a technical quirk discovered during development. When working in 16-bit color (5 bits Red, 6 bits Green, 5 bits Blue), repeatedly averaging the color channels of adjacent pixels leads to precision loss. Because green has one more bit of precision, it stays brighter slightly longer—causing a shift toward the green "end" of the spectrum. I dubbed this phenomenon "greenshift," and the name has stuck ever since.
 
-![screenshot illustrating the greenshift effect](assets/ProjectGreenshift.jpg)
+![screenshot illustrating the greenshift effect](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/ProjectGreenshift.jpg)
 
 ### Design Philosophy: Preserving the "Feel"
 
 The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
 
-![Example screenshot, showing debug output including FPS, currently playing song, and which configs are loaded and/or transitioning (DeltaFields, Palettes, WaveShapes, and Particles)](assets/Untitled1.png)
+![Example screenshot, showing debug output including FPS, currently playing song, and which configs are loaded and/or transitioning (DeltaFields, Palettes, WaveShapes, and Particles)](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/Untitled1.png)
 
 ## Project History
 
@@ -136,7 +136,7 @@ The original name for Project Greenshift was “expressionconsole,” reflecting
 <p align="center">
   <a href="https://en.wikipedia.org/wiki/Vibe_coding">
   <img
-    src="assets/no-vibe-coding.jpg"
+    src="https://raw.githubusercontent.com/redgreenshift/assets/main/third-party/no-vibe-coding.jpg"
     alt="A humorous image summarizing the project's policy against unreviewed vibe coding: “Vibe coding? We don't do that here.”"
   />
   </a>
