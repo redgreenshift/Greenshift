@@ -142,13 +142,18 @@ The original name for Project Greenshift was “expressionconsole,” reflecting
   </a>
 </p>
 
-Contributions from AI agents are welcome, provided they are reviewed by a
-human before being committed. Every change MUST be approved by a real person;
-approval by an automated process or another AI agent alone is insufficient.
+Contributions from AI agents are welcome, provided every change is reviewed
+and approved by a human before it is committed. Every change MUST be approved
+by a real person; approval by an automated process or another AI agent alone is
+insufficient.
 
-AI tools may be used to suggest code ideas or help draft comments, but all
-code is reviewed by the project author before committing. Code that the
-author does not fully understand is not committed.
+AI tools may be used to suggest code ideas or help draft comments. However,
+contributors must understand, verify, and take responsibility for any code
+they submit. The project author must review and understand all code before
+committing it, and will not commit code they do not fully understand.
+
+AI-generated code is subject to the same standards of review, correctness,
+and maintainability as any other code.
 
 ## License
 
