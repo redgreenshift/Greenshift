@@ -146,9 +146,9 @@ int PASCAL WinMain(HINSTANCE hInstance,
 
 int PASCAL WINMAIN(
 	_In_ HINSTANCE hInstance,
-	_In_opt_ HINSTANCE hPrevInstance,
-	_In_ LPSTR lpCmdLine,
-	_In_ int nCmdShow)
+	_In_opt_ HINSTANCE /*hPrevInstance*/,
+	_In_ LPSTR /*lpCmdLine*/,
+	_In_ int /*nCmdShow*/)
 {
 	error_t err = SUCCESS;
 	//    int i;
@@ -400,10 +400,10 @@ int PASCAL WINMAIN(
  * Note, to get it to crash... you have to make the DoDelta functions public
  */
  //*
-int PASCAL WINMAIN2(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nCmdShow)
+int PASCAL WINMAIN2(HINSTANCE /*hInstance*/,
+	HINSTANCE /*hPrevInstance*/,
+	LPSTR /*lpCmdLine*/,
+	int /*nCmdShow*/)
 {
 	//error_t err = SUCCESS;
 	BitCanvas* bitCanvas;

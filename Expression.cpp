@@ -360,7 +360,7 @@ bool    ExpressionSymbol::IsConstantExpression(value_t* inValue)
 #endif
 
 
-bool    ExpressionConstant::IsConstantExpression(value_t* inValue)
+bool    ExpressionConstant::IsConstantExpression(value_t* /*inValue*/)
 {
 	return true;
 };
@@ -1007,14 +1007,14 @@ EXPRESSION_BINARY_COPY(Comma)
  *
  ****************************************************************************/
 
-	error_t    ExpressionConstant::PartialSimplification(value_t* inValue,
+	error_t    ExpressionConstant::PartialSimplification(value_t* /*inValue*/,
 		Expression** outExpression)
 {
 	return Copy(outExpression);
 }
 
 #ifdef REGULAR_EXPRESSION
-error_t    ExpressionSymbol::PartialSimplification(value_t* inValue,
+error_t    ExpressionSymbol::PartialSimplification(value_t* /*inValue*/,
 	Expression** outExpression)
 {
 	return Copy(outExpression);
@@ -1705,7 +1705,7 @@ error_t Expression::NewVariable(const char* inName,
 
 
 error_t Expression::NewSqrt(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_SQRT(inExpression1)) != NULL)
@@ -1715,7 +1715,7 @@ error_t Expression::NewSqrt(Expression* inExpression1,
 }
 
 error_t Expression::NewSqr(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_SQR(inExpression1)) != NULL)
@@ -1725,7 +1725,7 @@ error_t Expression::NewSqr(Expression* inExpression1,
 }
 
 error_t Expression::NewLog10(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_LOG10(inExpression1)) != NULL)
@@ -1735,7 +1735,7 @@ error_t Expression::NewLog10(Expression* inExpression1,
 }
 
 error_t Expression::NewLn(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_LN(inExpression1)) != NULL)
@@ -1745,7 +1745,7 @@ error_t Expression::NewLn(Expression* inExpression1,
 }
 
 error_t    Expression::NewExp(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_EXP(inExpression1)) != NULL)
@@ -1755,7 +1755,7 @@ error_t    Expression::NewExp(Expression* inExpression1,
 }
 
 error_t Expression::NewFactorial(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_FACTORIAL(inExpression1)) != NULL)
@@ -1765,7 +1765,7 @@ error_t Expression::NewFactorial(Expression* inExpression1,
 }
 
 error_t Expression::NewCos(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_COS(inExpression1)) != NULL)
@@ -1775,7 +1775,7 @@ error_t Expression::NewCos(Expression* inExpression1,
 }
 
 error_t Expression::NewSin(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_SIN(inExpression1)) != NULL)
@@ -1785,7 +1785,7 @@ error_t Expression::NewSin(Expression* inExpression1,
 }
 
 error_t Expression::NewTan(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_TAN(inExpression1)) != NULL)
@@ -1795,7 +1795,7 @@ error_t Expression::NewTan(Expression* inExpression1,
 }
 
 error_t Expression::NewArcCos(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCCOS(inExpression1)) != NULL)
@@ -1805,7 +1805,7 @@ error_t Expression::NewArcCos(Expression* inExpression1,
 }
 
 error_t Expression::NewArcSin(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCSIN(inExpression1)) != NULL)
@@ -1815,7 +1815,7 @@ error_t Expression::NewArcSin(Expression* inExpression1,
 }
 
 error_t Expression::NewArcTan(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCTAN(inExpression1)) != NULL)
@@ -1827,7 +1827,7 @@ error_t Expression::NewArcTan(Expression* inExpression1,
 
 
 error_t Expression::NewCosh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_COSH(inExpression1)) != NULL)
@@ -1837,7 +1837,7 @@ error_t Expression::NewCosh(Expression* inExpression1,
 }
 
 error_t Expression::NewSinh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_SINH(inExpression1)) != NULL)
@@ -1847,7 +1847,7 @@ error_t Expression::NewSinh(Expression* inExpression1,
 }
 
 error_t Expression::NewTanh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_TANH(inExpression1)) != NULL)
@@ -1857,7 +1857,7 @@ error_t Expression::NewTanh(Expression* inExpression1,
 }
 
 error_t Expression::NewArcCosh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCCOSH(inExpression1)) != NULL)
@@ -1867,7 +1867,7 @@ error_t Expression::NewArcCosh(Expression* inExpression1,
 }
 
 error_t Expression::NewArcSinh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCSINH(inExpression1)) != NULL)
@@ -1877,7 +1877,7 @@ error_t Expression::NewArcSinh(Expression* inExpression1,
 }
 
 error_t Expression::NewArcTanh(Expression* inExpression1,
-	Expression* inExpression2,
+	Expression* /*inExpression2*/,
 	Expression** outExpression)
 {
 	if ((*outExpression = NEW_ARCTANH(inExpression1)) != NULL)

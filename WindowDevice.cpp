@@ -249,7 +249,7 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
  * ThreadProcedure - the window must belong to the calling thread
  *
  ****************************************************************************/
-int        WindowDevice::ThreadProcedure(void* pData)
+int        WindowDevice::ThreadProcedure(void* /*pData*/)
 {
 	BOOL    hRet;
 	//BOOL    bQuit = FALSE;

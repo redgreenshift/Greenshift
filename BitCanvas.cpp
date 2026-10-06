@@ -810,7 +810,7 @@ void BitCanvas::CopyTo(void* lpSurface,
 #ifndef UNDEFINED
 	if (BitDepth() == (nPixelFormat + 1) * BITS_PER_BYTE)
 	{
-		this->CopyToSameBitdepth(lpSurfaceStart, nWidth, nHeight, nPitch);
+		this->CopyToSameBitdepth(lpSurfaceStart, nPitch);
 	}
 	else
 #endif

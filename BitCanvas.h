@@ -370,9 +370,14 @@ public:
 		const DWORD   nPitch,
 		const DWORD   nPixelFormat);
 protected:
+	/// <summary>
+	/// Copies pixel data from the object's internal 32-bit read buffer to the
+	/// provided surface buffer assuming the same bit depth and buffer dimensions;
+	/// skips surface padding per-line using the provided pitch.
+	/// </summary>
+	/// <param name="lpSurface">Pointer to the destination surface memory where pixel data will be written (treated as DWORD*).</param>
+	/// <param name="dwPitch">Surface scanline pitch in bytes (total bytes between starts of consecutive rows).</param>
 	void            CopyToSameBitdepth(void* lpSurface,
-		const DWORD   dwWidth,
-		const DWORD   dwHeight,
 		const DWORD   dwPitch)
 		//const DWORD   dwPixelFormat )
 	{

@@ -346,7 +346,7 @@ void* TweenThread::GetFrame(void)
   * ThreadProcedure - entry point for threaded activity
   *
   ****************************************************************************/
-int    TweenThread::ThreadProcedure(void* pData)
+int    TweenThread::ThreadProcedure(void* /*pData*/)
 {
 	enum class WorkType {
 		None = 0,							// No Work To Do
