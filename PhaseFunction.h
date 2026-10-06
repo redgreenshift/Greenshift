@@ -463,7 +463,7 @@ public:
 				/*
 				 * make the next ID
 				 */
-				int ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index++);
+				ret = snprintf(strID, _countof(strID), "%c%d", strPhaseID[dwPhase], index++);
 				if (ret < 0 || (size_t)ret >= _countof(strID))
 					return FAILURE;
 			}
