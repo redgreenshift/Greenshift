@@ -349,7 +349,6 @@ static DecodeOneResult decode_one_utf8_cp(
 	}
 
 	// Read continuation bytes
-	uint8_t b1 = 0, b2 = 0, b3 = 0;
 	uint8_t cont[3] = { 0,0,0 };
 
 	for (int i = 1; i < needed; ++i)

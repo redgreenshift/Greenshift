@@ -791,7 +791,6 @@ error_t FilingClerk::GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDic
 	int        token = 0;
 	char* strTOKEN = NULL;
 	char* strToken = NULL;
-	char* strExp = NULL;
 	char* strTmp = NULL;
 	enum { look_for_red, look_for_green, look_for_blue } state = look_for_red;
 	DWORD    nEntryNumber = 0;
@@ -970,7 +969,7 @@ error_t    FilingClerk::GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDict
 	char* strExp = NULL;
 	char* strTmp = nullptr;
 	enum { look_for_id, look_for_expression } state = look_for_id;
-	enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
+	//enum { d_default, d_extra } DictionaryRenamedToBuild = d_default;
 	MyDictionary<mychar_t*>* pIndirectMyDictionary = outMyDictionary;
 
 	/*

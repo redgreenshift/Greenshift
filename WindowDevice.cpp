@@ -252,7 +252,7 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 int        WindowDevice::ThreadProcedure(void* pData)
 {
 	BOOL    hRet;
-	BOOL    bQuit = FALSE;
+	//BOOL    bQuit = FALSE;
 	MSG     msg;
 	RECT    hRect;
 	error_t err = SUCCESS;

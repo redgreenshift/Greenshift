@@ -534,6 +534,9 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		 * Random Number Generators
 		 */
+#pragma warning(push)
+#pragma warning(disable:4189) // C4189 -- 'v1': local variable is initialized but not referenced
+
 #ifdef _DEBUG
 		const uint32_t maxEndTest = 10;
 #else
@@ -581,6 +584,8 @@ namespace GreenshiftUnitTest
 			}
 			Assert::AreEqual(1, 1);
 		}
+
+#pragma warning(pop) // C4189 -- 'v1': local variable is initialized but not referenced
 
 		TEST_METHOD(TestMTRand0_Verification)
 		{

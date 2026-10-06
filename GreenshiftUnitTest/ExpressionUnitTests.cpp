@@ -499,7 +499,6 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionNaturalLogarithm)
 		{
 			error_t err;
-			const value_t e = 2.71828182845904523536f;
 			value_t x = 6001;
 			std::string const original = "log(x)";
 			std::string const expected = original;
@@ -525,7 +524,6 @@ namespace GreenshiftUnitTest
 		TEST_METHOD(TestExpressionExp)
 		{
 			error_t err;
-			const value_t e = 2.71828182845904523536f;
 			value_t x = 4.2f;
 			std::string const original = "exp(x)";
 			std::string const expected = original;

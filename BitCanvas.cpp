@@ -1276,12 +1276,12 @@ void    BitCanvas::DrawLine(const value_t x1,
 	const long   lY2 = (long)(fY2 + 0.5f);
 
 
-	const long   change_in_x = lX2 - lX1;
-	const long   change_in_y = lY2 - lY1;
+	//const long   change_in_x = lX2 - lX1;
+	//const long   change_in_y = lY2 - lY1;
 
 	const value_t   line_width = line_width_parameter * m_nLineWidthFactor;
-	const long half_width = ((long)line_width) >> 1;
-	const long start_width = -half_width - (((long)line_width) & 1);
+	//const long half_width = ((long)line_width) >> 1;
+	//const long start_width = -half_width - (((long)line_width) & 1);
 
 	//    long lWidth;
 

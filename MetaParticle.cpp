@@ -266,7 +266,7 @@ error_t    MetaParticle::IntervalCheck(void)
 {
 	DWORD    i;
 	DWORD    dwNewParticle;
-	value_t    nRandom = -1.0f;
+	//value_t    nRandom = -1.0f;
 
 	if (m_nIntervalTime < m_hrParticleTimer.Seconds())
 	{

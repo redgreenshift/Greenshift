@@ -131,7 +131,7 @@ error_t    MetaPalette::InitializeDerived(
  ****************************************************************************/
 error_t    MetaPalette::UpdateDerived(WindowDevice* pWindowDevice)
 {
-	error_t    err = SUCCESS;
+	//error_t    err = SUCCESS;
 
 	if (m_dwCurrent != 0xBADC0DE)
 		DisplayString(4, "Current Palette ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);

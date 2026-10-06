@@ -636,7 +636,7 @@ error_t    WindowDeviceDX::CheckDeviceCapabilities(void)
  ****************************************************************************/
 error_t    WindowDeviceDX::InitDisplay(void)
 {
-	error_t             err = SUCCESS;
+	//error_t             err = SUCCESS;
 	HRESULT             hRet = DD_OK;
 	DDSURFACEDESC2      ddsd;
 	DDSURFACEDESC2      ddsdMask;

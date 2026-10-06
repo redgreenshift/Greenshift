@@ -156,7 +156,7 @@ int PASCAL WINMAIN(
 	//    DWORD j;
 	const value_t    pi = 3.14159265358979323846264338327950288419716939937510582097494f;
 	value_t
-		angularFrequency = 0.0625f,
+		//angularFrequency = 0.0625f,
 		time = 0.0f;
 
 	FILE* outFile;
@@ -405,7 +405,7 @@ int PASCAL WINMAIN2(HINSTANCE hInstance,
 	LPSTR lpCmdLine,
 	int nCmdShow)
 {
-	error_t err = SUCCESS;
+	//error_t err = SUCCESS;
 	BitCanvas* bitCanvas;
 	MyDictionary<mychar_t*> dConfig;
 
