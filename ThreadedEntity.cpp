@@ -207,7 +207,7 @@ void    ThreadedEntity::ThreadHasInitialized(const bool bSuccessfullyInitialized
  ****************************************************************************/
 DWORD    ThreadedEntity::Resume(void)
 {
-	DWORD    dwRet = -1;  /* error return if thread doesn't exist */
+	DWORD    dwRet = MAXDWORD;  /* error return if thread doesn't exist */
 
 	if (m_hThread != NULL)
 	{
@@ -248,7 +248,7 @@ DWORD    ThreadedEntity::Resume(void)
  ****************************************************************************/
 DWORD    ThreadedEntity::Suspend(void)
 {
-	DWORD    dwRet = -1;  /* error return if thread doesn't exist */
+	DWORD    dwRet = MAXDWORD;  /* error return if thread doesn't exist */
 
 	if (m_hThread != NULL)
 	{
