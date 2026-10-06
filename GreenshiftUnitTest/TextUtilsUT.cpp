@@ -111,9 +111,9 @@ namespace GreenshiftUnitTest
 			{
 				utf8_to_wstring_Threw = true;
 			}
-			if (ERROR_POLICY == Utf8ErrorPolicy::Throw)
+			if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Throw)
 				Assert::IsTrue(utf8_to_wstring_Threw, L"Failed to detect invalid sequence and reject conversion via throw");
-			else if (ERROR_POLICY == Utf8ErrorPolicy::Replace)
+			else if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Replace)
 				Assert::AreEqual(expected, result, L"Failed to convert to 2 `UnicodeReplacementChar`");
 			else
 				Assert::AreEqual(std::wstring{/*empty*/}, result, L"Failed to detect invalid sequence and reject conversion");
@@ -301,11 +301,11 @@ namespace GreenshiftUnitTest
 				// This may differ depending on your implementation.
 				const std::wstring result = utf8_to_wstring(original);
 
-				if (ERROR_POLICY == Utf8ErrorPolicy::Return)
+				if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Return)
 				{
 					Assert::IsTrue(result.empty());
 				}
-				else if (ERROR_POLICY == Utf8ErrorPolicy::Replace)
+				else if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Replace)
 				{
 					Assert::IsFalse(result.empty());
 
@@ -400,7 +400,7 @@ namespace GreenshiftUnitTest
 			original.push_back((char)0xC0);  // invalid leading byte (overlong prefix)
 			original.push_back('B');         // 0x42
 
-			if (ERROR_POLICY == Utf8ErrorPolicy::Throw)
+			if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Throw)
 			{
 				ExpectInvalidInput(original);
 				return;
@@ -408,11 +408,11 @@ namespace GreenshiftUnitTest
 
 			std::wstring result = utf8_to_wstring(original);
 
-			if (ERROR_POLICY == Utf8ErrorPolicy::Return)
+			if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Return)
 			{
 				Assert::IsTrue(result.empty(), L"expected empty (currently no value to indicate failure)");
 			}
-			else if (ERROR_POLICY == Utf8ErrorPolicy::Replace)
+			else if constexpr (ERROR_POLICY == Utf8ErrorPolicy::Replace)
 			{
 				// At minimum, we expect the 'A' and 'B' to appear somewhere in order,
 				// or at least that the output length isn't nonsense.
