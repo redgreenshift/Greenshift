@@ -44,8 +44,8 @@
 		  break;
 	  */
 
-#define TIMER_STOPPED    -1
-#define IDT_TIMER1 1
+constexpr int TIMER_STOPPED = -1;
+constexpr int IDT_TIMER1 = 1;
 
 void MakeCursorVisible(void);
 void MakeCursorInvisible(void);
