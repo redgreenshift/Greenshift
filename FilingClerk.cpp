@@ -168,7 +168,7 @@ int FilingClerk::GetChar(void)
 
 	if ((c = getc(m_pFile)) != EOF)
 	{
-		m_pTokenBuffer[m_nUsedLength++] = c;
+		m_pTokenBuffer[m_nUsedLength++] = static_cast<BYTE>(c);
 		m_pTokenBuffer[m_nUsedLength] = '\0';
 	}
 

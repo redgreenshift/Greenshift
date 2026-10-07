@@ -954,7 +954,7 @@ error_t    WindowDeviceDX::InitDisplay(void)
 	if (hRet == DD_OK)
 		if (BitDepth() == 8 && GetMode(WD_FULLSCREEN))
 		{
-			int                     i;
+			BYTE                    i;
 			PALETTEENTRY            ape[256];
 
 			for (i = 0; i < 256; i++)

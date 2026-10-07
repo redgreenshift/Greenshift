@@ -224,7 +224,7 @@ public:
 	virtual error_t Add(DataType inValue)
 	{
 		error_t err;
-		DWORD   i = -1;
+		DWORD   i = MAXDWORD;
 
 		if (!IsValid(inValue))
 			return ERR_NULL;

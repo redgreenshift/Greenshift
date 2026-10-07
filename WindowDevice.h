@@ -142,7 +142,7 @@ public:
 		const char* string,
 		const COLORREF dwColor = PALETTERGB(255, 255, 255));
 
-	virtual int         ThreadProcedure(void* pData);/* thread entry point */
+	virtual int         ThreadProcedure(void* pData) override;/* thread entry point */
 
 	virtual HRESULT     SetPalette(LOGPALETTE* lpPalette) = 0;
 	virtual HRESULT     Flip(BitCanvas* pBitCanvas) = 0;

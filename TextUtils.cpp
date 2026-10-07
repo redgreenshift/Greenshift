@@ -546,7 +546,7 @@ Utf8Certainty is_valid_utf8(const uint8_t* pszUtf8, size_t len)
 std::string makeLowercase(std::string& s)
 {
 	std::transform(s.begin(), s.end(), s.begin(),
-		[](unsigned char ch) { return std::tolower(ch); });
+		[](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
 	return s;
 }
 
