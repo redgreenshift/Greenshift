@@ -365,7 +365,7 @@ char* FilingClerk::EndSearch(void)
 FilingClerk::token_t    FilingClerk::GetToken(void)
 {
 	int    c;
-	int delimiter;
+	int delimiter = 0;
 	enum {
 		inDefault,
 		inMultiCharacter,

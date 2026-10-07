@@ -183,10 +183,10 @@ void DeltaTween::PrerenderFrames(const DWORD dwFrames,
 	value_t     logicalY;
 	//    value_t     deltaX;
 	//    value_t     deltaY;
-	value_t     deltaX1;
-	value_t     deltaY1;
-	value_t     deltaX2;
-	value_t     deltaY2;
+	value_t     deltaX1 = 0.0f;
+	value_t     deltaY1 = 0.0f;
+	value_t     deltaX2 = 0.0f;
+	value_t     deltaY2 = 0.0f;
 	value_t     fPercent;
 	long        destX;
 	long        destY;

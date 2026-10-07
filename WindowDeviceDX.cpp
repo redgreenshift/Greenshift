@@ -642,7 +642,7 @@ error_t    WindowDeviceDX::InitDisplay(void)
 	DDSURFACEDESC2      ddsdMask;
 	DWORD               dwDefaultRefreshRate = 0;
 	DWORD               dwAdditionalOptions = 0;
-	LPDIRECTDRAWCLIPPER pClipper;
+	LPDIRECTDRAWCLIPPER pClipper = nullptr;
 
 #if EXTREME_DEBUGGING
 	DumpToFile("error.txt", "Beginning initialization of the display.", "\n");
