@@ -123,11 +123,11 @@ protected:
 	/*
 	 * accessors, "protected" in case a subclass needs to access them
 	 */
-	inline LPDIRECTDRAW7            GetDD(void);
-	inline LPDIRECTDRAWSURFACE7     GetPrimary(void);
-	inline LPDIRECTDRAWSURFACE7     GetBack(void);
-	inline LPDIRECTDRAWPALETTE      GetPalette(void);
-	inline LPDIRECTDRAWSURFACE7     GetMask(void) { return m_pDDSOverlayMask; };
+	inline LPDIRECTDRAW7            GetDD(void) const;
+	inline LPDIRECTDRAWSURFACE7     GetPrimary(void) const;
+	inline LPDIRECTDRAWSURFACE7     GetBack(void) const;
+	inline LPDIRECTDRAWPALETTE      GetPalette(void) const;
+	inline LPDIRECTDRAWSURFACE7     GetMask(void) const { return m_pDDSOverlayMask; };
 	inline LPDIRECTDRAW7* PGetDD(void);
 	inline LPDIRECTDRAWSURFACE7* PGetPrimary(void);
 	inline LPDIRECTDRAWSURFACE7* PGetBack(void);

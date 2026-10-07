@@ -155,16 +155,16 @@ protected:
 	/*
 	 * accessors
 	 */
-	inline DWORD        Width(void) { return m_dwWidth; };
-	inline DWORD        Height(void) { return m_dwHeight; };
-	inline DWORD        WindowWidth(void) { return m_dwWindowWidth; };
-	inline DWORD        WindowHeight(void) { return m_dwWindowHeight; };
-	inline DWORD        FullscreenWidth(void) { return m_dwFullscreenWidth; };
-	inline DWORD        FullscreenHeight(void) { return m_dwFullscreenHeight; };
-	inline DWORD        BitDepth(void) { return m_dwBitDepth; };
-	inline DWORD        ColorKey(void) { return m_dwOverlayColorKey; };
+	inline DWORD        Width(void) const { return m_dwWidth; };
+	inline DWORD        Height(void) const { return m_dwHeight; };
+	inline DWORD        WindowWidth(void) const { return m_dwWindowWidth; };
+	inline DWORD        WindowHeight(void) const { return m_dwWindowHeight; };
+	inline DWORD        FullscreenWidth(void) const { return m_dwFullscreenWidth; };
+	inline DWORD        FullscreenHeight(void) const { return m_dwFullscreenHeight; };
+	inline DWORD        BitDepth(void) const { return m_dwBitDepth; };
+	inline DWORD        ColorKey(void) const { return m_dwOverlayColorKey; };
 	inline BitCanvas* GetBitCanvas(void) { return m_pBitCanvas; };
-	inline HWND         GetWindow(void) { return m_hWindow; };
+	inline HWND         GetWindow(void) const { return m_hWindow; };
 	inline DWORD        ShouldFlip(void)
 	{
 		return  (GetMode(WD_FULLSCREEN | WD_FSFLIP)) || GetMode(WD_OVERLAY);
@@ -233,7 +233,7 @@ private:
 	bool                m_bShowDebug;
 	bool                m_bSwitchingModes;
 
-	inline DWORD        GetFlags(void) { return m_dwFlags; };
+	inline DWORD        GetFlags(void) const { return m_dwFlags; };
 	inline void         ToggleFlags(const DWORD dwFlags)
 	{
 		m_dwFlags ^= dwFlags;

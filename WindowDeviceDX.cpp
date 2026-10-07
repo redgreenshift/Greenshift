@@ -399,19 +399,19 @@ error_t    WindowDeviceDX::ClearScreenAll(void)
  * accessors
  *
  ****************************************************************************/
-LPDIRECTDRAW7           WindowDeviceDX::GetDD(void)
+LPDIRECTDRAW7           WindowDeviceDX::GetDD(void) const
 {
 	return m_pDD;
 }
-LPDIRECTDRAWSURFACE7    WindowDeviceDX::GetPrimary(void)
+LPDIRECTDRAWSURFACE7    WindowDeviceDX::GetPrimary(void) const
 {
 	return m_pDDSPrimary;
 }
-LPDIRECTDRAWSURFACE7    WindowDeviceDX::GetBack(void)
+LPDIRECTDRAWSURFACE7    WindowDeviceDX::GetBack(void) const
 {
 	return m_pDDSBack;
 }
-LPDIRECTDRAWPALETTE     WindowDeviceDX::GetPalette(void)
+LPDIRECTDRAWPALETTE     WindowDeviceDX::GetPalette(void) const
 {
 	return m_pDDPalette;
 }
