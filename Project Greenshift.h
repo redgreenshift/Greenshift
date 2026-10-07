@@ -109,6 +109,7 @@
 
 
 #include <math.h>
+#include <algorithm>
 
  /****************************************************************************
   *
@@ -127,8 +128,10 @@
 #define ROUND_UP(num)    ( ((num) < 0.0f) ? floor(num) :  ceil(num) )
 #define ROUND_DOWN(num)    ( ((num) < 0.0f) ?  ceil(num) : floor(num) )
 
-#define max(x, y)    (((x) > (y)) ? (x) : (y))
-#define min(x, y)    (((x) < (y)) ? (x) : (y))
+//#define max(x, y)    (((x) > (y)) ? (x) : (y))
+//#define min(x, y)    (((x) < (y)) ? (x) : (y))
+#define max(x, y)    ((std::max)((x), (y)))
+#define min(x, y)    ((std::min)((x), (y)))
 //max(max(x,y),z) /* expands to */ ((x>y)?x:y) > z?(x>y)?x:y):z
 //evaluating 3 conditionals if x or y are picked, and 2 if z is picked
 //this should be reduced
