@@ -20,11 +20,13 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <Windows.h>
+
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 
 #include "Project Greenshift.h"
-#include "Palette.h"
 
 namespace OKLab
 {

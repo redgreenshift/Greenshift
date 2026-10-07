@@ -26,8 +26,17 @@
   *
   ****************************************************************************/
 
-#include "WindowDevice.h"
+#include <Windows.h>
+
+#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+
+#include "BitCanvas.h"
+#include "Expression.h"
 #include "HighResolutionTimer.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
 
   /*
   case WM_ACTIVATE:

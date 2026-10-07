@@ -2,6 +2,9 @@
 #ifndef _DirectX_Error_Messages_H_
 #define _DirectX_Error_Messages_H_
 
+#include <Windows.h>
+#include <ddraw.h>
+
 /****************************************************************************
  *
  * DirectX error messages - as a convenience

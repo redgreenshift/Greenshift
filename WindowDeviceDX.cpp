@@ -26,6 +26,12 @@
   *
   ****************************************************************************/
 
+#include <ddraw.h>
+#include <Windows.h>
+
+#include "BitCanvas.h"
+#include "DXError.h"
+#include "WindowDevice.h"
 #include "WindowDeviceDX.h"
 
   //#define NO_WAIT

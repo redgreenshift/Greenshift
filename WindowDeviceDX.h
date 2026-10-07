@@ -30,9 +30,11 @@
 #ifndef _WindowDeviceDX_H_
 #define _WindowDeviceDX_H_
 
-#include "WindowDevice.h"
+#include <Windows.h>
 #include <ddraw.h>
-#include "DXError.h"
+
+#include "BitCanvas.h"
+#include "WindowDevice.h"
 
   /****************************************************************************
    *

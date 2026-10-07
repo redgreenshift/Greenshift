@@ -30,8 +30,10 @@
 #ifndef _WindowDevice_H_
 #define _WindowDevice_H_
 
-#include "ThreadedEntity.h"
 #include "BitCanvas.h"
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "ThreadedEntity.h"
 
   /* define strict before including windows */
 #ifndef STRICT
