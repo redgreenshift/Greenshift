@@ -864,7 +864,7 @@ BOOL    WindowDevice::MessageHandler(HWND hWindow, UINT message, WPARAM wParam, 
 		}
 		break;
 
-		return 0;
+		//return 0;
 #endif
 
 		/*
