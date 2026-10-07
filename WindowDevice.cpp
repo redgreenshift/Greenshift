@@ -254,7 +254,7 @@ int        WindowDevice::ThreadProcedure(void* /*pData*/)
 	BOOL    hRet;
 	//BOOL    bQuit = FALSE;
 	MSG     msg;
-	RECT    hRect;
+	RECT    hRect{};
 	error_t err = SUCCESS;
 
 	/* lock as early as I can so I can perform initialization */
@@ -335,8 +335,6 @@ int        WindowDevice::ThreadProcedure(void* /*pData*/)
 
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-
-
 	}
 
 	/*
@@ -398,7 +396,7 @@ int        WindowDevice::ThreadProcedure(void* /*pData*/)
  ****************************************************************************/
 error_t    WindowDevice::UpdateWindowProperties(void)
 {
-	RECT    hRect;
+	RECT    hRect{};
 
 	SetWindowLong(m_hWindow, GWL_STYLE, WindowStyle());
 	SetWindowLong(m_hWindow, GWL_EXSTYLE, WindowStyleEx());

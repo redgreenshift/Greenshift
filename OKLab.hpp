@@ -46,7 +46,7 @@ namespace OKLab
 		// Clamp t to [0, 1] to prevent overshooting the colors
 		t = std::clamp<value_t>(t, 0.0f, 1.0f);
 
-		Lab result;
+		Lab result{};
 
 		// Using C++20 std::lerp
 		result.L = std::lerp(start.L, end.L, t);
@@ -152,10 +152,11 @@ namespace OKLab
 	{
 		RGB lin = oklab_to_linear_srgb(c);
 		// 4. Linear RGB -> sRGB (Gamma encoding) and Clamp to [0, 1]
-		RGB result;
-		result.r = std::clamp<value_t>(linear_to_SRGB(lin.r), 0.0f, 1.0f);
-		result.g = std::clamp<value_t>(linear_to_SRGB(lin.g), 0.0f, 1.0f);
-		result.b = std::clamp<value_t>(linear_to_SRGB(lin.b), 0.0f, 1.0f);
+		RGB result{
+			.r = std::clamp<value_t>(linear_to_SRGB(lin.r), 0.0f, 1.0f),
+			.g = std::clamp<value_t>(linear_to_SRGB(lin.g), 0.0f, 1.0f),
+			.b = std::clamp<value_t>(linear_to_SRGB(lin.b), 0.0f, 1.0f),
+		};
 
 		return result;
 	}
@@ -183,10 +184,11 @@ namespace OKLab
 
 		RGB tmpRGB = oklab_to_rgb(tmpOK);
 
-		PALETTEENTRY final;
-		final.peRed = toU8(tmpRGB.r);
-		final.peGreen = toU8(tmpRGB.g);
-		final.peBlue = toU8(tmpRGB.b);
+		PALETTEENTRY final{
+			.peRed = toU8(tmpRGB.r),
+			.peGreen = toU8(tmpRGB.g),
+			.peBlue = toU8(tmpRGB.b),
+		};
 
 		return final;
 	}

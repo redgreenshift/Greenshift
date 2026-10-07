@@ -152,8 +152,8 @@ void flip()
  ****************************************************************************/
 HRESULT    WindowDeviceDX::OnFlip(void)
 {
-	RECT    srcRect;
-	RECT    dstRect;
+	RECT    srcRect{};
+	RECT    dstRect{};
 	HRESULT hRet;
 
 	if (GetPrimary() == NULL || GetBack() == NULL)
@@ -954,8 +954,7 @@ error_t    WindowDeviceDX::InitDisplay(void)
 	if (hRet == DD_OK)
 		if (BitDepth() == 8 && GetMode(WD_FULLSCREEN))
 		{
-			int                     i;
-			PALETTEENTRY            ape[256];
+			PALETTEENTRY ape[256]{};
 
 			for (i = 0; i < 256; i++)
 			{
@@ -1218,8 +1217,8 @@ void WindowDeviceDX::DumpCaps(void)
 error_t    WindowDeviceDX::UpdateOverlayProperties(void)
 {
 	HRESULT        hRet = DD_OK;
-	RECT        srcRect;
-	RECT        dstRect;
+	RECT        srcRect{};
+	RECT        dstRect{};
 
 	if (!GetMode(WD_OVERLAY))
 		return SUCCESS;
