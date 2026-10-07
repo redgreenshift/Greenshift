@@ -956,19 +956,20 @@ error_t    WindowDeviceDX::InitDisplay(void)
 		{
 			PALETTEENTRY ape[256]{};
 
-			for (i = 0; i < 256; i++)
+			for (int i = 0; i < 256; ++i)
 			{
-				ape[i].peRed = (BYTE)(((i >> 5) & 0x07) * 255 / 7) >> 2;
-				ape[i].peGreen = (BYTE)(((i >> 2) & 0x07) * 255 / 7);
-				ape[i].peBlue = (BYTE)(((i >> 0) & 0x03) * 255 / 3) >> 2;
-				ape[i].peFlags = (BYTE)0;
-				ape[i].peRed = (BYTE)0;
-				//        ape[i].peGreen = (BYTE) (((i >> 2) & 0x07) * 255 / 7);
-				ape[i].peBlue = (BYTE)0;
-				ape[i].peRed = (BYTE)(i > 200) ? i : 0;
-				ape[i].peGreen = (BYTE)i;
-				ape[i].peBlue = (BYTE)(i > 200) ? i : 0;
-				ape[i].peFlags = (BYTE)0;
+				// Previous palette experiment retained for reference:
+				//ape[i].peRed = static_cast<BYTE>((((i >> 5) & 0x07) * 255 / 7) >> 2);
+				//ape[i].peGreen = static_cast<BYTE>((((i >> 2) & 0x07) * 255 / 7));
+				//ape[i].peBlue = static_cast<BYTE>((((i >> 0) & 0x03) * 255 / 3) >> 2);
+				//ape[i].peFlags = 0;
+				//ape[i].peRed = 0;
+				////ape[i].peGreen = static_cast<BYTE>( (((i >> 2) & 0x07) * 255 / 7) );
+				//ape[i].peBlue = 0;
+				ape[i].peRed = static_cast<BYTE>((i > 200) ? i : 0);
+				ape[i].peGreen = static_cast<BYTE>(i);
+				ape[i].peBlue = static_cast<BYTE>((i > 200) ? i : 0);
+				ape[i].peFlags = 0;
 			}
 
 #if EXTREME_DEBUGGING
