@@ -325,7 +325,7 @@ int        WindowDevice::ThreadProcedure(void* /*pData*/)
 
 #ifndef OPENGL_yadda_yadda_yadda
 
-	while (hRet = GetMessage(&msg, NULL, 0, 0))
+	while ((hRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
 		if (hRet == -1
 			|| msg.message == WM_QUIT)
