@@ -19,6 +19,9 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "pch.h"
+#include <cstdint>
+#include <cstdlib>
+#include <initializer_list>
 #include <string>
 #include <vector>
 
