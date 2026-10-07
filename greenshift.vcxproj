@@ -329,7 +329,6 @@
       <AdditionalOptions>
       </AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <DisableSpecificWarnings>4505;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows\expressionconsole.tlb</TypeLibraryName>

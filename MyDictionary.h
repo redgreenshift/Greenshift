@@ -622,7 +622,7 @@ protected:
 
 
 #if EXTREME_DEBUGGING
-static void DumpToFile(const char* fileName, MyDictionary<mychar_t*>* pDict, mychar_t* anotherString = "")
+inline void DumpToFile(const char* fileName, MyDictionary<mychar_t*>* pDict, mychar_t* anotherString = "")
 {
 	FILE* outFile;
 

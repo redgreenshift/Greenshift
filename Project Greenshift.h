@@ -671,7 +671,7 @@ static inline void long_sqrt_rounded(const long lValue, long* outValue)
 
 #include <stdio.h>
 #include <windows.h>
-static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNumber, const char* anotherString = "")
+inline void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	char    strDisplay[2048];
 
@@ -704,7 +704,7 @@ static void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNu
   */
 #include <stdio.h>
 #include <float.h>
-static void DumpToFile(const char* fileName, const char* aString, value_t aNumber, const char* anotherString = "")
+inline void DumpToFile(const char* fileName, const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -714,7 +714,7 @@ static void DumpToFile(const char* fileName, const char* aString, value_t aNumbe
 
 }
 
-static void DumpToFile(const char* fileName, value_t aNumber, const char* anotherString = "")
+inline void DumpToFile(const char* fileName, value_t aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -724,7 +724,7 @@ static void DumpToFile(const char* fileName, value_t aNumber, const char* anothe
 
 }
 
-static void DumpToFile(const char* fileName, value_t* aNumber, const char* anotherString = "")
+inline void DumpToFile(const char* fileName, value_t* aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -734,7 +734,7 @@ static void DumpToFile(const char* fileName, value_t* aNumber, const char* anoth
 
 }
 
-static void DumpToFile(const char* fileName, const char* aString, const char* anotherString = "")
+inline void DumpToFile(const char* fileName, const char* aString, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
 
@@ -860,7 +860,7 @@ typedef enum {
 	 //    friend
 #ifdef UNDEFINED
 //#ifdef _DLL
-static char* ErrorString(error_t errCode)
+inline char* ErrorString(error_t errCode)
 {
 	//        switch( errCode )
 	//        {
@@ -871,7 +871,7 @@ static char* ErrorString(error_t errCode)
 	//      }
 };
 #else
-static const char* ErrorString(error_t errCode)
+inline const char* ErrorString(error_t errCode)
 {
 	switch (errCode)
 	{

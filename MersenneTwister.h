@@ -95,7 +95,7 @@ inline std::atomic<uint64_t> g_seed_event_counter{ 0 };
  * making it a common choice for seeding more complex generators (such as the Xoshiro family)
  * or for use in environments where multiple independent streams of random numbers are needed.
  */
-static inline uint64_t SplitMix64(uint64_t& x) {
+inline uint64_t SplitMix64(uint64_t& x) {
 	uint64_t z = (x += 0x9e3779b97f4a7c15ULL);   // increment state by a value derived from the golden ratio, so it will not repeat a sequence until every possible 64-bit value has been used
 	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL; /* 1011111101011000010001110110110100011100111001001110010110111001 */
 	z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL; /* 1001010011010000010010011011101100010011001100010001000111101011 */
@@ -114,7 +114,7 @@ static inline uint64_t SplitMix64(uint64_t& x) {
  * IMPORTANT NOTE: If you are aiming for statistical purity, you should almost
  * always prefer SplitMix64 with truncation over SplitMix32.
  */
-static inline uint32_t SplitMix32(uint32_t& x) {
+inline uint32_t SplitMix32(uint32_t& x) {
 	x += 0x9e3779b9u;
 	uint32_t z = x;
 	z = (z ^ (z >> 16)) * 0x85ebca6bu; // 10000101111010111100101001101011
@@ -135,7 +135,7 @@ static inline uint32_t SplitMix32(uint32_t& x) {
  * @param tid The thread identifier to hash.
  * @return A 64-bit hash of the thread ID.
  */
-static inline uint64_t hash_thread_id(std::thread::id tid) {
+inline uint64_t hash_thread_id(std::thread::id tid) {
 	// Use the standard-defined way to get a numeric representation of the thread ID.
 	// We cast to uint64_t to ensure we have a consistent starting width for the mixer.
 	uint64_t x = static_cast<uint64_t>(std::hash<std::thread::id>{}(tid));
@@ -152,7 +152,7 @@ static inline uint64_t hash_thread_id(std::thread::id tid) {
 }
 
 // Deterministic float->u32 bitcast (no numeric conversion).
-static inline uint32_t float_to_u32_bits(float f) {
+inline uint32_t float_to_u32_bits(float f) {
 #if __cpp_lib_bit_cast >= 201806L
 	return std::bit_cast<uint32_t>(f);
 #else
@@ -163,7 +163,7 @@ static inline uint32_t float_to_u32_bits(float f) {
 }
 
 // Deterministic double->u64 bitcast (no numeric conversion).
-static inline uint64_t double_to_u64_bits(double f) {
+inline uint64_t double_to_u64_bits(double f) {
 #if __cpp_lib_bit_cast >= 201806L
 	return std::bit_cast<uint64_t>(f);
 #else

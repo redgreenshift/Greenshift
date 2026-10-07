@@ -22,12 +22,12 @@
    /*
 	* version to reduce the size of the executable file
 	*/
-static const char* DXError(HRESULT error)
+inline const char* DXError(HRESULT error)
 {
 	return "DXError commented out";
 }
 #else
-static const char* DXError(HRESULT error)
+inline const char* DXError(HRESULT error)
 {
 	switch (error) {
 	case DD_OK:
