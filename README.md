@@ -5,7 +5,7 @@
 
 [![Winamp](https://img.shields.io/badge/Winamp-F93821.svg?logo=winamp&logoColor=white)](https://www.winamp.com)
 [![Platform: Windows](https://img.shields.io/badge/Windows-0078D4.svg?logo=data:image/svg%2bxml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLQpTb3VyY2U6IGh0dHBzOi8vd3d3LnN2Z3JlcG8uY29tL3N2Zy8zMjczNzgvbG9nby1taWNyb3NvZnQKQ3JlYXRvci9wcm9qZWN0OiBJb25pY29ucyBodHRwczovL3d3dy5zdmdyZXBvLmNvbS9hdXRob3IvSW9uaWNvbnMvCkxpY2Vuc2U6IE1JVCBMaWNlbnNlIGh0dHBzOi8vd3d3LnN2Z3JlcG8uY29tL3BhZ2UvbGljZW5zaW5nLyNNSVQKQ2hhbmdlczogbW9kaWZpZWQgdG8gd2hpdGUKLS0+CjwhLS0gT3JpZ2luYWwgZnJvbTogU1ZHIFJlcG8sIHd3dy5zdmdyZXBvLmNvbSwgR2VuZXJhdG9yOiBTVkcgUmVwbyBNaXhlciBUb29scyAtLT4KPHN2ZyBmaWxsPSIjRkZGRkZGIiB3aWR0aD0iODAwcHgiIGhlaWdodD0iODAwcHgiIHZpZXdCb3g9IjAgMCA1MTIgNTEyIiBpZD0iaWNvbnMiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTMxLjg3LDMwLjU4SDI0NC43VjI0My4zOUgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDMwLjU4SDQ3OS43VjI0My4zOUgyNjYuODlaIi8+PHBhdGggZD0iTTMxLjg3LDI2NS42MUgyNDQuN3YyMTIuOEgzMS44N1oiLz48cGF0aCBkPSJNMjY2Ljg5LDI2NS42MUg0NzkuN3YyMTIuOEgyNjYuODlaIi8+PC9zdmc+)](https://www.microsoft.com/windows)
-[![Language: C++20](https://img.shields.io/badge/C%2B%2B-20-00599C.svg)](https://en.cppreference.com/w/cpp/20)
+[![Language: C++23](https://img.shields.io/badge/C%2B%2B-23-00599C.svg)](https://en.cppreference.com/w/cpp/23)
 [![MMX supported](https://img.shields.io/badge/MMX-supported-0071C5.svg?logo=intel&logoColor=white)](https://en.wikipedia.org/wiki/MMX_(instruction_set))
 [![DirectDraw 7](https://img.shields.io/badge/DirectDraw-7-107C10.svg)](https://en.wikipedia.org/wiki/DirectDraw)
 [![License: GPL-2.0-only](https://img.shields.io/badge/License-GPL--2.0--only-F58220.svg)](LICENSE)
@@ -45,7 +45,7 @@ extended via user-defined mathematical expressions stored in external config fil
 
 ## Performance
 
-Greenshift is primarily written in C++20, with a small amount of C. MMX assembly is used for selected performance-critical operations. At runtime, Greenshift detects the available instruction sets and selects an appropriate implementation:
+Greenshift is primarily written in C++23, with a small amount of C. MMX assembly is used for selected performance-critical operations. At runtime, Greenshift detects the available instruction sets and selects an appropriate implementation:
 
 - Portable C++ implementations are used as fallbacks when optimized instruction sets are unavailable.
 - A compiler-tuned x86 implementation uses carefully structured C++ code designed to encourage more efficient machine-code generation. Its inner loop was refined through extensive repeated benchmarking rather than by writing x86 assembly directly, retaining changes only when they produced measurable speedups.

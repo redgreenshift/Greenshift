@@ -328,7 +328,7 @@
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Windows\</ProgramDataBaseFileName>
       <AdditionalOptions>
       </AdditionalOptions>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Midl>
