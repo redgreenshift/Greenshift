@@ -181,12 +181,12 @@ class MTRand {
 public:
 	typedef uint32_t uint32;  // unsigned integer type, at least 32 bits
 
-	enum { N = 624 };              // length of state vector -- MT19937 internal state words
-	enum { SAVE = N + 1 };         // length of array for save()
+	static constexpr int N = 624;              // length of state vector -- MT19937 internal state words
+	static constexpr int SAVE = N + 1;         // length of array for save()
 
 protected:
-	enum { M = 397 };              // period parameter
-	enum { MAGIC = 0x9908b0dfU };  // magic constant
+	static constexpr int M = 397;                   // period parameter
+	static constexpr uint32_t MAGIC = 0x9908b0dfU;  // magic constant
 
 	uint32 state[N];       // internal state
 	uint32 *pNext = state; // next value to get from state
@@ -299,7 +299,7 @@ inline MTRand::uint32 MTRand::randInt()
 inline MTRand::uint32 MTRand::randInt( const uint32& n )
 {
 	// Find which bits are used in n
-	uint32 used = ~0;
+	uint32 used = ~0u;
 	for( uint32 m = n; m; used <<= 1, m >>= 1 ) {}
 	used = ~used;
 
