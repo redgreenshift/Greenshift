@@ -102,6 +102,11 @@ ThreadedEntity::ThreadedEntity(const int iThreadPriority) :
 		CREATE_SUSPENDED,
 		&m_dwThreadID);
 
+	if (m_hThread == nullptr)
+	{
+		throw std::runtime_error("CreateThread failed");
+	}
+
 	SetThreadPriority(m_hThread, iThreadPriority);
 
 	/*     DuplicateHandle( GetCurrentProcess(), GetCurrentThread(),
