@@ -26,11 +26,12 @@
   *
   ****************************************************************************/
 
+#include <algorithm>
 #include <cmath> // std::tgamma
 #include <format>
+#include "malloc.h"
 
 #include "Expression.h"
-#include "TextUtils.hpp"
 
 
 #ifdef REGULAR_EXPRESSION
