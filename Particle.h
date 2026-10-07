@@ -137,6 +137,7 @@ protected:
 	value_t                 m_nAspect;
 	bool                    m_bZoom;
 
+public:
 
 	//PhaseFunction           m_pfValues;
 	//inline error_t          Evaluate_A_Vars( void ) { return m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init); };

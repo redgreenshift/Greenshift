@@ -34,6 +34,8 @@
 #ifndef _CollectionsAbstract_H_
 #define _CollectionsAbstract_H_
 
+#include <Windows.h>
+
 #include "Association.h"
 
 /**
