@@ -28,10 +28,17 @@
 
 #include <algorithm>
 #include <cmath> // std::tgamma
+#include <cstdio>
+#include <cstdlib>
+#include <cctype>
 #include <format>
-#include "malloc.h"
+#include <malloc.h>
+#include <memory>
+#include <string>
+#include <string.h>
 
 #include "Expression.h"
+#include "MyDictionary.h"
 
 
 #ifdef REGULAR_EXPRESSION
