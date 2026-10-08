@@ -26,8 +26,19 @@
   *
   ****************************************************************************/
 
-#include "OKLab.hpp"
 #include "Palette.h"
+
+#include "Expression.h"
+#include "GForceFunctions.h"
+#include "MersenneTwister.h"
+#include "MyDictionary.h"
+#include "OKLab.hpp"
+#include "PhaseFunction.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <Windows.h> // DWORD, PALETTEENTRY
 
   /****************************************************************************
    *
@@ -622,8 +633,6 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 	return GetPalette();
 }
 
-
-#include "GForceFunctions.h"
 
 /****************************************************************************
  *

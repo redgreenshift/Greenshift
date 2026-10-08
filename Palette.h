@@ -32,14 +32,11 @@
 
 #include "MyDictionary.h"
 #include "Expression.h"  /* for HSV color */
-#include "PhaseFunction.h"
 #include "HighResolutionTimer.h"
-#include <fstream>
-#include <io.h>
-#include <windows.h> /* for PALETTEENTRY */
-#include <stdlib.h>  /* for atoi() */
-  //#include <stdlib.h>
-  //    ifstream myFile;
+#include "MersenneTwister.h"
+#include "PhaseFunction.h"
+
+#include <Windows.h> /* for PALETTEENTRY, WORD */
 
 #define PALETTE_SIZE    256
 
