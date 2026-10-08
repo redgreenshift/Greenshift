@@ -31,6 +31,15 @@
 // Extremely unlikely to cause a problem. It's more portable to leave it alone,
 // and long term I'd like to move to std::string anyway. Let's just disable this warning.
 #define _CRT_NONSTDC_NO_DEPRECATE
+
+// Suppress MSVC CRT deprecation warnings.
+//
+// Greenshift intentionally uses standard C/C++ runtime APIs such as fopen().
+// These APIs are not deprecated by the C or C++ standards; the warning is
+// specific to Microsoft's "secure CRT" extensions. Migration to *_s APIs
+// is not required and would reduce portability.
+#define _CRT_SECURE_NO_WARNINGS
+
 // add headers that you want to pre-compile here
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // TODO: Delete with codecvt_utf8_utf16
 
