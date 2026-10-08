@@ -28,6 +28,16 @@
 
 #include "VectorGraphic.h"
 
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "PhaseFunction.h"
+
+#include <cmath>
+#include <cstdlib>
+#include <cctype>
+#include <new>
+#include <string.h>
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *

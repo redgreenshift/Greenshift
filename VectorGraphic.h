@@ -30,12 +30,12 @@
 #ifndef _VectorGraphic_H_
 #define _VectorGraphic_H_
 
-  //#include "Graph.h"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "PhaseFunction.h"
 #include "PointRotation.h"
 
+#include <Windows.h> // DWORD
 
 
 enum { VG_PARAMETRIC, VG_4D };
