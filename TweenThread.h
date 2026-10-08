@@ -31,8 +31,6 @@
 #define _TweenThread_H_
 
 #include "ThreadedEntity.h"
-#include "ContiguousAlignedMemoryAllocator.h"
-  //#include "HighResolutionTimer.h"
 
 
 typedef struct tagTWEENDESCRIPTION

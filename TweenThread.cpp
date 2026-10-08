@@ -28,6 +28,10 @@
 
 #include "TweenThread.h"
 
+#include "ContiguousAlignedMemoryAllocator.h"
+#include "ThreadedEntity.h"
+
+#include <Windows.h> // DWORD
 
 #if EXTREME_DEBUGGING
   //HighResolutionTimer hrTweenTimer;
