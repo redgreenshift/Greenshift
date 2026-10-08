@@ -29,9 +29,20 @@
   //ESP reference instructions are larger than EBP references.
 
 
+#include "BitCanvas.h"
 
 #include "adetect.h"
-#include "BitCanvas.h"
+#include "ContiguousAlignedMemoryAllocator.h"
+#include "DeltaField.h"
+#include "DeltaTween.h"
+#include "Expression.h"
+#include "MersenneTwister.h"
+#include "MyDictionary.h"
+#include "Palette.h"
+#include "TweenThread.h"
+
+  //I don't think I should include math just for fabs()
+#include <cstdlib>
 //#include <mm3dnow.h>
 //#include <emmintrin.h>
 //#include <xmmintrin.h>
@@ -45,7 +56,7 @@
 //#include <Regstr.h>
 //#include <Sqlole.h>
 //#include <Wininet.h>
-
+#include <Windows.h> // DWORD
 
 /*
  * extra size should be multiple of DWORD so generic copy last line

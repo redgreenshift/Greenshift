@@ -33,15 +33,15 @@
 #define USE_MMX_INTRINSICS  1
 #define USE_MMX_ASSEMBLY    1
 
-
-#include <stdlib.h> /* for atol() */
-#include <math.h>
-  //I don't think I should include math just for fabs()
-#include "DeltaTween.h"
+#include "Expression.h"
 #include "DeltaField.h"
-#include "ContiguousAlignedMemoryAllocator.h"
-#include "Palette.h"
+#include "DeltaTween.h"
 #include "Interval.h"
+#include "MyDictionary.h"
+#include "Palette.h"
+#include "TweenThread.h"
+
+#include <Windows.h> // DWORD
 
 
 //#define MAX_LINE_WIDTH  32
