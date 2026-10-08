@@ -1,5 +1,4 @@
 #pragma once
-#include <algorithm>
 #include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
@@ -44,7 +43,11 @@
 #endif
 #endif
 
-#include <stdio.h>  /* for sprintf() */
+#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <new>
+#include <utility>
 
 	/**
 	 * @brief Defines the rhythmic, timing-based levels of evaluation of phase variables defined in a single config.

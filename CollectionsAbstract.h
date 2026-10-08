@@ -36,8 +36,6 @@
 
 #include <Windows.h>
 
-#include "Association.h"
-
 /**
  * @brief Abstract interface defining essential collection operations.
  */
