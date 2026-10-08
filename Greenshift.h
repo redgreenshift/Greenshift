@@ -87,7 +87,7 @@ public:
 		const DWORD nSpCh,
 		sound_data_t pSpectrum);
 	//    inline
-	value_t                     GetWaveformData(const value_t nValue);
+	value_t                     GetWaveformData(const value_t nValue) const;
 	//    inline
 	value_t                     GetSpectrumData(const value_t nValue);
 
@@ -97,10 +97,10 @@ protected:
 
 	inline error_t              RegulateFramerate(void);
 
-	inline DWORD                NumDeltaFields(void) { return m_dwNumDeltaFields; };
-	inline DWORD                NumWaveShapes(void) { return m_dwNumWaveShapes; };
-	inline DWORD                NumParticles(void) { return m_dwNumParticles; };
-	inline DWORD                NumPalettes(void) { return m_dwNumPalettes; };
+	inline DWORD                NumDeltaFields(void) const { return m_dwNumDeltaFields; };
+	inline DWORD                NumWaveShapes(void) const { return m_dwNumWaveShapes; };
+	inline DWORD                NumParticles(void) const { return m_dwNumParticles; };
+	inline DWORD                NumPalettes(void) const { return m_dwNumPalettes; };
 
 	void                        UpdateDisplayText(void);
 	error_t                     DisplayString(const int position,

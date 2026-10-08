@@ -241,7 +241,7 @@ value_t    Greenshift::GetSpectrumData(const value_t nValue)
  * GetWaveformData - gets the Waveform Data
  *
  ****************************************************************************/
-value_t Greenshift::GetWaveformData(const value_t nValue)
+value_t Greenshift::GetWaveformData(const value_t nValue) const
 {
 	DWORD nIndex = (int)(GForce_clip(nValue) * SOUND_DATA_LENGTH);
 	signed char scAmplitude;
@@ -258,7 +258,7 @@ value_t Greenshift::GetWaveformData(const value_t nValue)
 
 #if EXTREME_DEBUGGING
 
-DWORD getWindowBitDepth(void) {
+static DWORD getWindowBitDepth(void) {
 	DWORD    bpp;
 	HDC      hdc;
 	// retrieves device-specific information about 
