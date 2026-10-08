@@ -60,7 +60,7 @@ protected:
 
 public:
 	MetaDeltaField();
-	virtual                 ~MetaDeltaField();
+	virtual                 ~MetaDeltaField() override;
 
 	virtual error_t         InitializeDerived(
 		MyDictionary<mychar_t*>* inMainConfig,

@@ -72,14 +72,14 @@ public:
 
 	virtual error_t     InitializeDerived(
 		MyDictionary<mychar_t*>* inMainConfig,
-		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
+		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals) override;
 
 
 	virtual error_t     ReduceTime(void);
 
 protected:
-	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas);
-	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice);
+	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas) override;
+	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice) override;
 
 	error_t             IntervalCheck(void);
 
