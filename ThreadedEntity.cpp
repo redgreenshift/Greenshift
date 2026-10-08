@@ -26,9 +26,14 @@
   *
   ****************************************************************************/
 
-#include <stdexcept>
-
 #include "ThreadedEntity.h"
+
+#if EXTREME_DEBUGGING
+#include "DXError.h"
+#endif
+
+#include <stdexcept>
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
@@ -42,11 +47,6 @@ DWORD WINAPI ThreadedEntityThreadProc(LPVOID lpVoid)
 	else
 		return 1;
 }
-
-#if EXTREME_DEBUGGING
-#include <ddraw.h>
-#include "DXError.h"
-#endif
 
 
 /****************************************************************************

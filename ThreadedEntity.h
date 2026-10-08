@@ -1,5 +1,4 @@
 #pragma once
-#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
@@ -33,7 +32,7 @@
 #ifndef STRICT
 #define STRICT 1
 #endif
-#include <windows.h>
+#include <Windows.h> // DWORD
 
   /*
   THREAD_PRIORITY_LOWEST
