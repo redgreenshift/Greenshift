@@ -31,7 +31,8 @@
 #define _DeltaTween_H_
 
 #include "TweenThread.h"
-#include "DeltaField.h"
+
+#include <Windows.h> // DWORD
 
 typedef struct tagPIXELMAPDESCRIPTION
 {

@@ -28,6 +28,12 @@
 
 #include "DeltaTween.h"
 
+#include "DeltaField.h"
+#include "TweenThread.h"
+
+#include <cmath>
+#include <Windows.h> // DWORD
+
   /****************************************************************************
    *
    * DeltaTween - constructor
