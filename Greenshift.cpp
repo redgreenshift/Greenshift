@@ -158,7 +158,7 @@ error_t Greenshift::SetSoundData(const DWORD nWfCh, sound_data_t pWaveform,
 {
 	DWORD    i;
 	DWORD    dwSum;
-#define NUM_SUM 32
+	constexpr DWORD NUM_SUM = 32;
 
 	for (i = 0; i < SOUND_DATA_LENGTH; i++)
 	{
