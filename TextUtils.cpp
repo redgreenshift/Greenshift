@@ -27,15 +27,17 @@
 // https://en.wikipedia.org/wiki/Shift-JIS
 
 #include <algorithm> // std::transform
-#include <cstddef> // is_valid_utf8
+#include <cctype>
 #include <cstdint> // is_valid_utf8, append_codepoint_as_wchar
+#include <cstdio>
 #include <istream>
-#include <limits> // append_codepoint_as_wchar
+#include <locale>
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
 #include <string> // append_codepoint_as_wchar
 #include <string_view>
+#include <wchar.h>
 
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
 #include "TextUtils.hpp"
