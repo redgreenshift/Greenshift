@@ -30,9 +30,6 @@
 #ifndef _GForceFunctions_H_
 #define _GForceFunctions_H_
 
-#include "Vis.h"
-#include <stdlib.h> /* rand() & srand() */
-
 
 value_t GForce_mag(value_t nValue, void* pData);
 value_t GForce_fft(value_t nValue, void* pData);

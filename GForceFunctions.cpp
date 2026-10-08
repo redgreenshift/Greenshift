@@ -27,8 +27,13 @@
   ****************************************************************************/
 
 #include "GForceFunctions.h"
-#include "Greenshift.h"
 
+#include "Greenshift.h"
+#include "MersenneTwister.h"
+
+#include <cmath>
+#include <cstdint>
+#include <cstdlib> /* rand() & srand() */
 
   /****************************************************************************
    *
@@ -210,7 +215,7 @@ value_t GForce_trwv(value_t nValue)
  * @param input_value The value used to derive the RNG seed.
  * @return uint32_t: a pseudo-random seed derived from a floating-point value.
  ****************************************************************************/
-uint32_t Get_GForce_seed32(value_t input_value)
+static uint32_t Get_GForce_seed32(value_t input_value)
 {
 	// Narrow input to a 32-bit float to ensure a consistent bit-width for the seed
 	float float_val = static_cast<float>(input_value);
