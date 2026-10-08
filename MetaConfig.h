@@ -31,13 +31,12 @@
 #define _MetaConfig_H_
 
 #include "BitCanvas.h"
-#include "WindowDevice.h"
 #include "HighResolutionTimer.h"
-#include "MyDictionary.h"
-#include "Particle.h"
-#include "Palette.h"
-
 #include "MersenneTwister.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
+
+#include <Windows.h> // DWORD
 
 /**
  * @brief MetaConfig is an abstract base class designed to manage multiple sets
