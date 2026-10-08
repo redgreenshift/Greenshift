@@ -27,7 +27,16 @@
   ****************************************************************************/
 
 #include "FilingClerk.h"
-#include <ctype.h>
+
+#include "MyDictionary.h"
+
+#include <cctype>
+#include <cstdlib> /* for tolower and _MAX_PATH */
+#include <cstdio>
+#include <io.h>
+#include <malloc.h>
+#include <string.h>
+#include <Windows.h> // BYTE, DWORD
 
   /****************************************************************************
    *

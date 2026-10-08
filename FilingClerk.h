@@ -31,12 +31,13 @@
 #define _FilingClerk_H_
 
 #include "MyDictionary.h"
-#include <malloc.h>
+
   //#include <fstream.h>
 #include <io.h>
-#include <stdlib.h> /* for tolower and _MAX_PATH */
-#include <ctype.h>  /* for tolower */
-#include <stdio.h>  /* for FILE access */
+#include <cctype>  /* for tolower */
+#include <cstdio>  /* for FILE access */
+#include <string.h>
+#include <Windows.h> // DWORD
 
 #define WINDOWS_PATH_DELIMITER  "\\"
 #define UNIX_PATH_DELIMITER     "/"
