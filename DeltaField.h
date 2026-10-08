@@ -31,6 +31,8 @@
 #define _DeltaField_H_
 
 #include "Expression.h"
+#include "MersenneTwister.h"
+#include "MyDictionary.h"
 #include "PhaseFunction.h"
 
 

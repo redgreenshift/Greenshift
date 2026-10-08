@@ -28,6 +28,11 @@
 
 #include "DeltaField.h"
 
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "PhaseFunction.h"
+
+#include <cmath>
 
   /****************************************************************************
    *
