@@ -28,11 +28,20 @@
 
 #include "Greenshift.h"
 
-#include "frontend.h"
-#include <time.h>
+#include "Association.h"
+#include "BitCanvas.h"
+#include "Expression.h"
+//#include "frontend.h"
+#include "GForceFunctions.h"
+#include "MetaConfig.h"
+#include "VectorGraphic.h"
+#include "WindowDevice.h"
 
-
-  //#include <stdlib.h>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <string.h>
+#include <Windows.h> // DWORD
 
   /*
 

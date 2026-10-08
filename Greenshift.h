@@ -30,20 +30,19 @@
 #ifndef _Greenshift_H_
 #define _Greenshift_H_
 
-#include "HighResolutionTimer.h"
-#include "GForceFunctions.h"
-#include "WindowDeviceDX.h"
-#include "FilingClerk.h"
-#include "Expression.h"
 #include "BitCanvas.h"
-#include "MyDictionary.h"
-#include "MetaConfig.h"
+#include "Expression.h"
+#include "FilingClerk.h"
+#include "HighResolutionTimer.h"
 #include "MetaDeltaField.h"
-#include "MetaWaveShape.h"
-#include "MetaParticle.h"
 #include "MetaPalette.h"
+#include "MetaParticle.h"
+#include "MetaWaveShape.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
 
-#include "MersenneTwister.h"  /* pseudo-random number generator */
+#include <Windows.h> // HINSTANCE, DWORD
+
 
 #define VIS_TITLE "Greenshift"
 #define VIS_VER "v0.4.2b"

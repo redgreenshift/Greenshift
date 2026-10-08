@@ -23,11 +23,18 @@
 // this is how I currently test the code without having to build/run the DLL with WinAmp
 #include "Greenshift.h"
 
+//#include "adetect.h"
+#include "BitCanvas.h"
+#include "GForceFunctions.h"
 //#include "Interval.h"
+#include "MyDictionary.h"
 //#include "TextStream.h"
 
-//#include <vector>
-//#include "adetect.h"
+#include <cmath>
+#include <cstdio>
+#include <sal.h> // _In_
+#include <Windows.h> // PASCAL
+
 /*
  *
  You only have to catch the WM_SETTEXT Messages that Winamp gets.
