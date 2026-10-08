@@ -169,7 +169,17 @@ protected:
 	inline HWND         GetWindow(void) const { return m_hWindow; };
 	inline DWORD        ShouldFlip(void)
 	{
-		return  (GetMode(WD_FULLSCREEN | WD_FSFLIP)) || GetMode(WD_OVERLAY);
+		// TODO(2026):
+		// Investigate WD_FSFLIP usage and ShouldFlip() semantics.
+		// Should this require ALL fullscreen-flip bits, or merely ANY bits?
+		// Current behavior intentionally preserved.
+		const bool fullscreenFlip =
+			GetMode(WD_FULLSCREEN | WD_FSFLIP) != 0;
+
+		const bool overlay =
+			GetMode(WD_OVERLAY) != 0;
+
+		return fullscreenFlip || overlay;
 	};
 
 	/*
