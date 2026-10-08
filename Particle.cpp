@@ -28,6 +28,13 @@
 
 #include "Particle.h"
 
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "HighResolutionTimer.h"
+#include "VectorGraphic.h"
+
+#include <cmath>
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *

@@ -30,14 +30,12 @@
 #ifndef _Particle_H_
 #define _Particle_H_
 
-  //#include "GraphicalEntity.h"
-  //#include "BitCanvas.h"
 #include "Expression.h"
 #include "MyDictionary.h"
-//#include "Interval.h"
 #include "HighResolutionTimer.h"
 #include "VectorGraphic.h"
 
+#include <Windows.h> // DWORD
 
  //class Particle : public GraphicalEntity
 /****************************************************************************
