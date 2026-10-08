@@ -28,6 +28,10 @@
 
 #include "GreenshiftWinamp.h"
 
+#include "Greenshift.h"
+#include "Vis.h"
+
+#include <Windows.h> // MessageBox
 
 #ifdef GREENSHIFT_DLL
 
