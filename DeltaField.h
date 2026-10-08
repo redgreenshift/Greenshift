@@ -50,9 +50,9 @@ public:
 		const value_t destY,
 		value_t* deltaX,
 		value_t* deltaY);
-	value_t     GetAspect(void) { return m_nAspect; };
-	bool        GetEdgeWrap(void) { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
-	bool        GetZoom(void) { return m_bZoom; };
+	value_t     GetAspect(void) const { return m_nAspect; };
+	bool        GetEdgeWrap(void) const { return m_bEdgeWrap; };  /* should probably be bounds type in case I want other types other than clip and wrap */
+	bool        GetZoom(void) const { return m_bZoom; };
 
 	error_t     Initialize(MyDictionary<mychar_t*>* inDeltaConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);

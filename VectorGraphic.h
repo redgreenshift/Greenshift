@@ -64,10 +64,10 @@ public:
 	void                Reset(void);  /* reevaluate the A vars */
 
 
-	DWORD       GetNumFunctions(void) { return m_pfValues.NumFunctions(); };
-	DWORD       GetNumSteps(void) { return m_dwResolution; };
-	DWORD       GetMode(void) { return m_dwMode; };
-	bool        GetConnected(void) { return m_bConnected; };
+	DWORD       GetNumFunctions(void) const { return m_pfValues.NumFunctions(); };
+	DWORD       GetNumSteps(void) const { return m_dwResolution; };
+	DWORD       GetMode(void) const { return m_dwMode; };
+	bool        GetConnected(void) const { return m_bConnected; };
 	void        BeginFrame(void) { Evaluate_B_Vars(); EvaluateRotation(); };
 	inline void         Get(const DWORD dwFunction,
 		value_t* outX,
@@ -138,7 +138,7 @@ protected:
 		const value_t y,
 		const value_t z,
 		value_t* outX,
-		value_t* outY)
+		value_t* outY) const
 	{
 		const value_t nDepthPerceptionFactor
 			= m_nPointOfView / (m_nPointOfView - z);

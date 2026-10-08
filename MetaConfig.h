@@ -72,7 +72,7 @@ public:
 		MyDictionary<mychar_t*>* inMainConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals); /* constants are placed in globals */
 
-	value_t             GetUpdateTime(void) { return m_nUpdateTime; };
+	value_t             GetUpdateTime(void) const { return m_nUpdateTime; };
 	virtual error_t     ReduceTime(void) /* need a better name! */
 	{
 		/* default - ignore it 'cause I don't wanna reduce my update time */

@@ -60,8 +60,8 @@ protected:
 	value_t         m_nWidthFactorInverse;
 	value_t         m_nHeightFactorInverse;
 
-	inline long     Width(void) { return m_lVisibleWidth; };
-	inline long     Height(void) { return m_lVisibleHeight; };
+	inline long     Width(void) const { return m_lVisibleWidth; };
+	inline long     Height(void) const { return m_lVisibleHeight; };
 
 public:
 	DeltaTween(const TWEENDESCRIPTION& tween_description);

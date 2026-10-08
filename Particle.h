@@ -62,19 +62,19 @@ public:
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals);
 
 protected:
-	inline value_t      Lifetime(void) { return m_nLifetime; };
+	inline value_t      Lifetime(void) const { return m_nLifetime; };
 
 public:
-	inline value_t      DrawingTime(void) { return m_nDrawingTime; };
-	inline value_t      GetAspect(void) { return m_nAspect; };
-	inline bool         GetZoom(void) { return m_bZoom; };
+	inline value_t      DrawingTime(void) const { return m_nDrawingTime; };
+	inline value_t      GetAspect(void) const { return m_nAspect; };
+	inline bool         GetZoom(void) const { return m_bZoom; };
 
 	bool    Expired(void) { return m_nLifetime < m_hrRunningTime.Seconds(); };
 
-	DWORD GetNumInstances(void) { return m_dwNumInstances; };
-	DWORD GetNumFunctions(void) { return m_pVectorGraphics[0].GetNumFunctions(); };
-	DWORD GetNumSteps(void) { return m_pVectorGraphics[0].GetNumSteps(); };
-	bool  GetConnected(void) { return m_pVectorGraphics[0].GetConnected(); };
+	DWORD GetNumInstances(void) const { return m_dwNumInstances; };
+	DWORD GetNumFunctions(void) const { return m_pVectorGraphics[0].GetNumFunctions(); };
+	DWORD GetNumSteps(void) const { return m_pVectorGraphics[0].GetNumSteps(); };
+	bool  GetConnected(void) const { return m_pVectorGraphics[0].GetConnected(); };
 
 	DWORD               GetMode(void)
 	{

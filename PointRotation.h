@@ -47,7 +47,7 @@ public:
 		const value_t z,
 		value_t* outX,
 		value_t* outY,
-		value_t* outZ)
+		value_t* outZ) const
 	{
 		*outX = (a * x) + (d * y) + (g * z);
 		*outY = (b * x) + (e * y) + (h * z);

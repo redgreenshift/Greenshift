@@ -83,7 +83,7 @@ public:
 	 * ToNormalized - return the value normalized to the interval 0..1
 	 *
 	 ****************************************************************************/
-	inline value_t    Normalize(const value_t inValue)
+	inline value_t    Normalize(const value_t inValue) const
 	{
 		return (inValue - m_nStart) * m_nNormalizationFactor;
 	};
