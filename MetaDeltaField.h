@@ -30,8 +30,15 @@
 #ifndef _MetaDeltaField_H_
 #define _MetaDeltaField_H_
 
-#include "MetaConfig.h"
+#include "BitCanvas.h"
 #include "DeltaField.h"
+#include "Expression.h"
+#include "HighResolutionTimer.h"
+#include "MetaConfig.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
+
+#include <Windows.h> // DWORD
 
 /**
  * @brief MetaDeltaField is a class that manages a collection of DeltaField objects

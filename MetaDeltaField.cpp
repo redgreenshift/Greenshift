@@ -28,6 +28,15 @@
 
 #include "MetaDeltaField.h"
 
+#include "BitCanvas.h"
+#include "DeltaField.h"
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
+
+#include <string.h>
+#include <Windows.h> // DWORD
+
   /****************************************************************************
    *
    * MetaDeltaField - constructor
