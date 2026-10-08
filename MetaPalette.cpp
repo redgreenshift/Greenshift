@@ -28,6 +28,13 @@
 
 #include "MetaPalette.h"
 
+#include "BitCanvas.h"
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "Palette.h"
+#include "WindowDevice.h"
+
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *

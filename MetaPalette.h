@@ -30,9 +30,15 @@
 #ifndef _MetaPalette_H_
 #define _MetaPalette_H_
 
+#include "BitCanvas.h"
+#include "Expression.h"
+#include "HighResolutionTimer.h"
 #include "MetaConfig.h"
+#include "MyDictionary.h"
 #include "Palette.h"
+#include "WindowDevice.h"
 
+#include <Windows.h> // DWORD
 
 
 /**
