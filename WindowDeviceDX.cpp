@@ -26,13 +26,15 @@
   *
   ****************************************************************************/
 
-#include <ddraw.h>
-#include <Windows.h>
+#include "WindowDeviceDX.h"
 
 #include "BitCanvas.h"
 #include "DXError.h"
 #include "WindowDevice.h"
-#include "WindowDeviceDX.h"
+
+#include <algorithm>
+#include <ddraw.h>
+#include <Windows.h>
 
   //#define NO_WAIT
 
@@ -510,7 +512,7 @@ error_t    WindowDeviceDX::DisableDisplay(void)
  * DDEnumCallbackEx - Enumerate device callback
  *
  ****************************************************************************/
-BOOL WINAPI DDEnumCallbackEx(GUID FAR* lpGUID,
+static BOOL WINAPI DDEnumCallbackEx(GUID FAR* lpGUID,
 	LPSTR     lpDriverDescription,
 	LPSTR     lpDriverName,
 	LPVOID    lpContext,
@@ -550,7 +552,7 @@ BOOL    WindowDeviceDX::DDEnumCallbackEx(GUID FAR* lpGUID,
  * EnumModesCallback - Enumerate display modes callback
  *
  ****************************************************************************/
-HRESULT    WINAPI    EnumModesCallback(LPDDSURFACEDESC2 lpDDSurfaceDesc,
+static HRESULT    WINAPI    EnumModesCallback(LPDDSURFACEDESC2 lpDDSurfaceDesc,
 	LPVOID lpContext)
 {
 	//    DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_NONDISPLAYDEVICES;

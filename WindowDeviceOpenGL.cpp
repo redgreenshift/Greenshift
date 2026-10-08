@@ -1,4 +1,3 @@
-#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
