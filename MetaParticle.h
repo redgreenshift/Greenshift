@@ -30,12 +30,18 @@
 #ifndef _MetaParticle_H_
 #define _MetaParticle_H_
 
+#include "BitCanvas.h" // needs an interface
+#include "Expression.h"
+#include "HighResolutionTimer.h"
+#include "MersenneTwister.h"
 #include "MetaConfig.h"
+#include "MyDictionary.h"
 #include "Particle.h"
-#include "PointRotation.h"
+#include "WindowDevice.h"
 
+#include <Windows.h> // DWORD
 
-#define MAX_RUNNING_PARTICLES 4
+inline constexpr DWORD MAX_RUNNING_PARTICLES = 4;
 
 /**
  * @brief MetaParticleAbstract provides the smarts for drawing and tweening;

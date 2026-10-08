@@ -28,6 +28,17 @@
 
 #include "MetaParticle.h"
 
+#include "BitCanvas.h"
+#include "Expression.h"
+#include "MyDictionary.h"
+#include "Particle.h"
+#include "VectorGraphic.h"
+#include "WindowDevice.h"
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
