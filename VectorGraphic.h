@@ -64,7 +64,7 @@ public:
 	void                Reset(void);  /* reevaluate the A vars */
 
 
-	DWORD       GetNumFunctions(void) const { return m_pfValues.NumFunctions(); };
+	DWORD       GetNumFunctions(void) { return m_pfValues.NumFunctions(); };
 	DWORD       GetNumSteps(void) const { return m_dwResolution; };
 	DWORD       GetMode(void) const { return m_dwMode; };
 	bool        GetConnected(void) const { return m_bConnected; };
