@@ -33,6 +33,13 @@
 #include "MetaParticle.h"
 #include "Particle.h"
 
+#include "BitCanvas.h"
+#include "Expression.h"
+#include "HighResolutionTimer.h"
+#include "MyDictionary.h"
+#include "WindowDevice.h"
+
+#include <Windows.h> // DWORD
 
 /**
  * @brief MetaWaveShape is a class that manages a collection of WaveShape objects

@@ -28,6 +28,16 @@
 
 #include "MetaWaveShape.h"
 
+#include "BitCanvas.h"
+#include "Expression.h"
+#include "HighResolutionTimer.h"
+#include "MyDictionary.h"
+#include "Particle.h"
+#include "VectorGraphic.h"
+#include "WindowDevice.h"
+
+#include <Windows.h> // DWORD
+
   /****************************************************************************
    *
    * MetaWaveShape - constructor
