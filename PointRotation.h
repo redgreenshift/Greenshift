@@ -30,6 +30,7 @@
 #ifndef _PointRotation_H_
 #define _PointRotation_H_
 
+#include <cmath>
 
   /****************************************************************************
    *
