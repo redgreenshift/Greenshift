@@ -116,7 +116,13 @@
  */
 
 
-#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <malloc.h>
+
+#if EXTREME_DEBUGGING
+#include <Windows.h>
+#endif
 
  /****************************************************************************
   *
@@ -678,9 +684,6 @@ static inline void long_sqrt_rounded(const long lValue, long* outValue)
 #endif
 
 #if EXTREME_DEBUGGING
-
-#include <stdio.h>
-#include <windows.h>
 inline void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	char    strDisplay[2048];
@@ -712,8 +715,6 @@ inline void    ProjectGreenshiftDebugMessageBox(const char* aString, value_t aNu
   * make a Debug Class for the error types, wait... errors aren't necessarily
   * limited to debugging it's the DumpToFile which should go in Debug
   */
-#include <stdio.h>
-#include <float.h>
 inline void DumpToFile(const char* fileName, const char* aString, value_t aNumber, const char* anotherString = "")
 {
 	FILE* outFile = fopen(fileName, "a");
