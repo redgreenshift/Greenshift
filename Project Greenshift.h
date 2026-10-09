@@ -301,8 +301,8 @@ typedef DWORD COLORREF;
   */
 
 
-#include <stdlib.h> /* rand() */
 #ifdef HIDE_RANDOM_ROUTINES_SO_I_CAN_REMOVE_CALLS_TO_THEM
+#include <stdlib.h> /* rand() */
 
 #define RANDOM    Random_Number_Between_Zero_And_N_Minus_One
 
@@ -317,7 +317,7 @@ static unsigned int Random_Number_Between_Zero_And_N_Minus_One(const unsigned in
 {
 	return (int)(N * Random01());
 }
-#endif
+#endif // HIDE_RANDOM_ROUTINES_SO_I_CAN_REMOVE_CALLS_TO_THEM
 
 static inline long long_sqrt(const long inSquare)
 {
