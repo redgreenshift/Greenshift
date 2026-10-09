@@ -36,13 +36,7 @@
 #define _Expression_H_
 
 #include "MyDictionary.h"
-   //#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 
-#include <malloc.h> /* for PrintString */
-#include <stdio.h>  /* for sprintf() */
-#include <ctype.h>
 #include <memory>
 
 //#define REGULAR_EXPRESSION
