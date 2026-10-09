@@ -30,6 +30,7 @@
 #ifndef _PhaseFunction_H_
 #define _PhaseFunction_H_
 
+#include "Association.h"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "TextUtils.hpp"
@@ -43,12 +44,15 @@
 #endif
 #endif
 
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <map>
 #include <new>
 #include <string>
 #include <string.h>
 #include <utility>
+#include <vector>
 
 	/**
 	 * @brief Defines the rhythmic, timing-based levels of evaluation of phase variables defined in a single config.
