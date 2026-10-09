@@ -28,11 +28,15 @@
 #undef min
 #undef max
 
+#include <algorithm>
 #include <cctype>
 #include <map>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
+#include <Windows.h> // DWORD
 
 
 struct CaseInsensitiveLess {
