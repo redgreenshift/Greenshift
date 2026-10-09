@@ -34,7 +34,8 @@
 #ifndef _CollectionsAbstract_H_
 #define _CollectionsAbstract_H_
 
-#include <Windows.h>
+#include <algorithm>
+#include <Windows.h> // DWORD
 
 /**
  * @brief Abstract interface defining essential collection operations.
