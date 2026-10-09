@@ -24,6 +24,7 @@
 #include "..\MyDictionary.h"
 #include "..\PhaseFunction.h"
 #include "..\TextUtils.hpp"
+#include "..\Diagnostics.cpp"
 #include "..\InsertionOrderedMap.hpp"
 #include "..\StaticFifoSet.hpp"
 #include <array>

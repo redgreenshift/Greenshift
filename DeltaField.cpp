@@ -28,6 +28,7 @@
 
 #include "DeltaField.h"
 
+#include "Diagnostics.hpp"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "PhaseFunction.h"

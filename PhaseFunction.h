@@ -31,6 +31,7 @@
 #define _PhaseFunction_H_
 
 #include "Association.h"
+#include "Diagnostics.hpp"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "TextUtils.hpp"

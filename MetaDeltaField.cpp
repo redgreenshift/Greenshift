@@ -30,6 +30,7 @@
 
 #include "BitCanvas.h"
 #include "DeltaField.h"
+#include "Diagnostics.hpp"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "WindowDevice.h"

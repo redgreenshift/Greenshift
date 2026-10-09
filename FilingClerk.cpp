@@ -28,6 +28,7 @@
 
 #include "FilingClerk.h"
 
+#include "Diagnostics.hpp"
 #include "MyDictionary.h"
 
 #include <cctype>

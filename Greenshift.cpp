@@ -30,6 +30,7 @@
 
 #include "Association.h"
 #include "BitCanvas.h"
+#include "Diagnostics.hpp"
 #include "Expression.h"
 //#include "frontend.h"
 #include "GForceFunctions.h"

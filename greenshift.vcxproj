@@ -493,6 +493,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">
       </AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Expression.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">
       </AdditionalOptions>
@@ -689,6 +690,7 @@
     <ClInclude Include="ContiguousAlignedMemoryAllocator.h" />
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
+    <ClInclude Include="Diagnostics.hpp" />
     <ClInclude Include="InsertionOrderedMap.hpp" />
     <ClInclude Include="MersenneTwister.h" />
     <ClInclude Include="MyDictionary.h" />

@@ -32,6 +32,7 @@
 #define _MyDictionary_H_
 
 #include "CollectionsAbstract.h"
+#include "Diagnostics.hpp"
 #include "Association.h"
 #include "InsertionOrderedMap.hpp"
 

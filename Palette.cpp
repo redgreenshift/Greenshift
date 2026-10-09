@@ -28,6 +28,7 @@
 
 #include "Palette.h"
 
+#include "Diagnostics.hpp"
 #include "Expression.h"
 #include "GForceFunctions.h"
 #include "MersenneTwister.h"

@@ -29,6 +29,7 @@
 #include "ThreadedEntity.h"
 
 #if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
 #include "DXError.h"
 #endif
 
