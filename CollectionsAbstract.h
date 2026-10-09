@@ -621,7 +621,7 @@ public:
 	virtual error_t        Add(DataType inValue) = 0;
 	virtual error_t        Remove(DataType inValue) = 0;
 
-	virtual void        WipeContents(void);
+	virtual void        WipeContents(void) = 0;
 
 	virtual DWORD    AsArray(DataType** outArray) = 0;
 
