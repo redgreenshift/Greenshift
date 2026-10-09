@@ -43,10 +43,11 @@
 #endif
 #endif
 
-#include <string.h>
 #include <cstdio>
 #include <cstdlib>
 #include <new>
+#include <string>
+#include <string.h>
 #include <utility>
 
 	/**
