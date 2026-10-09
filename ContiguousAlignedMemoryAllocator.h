@@ -30,6 +30,7 @@
 #ifndef _ContiguousAlignedMemory_H_
 #define _ContiguousAlignedMemory_H_
 
+#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
