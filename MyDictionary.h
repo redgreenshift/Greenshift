@@ -35,7 +35,10 @@
 #include "Association.h"
 #include "InsertionOrderedMap.hpp"
 
+#include <cstdio>
 #include <string>
+#include <string.h>
+#include <Windows.h> // DWORD
 
 
 
