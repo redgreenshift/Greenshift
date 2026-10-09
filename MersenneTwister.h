@@ -47,22 +47,22 @@
 // Not thread safe (unless auto-initialization is avoided and each thread has
 // its own MTRand object)
 
-#include <stdio.h>
-#include <time.h>
-#include <limits.h>
-
-#include <algorithm>
 #include <atomic>
 #if __cpp_lib_bit_cast >= 201806L
 #include <bit>
 #endif
 #include <chrono>
+#include <climits>
+#include <cstdarg>
 #include <cstdint> // uint32_t
+#include <cstdio>
 #if __cpp_lib_bit_cast < 201806L
 #include <cstring>  // memcpy if needed
 #endif
 #include <iostream>
+#include <istream>
 #include <thread>   // std::thread::id
+#include <version>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -186,7 +186,7 @@ public:
 
 protected:
 	static constexpr int M = 397;                   // period parameter
-	static constexpr uint32_t MAGIC = 0x9908b0dfU;  // magic constant
+	static constexpr uint32_t MAGIC{ 0x9908b0dfU }; // magic constant
 
 	uint32 state[N];       // internal state
 	uint32 *pNext = state; // next value to get from state
@@ -472,7 +472,9 @@ inline void MTRand::unique_seed()
  */
 inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 {
-	uint32 seed_array[N];
+	uint32 seed_array[N]; // Intentionally uninitialized.
+	// The loop below assigns every element before use.
+	// Zero-initialization significantly degrades benchmark performance.
 
 	uint64_t x = seed64;
 	for (int i = 0; i < N; ++i)
@@ -484,7 +486,7 @@ inline void MTRand::deterministic_seed_u64(uint64_t seed64)
 		//
 		// With Truncation: We're taking 624 distinct samples from the SplitMix64 generator.
 		//
-		// With Splitting: We are taking only 312 samples and splitting them. Each half is coupled;
+		// With Splitting: We would take only 312 samples and split them in half. Each half is coupled;
 		// they are two different views of the same 64-bit transformation.
 		//
 		// Therefore truncation is the best option, as it's the only way to maintain the independence of the samples.
