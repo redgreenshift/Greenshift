@@ -788,7 +788,7 @@ class ExpressionConstant : public ExpressionValue
 private:
 	const value_t    m_nConstantValue;
 protected:    /* returns the constant value */
-	inline const value_t    ConstantValue(void) { return m_nConstantValue; };
+	inline const value_t    ConstantValue(void) const { return m_nConstantValue; };
 public:
 	ExpressionConstant(const value_t inValue);
 	virtual     ~ExpressionConstant();

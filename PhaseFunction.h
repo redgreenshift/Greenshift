@@ -950,9 +950,9 @@ public:
 	/*
 	 * to reduce the chances of accidental modification
 	 */
-	inline DWORD    NumDimensions(void) { return m_dwNumDimensions; };
-	inline DWORD    NumFunctions(void) { return m_dwNumFunctions; };
-	inline DWORD    NumPhases(void) { return m_dwNumPhases; };
+	inline DWORD    NumDimensions(void) const { return m_dwNumDimensions; };
+	inline DWORD    NumFunctions(void) const { return m_dwNumFunctions; };
+	inline DWORD    NumPhases(void) const { return m_dwNumPhases; };
 
 protected:
 	inline void     SetNumDimensions(const DWORD dwNumDimensions)

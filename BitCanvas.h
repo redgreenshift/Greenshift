@@ -326,9 +326,9 @@ public:
 	 *
 	 * see above comment for corresponding variable
 	 */
-	inline DWORD    BufferWidth(void) { return m_dwBufferWidth; };
-	inline DWORD    BufferHeight(void) { return m_dwBufferHeight; };
-	inline DWORD    BitDepth(void) { return m_dwBitDepth; };
+	inline DWORD    BufferWidth(void) const { return m_dwBufferWidth; };
+	inline DWORD    BufferHeight(void) const { return m_dwBufferHeight; };
+	inline DWORD    BitDepth(void) const { return m_dwBitDepth; };
 
 	/*
 	 * swap the buffer pointers
