@@ -215,7 +215,16 @@
     <ClInclude Include="OKLab.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ColorUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Diagnostics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MathUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MemoryUtils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,7 @@
 #pragma once
+#include "Project Greenshift.h"
 /*
- *  Copyright (C) 2001-2026 Jared Ivey
+ *  Copyright (C) 2026 Jared Ivey
  *
  *  This file is part of Project Greenshift
  *
@@ -21,8 +22,6 @@
  */
 
 #if EXTREME_DEBUGGING
-
-#include "CoreTypes.hpp"
 
 #include <cstdio>
 #include <cstdlib>

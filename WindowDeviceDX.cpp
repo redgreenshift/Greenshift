@@ -29,12 +29,13 @@
 #include "WindowDeviceDX.h"
 
 #include "BitCanvas.h"
+#include "ColorUtils.hpp"
 #include "DXError.h"
 #include "WindowDevice.h"
 
 #include <algorithm>
-#include <ddraw.h>
 #include <Windows.h>
+#include <ddraw.h>
 
   //#define NO_WAIT
 

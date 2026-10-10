@@ -19,83 +19,116 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#ifndef __Project_Greenshift_H__
-#define __Project_Greenshift_H__
 
-  /****************************************************************************
-   *
-   * Project Greenshift, the common include file.
-   *
-   *
-   * _Everything_ in Project Greenshift must include this file in the first line.
-   * (not strictly true anymore, just the idea I had initially.
-   * The copyright notices largely serve that function now)
-   *
-   * Yes, it seems redundant and unnecessary, but this is for a couple reasons.
-   *
-   * The first is to identify the file as part of Project Greenshift.
-   * This is more important if the code is reused by someone else in some other
-   * program, so it's easy to tell which files are mine and which are not.
-   *
-   * The second reason is to ensure that no matter what, certain assumptions
-   * always apply to any code in Project Greenshift.
-   * Namely the error_t and value_t data types, and NULL.
-   *
-   * Third, if something needs to be accessed from anywhere, this is the place.
-   *
-   *
-   *
-   *
-   * I ran into problems between the compile and link stage when using macros for conditional compilation
-   * those macros should have been defined at the lowest level.
-   *
-   * When compiling, the included files saw the defined macros,
-   * thus making code for everything it was supposed to.
-   *
-   * but the linker (only looking at the header files) could not see the
-   * macros defined in the C++ file, thus the linker calculated offset values
-   * for the member functions as if half the code hadn't been compiled.
-   *
-   * The result was that the wrong functions were being called.
-   * Example:
-   *        printf( "%s\n", expression->PrintString() );
-   *        was dereferencing a "NULL" pointer, which was especially puzzling since I wrote
-   *        PrintString in such a manner that it should NEVER return NULL.
-   *        (ok, checking my code, this is not true, but it probably wouldn't ever return NULL =)
-   *
-   *        It sometimes returns a string constant stating the error ("ERROR: malloc")
-   *
-   *        What should be done is use out parameters, and return an error_t
-   *        (PrintString isn't a core function, and is mainly intended for
-   *        debugging purposes, as differentiation isn't implemented yet,
-   *        so it's not a priority at the moment)
-   *
-   *        Using the debugger, I realized Evaluate() was actually called, NOT PrintString.
-   *        Evaluate happened to return 0 (zero) for the given values of the expression.
-   *        The PrintString protocol was imposed (by the linker) on a call to Evaluate,
-   *        thus the zero value was interpreted as a NULL pointer.
-   *
-   */
+// This is the foundation header for the entire project.
+// Compiler Configuration macros, Build Configuration macros, and Core Types
+// They're part of the language of Greenshift itself.
+
+/****************************************************************************
+ *
+ * Project Greenshift, the common include file.
+ *
+ * Historically this header was intended to be included by every Greenshift
+ * source file (at the top) and served as a central location for project-wide
+ * types, macros, configuration, and utility definitions.
+ *
+ * While the implementation details have evolved considerably, the core idea
+ * remains intact.
+ *
+ * Project Greenshift.h continues to serve as the foundation header for the
+ * project. It defines compiler configuration, build configuration, project
+ * types, and other assumptions that are intended to be consistently visible
+ * throughout the codebase.
+ *
+ * Early in development I encountered a particularly difficult bug caused by
+ * conditional compilation and inconsistent compile-time assumptions between
+ * translation units.
+ *
+ * The experience strongly influenced the original architecture of Greenshift
+ * and motivated centralizing common project definitions in this header.
+ *
+ * The story below explains how that bug influenced the architecture of
+ * Greenshift and motivated centralizing common project definitions in this
+ * header.
+ *
+ * Historical Note (circa 2000-2001)
+ * ---------------------------------
+ * _Everything_ in Project Greenshift must include this file in the first line.
+ *
+ * Yes, it seems redundant and unnecessary, but this is for a couple reasons.
+ *
+ * The first is to identify the file as part of Project Greenshift.
+ * This is more important if the code is reused by someone else in some other
+ * program, so it's easy to tell which files are mine and which are not.
+ * (ADDENDUM: not strictly true anymore, copyright notices serve that function)
+ *
+ * The second reason is to ensure that no matter what, certain assumptions
+ * always apply to any code in Project Greenshift.
+ * Namely the error_t and value_t data types, and NULL.
+ *
+ * Third, if something needs to be accessed from anywhere, this is the place.
+ *
+ *
+ *
+ *
+ * I ran into problems between the compile and link stage when using macros for conditional compilation
+ * those macros should have been defined at the lowest level.
+ *
+ * When compiling, the included files saw the defined macros,
+ * thus making code for everything it was supposed to.
+ *
+ * but the linker (only looking at the header files) could not see the
+ * macros defined in the C++ file, thus the linker calculated offset values
+ * for the member functions as if half the code hadn't been compiled.
+ *
+ * The result was that the wrong functions were being called.
+ * Example:
+ *        printf( "%s\n", expression->PrintString() );
+ *        was dereferencing a "NULL" pointer, which was especially puzzling since I wrote
+ *        PrintString in such a manner that it should NEVER return NULL.
+ *        (ok, checking my code, this is not true, but it probably wouldn't ever return NULL =)
+ *
+ *        It sometimes returns a string constant stating the error ("ERROR: malloc")
+ *
+ *        What should be done is use out parameters, and return an error_t
+ *        (PrintString isn't a core function, and is mainly intended for
+ *        debugging purposes, as differentiation isn't implemented yet,
+ *        so it's not a priority at the moment)
+ *
+ *        Using the debugger, I realized Evaluate() was actually called, NOT PrintString.
+ *        Evaluate happened to return 0 (zero) for the given values of the expression.
+ *        The PrintString protocol was imposed (by the linker) on a call to Evaluate,
+ *        thus the zero value was interpreted as a NULL pointer.
+ *
+ */
 
 
-   /****************************************************************************
-	*
-	* conditional compile #defines
-	*
-	****************************************************************************/
-	//#define USE_FAST_BLIT 1
-	//#define USE_FLIP 1
+/****************************************************************************
+*
+* conditional compile #defines
+* Compiler Configuration macros, Build Configuration macros
+*
+****************************************************************************/
+//#define USE_FAST_BLIT 1
+//#define USE_FLIP 1
 
- /*
-  * this is a toggle so I can put an insane amount of debugging code
-  * and not have to toggle each individually using comments
-  */
+ /* this is a toggle so I can put an insane amount of debugging code
+  * and not have to toggle each individually using comments  */
 #define EXTREME_DEBUGGING 0
 
+// Reduce the amout of logging during startup (don't log the contents of every config)
 #define HIDE_INIT_TRACE 1
 
-	//#define USE_FASTER_LINE_DRAW
+//#define USE_FASTER_LINE_DRAW
 #define USE_TIMER_TO_HIDE_MOUSE
+
+/*
+ * the floating point value type
+ *
+ * Configuration: Set to 1 for double, 0 for float
+ */
+#define USE_HIGH_PRECISION_FLOAT 0
+
 
 // 'strdup': The POSIX name for this item is deprecated. Instead, use the ISO C and C++ conformant name: _strdup. See online help for details.
 // Extremely unlikely to cause a problem. It's more portable to leave it alone,
@@ -110,81 +143,52 @@
 // is not required and would reduce portability.
 #define _CRT_SECURE_NO_WARNINGS
 
-/*
- * signal for Expression to use a union to store members
- * should be removed before release.
- */
+#define WIN32_LEAN_AND_MEAN
+#define STRICT 1
+
+#include <cstdint>
 
 
-#include <cstdio>
-#include <cstdlib>
-#include <malloc.h>
-
-#if EXTREME_DEBUGGING
-#include <Windows.h>
-#endif
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
 
  /****************************************************************************
   *
-  * Standard Macros valid anywhere in Project Greenshift
+  * Standard Macros and types valid anywhere in Project Greenshift
   *
   ****************************************************************************/
 #define BITS_PER_BYTE    8
 
-  // ROUND is the only one I use, the others I was just experimenting with
-  //#define ROUND_ZERO(num)    ( ((num) < 0.0) ? ceil((num) - 0.5) : floor((num) + 0.5) )
-  /* DUH!  toward_zero is simply a TRUNCATE or typecast to integer */
-#define TOWARD_ZERO(num)    ( ((num) < 0.0f) ? ceil(num) : floor(num) )
-#define ROUND_ZERO(num)    ( ((num) < 0.0f) ? floor((num) - 0.5f) : floor((num) + 0.5f) )
-#define ROUND(num)    ( ((num)-floor(num) < 0.5f) ? floor(num) : floor((num) + 1.0f) )
-#define ROUND_SPECIAL(num, origin)    ( ((num) < (origin)) ? ceil((num) - 0.5f) : floor((num) + 0.5f) )
-#define ROUND_UP(num)    ( ((num) < 0.0f) ? floor(num) :  ceil(num) )
-#define ROUND_DOWN(num)    ( ((num) < 0.0f) ?  ceil(num) : floor(num) )
+ // ---------------------------------------------------------------------------
+ // Fundamental integer types
+ // ---------------------------------------------------------------------------
+//using byte_t = std::uint8_t;
+//using word_t = std::uint16_t;
+//using dword_t = std::uint32_t;
+typedef uint8_t byte_t;
+typedef uint16_t word_t;
+typedef uint32_t dword_t;
 
-#define max(x, y)    (((x) > (y)) ? (x) : (y))
-#define min(x, y)    (((x) < (y)) ? (x) : (y))
-//#define max(x, y)    ((std::max)((x), (y)))
-//#define min(x, y)    ((std::min)((x), (y)))
-//max(max(x,y),z) /* expands to */ ((x>y)?x:y) > z?(x>y)?x:y):z
-//evaluating 3 conditionals if x or y are picked, and 2 if z is picked
-//this should be reduced
-#define max3(x, y, z)    (((x)>(y)) ? \
-                         (((x)>(z)) ? (x) : (z)) : \
-                         (((y)>(z)) ? (y) : (z)))
-#define min3(x, y, z)    (((x)<(y)) ? \
-                         (((x)<(z)) ? (x) : (z)) : \
-                         (((y)<(z)) ? (y) : (z)))
+// ---------------------------------------------------------------------------
+// Project-wide types
+// ---------------------------------------------------------------------------
 
-
-
-#define SAFE_FREE( buf )         {if( (buf) != NULL ) { free( buf ); buf = NULL; }}
-#define SAFE_DELETE( buf )       {if( (buf) != NULL ) { delete( buf ); buf = NULL; }}
-#define SAFE_DELETE_ARRAY( buf ) {if( (buf) != NULL ) { delete[]( buf ); buf = NULL; }}
-#define SAFE_DELETE_ARRAY_OF_POINTERS( buf, len )   \
-    {   \
-        for(int sdaopIndex=0; sdaopIndex < len; sdaopIndex++)   \
-        {   \
-            SAFE_DELETE_ARRAY( (buf) [sdaopIndex] );\
-        }   \
-    }
-
-
-#define LCLIP( longNum )    ( ( (long)(longNum) > 0L ) ? (long)(longNum) : 1L )
-#define DWORD_TO_LONG( longNum )    ( ( (long)(longNum) > 0L ) ? (long)(longNum) : 1L )
-#define LONG_TO_DWORD( longNum )    ( ( (long)(longNum) > 0L ) ? (long)(longNum) : 1L )
-
-/* when typecasting a large DWORD to a long, a negative value is possible
- * or if a negative long is typecast to a DWORD, then the value is quite large
- * this macro is to prevent this from happening
- */
-#define RESTRICT_TO_POSITIVE( num )    ( ( (signed)(num) > 0 ) ? (signed)(num) : 1 )
-
+// ---------------------------------------------------------------------------
+// Numeric precision configuration
+// ---------------------------------------------------------------------------
 
  /****************************************************************************
   *
   * Standard types valid anywhere in Project Greenshift
   *
   ****************************************************************************/
+
+  // ---------------------------------------------------------------------------
+  // Pixel storage
+  // ---------------------------------------------------------------------------
+
+using pixelmap_t = std::uint32_t;
+using ppixelmap_t = pixelmap_t*;
 
  /**
   * @brief A PIXELMAP represents a single pixel's memory offset within a linear buffer, acting as the numerical tool used to map one position to another.
@@ -196,13 +200,6 @@ typedef unsigned long   PIXELMAP;
 typedef unsigned long* PPIXELMAP;
 
 
-/*
- * the floating point value type
- *
- * Configuration: Set to 1 for double, 0 for float
- */
-#define USE_HIGH_PRECISION_FLOAT 0
-
 #if USE_HIGH_PRECISION_FLOAT
 typedef double value_t;
 #define VALUE_T_SIZE 8
@@ -211,7 +208,16 @@ typedef float value_t;
 #define VALUE_T_SIZE 4
 #endif
 
+// ---------------------------------------------------------------------------
+// Legacy string types
+// ---------------------------------------------------------------------------
+
 typedef const char mychar_t;
+typedef const char char_t;
+typedef mychar_t* string_t;
+//typedef std::string string_t;
+// Future possibility:
+// using string_t = std::string;
 
 /*
  * everything in Project Greenshift should use
@@ -230,453 +236,14 @@ typedef value_t* pvalue_t;
  * I know I shouldn't have these typedef's and define's, but I don't want to
  * have everything include windows.h just for these things
  */
-typedef unsigned char BYTE;
-typedef unsigned short WORD;
-typedef unsigned long DWORD;
-#ifndef _COLORREF_DEFINED
-#define _COLORREF_DEFINED
-typedef DWORD COLORREF;
-
-#define RGB(r,g,b)      ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))
-
-#define GetRValue(rgb)  ((BYTE)(rgb))
-#define GetGValue(rgb)  ((BYTE)(((WORD)(rgb)) >> 8))
-#define GetBValue(rgb)  ((BYTE)((rgb)>>16))
-
-#endif 
+//typedef unsigned char BYTE;
+//typedef unsigned short WORD;
+//typedef unsigned long DWORD;
 
 
-
-
-
-/****************************************************************************
- *
- * color manipulation macros
- *
- ****************************************************************************/
-#define REDSHIFT16      11
-#define GREENSHIFT16    5
-#define BLUESHIFT16     0
-#define REDMASK16       0x001F
-#define GREENMASK16     0x003F
-#define BLUEMASK16      0x001F
-#define _REDMASK16      0xF800
-#define _GREENMASK16    0x07E0
-#define _BLUEMASK16     0x001F
-
-#define RGB16(red, green, blue)    ( \
-                        ( ((red  ) & REDMASK16  ) << REDSHIFT16  ) |\
-                        ( ((green) & GREENMASK16) << GREENSHIFT16) |\
-                        ( ((blue ) & BLUEMASK16 ) << BLUESHIFT16 ) )
-#define RED16(color)    (((color) >> REDSHIFT16  ) & REDMASK16   )
-#define GREEN16(color)  (((color) >> GREENSHIFT16) & GREENMASK16 )
-#define BLUE16(color)   (((color) >> BLUESHIFT16 ) & BLUEMASK16  )
-
-
-
-#define REDSHIFT32      16
-#define GREENSHIFT32    8
-#define BLUESHIFT32     0
-#define REDMASK32       0xFF
-#define GREENMASK32     0xFF
-#define BLUEMASK32      0xFF
-
-#define RGB32(red, green, blue)    ( \
-                        ( ((red  ) & REDMASK32  ) << REDSHIFT32  ) |\
-                        ( ((green) & GREENMASK32) << GREENSHIFT32) |\
-                        ( ((blue ) & BLUEMASK32 ) << BLUESHIFT32 ) )
-#define RED32(color)    (((color) >> REDSHIFT32  ) & REDMASK32   )
-#define GREEN32(color)  (((color) >> GREENSHIFT32) & GREENMASK32 )
-#define BLUE32(color)   (((color) >> BLUESHIFT32 ) & BLUEMASK32  )
-
-#define c32to16(color)  RGB16( r32to16(color), r32to16(color), b32to16(color) )
-
-
-
-
-
-
- /*
-  * random routines
-  */
-
-
-#ifdef HIDE_RANDOM_ROUTINES_SO_I_CAN_REMOVE_CALLS_TO_THEM
-#include <stdlib.h> /* rand() */
-
-#define RANDOM    Random_Number_Between_Zero_And_N_Minus_One
-
-  /* random number between 0 and 1, but NOT including 1 */
-static float Random01(void)
-{
-	return rand() / (float)(RAND_MAX + 1);
-}
-
-/* random number between 0 and N, not including N */
-static unsigned int Random_Number_Between_Zero_And_N_Minus_One(const unsigned int N = 1)
-{
-	return (int)(N * Random01());
-}
-#endif // HIDE_RANDOM_ROUTINES_SO_I_CAN_REMOVE_CALLS_TO_THEM
-
-static inline long long_sqrt(const long inSquare)
-{
-	long square = 1L;
-	long square_root = 1L;
-
-	/*
-	 * 1^2 == 1
-	 * 2^2 == 1 + 3
-	 * 3^2 == 1 + 3 + 5
-	 * 4^2 == 1 + 3 + 5 + 7
-	 * 5^2 == 1 + 3 + 5 + 7 + 9
-	 *
-	 * 1^2 == 1
-	 * 2^2 == 1 + 1 + 2
-	 * 3^2 == 1 + 1 + 2 + 2 + 3
-	 * 4^2 == 1 + 1 + 2 + 2 + 3 + 3 + 4
-	 * 5^2 == 1 + 1 + 2 + 2 + 3 + 3 + 4 + 4 + 5
-	 */
-
-	while (square <= inSquare)
-	{
-		square += square_root;
-		square_root++;
-		square += square_root;
-	}
-
-	return square_root - 1L;
-}
-
-/*
- * this is just some experimental code, to see if it works... it doesn't :P
- */
-static inline long long_sqrt_x2(const long inSquare)
-{
-	long square = 1L;
-	long square_root = 1L;
-
-	/* 1 2 2 2
-	 * 3 4 4 4
-	 * 5 6 6 6
-	 * 7 8 8 8
-	 * 9 10 10 10
-	 * 11 12 12 12
-	 * 13 14 14 14
-	 * 15 16 16 16
-	 */
-	while (square < inSquare)
-	{
-		square += square_root;
-		square_root++;
-		if (square > inSquare)
-		{
-			return ((square_root - 1L) << 1);
-		}
-		square += square_root;
-	}
-
-	//    return (square_root - 1L) << 1;
-	return (square_root << 1) - 1L;
-}
-
-//#define LONG_SQRT_X2( lValue, outValue ) outValue = (long)(2.0f * sqrt( (value_t)lValue ) + 0.5f )
-#define LONG_SQRT_X2( lValue, outValue ) {         \
-    switch( lValue )                            \
-    {                                           \
-    case 0L:    outValue = 0L;  break;  \
-    case 1L:    outValue = 2L;  break;  \
-    case 2L:    outValue = 3L;  break;  \
-    case 3L:    outValue = 3L;  break;  \
-    case 4L:    outValue = 4L;  break;  \
-    case 5L:    outValue = 4L;  break;  \
-    case 6L:    outValue = 5L;  break;  \
-    case 7L:    outValue = 5L;  break;  \
-    case 8L:    outValue = 6L;  break;  \
-    case 9L:    outValue = 6L;  break;  \
-    case 10L:   outValue = 6L;  break;  \
-    case 11L:   outValue = 7L;  break;  \
-    case 12L:   outValue = 7L;  break;  \
-    case 13L:   outValue = 7L;  break;  \
-    case 14L:   outValue = 7L;  break;  \
-    case 15L:   outValue = 8L;  break;  \
-/*    case 16L:   outValue = 8L;  break;  \
-    case 17L:   outValue = 8L;  break;  \
-    case 18L:   outValue = 8L;  break;  \
-    case 19L:   outValue = 9L;  break;  \
-    case 20L:   outValue = 9L;  break;  \
-    case 21L:   outValue = 9L;  break;  \
-    case 22L:   outValue = 9L;  break;  \
-    case 23L:   outValue = 10L;  break;  \
-    case 24L:   outValue = 10L;  break;  \
-    case 25L:   outValue = 10L;  break;  \
-    case 26L:   outValue = 10L;  break;  \
-    case 27L:   outValue = 10L;  break;  \
-    case 28L:   outValue = 11L;  break;  \
-    case 29L:   outValue = 11L;  break;  \
-    case 30L:   outValue = 11L;  break;  \
-    case 31L:   outValue = 11L;  break;  \
-/*    case 32L:   outValue = 11L;  break;  \
-    case 33L:   outValue = 11L;  break;  \
-    case 34L:   outValue = 12L;  break;  \
-    case 35L:   outValue = 12L;  break;  \
-    case 36L:   outValue = 12L;  break;  \
-    case 37L:   outValue = 12L;  break;  \
-    case 38L:   outValue = 12L;  break;  \
-    case 39L:   outValue = 12L;  break;  \
-    case 40L:   outValue = 13L;  break;  \
-    case 41L:   outValue = 13L;  break;  \
-    case 42L:   outValue = 13L;  break;  \
-    case 43L:   outValue = 13L;  break;  \
-    case 44L:   outValue = 13L;  break;  \
-    case 45L:   outValue = 13L;  break;  \
-    case 46L:   outValue = 14L;  break;  \
-    case 47L:   outValue = 14L;  break;  \
-    case 48L:   outValue = 14L;  break;  \
-    case 49L:   outValue = 14L;  break;  \
-    case 50L:   outValue = 14L;  break;  \
-    case 51L:   outValue = 14L;  break;  \
-    case 52L:   outValue = 14L;  break;  \
-    case 53L:   outValue = 15L;  break;  \
-    case 54L:   outValue = 15L;  break;  \
-    case 55L:   outValue = 15L;  break;  \
-    case 56L:   outValue = 15L;  break;  \
-    case 57L:   outValue = 15L;  break;  \
-    case 58L:   outValue = 15L;  break;  \
-    case 59L:   outValue = 15L;  break;  \
-    case 60L:   outValue = 15L;  break;  \
-    case 61L:   outValue = 16L;  break;  \
-    case 62L:   outValue = 16L;  break;  \
-    case 63L:   outValue = 16L;  break;/**/  \
-    default:    outValue = (long)(2.0f * (value_t)sqrt( lValue ) + 0.5f); break; \
-    }                                          \
-}
-
-
-#define LONG_SQRT_X22( lValue, outValue ) {         \
-    switch( lValue )                            \
-    {                                           \
-    case 0L:    outValue = 0L;       break;  \
-    case 1L:    outValue = 2L;       break;  \
-    case 2L:\
-    case 3L:    outValue = 3L;  break;  \
-    case 4L:\
-    case 5L:    outValue = 4L;  break;  \
-    case 6L:\
-    case 7L:    outValue = 5L;  break;  \
-    case 8L:\
-    case 9L:\
-    case 10L:   outValue = 6L;  break;  \
-    case 11L:\
-    case 12L:\
-    case 13L:\
-    case 14L:   outValue = 7L;  break;  \
-/*    case 15L:\
-    case 16L:\
-    case 17L:\
-    case 18L:   outValue = 8L;  break;  \
-    case 19L:\
-    case 20L:\
-    case 21L:\
-    case 22L:   outValue = 9L;  break;  \
-    case 23L:\
-    case 24L:\
-    case 25L:\
-    case 26L:\
-    case 27L:   outValue = 10L;  break;  \
-    case 28L:\
-    case 29L:\
-    case 30L:\
-    case 31L:\
-    case 32L:\
-    case 33L:   outValue = 11L;  break;  \
-    case 34L:\
-    case 35L:\
-    case 36L:\
-    case 37L:\
-    case 38L:\
-    case 39L:   outValue = 12L;  break;  \
-    case 40L:\
-    case 41L:\
-    case 42L:\
-    case 43L:\
-    case 44L:\
-    case 45L:   outValue = 13L;  break;  \
-    case 46L:\
-    case 47L:\
-    case 48L:\
-    case 49L:\
-    case 50L:\
-    case 51L:\
-    case 52L:   outValue = 14L;  break;  \
-    case 53L:\
-    case 54L:\
-    case 55L:\
-    case 56L:\
-    case 57L:\
-    case 58L:\
-    case 59L:\
-    case 60L:   outValue = 15L;  break;  \
-    case 61L:\
-    case 62L:\
-    case 63L:   outValue = 16L;  break;/**/  \
-    default:    outValue = (value_t)(2.0f * sqrt( lValue ) + 0.5f);   break;    \
-    }                                          \
-}
-
-/*
-static inline void long_sqrt( const long lValue, float *outValue )
-{
-	switch( lValue )
-	{
-	case 0L:    *outValue = 0.0f;       break;
-	case 1L:    *outValue = 1.0f;       break;
-	case 2L:    *outValue = 1.414214f;  break;
-	case 3L:    *outValue = 1.732051f;  break;
-	case 4L:    *outValue = 2.0f;       break;
-	case 5L:    *outValue = 2.236068f;  break;
-	case 6L:    *outValue = 2.449490f;  break;
-	case 7L:    *outValue = 2.645751f;  break;
-	case 8L:    *outValue = 2.828427f;  break;
-	case 9L:    *outValue = 3.0f;       break;
-	case 10L:   *outValue = 3.162278f;  break;
-	case 11L:   *outValue = 3.316624f;  break;
-	case 12L:   *outValue = 3.464102f;  break;
-	case 13L:   *outValue = 3.605551f;  break;
-	case 14L:   *outValue = 3.741657f;  break;
-	case 15L:   *outValue = 3.872983f;  break;
-	case 16L:   *outValue = 4.0f;       break;
-	case 17L:   *outValue = 4.123106f;  break;
-	case 18L:   *outValue = 4.242641f;  break;
-	case 19L:   *outValue = 4.358899f;  break;
-	case 20L:   *outValue = 4.472136f;  break;
-	case 21L:   *outValue = 4.582576f;  break;
-	case 22L:   *outValue = 4.690416f;  break;
-	case 23L:   *outValue = 4.795832f;  break;
-	case 24L:   *outValue = 4.898979f;  break;
-	case 25L:   *outValue = 5.0f;       break;
-	case 26L:   *outValue = 5.099020f;  break;
-	case 27L:   *outValue = 5.196152f;  break;
-	case 28L:   *outValue = 5.291503f;  break;
-	case 29L:   *outValue = 5.385165f;  break;
-	case 30L:   *outValue = 5.477226f;  break;
-	case 31L:   *outValue = 5.567764f;  break;
-	case 32L:   *outValue = 5.656854f;  break;
-	case 33L:   *outValue = 5.744563f;  break;
-	case 34L:   *outValue = 5.830952f;  break;
-	case 35L:   *outValue = 5.916080f;  break;
-	case 36L:   *outValue = 6.0f;       break;
-	default:    *outValue = sqrt( lValue );   break;
-	}
-};
-/**/
-
-static inline void long_sqrt_rounded(const long lValue, long* outValue)
-{
-#ifdef UNDEFINED
-	if (lValue < 1L)
-		*outValue = 0L;
-	else
-		if (lValue < 4L)
-			*outValue = 1L;
-		else
-			if (lValue < 9L)
-				*outValue = 2L;
-			else
-				if (lValue < 16L)
-					*outValue = 3L;
-				else
-					if (lValue < 25L)
-						*outValue = 4L;
-					else
-						if (lValue < 36L)
-							*outValue = 5L;
-#else
-	switch (lValue)
-	{
-	case 0L:    *outValue = 0L;     break;
-	case 1L:
-	case 2L:    *outValue = 1L;     break;
-	case 3L:
-	case 4L:
-	case 5L:
-	case 6L:    *outValue = 2L;     break;
-	case 7L:
-	case 8L:
-	case 9L:
-	case 10L:
-	case 11L:
-	case 12L:   *outValue = 3L;     break;
-	case 13L:
-	case 14L:
-	case 15L:
-	case 16L:
-	case 17L:
-	case 18L:
-	case 19L:
-	case 20L:   *outValue = 4L;     break;
-	case 21L:
-	case 22L:
-	case 23L:
-	case 24L:
-	case 25L:
-	case 26L:
-	case 27L:
-	case 28L:
-	case 29L:
-	case 30L:   *outValue = 5L;     break;
-	case 31L:
-	case 32L:
-	case 33L:
-	case 34L:
-	case 35L:
-	case 36L:   *outValue = 6L;     break;
-	default:    *outValue = long_sqrt(lValue);   break;
-	}
-#endif
-};
-
-
-
-
-
-
-
-
-/****************************************************************************
- *
- * #defines I probably shouldn't have here
- *
- ****************************************************************************/
-
-#ifdef USE_TIMER_TO_HIDE_MOUSE
-#define WINVER 0x0500
-#define _WIN32_WINDOWS    0x0410
-#endif
-
-
-#ifndef WIN32
-#define WIN32
-#endif
-
- //#ifndef STRICT
- //#define STRICT 1
- //#endif
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#endif
-
-/* define NULL pointer value */
-#ifndef NULL
-#ifdef  __cplusplus
-#define NULL    0
-#else
-#define NULL    ((void *)0)
-#endif
-#endif
 
   /* extern void * memcpy_amd(void *dest, const void *src, size_t n); */
+
 
 
  /****************************************************************************
@@ -955,8 +522,4 @@ this line is a comment
 /**/
 
 #endif /* UNDEFINED_SO_YOU_CAN_SEE_THE_COMMENT_SCHEME */
-
-
-
-#endif  /* __Project_Greenshift_H__ */
 

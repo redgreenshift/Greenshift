@@ -2,6 +2,8 @@
 #ifndef _DirectX_Error_Messages_H_
 #define _DirectX_Error_Messages_H_
 
+#include "ColorUtils.hpp"
+
 #include <Windows.h>
 #include <ddraw.h>
 

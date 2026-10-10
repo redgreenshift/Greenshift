@@ -31,6 +31,7 @@
 #define _WindowDevice_H_
 
 #include "BitCanvas.h"
+#include "ColorUtils.hpp"
 #include "Expression.h"
 #include "MyDictionary.h"
 #include "ThreadedEntity.h"
@@ -40,7 +41,7 @@
 #define STRICT 1
 #endif
 #include <windows.h>
-//#include <ddraw.h>
+#include <ddraw.h>
 
 
 #define GS_WindowStyle   ( WS_SYSMENU     \

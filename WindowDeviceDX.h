@@ -31,6 +31,7 @@
 #define _WindowDeviceDX_H_
 
 #include "BitCanvas.h"
+#include "ColorUtils.hpp"
 #include "WindowDevice.h"
 
 #include <Windows.h>

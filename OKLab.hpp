@@ -19,14 +19,14 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-#include <Windows.h>
+#include "Project Greenshift.h"
+#include "ColorUtils.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+//#include <Windows.h> // PALETTEENTRY
 
-#include "Project Greenshift.h"
 
 namespace OKLab
 {
