@@ -123,8 +123,6 @@ typedef uint32_t colorref_t;
  //#define RGB(r,g,b)      ((COLORREF)(((BYTE)(r)|((WORD)((BYTE)(g))<<8))|(((DWORD)(BYTE)(b))<<16)))
  //
  //#ifndef GetRValue
- ////#error "blarg!!!!! JRDV"
- ////static_assert(false, "This code should not be instantiated");
  //#define GetRValue(rgb)  ((BYTE)(rgb))
  //#endif
  //
@@ -136,7 +134,6 @@ typedef uint32_t colorref_t;
  //#define GetBValue(rgb)  ((BYTE)((rgb)>>16))
  //#endif
  //
- //// Defined in winsomething.h
  ////#define GetRValue(rgb)      (LOBYTE(rgb))
  ////#define GetGValue(rgb)      (LOBYTE(((WORD)(rgb)) >> 8))
  ////#define GetBValue(rgb)      (LOBYTE((rgb)>>16))

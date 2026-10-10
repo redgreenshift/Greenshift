@@ -69,11 +69,6 @@
 #pragma warning(disable: 5033) // "'register' is no longer a supported storage class"
 #endif
 
-#pragma push_macro("min")
-#pragma push_macro("max")
-#undef min
-#undef max
-
 inline std::atomic<uint64_t> g_seed_event_counter{ 0 };
 
 /**
@@ -670,8 +665,6 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 	return is;
 }
 
-#pragma pop_macro("max")
-#pragma pop_macro("min")
 
 #if defined(_MSC_VER)
 #pragma warning(pop)
@@ -718,3 +711,4 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
 //        with the high-entropy `MTRand::deterministic_seed_u32(oneSeed);`
 //      - added comments clarifying which implementations are RECOMMENDED (high-entropy)
 //        and which methods are lower-entropy (included for LEGACY reasons)
+
