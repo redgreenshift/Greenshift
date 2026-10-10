@@ -34,6 +34,9 @@
 #ifndef _CollectionsAbstract_H_
 #define _CollectionsAbstract_H_
 
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
+
 #include <algorithm>
 #include <Windows.h> // DWORD
 
@@ -332,7 +335,7 @@ protected:
 	 ****************************************************************************/
 	virtual DWORD   GrowSize(void)
 	{
-		return max(Capacity(), 2);
+		return std::max(Capacity(), 2ul); // Double the size, but ensure a minimum grow
 	};
 
 	/****************************************************************************
