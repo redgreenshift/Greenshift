@@ -29,7 +29,9 @@
 #include "MetaPalette.h"
 
 #include "BitCanvas.h"
+#include "Diagnostics.hpp"
 #include "Expression.h"
+#include "MemoryUtils.hpp"
 #include "MyDictionary.h"
 #include "Palette.h"
 #include "WindowDevice.h"

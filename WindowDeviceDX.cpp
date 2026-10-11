@@ -30,6 +30,7 @@
 
 #include "BitCanvas.h"
 #include "ColorUtils.hpp"
+#include "Diagnostics.hpp"
 #include "DXError.h"
 #include "WindowDevice.h"
 

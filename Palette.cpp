@@ -28,10 +28,12 @@
 
 #include "Palette.h"
 
+#include "ColorUtils.hpp"
 #include "Diagnostics.hpp"
 #include "Expression.h"
 #include "GForceFunctions.h"
-#include "MersenneTwister.h"
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
 #include "MyDictionary.h"
 #include "OKLab.hpp"
 #include "PhaseFunction.h"
