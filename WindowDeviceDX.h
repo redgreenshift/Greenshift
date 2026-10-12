@@ -63,7 +63,7 @@ public:
 	};
 	void DumpCaps(void);
 	WindowDeviceDX();    /* constructor */
-	virtual             ~WindowDeviceDX();    /* destructor */
+	virtual             ~WindowDeviceDX() override;    /* destructor */
 
 #ifdef UNDEFINED
 	BOOL                DDEnumCallbackEx(GUID FAR* lpGUID,
@@ -83,7 +83,7 @@ protected:
 	/* check capabilities of hardware */
 //    error_t             CheckDeviceCapabilities( void );
 	error_t             ClearScreen(void);    /* clears the back surface */
-	virtual error_t     ClearScreenAll(void); /* clears all surfaces */
+	virtual error_t     ClearScreenAll(void) override; /* clears all surfaces */
 	error_t             FillSurface(LPDIRECTDRAWSURFACE7 lpSurface,
 		DWORD dwFillColor = PALETTERGB(0, 0, 0));
 	/* clear a surface
@@ -92,27 +92,27 @@ protected:
 	 */
 
 	 /* how many places should call InitDisplay()? */
-	virtual error_t     InitDisplay(void); /* create all the DD
+	virtual error_t     InitDisplay(void) override; /* create all the DD
 											  * surfaces
 											  */
-	virtual error_t     DisableDisplay(void); /* disable all the DD surfaces
+	virtual error_t     DisableDisplay(void) override; /* disable all the DD surfaces
 												 */
 public:
-	virtual HRESULT     SetPalette(LOGPALETTE* lpPalette);
-	virtual HRESULT     Flip(BitCanvas* pBitCanvas);
+	virtual HRESULT     SetPalette(LOGPALETTE* lpPalette) override;
+	virtual HRESULT     Flip(BitCanvas* pBitCanvas) override;
 	//    HRESULT             Blit( void );       /* tell BitCanvas to draw on me */
 	//    virtual HRESULT     OnFlip( void );     /* swap the front and back      */
 
 protected:
-	HRESULT             Blit(void);       /* tell BitCanvas to draw on me */
-	virtual HRESULT     OnFlip(void);     /* swap the front and back      */
-	virtual void        OnResize(void);   /* account for window changes   */
-	virtual void        OnMove(void);     /* account for window changes   */
+	HRESULT             Blit(void);              /* tell BitCanvas to draw on me */
+	virtual HRESULT     OnFlip(void) override;   /* swap the front and back      */
+	virtual void        OnResize(void) override; /* account for window changes   */
+	virtual void        OnMove(void) override;   /* account for window changes   */
 
-	virtual HRESULT     GetDC(HDC* pHDC);
-	virtual HRESULT     ReleaseDC(HDC hdc);
-	virtual HRESULT     GetPrimaryDC(HDC* pHDC);
-	virtual HRESULT     ReleasePrimaryDC(HDC hdc);
+	virtual HRESULT     GetDC(HDC* pHDC) override;
+	virtual HRESULT     ReleaseDC(HDC hdc) override;
+	virtual HRESULT     GetPrimaryDC(HDC* pHDC) override;
+	virtual HRESULT     ReleasePrimaryDC(HDC hdc) override;
 
 	DWORD               CoopLevel(void);    /* DD cooperative level flags */
 	virtual DWORD       CoopLevelAlways(void); /* flags for all modes */
@@ -120,7 +120,7 @@ protected:
 	virtual DWORD       CoopLevelFullscreen(void);/* flags for fullscreen */
 
 
-	virtual void        ReleaseAllObjects(void);    /* release all surfaces and release exclusive mode */
+	virtual void        ReleaseAllObjects(void);  /* release all surfaces and release exclusive mode */
 	virtual void        ReleaseAllSurfaces(void); /* release all surfaces and palette */
 
 

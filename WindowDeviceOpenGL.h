@@ -47,13 +47,13 @@ class WindowDeviceOpenGL : public WindowDevice
 {
 public:
 	WindowDeviceOpenGL();    /* constructor */
-	virtual             ~WindowDeviceOpenGL();    /* destructor */
+	virtual             ~WindowDeviceOpenGL() override;    /* destructor */
 
 	void                Update(const long symbol);
 
 protected:
 	error_t             ClearScreen(void);    /* clears the back surface */
-	virtual error_t     ClearScreenAll(void); /* clears all surfaces */
+	virtual error_t     ClearScreenAll(void) override; /* clears all surfaces */
 	/*    error_t                FillSurface( LPDIRECTDRAWSURFACE7 lpSurface,
 										DWORD dwFillColor = 0 ); /* clear a surface
 																  * using the
@@ -61,19 +61,19 @@ protected:
 																  */
 
 																  /* how many places should call InitDisplay()? */
-	virtual error_t     InitDisplay(void); /* create all the OpenGL
+	virtual error_t     InitDisplay(void) override; /* create all the OpenGL
 											  * surfaces
 											  */
-	virtual error_t     DisableDisplay(void); /* release all the OpenGL
+	virtual error_t     DisableDisplay(void) override; /* release all the OpenGL
 												 */
 
 	HRESULT             Blit(void);       /* tell BitCanvas to draw on me */
-	virtual HRESULT     OnFlip(void);     /* swap the front and back      */
-	virtual void        OnResize(void);   /* account for window changes   */
-	virtual void        OnMove(void);     /* account for window changes   */
+	virtual HRESULT     OnFlip(void) override;     /* swap the front and back      */
+	virtual void        OnResize(void) override;   /* account for window changes   */
+	virtual void        OnMove(void) override;     /* account for window changes   */
 
-	virtual HRESULT     GetDC(HDC* pHDC);
-	virtual HRESULT     ReleaseDC(HDC hdc);
+	virtual HRESULT     GetDC(HDC* pHDC) override;
+	virtual HRESULT     ReleaseDC(HDC hdc) override;
 
 
 	/*
