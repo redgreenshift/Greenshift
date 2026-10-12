@@ -34,6 +34,7 @@
 #include "Expression.h"
 //#include "frontend.h"
 #include "GForceFunctions.h"
+#include "MemoryUtils.hpp"
 #include "MetaConfig.h"
 #include "VectorGraphic.h"
 #include "WindowDevice.h"

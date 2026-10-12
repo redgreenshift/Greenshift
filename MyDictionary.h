@@ -210,7 +210,7 @@ public:
 		error_t    err;
 		DWORD    i;
 		DWORD    dwNumElements;
-		Association<DataType>** pArray;
+		Association<DataType>** pArray = nullptr;
 
 		err = srcMyDictionary.AsArray(&pArray, &dwNumElements);
 		if (err != SUCCESS)

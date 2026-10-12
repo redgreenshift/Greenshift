@@ -30,6 +30,8 @@
 
 #include "ContiguousAlignedMemoryAllocator.h"
 #include "ThreadedEntity.h"
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
 
 #include <Windows.h> // DWORD
 

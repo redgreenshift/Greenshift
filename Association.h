@@ -30,6 +30,8 @@
 #ifndef _Association_H_
 #define _Association_H_
 
+#include "MemoryUtils.hpp"
+
 #include <cstring> // strlen
 
   /*

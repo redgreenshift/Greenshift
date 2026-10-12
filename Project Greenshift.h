@@ -149,9 +149,6 @@
 #include <cstdint>
 
 
-#include "MathUtils.hpp"
-#include "MemoryUtils.hpp"
-
  /****************************************************************************
   *
   * Standard Macros and types valid anywhere in Project Greenshift
