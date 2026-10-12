@@ -121,8 +121,8 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 	DWORD    dwByteDepth;
 	DWORD    dwLCM;
 	DWORD    dwDWORDPitch;
-	PIXELMAPDESCRIPTION pmd;
-	TWEENDESCRIPTION    tween_description;
+	PIXELMAPDESCRIPTION pmd{};
+	TWEENDESCRIPTION    tween_description{};
 	value_t nWidth, nHeight, nBitDepth;
 	value_t* pValue;
 

@@ -41,7 +41,7 @@
    * ThreadedEntityThreadProc - thing that gets the thread going
    *
    ****************************************************************************/
-DWORD WINAPI ThreadedEntityThreadProc(LPVOID lpVoid)
+static DWORD WINAPI ThreadedEntityThreadProc(LPVOID lpVoid)
 {
 	if (lpVoid != NULL)
 		return ((ThreadedEntity*)lpVoid)->BaseThreadProcedure();
