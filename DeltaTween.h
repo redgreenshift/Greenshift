@@ -27,12 +27,9 @@
   *
   ****************************************************************************/
 
-#ifndef _DeltaTween_H_
-#define _DeltaTween_H_
-
 #include "TweenThread.h"
 
-#include <Windows.h> // DWORD
+#include <Windows.h> // DWORD (Parent uses HANDLE)
 
 typedef struct tagPIXELMAPDESCRIPTION
 {
@@ -95,6 +92,4 @@ protected:
 		const DWORD nBoundsType);
 
 };
-
-#endif /* _DeltaTween_H_ */
 

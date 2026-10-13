@@ -27,10 +27,9 @@
   *
   ****************************************************************************/
 
-#ifndef _TweenThread_H_
-#define _TweenThread_H_
-
 #include "ThreadedEntity.h"
+
+#include <Windows.h> // DWORD (Parent uses HANDLE)
 
 
 typedef struct tagTWEENDESCRIPTION
@@ -162,6 +161,4 @@ private:
 
 	void* m_pUnalignedBuffer;    /* the pointer to the allocated chunk of memory */
 };
-
-#endif /* _TweenThread_H_ */
 

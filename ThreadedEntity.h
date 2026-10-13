@@ -26,13 +26,7 @@
   *
   ****************************************************************************/
 
-#ifndef _ThreadedEntity_H_
-#define _ThreadedEntity_H_
-
-#ifndef STRICT
-#define STRICT 1
-#endif
-#include <Windows.h> // DWORD
+#include <Windows.h> // DWORD, HANDLE
 
   /*
   THREAD_PRIORITY_LOWEST
@@ -89,7 +83,4 @@ private:
 	HANDLE              m_hThread;      /* handle for the thread        */
 	DWORD               m_dwThreadID;   /* the ID for the thread        */
 };
-
-
-#endif  /* _ThreadedEntity_H_ */
 
