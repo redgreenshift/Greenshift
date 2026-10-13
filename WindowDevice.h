@@ -41,7 +41,6 @@
 #define STRICT 1
 #endif
 #include <windows.h>
-#include <ddraw.h>
 
 
 #define GS_WindowStyle   ( WS_SYSMENU     \
@@ -147,7 +146,7 @@ public:
 
 	virtual int         ThreadProcedure(void* pData) override;/* thread entry point */
 
-	virtual HRESULT     SetPalette(LOGPALETTE* lpPalette) = 0;
+	virtual HRESULT     SetPalette(logpalette_t* lpPalette) = 0;
 	virtual HRESULT     Flip(BitCanvas* pBitCanvas) = 0;
 
 protected:

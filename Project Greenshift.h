@@ -159,12 +159,9 @@
  // ---------------------------------------------------------------------------
  // Fundamental integer types
  // ---------------------------------------------------------------------------
-//using byte_t = std::uint8_t;
-//using word_t = std::uint16_t;
-//using dword_t = std::uint32_t;
-typedef uint8_t byte_t;
-typedef uint16_t word_t;
-typedef uint32_t dword_t;
+using byte_t = std::uint8_t;
+using word_t = std::uint16_t;
+using dword_t = std::uint32_t;
 
 // ---------------------------------------------------------------------------
 // Project-wide types

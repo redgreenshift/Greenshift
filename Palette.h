@@ -30,15 +30,13 @@
 #ifndef _Palette_H_
 #define _Palette_H_
 
+#include "ColorUtils.hpp"
 #include "MyDictionary.h"
-#include "Expression.h"  /* for HSV color */
+#include "Expression.h"  /* for HSV color; EXPRESSIONDESCRIPTION */
 #include "HighResolutionTimer.h"
-#include "MersenneTwister.h"
 #include "PhaseFunction.h"
 
-#include <Windows.h> /* for PALETTEENTRY, WORD */
-
-#define PALETTE_SIZE    256
+inline constexpr word_t PALETTE_SIZE = 256;
 
 enum {
 	PALETTE_UNKNOWN = -1,
@@ -69,14 +67,14 @@ public:
 	error_t     Initialize(MyDictionary<mychar_t*>* pConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* pUserDefined);
 
-	void        SetPaletteEntry(const DWORD nIndex, const COLORREF crColor);
+	void        SetPaletteEntry(const size_t nIndex, const rgb32_t crColor);
 	//void        SetPalette(value_t* nIndex, Expression* pHue,
 	//	Expression* pSaturation,
 	//	Expression* pValue);
 
 	/* Does not re-evaluate the palette */
-	inline LOGPALETTE* PGetLogicalPalette(void) { return &(GetPalette()); };
-	LOGPALETTE& GetLogicalPalette(void); // DOES re-evaluate the palette!
+	inline logpalette_t* PGetLogicalPalette(void) { return &(GetPalette()); };
+	logpalette_t& GetLogicalPalette(void); // DOES re-evaluate the palette!
 	void          ResetTimer(void) /* restart the timer for time dependent palettes */
 	{
 		m_hrTimer.Start();
@@ -85,23 +83,23 @@ public:
 			m_pfValues.EvaluatePhase(ConfigPhaseCadence::A_Init);
 	};
 protected:
-	inline LOGPALETTE& GetPalette(void) { return m_union.LogicalPalette; };
+	inline logpalette_t& GetPalette(void) { return m_union.LogicalPalette; };
 
-	COLORREF    HSVToRGB(const value_t nnHue,
+	rgb32_t    HSVToRGB(const value_t nnHue,
 		const value_t nnSaturation,
 		const value_t nnValue);
-	COLORREF    HLSToRGB(const value_t nnHue,
+	rgb32_t    HLSToRGB(const value_t nnHue,
 		const value_t nnLightness,
 		const value_t nnSaturation);
 
 	void        Clip(value_t* nValue);
-	BYTE        PercentToByte(const value_t nValue);
+	byte_t        PercentToByte(const value_t nValue);
 
 private:
 	union {
-		LOGPALETTE      LogicalPalette;
-		BYTE            reserved[sizeof(LOGPALETTE) +
-			(PALETTE_SIZE - 1) * sizeof(PALETTEENTRY)];
+		logpalette_t      LogicalPalette;
+		byte_t            reserved[sizeof(logpalette_t) +
+			(PALETTE_SIZE - 1) * sizeof(paletteentry_t)];
 	} m_union;
 
 	value_t                 m_nIntensity; /* 0.0 to 1.0 represent 0 to 255 */

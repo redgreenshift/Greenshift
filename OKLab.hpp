@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
-//#include <Windows.h> // PALETTEENTRY
 
 
 namespace OKLab
@@ -175,7 +174,7 @@ namespace OKLab
 	 * @brief Good for natural looking smooth transitions between colors
 	 * (i.e. avoid muddy colors that can occur when interpolating through RGB space)
 	 */
-	inline PALETTEENTRY interpolate(const PALETTEENTRY& rgbpal1, const PALETTEENTRY& rgbpal2, const value_t nPercent)
+	inline paletteentry_t interpolate(const paletteentry_t& rgbpal1, const paletteentry_t& rgbpal2, const value_t nPercent)
 	{
 		RGB rgb1 = { fromU8(rgbpal1.peRed), fromU8(rgbpal1.peGreen), fromU8(rgbpal1.peBlue) };
 		RGB rgb2 = { fromU8(rgbpal2.peRed), fromU8(rgbpal2.peGreen), fromU8(rgbpal2.peBlue) };
@@ -186,10 +185,11 @@ namespace OKLab
 
 		RGB tmpRGB = oklab_to_rgb(tmpOK);
 
-		PALETTEENTRY final{
+		paletteentry_t final{
 			.peRed = toU8(tmpRGB.r),
 			.peGreen = toU8(tmpRGB.g),
 			.peBlue = toU8(tmpRGB.b),
+			.peFlags = (nPercent < 0.5f) ? rgbpal1.peFlags : rgbpal2.peFlags,
 		};
 
 		return final;

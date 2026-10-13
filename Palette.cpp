@@ -41,7 +41,6 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <Windows.h> // DWORD, PALETTEENTRY
 
   /****************************************************************************
    *
@@ -96,11 +95,11 @@ Palette::~Palette()
  * SetPaletteEntry -
  *
  ****************************************************************************/
-void    Palette::SetPaletteEntry(const DWORD nIndex, const COLORREF crColor)
+void    Palette::SetPaletteEntry(const size_t nIndex, const rgb32_t crColor)
 {
-	GetPalette().palPalEntry[nIndex].peRed = GetRValue(crColor);
-	GetPalette().palPalEntry[nIndex].peGreen = GetGValue(crColor);
-	GetPalette().palPalEntry[nIndex].peBlue = GetBValue(crColor);
+	GetPalette().palPalEntry[nIndex].peRed = RFromRGB32(crColor);
+	GetPalette().palPalEntry[nIndex].peGreen = GFromRGB32(crColor);
+	GetPalette().palPalEntry[nIndex].peBlue = BFromRGB32(crColor);
 }
 
 
@@ -125,9 +124,9 @@ void    Palette::Clip(value_t* nValue)
  * PercentToByte -
  *
  ****************************************************************************/
-BYTE    Palette::PercentToByte(const value_t nValue)
+byte_t    Palette::PercentToByte(const value_t nValue)
 {
-	return (BYTE)floor(nValue * 255.0f + 0.5f);
+	return (byte_t)floor(nValue * 255.0f + 0.5f);
 }
 
 
@@ -144,7 +143,7 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 	char        strIDGreen[8];
 	char        strIDBlue[8];
 	error_t     err = SUCCESS;
-	WORD        i;
+	word_t      i;
 	mychar_t* strHue = NULL;
 	mychar_t* strSaturation = NULL;
 	mychar_t* strValue = NULL;
@@ -258,9 +257,12 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
 			bVal = pConfig->GetValue(strIDBlue);
 			if (rVal == NULL || gVal == NULL || bVal == NULL)
 				return ERR_UNKNOWNPALETTETYPE;
-			SetPaletteEntry(i,
-				RGB(atol(rVal), atol(gVal), atol(bVal)));
-			//                RGB(
+
+			const byte_t cR = static_cast<byte_t>(atol(rVal));
+			const byte_t cG = static_cast<byte_t>(atol(gVal));
+			const byte_t cB = static_cast<byte_t>(atol(bVal));
+			SetPaletteEntry(i, RGB32(cR, cG, cB));
+			//                RGB32(
 			//                    atol( pConfig->GetValue( strIDRed,   "0" ) ),
 			//                    atol( pConfig->GetValue( strIDGreen, "0") ),
 			//                    atol( pConfig->GetValue( strIDBlue,  "0") )
@@ -402,8 +404,8 @@ error_t        Palette::Initialize(MyDictionary<mychar_t*>* pConfig,
  ****************************************************************************/
 error_t    Palette::Initialize(Palette* palette)
 {
-	DWORD    i;
-	LOGPALETTE* lpLogPalette;
+	dword_t    i;
+	logpalette_t* lpLogPalette;
 
 	if (palette == NULL)
 		return ERR_PALETTE;
@@ -487,7 +489,7 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 			src1[i].peBlue * (1.0f - nPercent) +
 			src2[i].peBlue * (nPercent));
 
-		GetPalette().palPalEntry[i].peFlags = pal2->palPalEntry[i].peFlags;
+		GetPalette().palPalEntry[i].peFlags = (nPercent < 0.5f) ? pal1->palPalEntry[i].peFlags : pal2->palPalEntry[i].peFlags;
 	}
 
 
@@ -502,10 +504,10 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
  ****************************************************************************/
 error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
 {
-	DWORD	    i;
-	WORD	    nEntries;
-	LOGPALETTE* pal1;
-	LOGPALETTE* pal2;
+	dword_t	      i;
+	word_t	      nEntries;
+	logpalette_t* pal1;
+	logpalette_t* pal2;
 
 	if (p1 == NULL || p2 == NULL)
 		return ERR_PALETTE;
@@ -541,11 +543,11 @@ error_t Palette::Initialize(Palette* p1, Palette* p2, const value_t nPercent)
  * GetLogicalPalette - DOES re-evaluate the palette
  *
  ****************************************************************************/
-LOGPALETTE& Palette::GetLogicalPalette(void)
+logpalette_t& Palette::GetLogicalPalette(void)
 {
-	DWORD       i;
+	dword_t       i;
 	value_t     c1, c2, c3, c4;
-	COLORREF    crColor;
+	rgb32_t    crColor;
 
 
 	m_nTime = m_hrTimer.Seconds();  /* new evaluation, new time */
@@ -584,7 +586,7 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 			Clip(&c1);
 			Clip(&c2);
 			Clip(&c3);
-			crColor = RGB(PercentToByte(c1),
+			crColor = RGB32(PercentToByte(c1),
 				PercentToByte(c2),
 				PercentToByte(c3));
 			break;
@@ -600,13 +602,13 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 		case PALETTE_CMY:
 		case PALETTE_CMYK:
 			c4 = (1.0f - c4);
-			c1 = (1.0f - c1) * c4;
-			c2 = (1.0f - c2) * c4;
-			c3 = (1.0f - c3) * c4;
+			c1 = (1.0f - c1) * c4; // red
+			c2 = (1.0f - c2) * c4; // green
+			c3 = (1.0f - c3) * c4; // blue
 			Clip(&c1);
 			Clip(&c2);
 			Clip(&c3);
-			crColor = RGB(PercentToByte(c1),
+			crColor = RGB32(PercentToByte(c1),
 						  PercentToByte(c2),
 						  PercentToByte(c3));
 			break;
@@ -618,14 +620,15 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
 			{
 				OKLab::Lab lab = { c1, c2, c3 };
 				OKLab::RGB rgb = OKLab::oklab_to_rgb(lab);
-				crColor = RGB(PercentToByte(rgb.r),
+				crColor = RGB32(PercentToByte(rgb.r),
 					PercentToByte(rgb.g),
 					PercentToByte(rgb.b));
 			}
 			break;
 
 		default:
-			crColor = RGB(i, i, i);  /* If I don't know what it is,
+			const byte_t c = static_cast<byte_t>(i);
+			crColor = RGB32(c, c, c);  /* If I don't know what it is,
 									  * it will be a grayscale palette! */
 			break;
 		}
@@ -642,7 +645,7 @@ LOGPALETTE& Palette::GetLogicalPalette(void)
  * HSVToRGB - Hue Saturation Value (a.k.a. Brightness)
  *
  ****************************************************************************/
-COLORREF    Palette::HSVToRGB(const value_t nnHue,
+rgb32_t    Palette::HSVToRGB(const value_t nnHue,
 	const value_t nnSaturation,
 	const value_t nnValue)
 {
@@ -717,7 +720,7 @@ COLORREF    Palette::HSVToRGB(const value_t nnHue,
 	Clip(&nGreen);
 	Clip(&nBlue);
 
-	return RGB(PercentToByte(nRed),
+	return RGB32(PercentToByte(nRed),
 		PercentToByte(nGreen),
 		PercentToByte(nBlue));
 }
@@ -874,10 +877,10 @@ function rgb(color_in: color_type): color_type;
 
 /****************************************************************************
  *
- * HLSToRGB - Hue Lightness Saturation - not implemented yet (copied HSV)
+ * HLSToRGB - Hue Lightness Saturation
  *
  ****************************************************************************/
-COLORREF    Palette::HLSToRGB(const value_t nnHue,
+rgb32_t    Palette::HLSToRGB(const value_t nnHue,
 	const value_t nnLightness,
 	const value_t nnSaturation)
 {
@@ -963,7 +966,7 @@ COLORREF    Palette::HLSToRGB(const value_t nnHue,
 	Clip(&nGreen);
 	Clip(&nBlue);
 
-	return RGB(PercentToByte(nRed),
+	return RGB32(PercentToByte(nRed),
 		PercentToByte(nGreen),
 		PercentToByte(nBlue));
 }

@@ -35,6 +35,7 @@
 #include "WindowDevice.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <Windows.h>
 #include <ddraw.h>
 
@@ -966,7 +967,15 @@ error_t    WindowDeviceDX::InitDisplay(void)
 		{
 			PALETTEENTRY ape[256]{};
 
-			for (int i = 0; i < 256; ++i)
+			if (GetBitCanvas()->PGetPalette()->palNumEntries > _countof(ape))
+				return ERR_BOUNDS;
+
+			EnterCS();
+			// REVIEW: Unsure what this CS is protecting, specifically... GetDD()? GetBitCanvas()? PGetPalette()? Just the call to CreatePalette()?
+			// If I had to guess, I think it was added to protect whenever we're changing properties about the windo, like Palette or Blit-ing to the screen.
+			// I do not know precisely why this was added, so I'm leaving it for a larger cleanup investigation pass
+
+			for (int i = 0; i < GetBitCanvas()->PGetPalette()->palNumEntries; ++i)
 			{
 				// Previous palette experiment retained for reference:
 				//ape[i].peRed = static_cast<BYTE>((((i >> 5) & 0x07) * 255 / 7) >> 2);
@@ -976,27 +985,33 @@ error_t    WindowDeviceDX::InitDisplay(void)
 				//ape[i].peRed = 0;
 				////ape[i].peGreen = static_cast<BYTE>( (((i >> 2) & 0x07) * 255 / 7) );
 				//ape[i].peBlue = 0;
-				ape[i].peRed = static_cast<BYTE>((i > 200) ? i : 0);
-				ape[i].peGreen = static_cast<BYTE>(i);
-				ape[i].peBlue = static_cast<BYTE>((i > 200) ? i : 0);
-				ape[i].peFlags = 0;
-			}
 
-#if EXTREME_DEBUGGING
-			DumpToFile("error.txt", "about to set the palette", "\n");
-#endif
+				if (GetBitCanvas() != NULL)
+				{
+					ape[i].peRed = GetBitCanvas()->PGetPalette()->palPalEntry->peRed;
+					ape[i].peGreen = GetBitCanvas()->PGetPalette()->palPalEntry->peGreen;
+					ape[i].peBlue = GetBitCanvas()->PGetPalette()->palPalEntry->peBlue;
+					ape[i].peFlags = GetBitCanvas()->PGetPalette()->palPalEntry->peFlags;
+				}
+				else
+				{
+					ape[i].peRed = static_cast<BYTE>((i > 200) ? i : 0);
+					ape[i].peGreen = static_cast<BYTE>(i);
+					ape[i].peBlue = static_cast<BYTE>((i > 200) ? i : 0);
+					ape[i].peFlags = 0;
+				}
+			}
 
 			//    return (*pDDPalette)->SetEntries( 0, 0, 256, ape );
 			//    DumpToFile("checkpalette.txt", DXError( (*pDDPalette)->SetEntries( 0, 0, 256, ape ) ), "\n" );
 
 			//    MessageBox(NULL, "hello", "hello", MB_OK);
 				/* ADDED PRIMARY SURFACE, REMOVE IF MESSED UP!  ugh!  still doesn't work... */
-			EnterCS();
-			if (GetBitCanvas() != NULL)
-				hRet = GetDD()->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, GetBitCanvas()->PGetPalette()->palPalEntry, PGetPalette(), NULL);
-			else
-				hRet = GetDD()->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, ape, PGetPalette(), NULL);
+			hRet = GetDD()->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256, ape, PGetPalette(), NULL);
 			LeaveCS();
+#if EXTREME_DEBUGGING
+			DumpToFile("error.txt", "palette created", "\n");
+#endif
 			//        if( hRet != DD_OK )
 			//            return hRet;
 
@@ -1046,9 +1061,10 @@ error_t    WindowDeviceDX::InitDisplay(void)
  * SetPalette
  *
  ****************************************************************************/
-HRESULT    WindowDeviceDX::SetPalette(LOGPALETTE* lpPalette)
+HRESULT    WindowDeviceDX::SetPalette(logpalette_t* lpPalette)
 {
 	HRESULT    hRet;
+	PALETTEENTRY ape[256]{};
 
 	/*
 	 * ignore if I'm not fullscreen, or I'm not in paletted mode
@@ -1060,13 +1076,24 @@ HRESULT    WindowDeviceDX::SetPalette(LOGPALETTE* lpPalette)
 	if (lpPalette == NULL)
 		return DD_OK;  /* what else could I return? */
 
+	if (lpPalette->palNumEntries > _countof(ape))
+		return E_BOUNDS;
+
+	for (int i = 0; i < lpPalette->palNumEntries; ++i)
+	{
+		ape[i].peRed = lpPalette->palPalEntry->peRed;
+		ape[i].peGreen = lpPalette->palPalEntry->peGreen;
+		ape[i].peBlue = lpPalette->palPalEntry->peBlue;
+		ape[i].peFlags = lpPalette->palPalEntry->peFlags;
+	}
+
 	//    hRet = GetDD()->CreatePalette(DDPCAPS_8BIT, GetBitCanvas()->PGetPalette()->palPalEntry, PGetPalette(), NULL);
 	//    hRet = GetPrimary()->SetPalette( GetPalette() );
 
 	EnterCS();
 
 	//    hRet = PGetPalette()->SetEntries( 0, 0, lpPalette->palNumEntries, lpPalette->palPalEntry );
-	hRet = m_pDDPalette->SetEntries(0, 0, lpPalette->palNumEntries, lpPalette->palPalEntry);
+	hRet = m_pDDPalette->SetEntries(0, 0, lpPalette->palNumEntries, ape);
 
 	LeaveCS();
 

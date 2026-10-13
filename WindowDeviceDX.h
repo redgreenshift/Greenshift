@@ -98,7 +98,7 @@ protected:
 	virtual error_t     DisableDisplay(void) override; /* disable all the DD surfaces
 												 */
 public:
-	virtual HRESULT     SetPalette(LOGPALETTE* lpPalette) override;
+	virtual HRESULT     SetPalette(logpalette_t* lpPalette) override;
 	virtual HRESULT     Flip(BitCanvas* pBitCanvas) override;
 	//    HRESULT             Blit( void );       /* tell BitCanvas to draw on me */
 	//    virtual HRESULT     OnFlip( void );     /* swap the front and back      */

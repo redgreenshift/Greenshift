@@ -451,7 +451,7 @@ public:
 	 *
 	 ****************************************************************************/
 	inline
-		LOGPALETTE* PGetPalette(void)
+		logpalette_t* PGetPalette(void)
 	{
 		return m_pPalette.PGetLogicalPalette();
 		//    return &m_pPalette.GetLogicalPalette();
@@ -465,7 +465,7 @@ public:
 	 * AHA! That was for CS4451a_project_3, so this was intended to be temporary, and I can clean it up
 	 */
 	inline void     BlahPutPixel(const long x, const long y,
-		const DWORD r, const DWORD g, const DWORD b)
+		const byte_t r, const byte_t g, const byte_t b)
 	{
 		const DWORD    pixelOffset = BufferWidth() * y + x;
 
@@ -514,9 +514,9 @@ protected:
 	inline virtual void     PutPixel(const DWORD pixelOffset,
 		const BYTE color) = 0;
 	inline virtual void     BlahPutPixel(const DWORD pixelOffset,
-		const DWORD r,
-		const DWORD g,
-		const DWORD b) = 0;
+		const byte_t r,
+		const byte_t g,
+		const byte_t b) = 0;
 	inline virtual void     PutPixel(const DWORD pixelOffset,
 		const WORD pixel_width,
 		const BYTE color) = 0;
@@ -715,9 +715,9 @@ protected:
 	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
 	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
 	virtual void     BlahPutPixel(const DWORD pixelOffset,
-		const DWORD r,
-		const DWORD g,
-		const DWORD b) override
+		const byte_t r,
+		const byte_t g,
+		const byte_t b) override
 	{   /* hack for graphics project */
 		m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32(r, g, b);
 	};
@@ -744,9 +744,9 @@ protected:
 	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
 	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
 	virtual void     BlahPutPixel(const DWORD pixelOffset,
-		const DWORD r,
-		const DWORD g,
-		const DWORD b) override
+		const byte_t r,
+		const byte_t g,
+		const byte_t b) override
 	{
 		m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16(r, g, b);
 	};
@@ -773,9 +773,9 @@ protected:
 	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
 	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
 	virtual void     BlahPutPixel(const DWORD pixelOffset,
-		const DWORD r,
-		const DWORD g,
-		const DWORD b) override
+		const byte_t r,
+		const byte_t g,
+		const byte_t b) override
 	{
 		m_pWriteBuffer32[pixelOffset] = RGB32(r, g, b);
 		//m_pWriteBuffer32[pixelOffset] = 0xFFFFFFFF;
