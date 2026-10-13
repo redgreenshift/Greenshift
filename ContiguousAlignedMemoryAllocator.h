@@ -1,5 +1,4 @@
 #pragma once
-#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
@@ -27,11 +26,6 @@
   *
   ****************************************************************************/
 
-#ifndef _ContiguousAlignedMemory_H_
-#define _ContiguousAlignedMemory_H_
-
-#include <Windows.h> // DWORD
-
   /****************************************************************************
    *
    * ContinuousAlignedMemory - not intended as a general purpose mem allocator
@@ -50,24 +44,52 @@
    * access to be 16 byte aligned.
    *
    ****************************************************************************/
+
+#include "Project Greenshift.h"
+
+/**
+ * @class ContiguousAlignedMemory
+ * @brief A static utility class for allocating a single, contiguous block of memory for multiple pages.
+ *
+ * This class provides a mechanism to allocate one large, contiguous block that contains:
+ * 1. A header (storing the number of pages).
+ * 2. A page table (an array of pointers to the start of each page).
+ * 3. The requested pages of memory, with each page start being aligned to the specified byte boundary.
+ *
+ * This is a specialized allocator designed for scenarios where a single large allocation is preferred
+ * to reduce memory fragmentation and cache misses, such as when processing large, fixed-size data buffers.
+ *
+ * @note This is not intended as a general-purpose allocator. Because it uses a single block, the
+ *       lifetime of the memory must be managed by the caller (e.g., by deleting the pointer
+ *       returned in 'outMemory').
+ */
 class ContiguousAlignedMemory
 {
 public:
+	/// <summary>
+	/// Allocates a single contiguous block that contains a page table and aligned page buffers, initializes the page table, and returns pointers to the block and page table.
+	/// </summary>
+	/// <param name="outMemory">Pointer to a void* that receives the address of the allocated block (allocated with new byte_t[]). The caller is responsible for freeing the block (delete[]).</param>
+	/// <param name="outPageTable">Pointer to a void** that receives the address of the page table (an array of void* entries) located inside the allocated block. Do not free the page table separately.</param>
+	/// <param name="nPages">Number of pages to allocate. Must be > 0.</param>
+	/// <param name="nPageSize">Requested page size in bytes. Must be > 0. Each page size is rounded up to the specified alignment.</param>
+	/// <param name="nBytesToAlign">Alignment in bytes for pages (default 8). Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
+	/// <returns>An error_t status code: SUCCESS on success; ERR_NULL if an input pointer or size is invalid; ERR_MALLOC if memory allocation fails.</returns>
 	static error_t  Allocate(void** outMemory,
 		void*** outPageTable,
-		const DWORD nPages,
-		const DWORD nPageSize,
-		const DWORD nBytesToAlign = 8)
+		const dword_t nPages,
+		const dword_t nPageSize,
+		const dword_t nBytesToAlign = 8)
 	{
-		DWORD   nAlignment_Overhead = nBytesToAlign - 1;
-		DWORD   nAligned_Page_Size;
-		DWORD   nAligned_Memory_Size;
-		DWORD   nPage_Table_Size;
-		DWORD   nTotal_Allocation_Size;
-		DWORD   index;
+		dword_t   nAlignment_Overhead = nBytesToAlign - 1;
+		dword_t   nAligned_Page_Size;
+		dword_t   nAligned_Memory_Size;
+		dword_t   nPage_Table_Size;
+		dword_t   nTotal_Allocation_Size;
+		dword_t   index;
 		void* pUnalignedBase;
 		void* pAlignedBase;
-		DWORD   nAlignmentOffset;
+		dword_t   nAlignmentOffset;
 
 		/*
 		 *
@@ -89,7 +111,7 @@ public:
 		nPage_Table_Size = nPages * sizeof(void*);
 
 
-		nTotal_Allocation_Size = sizeof(DWORD)
+		nTotal_Allocation_Size = sizeof(dword_t)
 			+ nPage_Table_Size
 			+ nAlignment_Overhead
 			+ nAligned_Memory_Size;
@@ -97,42 +119,39 @@ public:
 		/*
 		 * create the block of memory
 		 */
-		(*outMemory) = new BYTE[nTotal_Allocation_Size];
+		(*outMemory) = new byte_t[nTotal_Allocation_Size];
 		if (*outMemory == NULL)
 			return ERR_MALLOC;
 
 		/*
 		 * setup the page table
 		 */
-		*((DWORD*)(*outMemory)) = nPages;
+		*((dword_t*)(*outMemory)) = nPages;
 
 		/*
 		 * tell the caller where the page table is
 		 */
-		*outPageTable = (void**)&((DWORD*)(*outMemory))[1];
+		*outPageTable = (void**)&((dword_t*)(*outMemory))[1];
 
 
-		pUnalignedBase = (void*)(&((BYTE*)(*outMemory))[sizeof(DWORD) + nPage_Table_Size]);
+		pUnalignedBase = (void*)(&((byte_t*)(*outMemory))[sizeof(dword_t) + nPage_Table_Size]);
 
-		nAlignmentOffset = ((DWORD)pUnalignedBase) % nBytesToAlign;
+		nAlignmentOffset = ((dword_t)pUnalignedBase) % nBytesToAlign;
 
 		if (nAlignmentOffset != 0)
 			nAlignmentOffset = nBytesToAlign - nAlignmentOffset;
 
 		//        DumpToFile( "alignlog.txt", nAlignmentOffset, "\n" );
 
-		pAlignedBase = ((BYTE*)pUnalignedBase) + nAlignmentOffset;
+		pAlignedBase = ((byte_t*)pUnalignedBase) + nAlignmentOffset;
 
 		for (index = 0; index < nPages; index++)
-			((void**)(&((DWORD*)(*outMemory))[1]))[index] =
-			((BYTE*)pAlignedBase) + nAligned_Page_Size * index;
+			((void**)(&((dword_t*)(*outMemory))[1]))[index] =
+			((byte_t*)pAlignedBase) + nAligned_Page_Size * index;
 
 		return SUCCESS;
 
 	};
 
 };
-
-
-#endif /* _ContiguousAlignedMemory_H_ */
 
