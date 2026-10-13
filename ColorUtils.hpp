@@ -182,9 +182,9 @@ struct logpalette_t {
 //                        ( ((red  ) & REDMASK16  ) << REDSHIFT16  ) |\
 //                        ( ((green) & GREENMASK16) << GREENSHIFT16) |\
 //                        ( ((blue ) & BLUEMASK16 ) << BLUESHIFT16 ) )
-//#define RED16(color)    (((color) >> REDSHIFT16  ) & REDMASK16   )
-//#define GREEN16(color)  (((color) >> GREENSHIFT16) & GREENMASK16 )
-//#define BLUE16(color)   (((color) >> BLUESHIFT16 ) & BLUEMASK16  )
+#define RED16(color)    (((color) >> REDSHIFT16  ) & REDMASK16   )
+#define GREEN16(color)  (((color) >> GREENSHIFT16) & GREENMASK16 )
+#define BLUE16(color)   (((color) >> BLUESHIFT16 ) & BLUEMASK16  )
 //
 //
 //
@@ -192,9 +192,9 @@ struct logpalette_t {
 //                        ( ((red  ) & REDMASK32  ) << REDSHIFT32  ) |\
 //                        ( ((green) & GREENMASK32) << GREENSHIFT32) |\
 //                        ( ((blue ) & BLUEMASK32 ) << BLUESHIFT32 ) )
-//#define RED32(color)    (((color) >> REDSHIFT32  ) & REDMASK32   )
-//#define GREEN32(color)  (((color) >> GREENSHIFT32) & GREENMASK32 )
-//#define BLUE32(color)   (((color) >> BLUESHIFT32 ) & BLUEMASK32  )
+#define RED32(color)    (((color) >> REDSHIFT32  ) & REDMASK32   )
+#define GREEN32(color)  (((color) >> GREENSHIFT32) & GREENMASK32 )
+#define BLUE32(color)   (((color) >> BLUESHIFT32 ) & BLUEMASK32  )
 
 //#define c32to16(color)  RGB16( r32to16(color), r32to16(color), b32to16(color) )
 
