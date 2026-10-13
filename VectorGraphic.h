@@ -27,15 +27,10 @@
   *
   ****************************************************************************/
 
-#ifndef _VectorGraphic_H_
-#define _VectorGraphic_H_
-
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
 #include "PhaseFunction.h"
 #include "PointRotation.h"
-
-#include <Windows.h> // DWORD
 
 
 enum { VG_PARAMETRIC, VG_4D };
@@ -64,12 +59,12 @@ public:
 	void                Reset(void);  /* reevaluate the A vars */
 
 
-	DWORD       GetNumFunctions(void) { return m_pfValues.NumFunctions(); };
-	DWORD       GetNumSteps(void) const { return m_dwResolution; };
-	DWORD       GetMode(void) const { return m_dwMode; };
+	dword_t       GetNumFunctions(void) { return m_pfValues.NumFunctions(); };
+	dword_t       GetNumSteps(void) const { return m_dwResolution; };
+	dword_t       GetMode(void) const { return m_dwMode; };
 	bool        GetConnected(void) const { return m_bConnected; };
 	void        BeginFrame(void) { Evaluate_B_Vars(); EvaluateRotation(); };
-	inline void         Get(const DWORD dwFunction,
+	inline void         Get(const dword_t dwFunction,
 		value_t* outX,
 		value_t* outY,
 		value_t* outLineWidth,
@@ -101,7 +96,7 @@ public:
 				*outLineWidth = 0.5f;
 		*outColor = m_pPen->Evaluate();
 	};
-	inline void         Get4d(const DWORD dwFunction,
+	inline void         Get4d(const dword_t dwFunction,
 		value_t  inX,
 		value_t  inZ,
 		value_t* outX,
@@ -161,9 +156,9 @@ protected:
 
 	//    value_t                 m_nStep;        /* the s var */
 	value_t                 m_nResolution;  /* NUM_S_STEPS var */
-	DWORD                   m_dwResolution;
+	dword_t                 m_dwResolution;
 
-	DWORD                   m_dwMode;
+	dword_t                 m_dwMode;
 
 	//    value_t                 m_nX;
 	//    value_t                 m_nZ;
@@ -181,15 +176,15 @@ protected:
 
 	value_t                 m_nScale;
 
-	void                    EvaluateXY_Pair(const DWORD dwIndex,
+	void                    EvaluateXY_Pair(const dword_t dwIndex,
 		value_t* outX,
 		value_t* outY);
-	void                    EvaluateXYZ_Tuple(const DWORD dwIndex,
+	void                    EvaluateXYZ_Tuple(const dword_t dwIndex,
 		value_t* outX,
 		value_t* outY,
 		value_t* outZ);
 
-	friend error_t  ImportPhase(VectorGraphic& DestVG, VectorGraphic& SourceVG, const DWORD dwPhase)
+	friend error_t  ImportPhase(VectorGraphic& DestVG, VectorGraphic& SourceVG, const dword_t dwPhase)
 	{
 		return ImportPhase(DestVG.m_pfValues, SourceVG.m_pfValues, dwPhase);
 	};
@@ -200,7 +195,4 @@ protected:
 private:
 	PhaseFunction           m_pfValues;
 };
-
-
-#endif  /* _VectorGraphic_H_ */
 

@@ -28,16 +28,21 @@
 
 #include "VectorGraphic.h"
 
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
+#include "MemoryUtils.hpp"
 #include "PhaseFunction.h"
+
+#if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
+#include <Windows.h> // MessageBoxA
+#endif
 
 #include <cmath>
 #include <cstdlib>
 #include <cctype>
 #include <new>
 #include <string.h>
-#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
@@ -152,7 +157,7 @@ error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
 	if (nTmp < 0.0f)
 		m_dwMode = 0;
 	else
-		m_dwMode = (DWORD)nTmp;
+		m_dwMode = (dword_t)nTmp;
 
 
 	/*
@@ -222,9 +227,9 @@ error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
 	m_nResolution = (value_t)Expression::Evaluate(inConfig->GetValue("Steps"), nDefaultSteps, &m_dValues, inGlobals);
 
 	if (m_nResolution <= 0.0f) /* what does negative step mean?! */
-		m_dwResolution = (DWORD)nDefaultSteps;
+		m_dwResolution = (dword_t)nDefaultSteps;
 	else
-		m_dwResolution = (DWORD)floor(m_nResolution);
+		m_dwResolution = (dword_t)floor(m_nResolution);
 
 	m_nResolution = (value_t)m_dwResolution;
 
@@ -287,7 +292,7 @@ error_t    VectorGraphic::Initialize(MyDictionary<mychar_t*>* inConfig,
  * EvaluateXY_Pair -
  *
  ****************************************************************************/
-void    VectorGraphic::EvaluateXY_Pair(const DWORD dwIndex, value_t* outX, value_t* outY)
+void    VectorGraphic::EvaluateXY_Pair(const dword_t dwIndex, value_t* outX, value_t* outY)
 {
 	//Evaluate_C_Vars();  /* C# vars - once per STEP (wrong place to call this; moved to UpdateStep) */
 	Evaluate_D_Vars();  /* D# vars - before every FUNCTION GROUP (typically unused by Particle/WaveShape) */
@@ -404,7 +409,7 @@ void    VectorGraphic::Draw2dFrameOn(Graph* lpGraph)
  * EvaluateXYZ_Tuple -
  *
  ****************************************************************************/
-void    VectorGraphic::EvaluateXYZ_Tuple(const DWORD dwIndex, value_t* outX, value_t* outY, value_t* outZ)
+void    VectorGraphic::EvaluateXYZ_Tuple(const dword_t dwIndex, value_t* outX, value_t* outY, value_t* outZ)
 {
 	//Evaluate_C_Vars();  /* C# vars - once per STEP (wrong place to call this; moved to UpdateStep) */
 	Evaluate_D_Vars();  /* D# vars - before every FUNCTION GROUP (typically unused by Particle/WaveShape) */
@@ -510,7 +515,7 @@ void    VectorGraphic::Draw3dFrameOn(Graph* lpGraph)
  ****************************************************************************/
 void    VectorGraphic::EvaluateRotation(void)
 {
-	DWORD    i;
+	dword_t    i;
 
 	m_pr3dRotator.ResetToIdentity();
 
