@@ -27,16 +27,15 @@
   *
   ****************************************************************************/
 
-#ifndef _PhaseFunction_H_
-#define _PhaseFunction_H_
-
 #include "Association.h"
-#include "Diagnostics.hpp"
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
 #include "TextUtils.hpp"
 
 #if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
 #include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -86,7 +85,7 @@ namespace ConfigPhaseCadence
 	 *
 	 * The PhaseCadence defines exactly when a value is refreshed or uniquely calculated in our engine's render pipeline logic.
 	 */
-	enum ConfigPhaseCadence : DWORD
+	enum ConfigPhaseCadence : dword_t
 	{
 		A_Init,		// Once per object lifetime at initialization
 		B_Frame,	// Once per frame pulse within the render loop; re-evaluated when 't' is updated
@@ -109,7 +108,7 @@ namespace ConfigPhaseCadence
  */
 typedef struct tagPHASEDESCRIPTOR
 {
-	DWORD        dwPhaseLength;
+	dword_t  dwPhaseLength;
 	value_t* pValues;
 	Expression** pFunctions;
 } PHASEDESCRIPTOR;
@@ -143,8 +142,8 @@ public:
 	};
 	~PhaseFunction()
 	{
-		DWORD    i;
-		DWORD    j;
+		dword_t    i;
+		dword_t    j;
 
 		if (m_pPhases != nullptr)
 		{
@@ -210,21 +209,21 @@ public:
 		 * This means MyDictionary needs to be able to copy itself
 		 */
 	{
-		char    strID[8];
-		error_t err;
-		DWORD   dwPhase;
-		DWORD   dwFunction;
-		DWORD   dwDimension;
-		DWORD   index;
+		char      strID[8];
+		error_t   err;
+		dword_t   dwPhase;
+		dword_t   dwFunction;
+		dword_t   dwDimension;
+		dword_t   index;
 
-		DWORD   dwPhaseFunctions;
+		dword_t   dwPhaseFunctions;
 
-		DWORD   dwAllocationSize;
-		DWORD   dwPhaseTableSize;
-		DWORD   dwPhaseValueTableSize;
-		DWORD   dwPhaseFunctionTableSize;
-		DWORD   dwParametricFunctionTableSize;
-		DWORD   dwParametricFunctionPointerTableSize;
+		dword_t   dwAllocationSize;
+		dword_t   dwPhaseTableSize;
+		dword_t   dwPhaseValueTableSize;
+		dword_t   dwPhaseFunctionTableSize;
+		dword_t   dwParametricFunctionTableSize;
+		dword_t   dwParametricFunctionPointerTableSize;
 
 
 
@@ -273,7 +272,7 @@ public:
 			 * have seen, so always create at least 15; if contiguous values are
 			 * defined higher, keep reading them in as long as values exist.
 			 */
-			constexpr DWORD highestUndefinedButUsedValue = 15;
+			constexpr dword_t highestUndefinedButUsedValue = 15;
 			index = 0;
 			while (true)
 			{
@@ -394,7 +393,7 @@ public:
 		/*
 		 * allocate space to store the phase stuff
 		 */
-		m_pUnalignedMem = new BYTE[dwAllocationSize];
+		m_pUnalignedMem = new byte_t[dwAllocationSize];
 		if (m_pUnalignedMem == NULL)
 			return ERR_MALLOC;
 
@@ -675,7 +674,7 @@ public:
 		if (err != SUCCESS)
 			return err;
 
-		for (DWORD i = 0; i < dwNumElements; ++i)
+		for (dword_t i = 0; i < dwNumElements; ++i)
 		{
 			mychar_t* keyID = configArray[i]->GetKey();
 			mychar_t* val = configArray[i]->GetValue();
@@ -690,7 +689,7 @@ public:
 					bool found = false;
 					// Iterate through the list and check values,
 					// ALL values including PHASE FUNCTIONS and REGULAR FUNCTIONS like X0,Y1,Z2
-					for (DWORD inner = 0; inner < dwNumElements; ++inner)
+					for (dword_t inner = 0; inner < dwNumElements; ++inner)
 					{
 						mychar_t* valInner = configArray[inner]->GetValue();
 
@@ -814,9 +813,9 @@ public:
 	 * EvaluatePhase - EXTREME_DEBUGGING version
 	 *
 	 ****************************************************************************/
-	error_t    EvaluatePhase(const DWORD dwPhaseNumber)
+	error_t    EvaluatePhase(const dword_t dwPhaseNumber)
 	{
-		DWORD i;
+		dword_t i;
 
 		if (dwPhaseNumber >= NumPhases())
 		{
@@ -888,7 +887,7 @@ public:
 	 * EvaluateFunction -
 	 *
 	 ****************************************************************************/
-	value_t    EvaluateFunction(const DWORD dwFunction, const DWORD dwDimension)
+	value_t    EvaluateFunction(const dword_t dwFunction, const dword_t dwDimension)
 	{
 #if EXTREME_DEBUGGING
 		Expression*** pppE;
@@ -924,10 +923,10 @@ public:
 	};
 
 
-	friend error_t ImportPhase(PhaseFunction& DestPF, PhaseFunction& SourcePF, const DWORD dwPhase)
+	friend error_t ImportPhase(PhaseFunction& DestPF, PhaseFunction& SourcePF, const dword_t dwPhase)
 	{
-		DWORD   i;
-		DWORD   dwPhaseLength;
+		dword_t   i;
+		dword_t   dwPhaseLength;
 
 		if (SourcePF.m_dwNumPhases <= dwPhase
 			|| DestPF.m_dwNumPhases <= dwPhase)
@@ -950,32 +949,32 @@ public:
 	/*
 	 * to reduce the chances of accidental modification
 	 */
-	inline DWORD    NumDimensions(void) const { return m_dwNumDimensions; };
-	inline DWORD    NumFunctions(void) const { return m_dwNumFunctions; };
-	inline DWORD    NumPhases(void) const { return m_dwNumPhases; };
+	inline dword_t    NumDimensions(void) const { return m_dwNumDimensions; };
+	inline dword_t    NumFunctions(void) const { return m_dwNumFunctions; };
+	inline dword_t    NumPhases(void) const { return m_dwNumPhases; };
 
 protected:
-	inline void     SetNumDimensions(const DWORD dwNumDimensions)
+	inline void     SetNumDimensions(const dword_t dwNumDimensions)
 	{
 		m_dwNumDimensions = dwNumDimensions;
 	};
-	inline void     SetNumFunctions(const DWORD dwNumFunctions)
+	inline void     SetNumFunctions(const dword_t dwNumFunctions)
 	{
 		m_dwNumFunctions = dwNumFunctions;
 	};
-	inline void     SetNumPhases(const DWORD dwNumPhases)
+	inline void     SetNumPhases(const dword_t dwNumPhases)
 	{
 		m_dwNumPhases = dwNumPhases;
 	};
 
 
 protected:
-	DWORD           m_dwNumDimensions;
-	DWORD           m_dwNumFunctions;
-	DWORD           m_dwNumPhases;
+	dword_t          m_dwNumDimensions;
+	dword_t          m_dwNumFunctions;
+	dword_t          m_dwNumPhases;
 	PHASEDESCRIPTOR* m_pPhases;
 	Expression*** m_pFunctions;
-	BYTE* m_pUnalignedMem;
+	byte_t* m_pUnalignedMem;
 };
 
 #if EXTREME_DEBUGGING
@@ -983,6 +982,4 @@ protected:
 #pragma warning(pop)
 #endif
 #endif
-
-#endif  /* _PhaseFunction_H_ */
 

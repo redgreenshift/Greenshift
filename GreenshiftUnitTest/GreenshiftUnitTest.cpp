@@ -441,9 +441,9 @@ namespace GreenshiftUnitTest
 
 			Assert::AreEqual(SUCCESS, pf.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
 
-			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize functions");
-			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
-			Assert::AreEqual(8ul, pf.NumFunctions(), L"Failed to initialize functions");
+			Assert::AreEqual(4u, pf.NumPhases(), L"Failed to initialize functions");
+			Assert::AreEqual(2u, pf.NumDimensions(), L"Failed to initialize dimensions");
+			Assert::AreEqual(8u, pf.NumFunctions(), L"Failed to initialize functions");
 
 			Assert::AreEqual(36, (int)dict.Size(), L"Failed to add all expected functions, and/or eliminate unused omitted values");
 		}
@@ -523,9 +523,9 @@ namespace GreenshiftUnitTest
 
 			Assert::AreEqual(SUCCESS, pf.Initialize(ConfigPhaseCadence::ConfigPhaseVars, "XYZ", &dConfig, &dict, &m_dGlobals), L"Initialization failed");
 
-			Assert::AreEqual(4ul, pf.NumPhases(), L"Failed to initialize phases");
-			Assert::AreEqual(2ul, pf.NumDimensions(), L"Failed to initialize dimensions");
-			Assert::AreEqual(1ul, pf.NumFunctions(), L"Failed to initialize functions");
+			Assert::AreEqual(4u, pf.NumPhases(), L"Failed to initialize phases");
+			Assert::AreEqual(2u, pf.NumDimensions(), L"Failed to initialize dimensions");
+			Assert::AreEqual(1u, pf.NumFunctions(), L"Failed to initialize functions");
 
 			Assert::AreEqual(24, (int)dict.Size(), L"Failed to add all expected functions, and/or eliminate unused omitted values");
 		}
