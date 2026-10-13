@@ -500,10 +500,10 @@ public:
 	 * AsArray - create an array representing my contents, and return the size
 	 *
 	 ****************************************************************************/
-	virtual error_t AsArray(DataType** outArray, DWORD* outNumElements)
+	virtual error_t AsArray(DataType** outArray, dword_t* outNumElements)
 	{
-		DWORD   i;
-		DWORD   dwElement;
+		dword_t   i;
+		dword_t   dwElement;
 
 		if (outArray == NULL || outNumElements == NULL)
 			return ERR_NULL;
@@ -526,6 +526,12 @@ public:
 		return SUCCESS;
 	};
 
+	// TEMPORARY measure to assist transitioning away from Windows.h types
+	// Delete this function at the earliest convenience.
+	error_t AsArray(DataType** outArray, DWORD* outNumElements)
+	{
+		return AsArray(outArray, reinterpret_cast<dword_t*>(outNumElements));
+	}
 };
 
 

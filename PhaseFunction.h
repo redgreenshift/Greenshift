@@ -36,7 +36,7 @@
 
 #if EXTREME_DEBUGGING
 #include "Diagnostics.hpp"
-#include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
+//#include <windows.h>  /* for MessageBox - REMOVE WHEN DONE DEBUGGING! */
 #if defined(_MSC_VER)
 #pragma warning(push)
 // The warning is only in logging code, so deferring for now
@@ -53,6 +53,7 @@
 #include <string.h>
 #include <utility>
 #include <vector>
+
 
 	/**
 	 * @brief Defines the rhythmic, timing-based levels of evaluation of phase variables defined in a single config.
@@ -668,7 +669,7 @@ public:
 		//
 		// for each unused ID that is above the highest used ID, RemoveValue
 		Association<mychar_t*>** configArray = nullptr;
-		DWORD dwNumElements = 0;
+		dword_t dwNumElements = 0;
 		std::vector<std::string> toDelete;
 		err = config->AsArray(&configArray, &dwNumElements);
 		if (err != SUCCESS)
@@ -683,8 +684,8 @@ public:
 			{
 				// Determine if Key is a Phase Function ID
 				if (std::isdigit(keyID[1])
-					&& (phases.find(toupper(keyID[0])) != std::string::npos
-						|| phases.find(tolower(keyID[0])) != std::string::npos))
+					&& (phases.find(static_cast<char>(toupper(keyID[0]))) != std::string::npos
+						|| phases.find(static_cast<char>(tolower(keyID[0]))) != std::string::npos))
 				{
 					bool found = false;
 					// Iterate through the list and check values,
@@ -731,7 +732,7 @@ public:
 			else
 			{
 				// Value is non-zero: keep track of the highest value per-phase
-				auto pos = phases.find(toupper(keyID[0]));
+				auto pos = phases.find(static_cast<char>(toupper(keyID[0])));
 				if (pos != std::string::npos)
 				{
 					const char currentPhase = keyID[0];
@@ -761,7 +762,7 @@ public:
 		// different bound, because we don't easily know when to stop. Now the stop condition has been restored.
 		for (const std::string& keyID : toDelete)
 		{
-			auto pos = phases.find(toupper(keyID[0]));
+			auto pos = phases.find(static_cast<char>(toupper(keyID[0])));
 			if (pos != std::string::npos)
 			{
 				const char currentPhase = keyID[0];
@@ -791,9 +792,9 @@ public:
 	 * EvaluatePhase -
 	 *
 	 ****************************************************************************/
-	error_t    EvaluatePhase(const DWORD dwPhaseNumber)
+	error_t    EvaluatePhase(const dword_t dwPhaseNumber)
 	{
-		DWORD i;
+		dword_t i;
 
 		if (dwPhaseNumber >= NumPhases())
 			return ERR_BOUNDS;
@@ -827,7 +828,7 @@ public:
 		if (m_pPhases == NULL)
 		{
 			DumpToFile("error.txt", "m_pPhases is NULL!", "\n");
-			MessageBoxA(NULL, "m_pPhases is NULL!", "ERROR!", MB_OK);
+			//MessageBoxA(NULL, "m_pPhases is NULL!", "ERROR!", MB_OK);
 			return ERR_NULL;
 		}
 
@@ -851,7 +852,7 @@ public:
 			if (m_pPhases[dwPhaseNumber].pFunctions == NULL)
 			{
 				DumpToFile("error.txt", "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "\n");
-				MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "ERROR!", MB_OK);
+				//MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions is NULL!", "ERROR!", MB_OK);
 				return ERR_NULL;
 			}
 
@@ -864,7 +865,7 @@ public:
 					DumpToFile("error.txt", "dwPhaseNumber = ", dwPhaseNumber, "\n");
 					DumpToFile("error.txt", "i = ", i, "\n");
 					DumpToFile("error.txt", "m_pPhases[dwPhaseNumber].dwPhaseLength = ", m_pPhases[dwPhaseNumber].dwPhaseLength, "\n");
-					MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions[i] is NULL!", "ERROR!", MB_OK);
+					//MessageBoxA(NULL, "m_pPhases[dwPhaseNumber].pFunctions[i] is NULL!", "ERROR!", MB_OK);
 					return ERR_NULL;
 				}
 
