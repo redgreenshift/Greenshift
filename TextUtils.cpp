@@ -26,34 +26,18 @@
 // https://en.wikipedia.org/wiki/UTF-8
 // https://en.wikipedia.org/wiki/Shift-JIS
 
+#include "TextUtils.hpp"
+
 #include <algorithm> // std::transform
 #include <cctype>
 #include <cstdint> // is_valid_utf8, append_codepoint_as_wchar
 #include <cstdio>
 #include <istream>
-#include <locale>
 #include <sstream>
 #include <stdexcept>
 #include <streambuf>
 #include <string> // append_codepoint_as_wchar
-#include <string_view>
 #include <wchar.h>
-
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
-#include "TextUtils.hpp"
-
-#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // Delete with codecvt_utf8_utf16
-#include <codecvt> // Delete with codecvt_utf8_utf16
-
-// This used to be the easy way to convert, then it was deprecated,
-// and the suggestion was to use MultiByteToWideChar, but that is Windows specific.
-// I want to at least try to keep as much of Greenshift agnostic about the platform as possible.
-std::wstring CODECVT_utf8_to_wstring(const std::string & s)
-{
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-	return conv.from_bytes(s);
-}
-#endif // _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 
 
 static constexpr Utf8ErrorPolicy Utf8ErrorDefaultPolicy = Utf8ErrorPolicy::Return;
@@ -122,37 +106,6 @@ inline std::wstring utf8_to_wstring(const char* pszUtf8, size_t cchUtf8)
 	std::istream in(&buf);
 	return utf8_to_wstring(in);
 }
-
-
-// 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :
-// std::wbuffer_convert, std::wstring_convert, and the <codecvt> header(containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17.
-// (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead.
-// You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
-#ifdef WIN32
-#include <windows.h>
-
-// This is the most straightforward replacement, as I don't have to _implement_ the feature myself... but it's platform specific, which is less than ideal.
-std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8)
-{
-	if (utf8.empty()) return {};
-
-	const int needed = MultiByteToWideChar(
-		CP_UTF8, MB_ERR_INVALID_CHARS,
-		utf8.data(), (int)utf8.size(),
-		nullptr, 0
-	);
-
-	if (needed <= 0) return {}; // or throw / handle error
-
-	std::wstring out(needed, L'\0');
-	MultiByteToWideChar(
-		CP_UTF8, MB_ERR_INVALID_CHARS,
-		utf8.data(), (int)utf8.size(),
-		out.data(), needed
-	);
-	return out;
-}
-#endif // WIN32
 
 
 /****************************************************************************

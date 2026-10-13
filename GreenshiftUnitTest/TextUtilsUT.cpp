@@ -19,9 +19,12 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "pch.h"
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING // (Delete if we ever remove codecvt_utf8_utf16)
+#include <codecvt> // for codecvt_utf8_utf16 (Delete if we ever remove codecvt_utf8_utf16)
 #include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
+#include <locale>
 #include <string>
 #include <vector>
 
@@ -29,6 +32,48 @@
 #include "CppUnitTest.h"
 #include "..\TextUtils.hpp"
 #include "..\TextUtils.cpp"
+
+// DEPRECATED
+// 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :
+// std::wbuffer_convert, std::wstring_convert, and the <codecvt> header(containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17.
+// (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead.
+// You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+//
+// This used to be the easy way to convert, then it was deprecated,
+// and the suggestion was to use MultiByteToWideChar, but that is Windows specific.
+// I want to at least *try* to keep Greenshift agnostic about the platform, as much as reasonably possible.
+// We will just TEST that my replacement matches the behavior of codecvt_utf8_utf16 and MultiByteToWideChar.
+static std::wstring CODECVT_utf8_to_wstring(const std::string& s)
+{
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	return conv.from_bytes(s);
+}
+
+#ifdef WIN32
+#include <string_view>
+#include <Windows.h> // The C++ Standard doesn't provide equivalent non-deprecated functionality for std::wstring_convert<std::codecvt_utf8_utf16; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead.
+// This is the most straightforward replacement... but it's platform specific, which is less than ideal.
+static std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8)
+{
+	if (utf8.empty()) return {};
+
+	const int needed = MultiByteToWideChar(
+		CP_UTF8, MB_ERR_INVALID_CHARS,
+		utf8.data(), (int)utf8.size(),
+		nullptr, 0
+	);
+
+	if (needed <= 0) return {}; // or throw / handle error
+
+	std::wstring out(needed, L'\0');
+	MultiByteToWideChar(
+		CP_UTF8, MB_ERR_INVALID_CHARS,
+		utf8.data(), (int)utf8.size(),
+		out.data(), needed
+	);
+	return out;
+}
+#endif // WIN32
 
 
  // Helpers
@@ -124,6 +169,420 @@ namespace GreenshiftUnitTest
 			Assert::IsTrue(Utf8Certainty::NotUtf8 == is_valid_utf8((uint8_t*)original, _countof(original) - 1), L"Failed to detect Invalid UTF8");
 		}
 
+		// What is BMP?
+		// BMP = Basic Multilingual Plane
+		// Unicode code points U+0000 through U+FFFF
+		// (excluding surrogate range U+D800-U+DFFF).
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_BMPCharacters)
+		{
+			// é ü ñ £ € Ω 中 日 本
+			// This test exercises multiple varied features without introducing surrogate pairs:
+			//  - Latin-1 Supplement(é, ü, ñ, £)
+			//  - BMP 2-byte UTF-8 sequences
+			//  - BMP 3-byte UTF-8 sequences(€, 中, 日, 本)
+			//  - Multiple Unicode blocks(Latin, Greek, Currency Symbols, CJK)
+			const std::string original = utf8_bytes({
+				0xC3, 0xA9,             // é U+00E9
+				0xC3, 0xBC,             // ü U+00FC
+				0xC3, 0xB1,             // ñ U+00F1
+				0xC2, 0xA3,             // £ U+00A3
+				0xE2, 0x82, 0xAC,       // € U+20AC
+				0xCE, 0xA9,             // Ω U+03A9
+				0xE4, 0xB8, 0xAD,       // 中 U+4E2D
+				0xE6, 0x97, 0xA5,       // 日 U+65E5
+				0xE6, 0x9C, 0xAC        // 本 U+672C
+				});
+			const std::vector<char16_t> expectedUtf16 = {
+				0x00E9, // é U+00E9
+				0x00FC, // ü U+00FC
+				0x00F1, // ñ U+00F1
+				0x00A3, // £ U+00A3
+				0x20AC, // € U+20AC
+				0x03A9, // Ω U+03A9
+				0x4E2D, // 中 U+4E2D
+				0x65E5, // 日 U+65E5
+				0x672C, // 本 U+672C
+			};
+			const std::wstring expected =
+				make_wstring_from_utf16_code_units(expectedUtf16);
+
+			const std::wstring result = utf8_to_wstring(original);
+			Assert::AreEqual(expected, result);
+
+			// Validate matches REFERENCE implementations
+			const std::wstring windowsResult = WINDOWS_utf8_to_utf16(original);
+			Assert::AreEqual(expected, windowsResult);
+			const std::wstring codecvtResult = CODECVT_utf8_to_wstring(original);
+			Assert::AreEqual(expected, codecvtResult);
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_Emoji)
+		{
+			// 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+			const std::string original = utf8_bytes({
+				0xF0, 0x9F, 0x98, 0x80, // 😀 U+1F600
+				0xF0, 0x9F, 0x9A, 0x80, // 🚀 U+1F680
+				0xF0, 0x9F, 0x8E, 0xB5, // 🎵 U+1F3B5
+				0xF0, 0x9F, 0x8C, 0x8E  // 🌎
+				}); //u8"😀🚀🎵🌎";
+			const std::vector<char16_t> expectedUtf16 = {
+				0xD83D, 0xDE00, // 😀 U+1F600
+				0xD83D, 0xDE80, // 🚀 U+1F680
+				0xd83c, 0xdfb5, // 🎵 U+1F3B5
+				0xd83c, 0xdf0e, // 🌎 U+1F30E
+			};
+			const std::wstring expected =
+				make_wstring_from_utf16_code_units(expectedUtf16);
+
+			const std::wstring result = utf8_to_wstring(original);
+			Assert::AreEqual(expected, result);
+
+			// Validate matches REFERENCE implementations
+			const std::wstring windowsResult = WINDOWS_utf8_to_utf16(original);
+			Assert::AreEqual(expected, windowsResult);
+			const std::wstring codecvtResult = CODECVT_utf8_to_wstring(original);
+			Assert::AreEqual(expected, codecvtResult);
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_MixedLanguage)
+		{
+			// Hello 世界 😀 Καλημέρα
+			const std::string original = utf8_bytes({
+				// Hello
+				'H', 'e', 'l', 'l', 'o', ' ',
+
+				// 世 U+4E16
+				0xE4, 0xB8, 0x96,
+
+				// 界 U+754C
+				0xE7, 0x95, 0x8C,
+
+				' ',
+
+				// 😀 U+1F600
+				0xF0, 0x9F, 0x98, 0x80,
+
+				' ',
+
+				// Καλημέρα
+				0xCE, 0x9A, // Κ
+				0xCE, 0xB1, // α
+				0xCE, 0xBB, // λ
+				0xCE, 0xB7, // η
+				0xCE, 0xBC, // μ
+				0xCE, 0xAD, // έ
+				0xCF, 0x81, // ρ
+				0xCE, 0xB1  // α
+				});
+			const std::vector<char16_t> expectedUtf16 =
+			{
+				// "Hello "
+				0x0048, // H
+				0x0065, // e
+				0x006C, // l
+				0x006C, // l
+				0x006F, // o
+				0x0020, // space
+
+				// 世 U+4E16
+				0x4E16,
+
+				// 界 U+754C
+				0x754C,
+
+				0x0020,
+
+				// 😀 U+1F600
+				0xD83D,
+				0xDE00,
+
+				0x0020,
+
+				// Καλημέρα
+				0x039A, // Κ
+				0x03B1, // α
+				0x03BB, // λ
+				0x03B7, // η
+				0x03BC, // μ
+				0x03AD, // έ
+				0x03C1, // ρ
+				0x03B1, // α
+			};
+			const std::wstring expected =
+				make_wstring_from_utf16_code_units(expectedUtf16);
+
+			const std::wstring result = utf8_to_wstring(original);
+			Assert::AreEqual(expected, result);
+
+			// Validate matches REFERENCE implementations
+			const std::wstring windowsResult = WINDOWS_utf8_to_utf16(original);
+			Assert::AreEqual(expected, windowsResult);
+			const std::wstring codecvtResult = CODECVT_utf8_to_wstring(original);
+			Assert::AreEqual(expected, codecvtResult);
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_EmbeddedNul)
+		{
+			// Verify all implementations preserve embedded NUL code units.
+			//
+			// This helps detect implementations that accidentally treat UTF-8 input
+			// as a null-terminated string rather than a byte sequence.
+
+			// "A\0B"
+			const std::string original({ 'A', '\0', 'B' });
+			const std::wstring expected({ 'A', '\0', 'B' });
+
+			Assert::AreEqual(
+				expected,
+				WINDOWS_utf8_to_utf16(original));
+
+			Assert::AreEqual(
+				expected,
+				CODECVT_utf8_to_wstring(original));
+
+			Assert::AreEqual(
+				expected,
+				utf8_to_wstring(original));
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_BoundaryCodePoints)
+		{
+			// Important UTF-8 / Unicode transition boundaries:
+			//
+			// U+007F   Largest ASCII code point
+			// U+0080   First 2-byte UTF-8 sequence
+			// U+07FF   Largest 2-byte UTF-8 sequence
+			// U+0800   First 3-byte UTF-8 sequence
+			// U+FFFF   Largest BMP code point
+			// U+10000  First supplementary code point
+			// U+10FFFF Largest valid Unicode code point
+			//
+			// This test exercises every major UTF-8 encoding boundary.
+
+			const std::string original = utf8_bytes({
+
+				// U+007F
+				0x7F,
+
+				// U+0080
+				0xC2, 0x80,
+
+				// U+07FF
+				0xDF, 0xBF,
+
+				// U+0800
+				0xE0, 0xA0, 0x80,
+
+				// U+FFFF
+				0xEF, 0xBF, 0xBF,
+
+				// U+10000
+				0xF0, 0x90, 0x80, 0x80,
+
+				// U+10FFFF
+				0xF4, 0x8F, 0xBF, 0xBF
+				});
+
+			const std::wstring expected =
+				WINDOWS_utf8_to_utf16(original);
+
+			Assert::AreEqual(
+				expected,
+				CODECVT_utf8_to_wstring(original));
+
+			Assert::AreEqual(
+				expected,
+				utf8_to_wstring(original));
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_RealWorldFilename)
+		{
+			// Realistic filename containing multiple scripts and an emoji.
+			//
+			// Exercises:
+			//  - ASCII
+			//  - Latin-1 accented characters
+			//  - CJK characters
+			//  - Supplementary-plane emoji
+			//  - Ordinary punctuation
+
+			const std::string original = utf8_bytes({
+
+				// "Caf"
+				'C', 'a', 'f',
+
+				// é
+				0xC3, 0xA9,
+
+				'_',
+
+				// 日
+				0xE6, 0x97, 0xA5,
+
+				// 本
+				0xE6, 0x9C, 0xAC,
+
+				// 語
+				0xE8, 0xAA, 0x9E,
+
+				'_',
+
+				// 😀
+				0xF0, 0x9F, 0x98, 0x80,
+
+				'.', 't', 'x', 't'
+				});
+
+			const std::wstring expected =
+				WINDOWS_utf8_to_utf16(original);
+
+			Assert::AreEqual(
+				expected,
+				CODECVT_utf8_to_wstring(original));
+
+			Assert::AreEqual(
+				expected,
+				utf8_to_wstring(original));
+		}
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_VeryLongMixedString)
+		{
+			// Long mixed-language string.
+			//
+			// Intended to exercise:
+			//  - repeated buffer growth
+			//  - repeated transitions between UTF-8 sequence lengths
+			//  - repeated surrogate-pair generation
+			//  - large input sizes
+			//
+			// A surprising number of bugs only appear after growing the destination
+			// buffer and reallocating *many* times. This test attempts to catch issues
+			// that may not be visible with smaller strings, including incorrect length
+			// calculations, stale pointers, invalidated iterators, and other
+			// buffer-management or state-management mistakes.
+
+			std::string original;
+
+			const std::string fragment = utf8_bytes({
+
+				// "Hello "
+				'H', 'e', 'l', 'l', 'o', ' ',
+
+				// 世界
+				0xE4, 0xB8, 0x96,
+				0xE7, 0x95, 0x8C,
+
+				' ',
+
+				// 😀
+				0xF0, 0x9F, 0x98, 0x80,
+
+				' '
+				});
+
+			// 1000 repetitions is intentionally large enough to force repeated
+			// buffer growth and reallocations while keeping unit test runtime low.
+			//
+			// NOTE(2026-10-13):
+			// MSVC STL growth pattern was observed where string capacity grew by
+			// approximately 1.5x after exceeding the small-string optimization buffer,
+			// triggering roughly sixteen reallocations.
+			//
+			//     15 -> 31
+			//     31 -> 47
+			//     47 -> 70
+			//     70 -> 105
+			//     105 -> 157
+			//     157 -> 235
+			//     235 -> 352
+			//     352 -> 528
+			//     528 -> 792
+			//     792 -> 1188
+			//     1188 -> 1782
+			//     1782 -> 2673
+			//     2673 -> 4009
+			//     4009 -> 6013
+			//     6013 -> 9019
+			//     9019 -> 13528
+			//     13528 -> 20292
+			//
+			// This test intentionally forces multiple buffer growth operations and
+			// reallocations to help detect bugs that only appear during repeated
+			// container expansion.
+			for (int i = 0; i < 1000; ++i)
+			{
+				original += fragment;
+			}
+
+			//const std::vector<char16_t> expectedUtf16 =
+			//{
+			//	0x0041,       // A
+			//	0x0000,       // NUL
+			//	0x0042,       // B
+			//	0x00E9,       // é
+			//	0xD83D,       // 😀 high surrogate
+			//	0xDE00,       // 😀 low surrogate
+			//	0x0043        // C
+			//};
+			const std::wstring expected =
+				WINDOWS_utf8_to_utf16(original);
+
+			Assert::AreEqual(
+				expected,
+				CODECVT_utf8_to_wstring(original));
+
+			Assert::AreEqual(
+				expected,
+				utf8_to_wstring(original));
+		}
+
+
+		TEST_METHOD(UTF8_EQUALS_REFERENCES_EmbeddedNulAndEmoji)
+		{
+			// Exercise several tricky cases simultaneously:
+			//
+			//  - ASCII
+			//  - Embedded NUL
+			//  - BMP character
+			//  - Supplementary character (surrogate pair)
+			//  - Additional text after all of the above
+			//
+			// This helps detect implementations that incorrectly treat UTF-8 as a
+			// null-terminated string or fail to resume decoding correctly after
+			// complex sequences.
+
+			const std::string original = utf8_bytes({
+
+				// A
+				'A',
+
+				// Embedded NUL
+				0x00,
+
+				// B
+				'B',
+
+				// é U+00E9
+				0xC3, 0xA9,
+
+				// 😀 U+1F600
+				0xF0, 0x9F, 0x98, 0x80,
+
+				// C
+				'C'
+				});
+
+			const std::wstring expected =
+				WINDOWS_utf8_to_utf16(original);
+
+			Assert::AreEqual(
+				expected,
+				CODECVT_utf8_to_wstring(original));
+
+			Assert::AreEqual(
+				expected,
+				utf8_to_wstring(original));
+		}
 
 
 		// --------------------
@@ -186,6 +645,9 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(static_cast<wchar_t>(0xFEFF), result[0]);
 		}
 
+		// What is BMP? Basic Multilingual Plane.
+		// BMP characters fit in a single UTF-16 code unit.
+		// Supplementary characters require surrogate pairs.
 		TEST_METHOD(BMPCharacters_CommonExamples)
 		{
 			// "café € 𝄞" but split into BMP + supplementary:

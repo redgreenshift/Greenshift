@@ -24,19 +24,7 @@
 #include <cstdint>
 #include <istream>
 #include <string>
-#include <string_view>
 
-
-// BEGIN -- Delete with codecvt_utf8_utf16
-#ifdef _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-std::wstring CODECVT_utf8_to_wstring(const std::string& s);
-#endif // _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-// END -- Delete with codecvt_utf8_utf16
-
-
-#ifdef WIN32
-std::wstring WINDOWS_utf8_to_utf16(const std::string_view utf8);
-#endif
 
 constexpr wchar_t InvalidSequenceReplacementChar = static_cast<wchar_t>(0xFFFD); // standard empty box character signifying an invalid byte sequence
 enum class Utf8ErrorPolicy {
@@ -67,3 +55,4 @@ Utf8Certainty is_valid_utf8(const uint8_t* data, size_t len);
 
 std::string makeLowercase(std::string& s);
 bool StrContainsStrI(const char* pHaystack, const char* pNeedle);
+
