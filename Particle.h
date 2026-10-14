@@ -27,17 +27,13 @@
   *
   ****************************************************************************/
 
-#ifndef _Particle_H_
-#define _Particle_H_
-
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
 #include "HighResolutionTimer.h"
 #include "VectorGraphic.h"
 
-#include <Windows.h> // DWORD
 
- //class Particle : public GraphicalEntity
+//class Particle : public GraphicalEntity
 /****************************************************************************
  *
  * @brief Particle - root class for dynamic display objects.
@@ -69,12 +65,12 @@ public:
 
 	bool    Expired(void) const { return m_nLifetime < m_hrRunningTime.ElapsedSeconds(); };
 
-	DWORD GetNumInstances(void) const { return m_dwNumInstances; };
-	DWORD GetNumFunctions(void) const { return m_pVectorGraphics[0].GetNumFunctions(); };
-	DWORD GetNumSteps(void) const { return m_pVectorGraphics[0].GetNumSteps(); };
+	dword_t GetNumInstances(void) const { return m_dwNumInstances; };
+	dword_t GetNumFunctions(void) const { return m_pVectorGraphics[0].GetNumFunctions(); };
+	dword_t GetNumSteps(void) const { return m_pVectorGraphics[0].GetNumSteps(); };
 	bool  GetConnected(void) const { return m_pVectorGraphics[0].GetConnected(); };
 
-	DWORD               GetMode(void)
+	dword_t               GetMode(void) const
 	{
 		return m_pVectorGraphics[0].GetMode();
 	};
@@ -87,14 +83,14 @@ public:
 	{
 		m_nDrawingTime = m_hrDrawingTime.ElapsedSeconds();
 	};
-	void                SetInstance(const DWORD dwInstance)
+	void                SetInstance(const dword_t dwInstance)
 	{
 		m_nID = (value_t)(dwInstance % m_dwNumInstances);
 		m_pVectorGraphics[(dwInstance % m_dwNumInstances)].BeginFrame(); // This call calls Evaluate_B_Vars() internally; handles re-evaluate for m_nTime change
 	};
 
-	inline void         Get(const DWORD dwInstance,
-		const DWORD dwFunction,
+	inline void         Get(const dword_t dwInstance,
+		const dword_t dwFunction,
 		value_t* outX,
 		value_t* outY,
 		value_t* outLineWidth,
@@ -102,8 +98,8 @@ public:
 	{
 		m_pVectorGraphics[dwInstance % m_dwNumInstances].Get(dwFunction, outX, outY, outLineWidth, outColor);
 	};
-	inline void         Get4d(const DWORD dwInstance,
-		const DWORD dwFunction,
+	inline void         Get4d(const dword_t dwInstance,
+		const dword_t dwFunction,
 		const value_t inX,
 		const value_t inZ,
 		value_t* outX,
@@ -116,7 +112,7 @@ public:
 
 	void            GetLastBuffers(value_t** outLastX, value_t** outLastY)
 	{
-		m_pVectorGraphics[(DWORD)m_nID].GetLastBuffers(outLastX, outLastY);
+		m_pVectorGraphics[(dword_t)m_nID].GetLastBuffers(outLastX, outLastY);
 	};
 
 protected:
@@ -125,7 +121,7 @@ protected:
 	HighResolutionTimer     m_hrDrawingTime;
 
 	value_t                 m_nNumInstances;/* the NUM var */
-	DWORD                   m_dwNumInstances;
+	dword_t                 m_dwNumInstances;
 	value_t                 m_nID;          /* the ID var */
 
 	value_t                 m_nTime;        /* the t var */
@@ -181,7 +177,4 @@ public:
 	WaveShape() {};
 	virtual ~WaveShape() override {};
 };
-
-
-#endif  /* _Particle_H_ */
 

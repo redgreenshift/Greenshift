@@ -27,14 +27,12 @@
   *
   ****************************************************************************/
 
-#ifndef _Palette_H_
-#define _Palette_H_
-
 #include "ColorUtils.hpp"
 #include "MyDictionary.h"
 #include "Expression.h"  /* for HSV color; EXPRESSIONDESCRIPTION */
 #include "HighResolutionTimer.h"
 #include "PhaseFunction.h"
+
 
 inline constexpr word_t PALETTE_SIZE = 256;
 
@@ -122,7 +120,4 @@ private:
 	Expression* m_pExp3 = nullptr; // component3 (Blue, Value, Saturation, or Yellow)
 	Expression* m_pExp4 = nullptr; // Component4 (Black)
 };
-
-
-#endif  /* _Palette_H_ */
 

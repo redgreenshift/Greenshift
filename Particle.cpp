@@ -28,13 +28,13 @@
 
 #include "Particle.h"
 
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
 #include "HighResolutionTimer.h"
+#include "MemoryUtils.hpp"
 #include "VectorGraphic.h"
 
 #include <cmath>
-#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
@@ -90,7 +90,7 @@ Particle::~Particle()
  ****************************************************************************/
 void    Particle::SetLifetime(const value_t nLifetime)
 {
-	DWORD    dwID;
+	dword_t    dwID;
 
 	m_nTime = 0.0f;
 	m_nLifetime = nLifetime;
@@ -115,7 +115,7 @@ error_t    Particle::Initialize(MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
 	error_t err;
-	DWORD   dwID;
+	dword_t   dwID;
 	//    value_t nDefaultAspect = 1.0f;
 
 
@@ -141,7 +141,7 @@ error_t    Particle::Initialize(MyDictionary<mychar_t*>* inConfig,
 	if (m_nNumInstances < 1.0f)
 		m_dwNumInstances = 1;
 	else
-		m_dwNumInstances = (DWORD)floor(m_nNumInstances);
+		m_dwNumInstances = (dword_t)floor(m_nNumInstances);
 
 	m_nNumInstances = (value_t)m_dwNumInstances;
 

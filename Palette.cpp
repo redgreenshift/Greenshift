@@ -30,11 +30,11 @@
 
 #include "ColorUtils.hpp"
 #include "Diagnostics.hpp"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "GForceFunctions.h"
 #include "MathUtils.hpp"
 #include "MemoryUtils.hpp"
-#include "MyDictionary.h"
 #include "OKLab.hpp"
 #include "PhaseFunction.h"
 
