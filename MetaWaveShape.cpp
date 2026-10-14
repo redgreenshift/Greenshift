@@ -214,7 +214,7 @@ error_t    MetaWaveShape::UpdateDerived(BitCanvas* pBitCanvas)
 //    m_nPercent = m_nTime / m_nTweenDuration;
 	if (m_bTweening)
 		//        m_nPercent = m_hrWaveShapeTimer.Seconds() / m_nTweenDuration;
-		m_nPercent = m_hrTweenTimer.Seconds() / m_nTweenDuration;
+		m_nPercent = m_hrTweenTimer.ElapsedSeconds() / m_nTweenDuration;
 	//    m_nPercent = 0.0f;
 
 
@@ -291,7 +291,7 @@ error_t    MetaWaveShape::IntervalCheck(void)
 	value_t nNewTweenDuration;
 	value_t nLifetime;
 
-	if (!m_bTweening && m_nIntervalTime < m_hrIntervalTimer.Seconds())
+	if (!m_bTweening && m_nIntervalTime < m_hrIntervalTimer.ElapsedSeconds())
 	{
 
 		/*        do {
@@ -346,7 +346,7 @@ error_t    MetaWaveShape::IntervalCheck(void)
 		m_nTweenDuration = nNewTweenDuration;
 	}
 	else
-		if (m_bTweening && m_nTweenDuration < m_hrTweenTimer.Seconds())
+		if (m_bTweening && m_nTweenDuration < m_hrTweenTimer.ElapsedSeconds())
 		{
 			//        if( m_pNext != NULL && m_dwNext != 0xBADC0DE )
 			//        {

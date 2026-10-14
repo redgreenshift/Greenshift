@@ -892,7 +892,7 @@ error_t    Greenshift::Render(void)
 		m_pWindowDevice->Flip(m_pBitCanvas);
 	}
 
-	m_nSecondsPerFrame = m_hrFramerateTimer.Seconds(); /* stop the timer */
+	m_nSecondsPerFrame = m_hrFramerateTimer.ElapsedSeconds(); /* stop the timer */
 
 	m_nFramesPerSecond = 1.0f / m_nSecondsPerFrame;  /* update the FRAMES_PER_SECOND variable */
 
@@ -989,7 +989,7 @@ void    Greenshift::UpdateDisplayText(void)
 		/*
 		 * check every 1/4th a second
 		 */
-	if (0.25f < m_hrDisplayTimer.Seconds())
+	if (0.25f < m_hrDisplayTimer.ElapsedSeconds())
 	{
 		//        lResult = SendMessage( m_hParentWindow,WM_USER, data, id);
 		//        lResult = SendMessage( m_hParentWindow,WM_USER, NULL, IPC_GETPLAYLISTTITLE);

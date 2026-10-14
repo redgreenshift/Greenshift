@@ -27,92 +27,48 @@
  *
  ****************************************************************************/
 
-#ifndef _HighResolutionTimer_H_
-#define _HighResolutionTimer_H_
-
-#include <windows.h>
-
-#ifndef UNDEFINED
-
-/****************************************************************************
- *
- * HighResolutionTimer - abstract the high resolution timer as a class
- *
- ****************************************************************************/
-class HighResolutionTimer
-{
-public:
-    HighResolutionTimer()
-    {
-        QueryPerformanceFrequency( &nFrequency );
-        Start();
-        Stop();
-//        DumpToFile("hrTimer.txt", nFrequency.QuadPart, "\n");
-    };
-
-    inline void Start( void )
-    {
-        QueryPerformanceCounter( &nStart );
-    };
-    inline void Stop( void )
-    {
-        QueryPerformanceCounter( &nStop );
-    };
-    inline value_t    Seconds( void )
-    {
-        Stop();
-//        return (float)(nStop.QuadPart - nStart.QuadPart) / (float)nFrequency.QuadPart;
-        return (value_t)(nStop.LowPart - nStart.LowPart) / (value_t)nFrequency.LowPart;
-    };
-    inline value_t    Milliseconds( void )
-    {
-        return 1000.0f * Seconds();
-    };
-
-protected:
-LARGE_INTEGER    nFrequency;
-LARGE_INTEGER    nStart;
-LARGE_INTEGER    nStop;
-
-};
-
-#else
-/*
-#include <time.h>
+#include <chrono> // steady_clock wraps QueryPerformanceCounter (on Windows)
+#include <ratio>
 
 class HighResolutionTimer
 {
 public:
-    HighResolutionTimer()
-    {
-        Start();
-        Stop();
-    };
+	HighResolutionTimer()
+	{
+		Start();
+	};
 
-    inline void Start( void )
-    {
-        nStart = clock();
-    };
-    inline void Stop( void )
-    {
-        nStop = clock();
-    };
-    inline value_t Seconds( void )
-    {
-        Stop();
-        return (value_t)(nStop - nStart) / (value_t)CLOCKS_PER_SEC;
-    };
-    inline value_t Milliseconds( void )
-    {
-        return 1000.0f * Seconds();
-    };
+	inline void Start(void)
+	{
+		nStart = nStop = std::chrono::steady_clock::now();
+	};
+	inline void Stop(void)
+	{
+		nStop = std::chrono::steady_clock::now();
+	};
+
+	inline value_t ElapsedSeconds(void) const
+	{
+		return std::chrono::duration<value_t>(
+			std::chrono::steady_clock::now() - nStart).count();
+	};
+	inline value_t ElapsedMilliseconds(void) const
+	{
+		return std::chrono::duration<value_t, std::milli>(
+			std::chrono::steady_clock::now() - nStart).count();
+	};
+	inline value_t StoppedSeconds(void) const
+	{
+		return std::chrono::duration<value_t>(nStop - nStart).count();
+	};
+	inline value_t StoppedMilliseconds(void) const
+	{
+		return std::chrono::duration<value_t, std::milli>(
+			nStop - nStart).count();
+	};
 
 protected:
-clock_t        nStart;
-clock_t        nStop;
+	std::chrono::steady_clock::time_point	nStart;
+	std::chrono::steady_clock::time_point	nStop;
 };
-*/
-#endif  /* UNDEFINED */
-
-#endif  /* _HighResolutionTimer_H_ */
 

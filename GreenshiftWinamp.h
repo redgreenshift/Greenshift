@@ -20,15 +20,6 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
- /****************************************************************************
-  *
-  * Association - set of associations of two objects
-  *
-  ****************************************************************************/
-
-#ifndef _GreenshiftWinamp_H_
-#define _GreenshiftWinamp_H_
-
 #ifndef GREENSHIFT_DLL
 #define GREENSHIFT_DLL
 #endif
@@ -93,9 +84,4 @@ winampVisModule modMain =
 		quit,
 		&gVisGreenshift
 };
-
-
-
-
-#endif  /* _GreenshiftWinamp_H_ */
 

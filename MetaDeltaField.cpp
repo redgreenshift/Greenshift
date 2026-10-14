@@ -193,7 +193,7 @@ error_t    MetaDeltaField::UpdateDerived(BitCanvas* pBitCanvas)
 		m_dwNext = 0xBADC0DE;
 	}
 
-	if (m_nInterval < m_hrInterval.Seconds())
+	if (m_nInterval < m_hrInterval.ElapsedSeconds())
 	{
 		/*
 		 * make sure BitCanvas isn't busy calculating the last delta field

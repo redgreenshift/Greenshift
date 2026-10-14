@@ -550,7 +550,7 @@ logpalette_t& Palette::GetLogicalPalette(void)
 	rgb32_t    crColor;
 
 
-	m_nTime = m_hrTimer.Seconds();  /* new evaluation, new time */
+	m_nTime = m_hrTimer.ElapsedSeconds();  /* new evaluation, new time */
 
 	if (m_nPaletteType == PALETTE_STATIC_COLOR_MAP)
 		return GetPalette();

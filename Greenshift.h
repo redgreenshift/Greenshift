@@ -38,7 +38,7 @@
 #include "MetaWaveShape.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // HINSTANCE, HWND, DWORD
+#include <Windows.h> // HINSTANCE, HWND
 
 
 #define VIS_TITLE "Greenshift"

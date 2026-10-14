@@ -279,7 +279,7 @@ error_t    MetaParticle::IntervalCheck(void)
 	DWORD    dwNewParticle;
 	//value_t    nRandom = -1.0f;
 
-	if (m_nIntervalTime < m_hrParticleTimer.Seconds())
+	if (m_nIntervalTime < m_hrParticleTimer.ElapsedSeconds())
 	{
 		//        m_bTweening = true;
 		m_nIntervalTime = m_pIntervalTime->Evaluate();

@@ -27,9 +27,6 @@
   *
   ****************************************************************************/
 
-#ifndef _GForceFunctions_H_
-#define _GForceFunctions_H_
-
 
 value_t GForce_mag(value_t nValue, void* pData);
 value_t GForce_fft(value_t nValue, void* pData);
@@ -50,7 +47,4 @@ value_t GForce_atan(value_t nValue);
 value_t GForce_log(value_t nValue);
 value_t GForce_exp(value_t nValue);
 value_t GForce_sqrt(value_t nValue);
-
-
-#endif /* _GForceFunctions_H_ */
 

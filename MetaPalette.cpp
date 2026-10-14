@@ -176,7 +176,7 @@ error_t    MetaPalette::UpdateDerived(BitCanvas* pBitCanvas)
 
 	if (m_bTweening)
 	{
-		nTweenPercent = m_hrTweenTimer.Seconds() / m_nTween;
+		nTweenPercent = m_hrTweenTimer.ElapsedSeconds() / m_nTween;
 		if (nTweenPercent < 1.0f)
 		{
 			//            DumpToFile( "error.txt", nTweenPercent, "\n" );
@@ -204,7 +204,7 @@ error_t    MetaPalette::UpdateDerived(BitCanvas* pBitCanvas)
 	else
 
 
-		if (m_nInterval < m_hrIntervalTimer.Seconds())
+		if (m_nInterval < m_hrIntervalTimer.ElapsedSeconds())
 		{
 			/*        do {
 			//            dwNext = RANDOM( m_dwNumConfigs );

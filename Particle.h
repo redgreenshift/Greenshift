@@ -67,7 +67,7 @@ public:
 	inline value_t      GetAspect(void) const { return m_nAspect; };
 	inline bool         GetZoom(void) const { return m_bZoom; };
 
-	bool    Expired(void) { return m_nLifetime < m_hrRunningTime.Seconds(); };
+	bool    Expired(void) const { return m_nLifetime < m_hrRunningTime.ElapsedSeconds(); };
 
 	DWORD GetNumInstances(void) const { return m_dwNumInstances; };
 	DWORD GetNumFunctions(void) const { return m_pVectorGraphics[0].GetNumFunctions(); };
@@ -80,12 +80,12 @@ public:
 	};
 	void                BeginFrame(void)
 	{
-		m_nTime = m_hrRunningTime.Seconds();
+		m_nTime = m_hrRunningTime.ElapsedSeconds();
 		m_hrDrawingTime.Start();
 	};
 	void                EndFrame(void)
 	{
-		m_nDrawingTime = m_hrDrawingTime.Seconds();
+		m_nDrawingTime = m_hrDrawingTime.ElapsedSeconds();
 	};
 	void                SetInstance(const DWORD dwInstance)
 	{

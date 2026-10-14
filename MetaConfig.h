@@ -95,7 +95,7 @@ public:
 
 		err = UpdateDerived(pBitCanvas);
 
-		m_nUpdateTime = m_hrTimer.Seconds();
+		m_nUpdateTime = m_hrTimer.ElapsedSeconds();
 
 		return err;
 	};

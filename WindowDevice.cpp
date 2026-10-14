@@ -597,7 +597,7 @@ error_t    WindowDevice::Flip(void)
 	EnterCS();
 	if (++dwFrames > 50)
 	{
-		nTime = hrtClock.Seconds();
+		nTime = hrtClock.ElapsedSeconds();
 		//            ClearScreen();
 		int ret = snprintf(strFPS, _countof(strFPS), "%5.3f", (value_t)dwFrames / nTime);
 		if (ret < 0 || (size_t)ret >= _countof(strFPS))
