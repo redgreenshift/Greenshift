@@ -28,19 +28,16 @@
   * DEPRECATED: Use LinearMap (or rather InsertionOrderedMap) instead. This class is a legacy class that has been replaced by LinearMap... or will be soon renamed to InsertionOrderedMap.
   ****************************************************************************/
 
-#ifndef _MyDictionary_H_
-#define _MyDictionary_H_
-
+#include "Association.h"
 #include "CollectionsAbstract.h"
 #include "Diagnostics.hpp"
-#include "Association.h"
+//#include "Expression.h" // DO NOT INCLUDE; BREAKS THE BUILD
 #include "InsertionOrderedMap.hpp"
+#include "MathUtils.hpp"
 
 #include <cstdio>
 #include <string>
 #include <string.h>
-#include <Windows.h> // DWORD
-
 
 
   /* should this be a void pointer?  No, the template helps
@@ -80,9 +77,9 @@ protected:
 	 ****************************************************************************/
 	virtual error_t MoveContents(DataType* pNewArray,
 		DataType* pOldArray,
-		const DWORD dwNewSize)
+		const dword_t dwNewSize)
 	{
-		DWORD   i;
+		dword_t   i;
 
 		/*
 		 * copy all the existing elements to the new array
@@ -159,7 +156,7 @@ template<class DataType>
 class MyDictionary : public Set< Association<DataType>* >
 {
 protected:
-	DWORD                   m_dwAliasCount;
+	dword_t                 m_dwAliasCount;
 	MyDictionary<mychar_t*>*	m_pAlias;
 	MyDictionary<DataType>* m_pAlternate;
 	bool                    m_bCaseSensitive;  /* comparisons are case sensitive */
@@ -275,7 +272,7 @@ public:
 	 ****************************************************************************/
 	error_t        RemoveValue(const char* inKey)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		if (inKey == NULL)
 			return ERR_NULL;
@@ -307,7 +304,7 @@ public:
 	DataType    GetValue_Helper(const char* inKey,
 		DataType returnValueIfNotFound = NULL)
 	{
-		DWORD    i;
+		dword_t    i;
 		DataType dtTemp = returnValueIfNotFound;
 
 		/*
@@ -401,9 +398,9 @@ protected:
 	 ****************************************************************************/
 	virtual error_t    MoveContents(data_t* pNewArray,
 		data_t* pOldArray,
-		const DWORD dwNewSize)
+		const dword_t dwNewSize)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		/*
 		 * copy all the existing elements to the new array
@@ -504,7 +501,7 @@ public:
  *
  * DEPRECATED: Use StaticFifoSet instead. It has a better implementation and is more efficient.
  ****************************************************************************/
-template<class DataType, DWORD MaximumSize>
+template<class DataType, dword_t MaximumSize>
 //class FiniteSet : public ArrayedCollection<DataType, FiniteSize>, public Set<DataType>
 class FiniteSet : public Set<DataType>
 {
@@ -515,7 +512,7 @@ protected:
 public:
 	FiniteSet()
 	{
-		DWORD    i;
+		dword_t    i;
 
 		for (i = 0; i < MaximumSize; i++)
 			m_pData[i] = NULL;
@@ -533,9 +530,9 @@ public:
 	 * if less than MaximumSize, restrict the finite set to the new size,
 	 * otherwise use MaximumSize
 	 */
-	void            RestrictSize(const DWORD dwSize)
+	void            RestrictSize(const dword_t dwSize)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		this->m_dwCapacity = min(MaximumSize, dwSize);
 		//        m_dwCapacity = 1;
@@ -560,7 +557,7 @@ protected:
 	 */
 	virtual error_t FullCheck(void)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		if (this->Size() < this->Capacity() || this->Capacity() == 0)
 			return SUCCESS;
@@ -577,9 +574,9 @@ protected:
 		return SUCCESS;
 	};
 
-	void    ShiftLeft(DataType* inoutArray, DWORD inLength)
+	void    ShiftLeft(DataType* inoutArray, dword_t inLength)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		for (i = 1; i < inLength; i++)
 			inoutArray[i - 1] = inoutArray[i];
@@ -640,7 +637,4 @@ inline void DumpToFile(const char* fileName, MyDictionary<mychar_t*>* pDict, myc
 	fclose(outFile);
 }
 #endif
-
-
-#endif    /* _MyDictionary_H_ */
 

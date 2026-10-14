@@ -43,7 +43,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
-#include <Windows.h> // DWORD
+#include <Windows.h> // HDC, HINSTANCE
 
   /*
 
@@ -155,12 +155,12 @@ void    Greenshift::Config(void)
  * SetSoundData - sets the waveform and spectrum data
  *
  ****************************************************************************/
-error_t Greenshift::SetSoundData(const DWORD nWfCh, sound_data_t pWaveform,
-	const DWORD nSpCh, sound_data_t pSpectrum)
+error_t Greenshift::SetSoundData(const dword_t nWfCh, sound_data_t pWaveform,
+	const dword_t nSpCh, sound_data_t pSpectrum)
 {
-	DWORD    i;
-	DWORD    dwSum;
-	constexpr DWORD NUM_SUM = 32;
+	dword_t    i;
+	dword_t    dwSum;
+	constexpr dword_t NUM_SUM = 32;
 
 	for (i = 0; i < SOUND_DATA_LENGTH; i++)
 	{
@@ -227,7 +227,7 @@ value_t    Greenshift::GetSpectrumData(const value_t nValue)
 	value_t      FRge = 2.0f;
 	value_t      FSrt = 14.0f;
 	value_t      nFrequency = nValue * FRge * FNum + FSrt;
-	DWORD        nIndex = (DWORD)(GForce_clip(nValue) * FNum);
+	dword_t      nIndex = (dword_t)(GForce_clip(nValue) * FNum);
 
 	if (nIndex >= SOUND_DATA_LENGTH)
 		nIndex = SOUND_DATA_LENGTH - 1;
@@ -245,7 +245,8 @@ value_t    Greenshift::GetSpectrumData(const value_t nValue)
  ****************************************************************************/
 value_t Greenshift::GetWaveformData(const value_t nValue) const
 {
-	DWORD nIndex = (int)(GForce_clip(nValue) * SOUND_DATA_LENGTH);
+	// REVIEW(JRDV): The (int) cast should probably be (dword_t)
+	dword_t nIndex = (int)(GForce_clip(nValue) * SOUND_DATA_LENGTH);
 	signed char scAmplitude;
 
 	if (nIndex >= SOUND_DATA_LENGTH)
@@ -260,11 +261,11 @@ value_t Greenshift::GetWaveformData(const value_t nValue) const
 
 #if EXTREME_DEBUGGING
 
-static DWORD getWindowBitDepth(void) {
-	DWORD    bpp;
+static dword_t getWindowBitDepth(void) {
+	dword_t  bpp;
 	HDC      hdc;
-	// retrieves device-specific information about 
-	// the specified device. 
+	// retrieves device-specific information about
+	// the specified device.
 
 	// Get the windows device context
 	hdc = GetDC(NULL);
@@ -322,7 +323,7 @@ error_t    Greenshift::Initialize(HINSTANCE hInstance)
 
 	error_t    err;
 	//error_t err2;
-	DWORD    i;
+	dword_t    i;
 
 #ifdef FORMAT_OF_LOGFILE_HEADER
 
@@ -831,8 +832,8 @@ error_t    Greenshift::LoadConfigs(void)
 		|| m_nDesiredFramerate < m_nMinimumFramerate)
 		m_nDesiredFramerate = m_nMinimumFramerate + 10.0f;
 
-	m_dwDesiredMSecondsPerFrame = (DWORD)floor(1000.0f / m_nDesiredFramerate);
-	m_dwMaximumMSecondsPerFrame = (DWORD)ceil(1000.0f / m_nMinimumFramerate);
+	m_dwDesiredMSecondsPerFrame = (dword_t)floor(1000.0f / m_nDesiredFramerate);
+	m_dwMaximumMSecondsPerFrame = (dword_t)ceil(1000.0f / m_nMinimumFramerate);
 
 	if (m_dwDesiredMSecondsPerFrame > 1)
 		m_dwDesiredMSecondsPerFrame -= 2;
@@ -916,8 +917,8 @@ error_t    Greenshift::Render(void)
  ****************************************************************************/
 error_t    Greenshift::RegulateFramerate(void)
 {
-	const DWORD    nMSeconds = (DWORD)(1000.0f * m_nSecondsPerFrame);
-	MetaConfig* pMetaConfig;
+	const dword_t  nMSeconds = (dword_t)(1000.0f * m_nSecondsPerFrame);
+	MetaConfig*    pMetaConfig = nullptr;
 	value_t        nLongestTime;
 	value_t        nTime;
 
@@ -978,8 +979,8 @@ error_t    Greenshift::RegulateFramerate(void)
  ****************************************************************************/
 void    Greenshift::UpdateDisplayText(void)
 {
-	DWORD    i = 0;
-	//    DWORD    dwDisplay;
+	dword_t i = 0;
+	//    dword_t dwDisplay;
 	//    char    strParticle[16];
 	char    strTitle[2048];
 	char    strSearch[] = "- Winamp";
@@ -1169,7 +1170,7 @@ void    Greenshift::Shutdown(void)
 
 
 
-//    DWORD    window_bit_depth = getWindowBitDepth(); //do I need this?
+//    dword_t    window_bit_depth = getWindowBitDepth(); //do I need this?
 
 
 	/*
@@ -1223,8 +1224,8 @@ void    Greenshift::Shutdown(void)
 	   */
 
 	   /*
-		   DWORD getWindowBitDepth( void ) {
-			   DWORD    bpp;
+		   dword_t getWindowBitDepth( void ) {
+			   dword_t    bpp;
 			   HDC        hdc;
 		   // retrieves device-specific information about
 		   // the specified device.

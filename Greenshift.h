@@ -27,10 +27,8 @@
   *
   ****************************************************************************/
 
-#ifndef _Greenshift_H_
-#define _Greenshift_H_
-
 #include "BitCanvas.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "FilingClerk.h"
 #include "HighResolutionTimer.h"
@@ -38,10 +36,9 @@
 #include "MetaPalette.h"
 #include "MetaParticle.h"
 #include "MetaWaveShape.h"
-#include "MyDictionary.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // HINSTANCE, DWORD
+#include <Windows.h> // HINSTANCE, HWND, DWORD
 
 
 #define VIS_TITLE "Greenshift"
@@ -82,9 +79,9 @@ public:
 
 
 	void                        SetParentWindow(HWND hWindow);
-	error_t                     SetSoundData(const DWORD nWfCh,
+	error_t                     SetSoundData(const dword_t nWfCh,
 		sound_data_t pWaveform,
-		const DWORD nSpCh,
+		const dword_t nSpCh,
 		sound_data_t pSpectrum);
 	//    inline
 	value_t                     GetWaveformData(const value_t nValue) const;
@@ -97,10 +94,10 @@ protected:
 
 	inline error_t              RegulateFramerate(void);
 
-	inline DWORD                NumDeltaFields(void) const { return m_dwNumDeltaFields; };
-	inline DWORD                NumWaveShapes(void) const { return m_dwNumWaveShapes; };
-	inline DWORD                NumParticles(void) const { return m_dwNumParticles; };
-	inline DWORD                NumPalettes(void) const { return m_dwNumPalettes; };
+	inline dword_t              NumDeltaFields(void) const { return m_dwNumDeltaFields; };
+	inline dword_t              NumWaveShapes(void) const { return m_dwNumWaveShapes; };
+	inline dword_t              NumParticles(void) const { return m_dwNumParticles; };
+	inline dword_t              NumPalettes(void) const { return m_dwNumPalettes; };
 
 	void                        UpdateDisplayText(void);
 	error_t                     DisplayString(const int position,
@@ -175,11 +172,8 @@ protected:
 	value_t                     m_nDesiredFramerate = 0;
 	value_t                     m_nMinimumFramerate = 0;
 
-	DWORD                       m_dwDesiredMSecondsPerFrame = 0;
-	DWORD                       m_dwMaximumMSecondsPerFrame = 0;
+	dword_t                     m_dwDesiredMSecondsPerFrame = 0;
+	dword_t                     m_dwMaximumMSecondsPerFrame = 0;
 
 };
-
-
-#endif  /* _Greenshift_H_ */
 
