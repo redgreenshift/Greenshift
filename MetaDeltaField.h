@@ -27,18 +27,14 @@
   *
   ****************************************************************************/
 
-#ifndef _MetaDeltaField_H_
-#define _MetaDeltaField_H_
-
 #include "BitCanvas.h"
 #include "DeltaField.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
 #include "MetaConfig.h"
-#include "MyDictionary.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // DWORD
 
 /**
  * @brief MetaDeltaField is a class that manages a collection of DeltaField objects
@@ -51,8 +47,8 @@ class MetaDeltaField : public MetaConfig
 protected:
 	value_t                 m_nInterval;
 	//    value_t                m_nTweenTime;
-	DWORD                   m_dwCurrent;
-	DWORD                   m_dwNext;
+	dword_t                 m_dwCurrent;
+	dword_t                 m_dwNext;
 	DeltaField* m_pDeltaFields;
 	Expression* m_pIntervalTime;
 	Expression* m_pTweenDuration;
@@ -70,13 +66,7 @@ public:
 	virtual error_t         UpdateDerived(WindowDevice* pWindowDevice) override;
 
 
-	void                    CheckInterval(void);
+	//void                    CheckInterval(void);
 
 };
-
-
-
-#endif  /* _MetaDeltaField_H_ */
-
-
 

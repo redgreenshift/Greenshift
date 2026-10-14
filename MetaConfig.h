@@ -27,16 +27,12 @@
   *
   ****************************************************************************/
 
-#ifndef _MetaConfig_H_
-#define _MetaConfig_H_
-
 #include "BitCanvas.h"
+#include "Expression.h"
 #include "HighResolutionTimer.h"
 #include "MersenneTwister.h"
 #include "MyDictionary.h"
 #include "WindowDevice.h"
-
-#include <Windows.h> // DWORD
 
 /**
  * @brief MetaConfig is an abstract base class designed to manage multiple sets
@@ -53,7 +49,7 @@ private:
 protected:
 	MTRand              m_mtRand;
 	//    MTRand::uint32      m_dwNumConfigs;
-	DWORD               m_dwNumConfigs = 0;
+	dword_t             m_dwNumConfigs = 0;
 private:
 	FiniteSet<void*, 61> m_fsRecentList;  /* hmm, tryint to make it private */
 protected:
@@ -67,7 +63,7 @@ public:
 
 	error_t             Initialize(
 		MyDictionary<mychar_t*>* pConfigs,
-		const DWORD dwNumConfigs,
+		const dword_t dwNumConfigs,
 		MyDictionary<mychar_t*>* inMainConfig,
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals); /* constants are placed in globals */
 
@@ -114,16 +110,16 @@ public:
 
 
 private:
-	DWORD               RandomConfigNum(void)
+	dword_t               RandomConfigNum(void)
 	{
 		MTRand::uint32  ui32_NumConfigs = (m_dwNumConfigs > 0) ? (m_dwNumConfigs - 1) : 0;
 
 		return m_mtRand.randInt(ui32_NumConfigs);
 	};/**/
 protected:
-	DWORD               GetRandomConfig(void)
+	dword_t               GetRandomConfig(void)
 	{
-		DWORD               dwNewConfigNumber;
+		dword_t               dwNewConfigNumber;
 		MyDictionary<mychar_t*>* pNewConfig;
 
 		//        do {} while( (dwReturn = m_mtRand.randInt( m_dwNumConfigs ) ) >= m_dwNumConfigs );
@@ -149,6 +145,4 @@ protected:
 	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas) = 0;
 	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice) = 0;
 };
-
-#endif  /* _MetaConfig_H_ */
 

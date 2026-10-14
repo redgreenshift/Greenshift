@@ -29,14 +29,18 @@
 #include "MetaWaveShape.h"
 
 #include "BitCanvas.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
-#include "MyDictionary.h"
+#include "MemoryUtils.hpp"
 #include "Particle.h"
 #include "VectorGraphic.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // DWORD
+#if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
+#endif
+
 
   /****************************************************************************
    *
@@ -80,7 +84,7 @@ error_t    MetaWaveShape::InitializeDerived(
 	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
-	DWORD   i;
+	dword_t i;
 	error_t err;
 
 	//    value_t  nDefaultAspect;
@@ -260,7 +264,7 @@ error_t    MetaWaveShape::UpdateDerived(BitCanvas* pBitCanvas)
  ****************************************************************************/
 error_t    MetaWaveShape::ReduceTime(void)
 {
-	DWORD    dwNewWaveShape;
+	dword_t    dwNewWaveShape;
 
 	/*    do
 		{

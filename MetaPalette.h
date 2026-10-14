@@ -27,18 +27,13 @@
   *
   ****************************************************************************/
 
-#ifndef _MetaPalette_H_
-#define _MetaPalette_H_
-
 #include "BitCanvas.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
 #include "MetaConfig.h"
-#include "MyDictionary.h"
 #include "Palette.h"
 #include "WindowDevice.h"
-
-#include <Windows.h> // DWORD
 
 
 /**
@@ -50,8 +45,8 @@
 class MetaPalette : public MetaConfig
 {
 protected:
-	DWORD                   m_dwCurrent;
-	DWORD                   m_dwNext;
+	dword_t                 m_dwCurrent;
+	dword_t                 m_dwNext;
 	value_t                 m_nPercent;
 	value_t                 m_nInterval;
 	value_t                 m_nTween;
@@ -77,9 +72,4 @@ public:
 	void                IntervalCheck(void);
 
 };
-
-
-#endif  /* _MetaPalette_H_ */
-
-
 

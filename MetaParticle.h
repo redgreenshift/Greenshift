@@ -27,21 +27,17 @@
   *
   ****************************************************************************/
 
-#ifndef _MetaParticle_H_
-#define _MetaParticle_H_
-
 #include "BitCanvas.h" // needs an interface
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
-#include "MersenneTwister.h"
+#include "MathUtils.hpp"
 #include "MetaConfig.h"
-#include "MyDictionary.h"
 #include "Particle.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // DWORD
 
-inline constexpr DWORD MAX_RUNNING_PARTICLES = 4;
+inline constexpr dword_t MAX_RUNNING_PARTICLES = 4;
 
 /**
  * @brief MetaParticleAbstract provides the smarts for drawing and tweening;
@@ -63,10 +59,10 @@ protected:
 	value_t             m_nX;             /* x */
 	value_t             m_nZ;             /* z */
 
-	DWORD               m_dwMode;
-	DWORD               m_dwNumInstances;
-	DWORD               m_dwNumFunctions;
-	DWORD               m_dwNumSteps;
+	dword_t             m_dwMode;
+	dword_t             m_dwNumInstances;
+	dword_t             m_dwNumFunctions;
+	dword_t             m_dwNumSteps;
 
 	//    value_t                m_nTime;
 	value_t             m_nPercent;
@@ -86,12 +82,12 @@ public:
 	virtual ~MetaParticleAbstract() override;
 
 protected:
-	inline void         GetNums(DWORD* outInstances, DWORD* outFunctions, DWORD* outSteps)
+	inline void         GetNums(dword_t* outInstances, dword_t* outFunctions, dword_t* outSteps)
 	{
-		const DWORD    dwInstances = m_pCurrent->GetNumInstances();
-		const DWORD    dwFunctions = m_pCurrent->GetNumFunctions();
-		const DWORD    dwSteps = m_pCurrent->GetNumSteps();
-		DWORD    dwInstances2, dwFunctions2, dwSteps2;
+		const dword_t    dwInstances = m_pCurrent->GetNumInstances();
+		const dword_t    dwFunctions = m_pCurrent->GetNumFunctions();
+		const dword_t    dwSteps = m_pCurrent->GetNumSteps();
+		dword_t    dwInstances2, dwFunctions2, dwSteps2;
 
 		/* need to return each of the running particles */
 	//    *outInstances = m_pCurrent->HackGetNumInstances();
@@ -126,9 +122,9 @@ protected:
 			*outSteps = dwSteps;
 		}
 	}
-	inline void         Get(const value_t nPercent,
-		const DWORD dwInstance,
-		const DWORD dwFunction,
+	void         Get(const value_t nPercent,
+		const dword_t dwInstance,
+		const dword_t dwFunction,
 		value_t* outX,
 		value_t* outY,
 		value_t* outLineWidth,
@@ -149,11 +145,11 @@ protected:
 class MetaParticle : public MetaParticleAbstract
 {
 protected:
-	//    DWORD                m_dwCurrent;
-	//    DWORD                m_dwNext;
+	//    dword_t                m_dwCurrent;
+	//    dword_t                m_dwNext;
 	value_t             m_nIntervalTime;
 	//    value_t                m_nTweenDuration;
-	DWORD               m_dwRunningList[MAX_RUNNING_PARTICLES];
+	dword_t             m_dwRunningList[MAX_RUNNING_PARTICLES];
 	Particle* m_pParticles;
 	Expression* m_pIntervalTime;
 	Expression* m_pParticleProbability;
@@ -179,7 +175,7 @@ protected:
 	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas) override;
 	virtual error_t     UpdateDerived(WindowDevice* pWindowDevice) override;
 
-	DWORD               CountParticles(void);
+	dword_t             CountParticles(void);
 
 	error_t             IntervalCheck(void);
 
@@ -192,17 +188,17 @@ protected:
 #ifdef UNDEFINED
 
 typedef struct tagPARTICLE_INFO {
-	DWORD               dwMode;
-	DWORD               dwNumInstances;
-	DWORD               dwNumFunctions;
-	DWORD               dwNumSteps;
+	dword_t             dwMode;
+	dword_t             dwNumInstances;
+	dword_t             dwNumFunctions;
+	dword_t             dwNumSteps;
 	Particle* pParticle;
 } PARTICLE_INFO;
 
 
 
 typedef struct tagTWEEN_INFO {
-	DWORD               dwMode;
+	dword_t             dwMode;
 	Particle* pCurrent;
 	Particle* pNext;
 	HighResolutionTimer hrTween;
@@ -213,10 +209,4 @@ typedef struct tagTWEEN_INFO {
 } TWEEN_INFO;
 
 #endif
-
-
-
-
-
-#endif  /* _MetaParticle_H_ */
 

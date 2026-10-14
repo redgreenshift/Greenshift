@@ -31,12 +31,12 @@
 #include "BitCanvas.h"
 #include "DeltaField.h"
 #include "Diagnostics.hpp"
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
+#include "MemoryUtils.hpp"
 #include "WindowDevice.h"
 
 #include <string.h>
-#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
@@ -76,7 +76,7 @@ error_t    MetaDeltaField::InitializeDerived(
 	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
-	DWORD    i;
+	dword_t    i;
 	error_t    err;
 
 	m_pDeltaFields = new DeltaField[m_dwNumConfigs];

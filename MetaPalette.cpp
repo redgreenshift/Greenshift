@@ -30,13 +30,12 @@
 
 #include "BitCanvas.h"
 #include "Diagnostics.hpp"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "MemoryUtils.hpp"
-#include "MyDictionary.h"
 #include "Palette.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // DWORD
 
   /****************************************************************************
    *
@@ -79,7 +78,7 @@ error_t    MetaPalette::InitializeDerived(
 	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
-	DWORD    i;
+	dword_t    i;
 	error_t    err;
 
 	m_pPalettes = new Palette[m_dwNumConfigs];
@@ -164,7 +163,7 @@ error_t    MetaPalette::UpdateDerived(BitCanvas* pBitCanvas)
 {
 	////    static DWORD    dwFrames = 0;
 	error_t    err = SUCCESS;
-	DWORD    dwNext;
+	dword_t    dwNext;
 	value_t    nTweenPercent;
 	//    IntervalCheck();
 

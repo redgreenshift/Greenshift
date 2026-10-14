@@ -27,19 +27,14 @@
   *
   ****************************************************************************/
 
-#ifndef _MetaWaveShape_H_
-#define _MetaWaveShape_H_
-
-#include "MetaParticle.h"
-#include "Particle.h"
-
 #include "BitCanvas.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
-#include "MyDictionary.h"
+#include "MetaParticle.h"
+#include "Particle.h"
 #include "WindowDevice.h"
 
-#include <Windows.h> // DWORD
 
 /**
  * @brief MetaWaveShape is a class that manages a collection of WaveShape objects
@@ -51,8 +46,8 @@ class MetaWaveShape : public MetaParticleAbstract
 {
 protected:
 	//    value_t                m_nPercent;
-	DWORD               m_dwCurrent;
-	DWORD               m_dwNext;
+	dword_t             m_dwCurrent;
+	dword_t             m_dwNext;
 	value_t             m_nIntervalTime;
 	value_t             m_nTweenDuration;
 	//    HighResolutionTimer m_hrWaveShapeTimer;
@@ -91,8 +86,4 @@ protected:
 	error_t             IntervalCheck(void);
 
 };
-
-
-#endif  /* _MetaWaveShape_H_ */
-
 

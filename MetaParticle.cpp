@@ -29,16 +29,22 @@
 #include "MetaParticle.h"
 
 #include "BitCanvas.h"
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
+#include "MemoryUtils.hpp"
 #include "Particle.h"
 #include "VectorGraphic.h"
 #include "WindowDevice.h"
 
+#if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
+#endif
+
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
-#include <Windows.h> // DWORD
+#include <new>
+
 
   /****************************************************************************
    *
@@ -47,7 +53,7 @@
    ****************************************************************************/
 MetaParticle::MetaParticle()
 {
-	DWORD    i;
+	dword_t    i;
 
 	for (i = 0; i < MAX_RUNNING_PARTICLES; i++)
 		m_dwRunningList[i] = 0xBADC0DE;
@@ -88,7 +94,7 @@ error_t    MetaParticle::InitializeDerived(
 	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
-	DWORD    i;
+	dword_t    i;
 	error_t    err;
 
 	m_pParticles = new Particle[m_dwNumConfigs];
@@ -166,9 +172,9 @@ error_t    MetaParticle::InitializeDerived(
 error_t    MetaParticle::UpdateDerived(WindowDevice* pWindowDevice)
 {
 	char    strName[16];
-	DWORD    particle;
-	DWORD    i;
-	DWORD    dwNum = 0;
+	dword_t particle;
+	dword_t i;
+	dword_t dwNum = 0;
 
 	for (i = 0; i < MAX_RUNNING_PARTICLES; i++)
 	{
@@ -197,7 +203,7 @@ error_t    MetaParticle::UpdateDerived(WindowDevice* pWindowDevice)
  ****************************************************************************/
 error_t    MetaParticle::UpdateDerived(BitCanvas* pBitCanvas)
 {
-	DWORD    dwRun;
+	dword_t    dwRun;
 
 	//    m_nTime = m_hrParticleTimer.Seconds();
 	//    m_nPercent = m_nTime / m_nTweenDuration;
@@ -241,9 +247,9 @@ error_t    MetaParticle::UpdateDerived(BitCanvas* pBitCanvas)
  ****************************************************************************/
 error_t    MetaParticle::ReduceTime(void)
 {
-	DWORD   i;
-	DWORD   dwSlowestParticle = 0xBADC0DE;
-	DWORD   particle;
+	dword_t i;
+	dword_t dwSlowestParticle = 0xBADC0DE;
+	dword_t particle;
 	value_t nLongestTime = -1.0f;
 
 	for (i = 0; i < MAX_RUNNING_PARTICLES; i++)
@@ -275,8 +281,8 @@ error_t    MetaParticle::ReduceTime(void)
  ****************************************************************************/
 error_t    MetaParticle::IntervalCheck(void)
 {
-	DWORD    i;
-	DWORD    dwNewParticle;
+	dword_t    i;
+	dword_t    dwNewParticle;
 	//value_t    nRandom = -1.0f;
 
 	if (m_nIntervalTime < m_hrParticleTimer.ElapsedSeconds())
@@ -325,11 +331,11 @@ error_t    MetaParticle::IntervalCheck(void)
  * CountParticles
  *
  ****************************************************************************/
-DWORD    MetaParticle::CountParticles(void)
+dword_t    MetaParticle::CountParticles(void)
 {
-	DWORD    i;
-	DWORD    particle;
-	DWORD    dwNumParticles;
+	dword_t    i;
+	dword_t    particle;
+	dword_t    dwNumParticles;
 
 
 	dwNumParticles = 0;
@@ -409,8 +415,8 @@ MetaParticleAbstract::~MetaParticleAbstract()
  *
  ****************************************************************************/
 void    MetaParticleAbstract::Get(const value_t nPercent,
-	const DWORD dwInstance,
-	const DWORD dwFunction,
+	const dword_t dwInstance,
+	const dword_t dwFunction,
 	value_t* outX,
 	value_t* outY,
 	value_t* outLineWidth,
@@ -525,9 +531,9 @@ void MetaParticleAbstract::UpdateStep(value_t s)
  ****************************************************************************/
 void    MetaParticleAbstract::DrawParametric(BitCanvas* pBitCanvas)
 {
-	DWORD    s;
-	DWORD    f;
-	DWORD    i;
+	dword_t s;
+	dword_t f;
+	dword_t i;
 	value_t lastX = 0.0f;
 	value_t lastY = 0.0f;
 	value_t x;
@@ -597,10 +603,10 @@ void    MetaParticleAbstract::DrawParametric(BitCanvas* pBitCanvas)
  ****************************************************************************/
 void    MetaParticleAbstract::Draw4d(BitCanvas* pBitCanvas)
 {
-	DWORD    dwX;
-	DWORD    dwZ;
-	DWORD    f;
-	DWORD    i;
+	dword_t dwX;
+	dword_t dwZ;
+	dword_t f;
+	dword_t i;
 	value_t lastX = 0.0f;
 	value_t lastY = 0.0f;
 	value_t x;

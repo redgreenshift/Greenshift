@@ -28,6 +28,13 @@
 
 #include "MetaConfig.h"
 
+#include "MyDictionary.h"
+#include "Expression.h"
+#include "WindowDevice.h"
+
+#include <cstdlib>
+#include <string.h>
+
 
   /****************************************************************************
    *
@@ -60,7 +67,7 @@ MetaConfig::~MetaConfig()
  ****************************************************************************/
 error_t    MetaConfig::Initialize(
 	MyDictionary<mychar_t*>* pConfigs,
-	const DWORD dwNumConfigs,
+	const dword_t dwNumConfigs,
 	MyDictionary<mychar_t*>* inMainConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals)
 {
