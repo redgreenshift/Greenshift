@@ -1,5 +1,4 @@
 #pragma once
-#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
@@ -27,9 +26,7 @@
   *
   ****************************************************************************/
 
-#ifndef _Interval_H_
-#define _Interval_H_
-
+#include "Project Greenshift.h"
 
 /**
  * @brief A linear mapping between a unit interval [0, 1] and a target range [start, stop].
@@ -41,18 +38,7 @@
 class Interval
 {
 public:
-
-	/****************************************************************************
-	 *
-	 * Interval - default constructor
-	 *
-	 ****************************************************************************/
-	Interval()
-	{
-		m_nStart = 0.0f;
-		m_nStop = 1.0f;
-		m_nNormalizationFactor = 1.0f;
-	};
+	Interval() = default;
 
 	/****************************************************************************
 	 *
@@ -66,17 +52,15 @@ public:
 		m_nNormalizationFactor = 1.0f / (m_nStop - m_nStart);
 	};
 
-
 	/****************************************************************************
 	 *
 	 * operator[] - return the value nReal percent between start and stop
 	 *
 	 ****************************************************************************/
-	inline value_t    operator[](const value_t inValue)
+	inline value_t    operator[](const value_t inValue) const
 	{
 		return m_nStart + (m_nStop - m_nStart) * inValue;
 	};
-
 
 	/****************************************************************************
 	 *
@@ -89,13 +73,9 @@ public:
 	};
 
 
-
 protected:
-	value_t        m_nNormalizationFactor;
-	value_t        m_nStart;
-	value_t        m_nStop;
+	value_t        m_nNormalizationFactor = 1.0f;
+	value_t        m_nStart = 0.0f;
+	value_t        m_nStop = 1.0f;
 };
-
-
-#endif  /* _Interval_H_ */
 

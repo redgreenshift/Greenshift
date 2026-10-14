@@ -1,4 +1,5 @@
 #pragma once
+#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
@@ -19,6 +20,8 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
+#include <malloc.h>
 
 #define SAFE_FREE( buf )         {if( (buf) != NULL ) { free( buf ); buf = NULL; }}
 #define SAFE_DELETE( buf )       {if( (buf) != NULL ) { delete( buf ); buf = NULL; }}

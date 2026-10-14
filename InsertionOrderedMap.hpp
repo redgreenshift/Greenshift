@@ -31,7 +31,6 @@
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <Windows.h> // DWORD
 
 
 struct CaseInsensitiveLess {
@@ -144,7 +143,7 @@ public:
 
 
 protected:
-	DWORD							m_dwAliasCount = 0;
+	dword_t									m_dwAliasCount = 0;
 	InsertionOrderedMap<KeyType, KeyType>*	m_mapAlias = nullptr;
 	InsertionOrderedMap<KeyType, DataType>*	m_mapAlternate = nullptr;
 
@@ -191,7 +190,7 @@ public:
 	error_t Import(this_t& src)
 	{
 		error_t    err;
-		DWORD    i;
+		dword_t    i;
 		std::vector < std::tuple<KeyType, DataType> > pArray;
 
 		err = src.AsArray(pArray);
@@ -199,7 +198,7 @@ public:
 			return err;
 
 
-		DWORD dwNumElements = pArray.size();
+		dword_t dwNumElements = pArray.size();
 
 		for (i = 0; i < dwNumElements; i++)
 		{
@@ -347,7 +346,7 @@ public:
 	virtual error_t AsArray(std::vector < std::tuple<KeyType, DataType> > & outArray)
 	{
 		std::vector < std::tuple<KeyType, DataType> > retVal;
-		const DWORD size = m_map.size();
+		const dword_t size = m_map.size();
 
 		/*
 		 * sort by sequence number (via map)
