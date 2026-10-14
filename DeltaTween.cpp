@@ -32,7 +32,7 @@
 #include "TweenThread.h"
 
 #include <cmath>
-#include <Windows.h> // DWORD
+#include <Windows.h> // Sleep
 
   /****************************************************************************
    *
@@ -129,7 +129,7 @@ void    DeltaTween::SetAspect(value_t nAspect, const bool bZoom)
 long    DeltaTween::ConvertToScreen(const value_t nPhysicalValue,
 	const long nHalfDimension,
 	const long nDimension,
-	const DWORD nBoundsType)
+	const dword_t nBoundsType)
 {
 	long    nReturnValue;
 
@@ -169,7 +169,7 @@ long    DeltaTween::ConvertToScreen(const value_t nPhysicalValue,
  * PrerenderFrames - calculates the frames between fields
  *
  ****************************************************************************/
-void DeltaTween::PrerenderFrames(const DWORD dwFrames,
+void DeltaTween::PrerenderFrames(const dword_t dwFrames,
 	void** pFrames,
 	void* pObject1,
 	void* pObject2)
@@ -199,13 +199,13 @@ void DeltaTween::PrerenderFrames(const DWORD dwFrames,
 	long        displayX;
 	long        displayY;
 
-	DWORD       dwDestX;
-	DWORD       dwDestY;
-	DWORD       dwSourceOffset;
-	DWORD       dwDestOffset = 0;
-	DWORD       boundsType = 0;
+	dword_t     dwDestX;
+	dword_t     dwDestY;
+	dword_t     dwSourceOffset;
+	dword_t     dwDestOffset = 0;
+	dword_t     boundsType = 0;
 
-	DWORD       currentFrame;
+	dword_t     currentFrame;
 
 	/*
 	 * yadda yadda yadda... always check for NULL
@@ -328,7 +328,7 @@ void DeltaTween::PrerenderFrames(const DWORD dwFrames,
   * PrerenderFrames - calculates the frames between fields
   *
   ****************************************************************************/
-void DeltaTween::PrerenderFrames(const DWORD dwFrames,
+void DeltaTween::PrerenderFrames(const dword_t dwFrames,
 	void** pFrames,
 	void* pObject1,
 	void* pObject2)
@@ -505,11 +505,11 @@ void DeltaTween::ExperimentalPrerenderFrame(
 	long        displayX;
 	long        displayY;
 
-	DWORD       dwDestX;
-	DWORD       dwDestY;
-	DWORD       dwSourceOffset;
-	DWORD       dwDestOffset = 0;
-	DWORD       boundsType = 0;
+	dword_t     dwDestX;
+	dword_t     dwDestY;
+	dword_t     dwSourceOffset;
+	dword_t     dwDestOffset = 0;
+	dword_t     boundsType = 0;
 
 	/*
 	 * yadda yadda yadda... always check for NULL
@@ -590,7 +590,7 @@ void DeltaTween::ExperimentalPrerenderFrame(
  * ONLY called with no NULL pointers
  *
  ****************************************************************************/
-void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
+void DeltaTween::ExperimentalPrerenderFrames(const dword_t dwFrames,
 	void** pFrames,
 	void* pFirstFrame,
 	void* pLastFrame)
@@ -603,10 +603,10 @@ void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
 	PIXELMAP* pPixelMap1 = (PIXELMAP*)pFirstFrame;
 	PIXELMAP* pPixelMap2 = (PIXELMAP*)pLastFrame;
 
-	DWORD       dwSourceOffset;
-	DWORD       dwDestOffset;
+	dword_t       dwSourceOffset;
+	dword_t       dwDestOffset;
 
-	DWORD       dwCurrentFrame;
+	dword_t       dwCurrentFrame;
 
 	/*
 	 * yadda yadda yadda... always check for NULL
@@ -670,12 +670,12 @@ void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
  * ONLY called with no NULL pointers
  *
  ****************************************************************************/
-void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
+void DeltaTween::ExperimentalPrerenderFrames(const dword_t dwFrames,
 	void** pFrames,
 	void* pFirstFrame,
 	void* pLastFrame)
 {
-	const DWORD     dwLength = (DWORD)(Width() * Height());
+	const dword_t   dwLength = (dword_t)(Width() * Height());
 	const value_t   nPercentDifference = 1.0f / (dwFrames + 1UL);
 	value_t         nTweenPercent = 0.0f;
 	PIXELMAP** ppPixelMap = (PIXELMAP**)pFrames;
@@ -684,10 +684,10 @@ void DeltaTween::ExperimentalPrerenderFrames(const DWORD dwFrames,
 	//    long        *pPixelMap1   = (long*)pFirstFrame;
 	//    long        *pPixelMap2   = (long*)pLastFrame;
 
-	DWORD           dwSourceOffset;
-	DWORD           dwDestOffset;
+	dword_t           dwSourceOffset;
+	dword_t           dwDestOffset;
 
-	DWORD           dwCurrentFrame;
+	dword_t           dwCurrentFrame;
 
 	/*
 	 * yadda yadda yadda... always check for NULL

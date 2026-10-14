@@ -29,12 +29,11 @@
 
 #include "TweenThread.h"
 
-#include <Windows.h> // DWORD (Parent uses HANDLE)
 
 typedef struct tagPIXELMAPDESCRIPTION
 {
-	DWORD   dwWidth;
-	DWORD   dwHeight;
+	dword_t   dwWidth;
+	dword_t   dwHeight;
 } PIXELMAPDESCRIPTION;
 
 
@@ -74,11 +73,11 @@ public:
 
 protected:
 	void            SetAspect(value_t nAspect, const bool bZoom);
-	virtual void    PrerenderFrames(const DWORD dwFrames,
+	virtual void    PrerenderFrames(const dword_t dwFrames,
 		void** pFrames,
 		void* pObject1,
 		void* pObject2) override;
-	virtual void    ExperimentalPrerenderFrames(const DWORD dwFrames,
+	virtual void    ExperimentalPrerenderFrames(const dword_t dwFrames,
 		void** pFrames,
 		void* pFirstFrame,
 		void* pLastFrame) override;
@@ -89,7 +88,7 @@ protected:
 	inline long    ConvertToScreen(const value_t nPhysicalValue,
 		const long nHalfDimension,
 		const long nDimension,
-		const DWORD nBoundsType);
+		const dword_t nBoundsType);
 
 };
 

@@ -26,7 +26,7 @@
   *
   ****************************************************************************/
 
-#include <Windows.h> // DWORD, HANDLE
+#include <Windows.h> // DWORD, HANDLE, CRITICAL_SECTION
 
   /*
   THREAD_PRIORITY_LOWEST

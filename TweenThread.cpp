@@ -33,7 +33,7 @@
 #include "MathUtils.hpp"
 #include "MemoryUtils.hpp"
 
-#include <Windows.h> // DWORD
+#include <Windows.h> // THREAD_PRIORITY_BELOW_NORMAL
 
 #if EXTREME_DEBUGGING
   //HighResolutionTimer hrTweenTimer;
@@ -96,11 +96,11 @@ TweenThread::~TweenThread()
 error_t    TweenThread::Initialize(void* pObject1)
 {
 	error_t err;
-	void** pPageTable;
-	DWORD   dwBytesToAlign = 16;
-	DWORD   dwPageSize = m_dwFrameSize;
-	DWORD   dwNumPages = 2 + 2 * m_dwMaximumFrames;
-	/*    DWORD   dwNumPages     = 4 * m_dwMaximumFrames; /* one frameset for each of:
+	void**  pPageTable;
+	dword_t dwBytesToAlign = 16;
+	dword_t dwPageSize = m_dwFrameSize;
+	dword_t dwNumPages = 2 + 2 * m_dwMaximumFrames;
+	/*    dword_t   dwNumPages     = 4 * m_dwMaximumFrames; /* one frameset for each of:
 															PlainFrames
 															TweenFrames
 															PlainFramesThreadside
@@ -149,7 +149,7 @@ error_t    TweenThread::Initialize(void* pObject1)
  * interpolated frames between Object1 and Object2.
  *
  ****************************************************************************/
-error_t TweenThread::ScheduleTween(const DWORD dwFrames,
+error_t TweenThread::ScheduleTween(const dword_t dwFrames,
 	void* pObject1,
 	void* pObject2)
 {

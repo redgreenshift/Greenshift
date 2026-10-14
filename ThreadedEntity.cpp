@@ -34,7 +34,7 @@
 #endif
 
 #include <stdexcept>
-#include <Windows.h> // DWORD
+#include <Windows.h> // DWORD, LPVOID, InitializeCriticalSection
 
   /****************************************************************************
    *

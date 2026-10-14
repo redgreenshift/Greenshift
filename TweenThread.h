@@ -29,16 +29,14 @@
 
 #include "ThreadedEntity.h"
 
-#include <Windows.h> // DWORD (Parent uses HANDLE)
-
 
 typedef struct tagTWEENDESCRIPTION
 {
-	DWORD    dwFrameSize;        /* number of bytes per frame */
-	DWORD    dwMaximumFrames;    /* maximum number of frames */
-	DWORD    dwDefaultFrames;    /* default number of frames */
-	DWORD    dwTweenFrameRepeatValue;    /* number of times to repeat each tween frame */
-	DWORD    dwPlainFrameRepeatValue;    /* number of times to repeat each normal frame */
+	dword_t    dwFrameSize;        /* number of bytes per frame */
+	dword_t    dwMaximumFrames;    /* maximum number of frames */
+	dword_t    dwDefaultFrames;    /* default number of frames */
+	dword_t    dwTweenFrameRepeatValue;    /* number of times to repeat each tween frame */
+	dword_t    dwPlainFrameRepeatValue;    /* number of times to repeat each normal frame */
 	void* pData;                /* extra data used by derived classes */
 } TWEENDESCRIPTION;
 
@@ -69,7 +67,7 @@ public:
 
 	error_t         Initialize(void* pObject1);
 
-	error_t         ScheduleTween(const DWORD dwFrames,
+	error_t         ScheduleTween(const dword_t dwFrames,
 		void* pObject1,
 		void* pObject2);
 
@@ -82,11 +80,11 @@ protected:
 	 * the function that does all the work,
 	 * derived classes only need to define this
 	 */
-	virtual void    PrerenderFrames(const DWORD dwFrames,
+	virtual void    PrerenderFrames(const dword_t dwFrames,
 		void** pFrames,
 		void* pObject1,
 		void* pObject2) = 0;
-	virtual void    ExperimentalPrerenderFrames(const DWORD dwFrames,
+	virtual void    ExperimentalPrerenderFrames(const dword_t dwFrames,
 		void** pFrames,
 		void* pFirstFrame,
 		void* pLastFrame) = 0;
@@ -95,9 +93,9 @@ protected:
 		void* pObject1) = 0;
 
 
-	inline void     SwapDWORD(DWORD* pDWORD1, DWORD* pDWORD2)
+	inline void     SwapDWORD(dword_t* pDWORD1, dword_t* pDWORD2)
 	{
-		DWORD   dwTemp;
+		dword_t   dwTemp;
 
 		dwTemp = *pDWORD1;
 		*pDWORD1 = *pDWORD2;
@@ -122,11 +120,11 @@ private:
 	//		-- The dwFrames argument is **ALWAYS** 0 right now.
 	// Typically, m_dwMaximumFrames and m_dwDefaultFrames will be the same.
 	// This allows for the possibility to have a variable number of frames.
-	const DWORD     m_dwMaximumFrames;
-	const DWORD     m_dwDefaultFrames;
-	const DWORD     m_dwTweenFrameRepeatValue;
-	const DWORD     m_dwPlainFrameRepeatValue;
-	const DWORD     m_dwFrameSize;
+	const dword_t     m_dwMaximumFrames;
+	const dword_t     m_dwDefaultFrames;
+	const dword_t     m_dwTweenFrameRepeatValue;
+	const dword_t     m_dwPlainFrameRepeatValue;
+	const dword_t     m_dwFrameSize;
 
 	/*
 	 * 0 = loop on delta 1, ready to schedule tween
@@ -141,14 +139,14 @@ private:
 		Tweening = 2,					// Using the new interpolation data (tween once then return to state 0)
 	} m_state = TweenState::Serving_NoPendingWork;
 
-	DWORD           m_dwCurrentFrame;
-	DWORD           m_dwPlainRepetition;
-	DWORD           m_dwTweenRepetition;
+	dword_t           m_dwCurrentFrame;
+	dword_t           m_dwPlainRepetition;
+	dword_t           m_dwTweenRepetition;
 
-	DWORD           m_dwNumPlainFrames;
-	DWORD           m_dwNumTweenFrames;
-	DWORD           m_dwNumTweenFramesThreadside;
-	DWORD           m_dwNumPlainFramesThreadside;
+	dword_t           m_dwNumPlainFrames;
+	dword_t           m_dwNumTweenFrames;
+	dword_t           m_dwNumTweenFramesThreadside;
+	dword_t           m_dwNumPlainFramesThreadside;
 
 	void** m_pPlainFrames;
 	void** m_pTweenFrames;

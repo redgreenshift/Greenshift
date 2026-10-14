@@ -20,12 +20,16 @@
  */
 // CONSOLE -- old, this file is how I started testing the Expression class in a console app
 // this is how I tested the code before building the Windows app harness, probably still works as a "scratch console".
-#include "Project Greenshift.h"
+
+#include "MyDictionary.h"
 #include "Expression.h"
-#include <float.h>
+
+#include <cstdio>
+//#include <float.h>
+
+
 #define printError(num)        printf("%s\n", ErrorString(num)) // REVIEW: I don't understand where errorStrings[num] came from... ErrorString(num) is what I expected;
 																//I might have been prototyping a different idea and never completed the idea.
-#include "MyDictionary.h"
 
 
 int mainHack(void)
