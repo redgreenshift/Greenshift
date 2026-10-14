@@ -21,16 +21,26 @@
 #include "pch.h"
 #include "..\Project Greenshift.h"
 #include "CppUnitTest.h"
+#include "..\Association.h"
+#include "..\CollectionsAbstract.h"
+#include "..\Expression.h"
 #include "..\MyDictionary.h"
 #include "..\PhaseFunction.h"
 #include "..\TextUtils.hpp"
 #include "..\Diagnostics.cpp"
 #include "..\InsertionOrderedMap.hpp"
 #include "..\StaticFifoSet.hpp"
+
+#include <algorithm>
 #include <array>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <optional>
 #include <random>
 #include <string>
+#include <string.h>
+#include <tuple>
 #include <vector>
 
 #include "..\MersenneTwister.h"
@@ -38,7 +48,7 @@
 value_t My_abs(value_t nValue);
 value_t My_wrap(value_t nValue);
 
-value_t My_mag(value_t nValue)
+static value_t My_mag(value_t nValue)
 {
 	return My_abs(nValue);
 }
@@ -99,7 +109,7 @@ namespace GreenshiftUnitTest
 		{
 			FiniteSet<const char*, 10> set;
 
-			Assert::AreEqual(set.Size(), 0ul, L"Failed to initialize to empty.");
+			Assert::AreEqual(set.Size(), 0u, L"Failed to initialize to empty.");
 
 			set.Add("1");
 			set.Add("2");
@@ -111,16 +121,16 @@ namespace GreenshiftUnitTest
 			set.Add("8");
 			set.Add("9");
 			set.Add("10");
-			Assert::AreEqual(set.Size(), 10ul, L"Failed to add all values.");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to add all values.");
 
 			set.Add("11");
-			Assert::AreEqual(set.Size(), 10ul, L"Failed to maintain specified size");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to maintain specified size");
 			Assert::IsTrue(set.Includes("11"), L"Failed to add the new value");
 			Assert::IsTrue(set.Includes("2"), L"Failed to purge oldest value first");
 			Assert::IsFalse(set.Includes("1"), L"Failed to purge oldest value first");
 
 			set.Add("12");
-			Assert::AreEqual(set.Size(), 10ul, L"Failed to maintain specified size");
+			Assert::AreEqual(set.Size(), 10u, L"Failed to maintain specified size");
 			Assert::IsTrue(set.Includes("12"), L"Failed to add the new value");
 			Assert::IsFalse(set.Includes("2"), L"Failed to purge oldest value first");
 		}

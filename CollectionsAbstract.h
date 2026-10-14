@@ -31,14 +31,10 @@
   *
   ****************************************************************************/
 
-#ifndef _CollectionsAbstract_H_
-#define _CollectionsAbstract_H_
-
 #include "MathUtils.hpp"
 #include "MemoryUtils.hpp"
 
 #include <algorithm>
-#include <Windows.h> // DWORD
 
 /**
  * @brief Abstract interface defining essential collection operations.
@@ -92,8 +88,8 @@ template<class DataType, DataType InvalidValue>
 class Collection
 {
 protected:
-	DWORD           m_dwNumElements;   /* number of elements stored */
-	DWORD           m_dwCapacity;      /* num of allocated spaces in array */
+	dword_t         m_dwNumElements;   /* number of elements stored */
+	dword_t         m_dwCapacity;      /* num of allocated spaces in array */
 	DataType*		m_pArray;          /* data stored in the Collection */
 	bool            m_bGrowable;       /* true if m_pArray may be resized,
 										* false if has a fixed size */
@@ -103,7 +99,7 @@ protected:
 										*/
 
 
-	inline DWORD    Capacity(void) { return m_dwCapacity; };
+	inline dword_t    Capacity(void) const { return m_dwCapacity; };
 
 
 public:
@@ -179,7 +175,7 @@ public:
 	 ****************************************************************************/
 	virtual void    WipeContents(void)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		/*
 		 * if should free the elements, do so before delete[]'ing the array
@@ -205,7 +201,7 @@ public:
 	 * Size - return the number of elements stored in Collection
 	 *
 	 ****************************************************************************/
-	virtual DWORD   Size(void)
+	virtual dword_t   Size(void)
 	{
 		return m_dwNumElements;
 	};
@@ -228,7 +224,7 @@ public:
 	virtual error_t Add(DataType inValue)
 	{
 		error_t err;
-		DWORD   i = MAXDWORD;
+		dword_t i = 0xFFFFFFFF; //  MAXDWORD;
 
 		if (!IsValid(inValue))
 			return ERR_NULL;
@@ -268,7 +264,7 @@ public:
 	virtual error_t Remove(DataType inValue)
 	{
 		error_t err;
-		DWORD   i;
+		dword_t i;
 
 		/*
 		 * verify inValue is something that could be stored in collection
@@ -333,9 +329,9 @@ protected:
 	 *                increase the size of the internal array
 	 *
 	 ****************************************************************************/
-	virtual DWORD   GrowSize(void)
+	virtual dword_t   GrowSize(void)
 	{
-		return std::max(Capacity(), 2ul); // Double the size, but ensure a minimum grow
+		return std::max(Capacity(), 2u); // Double the size, but ensure a minimum grow
 	};
 
 	/****************************************************************************
@@ -380,9 +376,9 @@ protected:
 	 ****************************************************************************/
 	virtual error_t MoveContents(DataType* pNewArray,
 		DataType* pOldArray,
-		const DWORD dwNewSize)
+		const dword_t dwNewSize)
 	{
-		DWORD    i;
+		dword_t    i;
 
 		/*
 		 * copy all the existing elements to the new array
@@ -416,10 +412,10 @@ protected:
 	 *        return value != SUCCESS means inValue is not in the Collection
 	 *
 	 ************************************************************************/
-	virtual error_t IndexOf(DataType inValue, DWORD* outIndex)
+	virtual error_t IndexOf(DataType inValue, dword_t* outIndex)
 	{
 		error_t err;
-		DWORD   i;
+		dword_t   i;
 
 
 		for (i = 0; i < Capacity(); i++)
@@ -451,11 +447,11 @@ protected:
 	 * Grow - increase the size of the internal array
 	 *
 	 ****************************************************************************/
-	virtual error_t Grow(const DWORD dwGrowAtLeast = 0)
+	virtual error_t Grow(const dword_t dwGrowAtLeast = 0)
 	{
 		error_t     err;
-		DWORD       i;
-		DWORD       dwNewSize;
+		dword_t       i;
+		dword_t       dwNewSize;
 		DataType* tmpArray;
 
 		dwNewSize = Capacity() + max(GrowSize(), dwGrowAtLeast);
@@ -525,13 +521,6 @@ public:
 
 		return SUCCESS;
 	};
-
-	// TEMPORARY measure to assist transitioning away from Windows.h types
-	// Delete this function at the earliest convenience.
-	error_t AsArray(DataType** outArray, DWORD* outNumElements)
-	{
-		return AsArray(outArray, reinterpret_cast<dword_t*>(outNumElements));
-	}
 };
 
 
@@ -622,17 +611,17 @@ public:
 	};
 
 protected:
-	virtual    DWORD        Capacity(void) = 0;
+	virtual    dword_t        Capacity(void) = 0;
 
 public:
-	virtual DWORD        Size(void) { return m_dwNumElements; };
-	virtual bool        Includes(DataType inValue) = 0;
+	virtual dword_t        Size(void) { return m_dwNumElements; };
+	virtual bool           Includes(DataType inValue) = 0;
 	virtual error_t        Add(DataType inValue) = 0;
 	virtual error_t        Remove(DataType inValue) = 0;
 
 	virtual void        WipeContents(void) = 0;
 
-	virtual DWORD    AsArray(DataType** outArray) = 0;
+	virtual dword_t    AsArray(DataType** outArray) = 0;
 
 protected:
 	//    virtual bool    IsValid( DataType inValue );
@@ -640,18 +629,14 @@ protected:
 	{
 		return inValue1 == inValue2;
 	};
-	//    virtual    DWORD    GrowSize(void);
+	//    virtual    dword_t    GrowSize(void);
 	//    virtual error_t    FullCheck( void );
 	//    virtual bool    ShouldGrow( void );
 	//    virtual error_t    MoveContents( DataType *pNewArray,
 	//                                  DataType *pOldArray,
-	//                                  const DWORD dwNewSize );
-	//    virtual error_t    IndexOf( DataType inValue, DWORD *outIndex );
+	//                                  const dword_t dwNewSize );
+	//    virtual error_t    IndexOf( DataType inValue, dword_t *outIndex );
 	//    virtual error_t    Grow( void );
 };
 #endif
-
-
-
-#endif  /* _CollectionsAbstract_H_ */
 

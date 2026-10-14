@@ -208,8 +208,8 @@ public:
 	error_t    Import(MyDictionary<DataType>& srcMyDictionary)
 	{
 		error_t    err;
-		DWORD    i;
-		DWORD    dwNumElements;
+		dword_t    i;
+		dword_t    dwNumElements;
 		Association<DataType>** pArray = nullptr;
 
 		err = srcMyDictionary.AsArray(&pArray, &dwNumElements);

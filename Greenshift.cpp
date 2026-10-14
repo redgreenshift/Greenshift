@@ -498,7 +498,7 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 
 	{
 		Association<mychar_t*>** pMainConfig;
-		DWORD   dwSize = 0;
+		dword_t   dwSize = 0;
 
 		if ((err = m_dMainConfig.AsArray(&pMainConfig, &dwSize)) == SUCCESS
 			&& (m_pValues = new value_t[dwSize]) != NULL)
@@ -584,8 +584,8 @@ DumpToFile("error.txt", "Entering Greenshift::Initialize()", "\n");
 error_t    Greenshift::LoadConfigs(void)
 {
 	error_t err = SUCCESS;
-	DWORD   i;
-	DWORD   dwSize;
+	dword_t   i;
+	dword_t   dwSize;
 	Association<mychar_t*>** pArray = NULL;
 	char    strModulePath[MAX_PATH];
 	char    strRoot[MAX_PATH];

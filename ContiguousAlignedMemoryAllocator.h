@@ -47,6 +47,8 @@
 
 #include "Project Greenshift.h"
 
+#include <memory>
+
 /**
  * @class ContiguousAlignedMemory
  * @brief A static utility class for allocating a single, contiguous block of memory for multiple pages.
