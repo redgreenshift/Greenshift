@@ -305,6 +305,12 @@ public:
 		const DWORD dwBitDepth,
 		const TWEENDESCRIPTION& tween_description);
 	virtual ~BitCanvas();
+	// BitCanvas owns substantial pixel memory.
+	// Copy and move semantics are intentionally disabled.
+	BitCanvas(const BitCanvas&) = delete; // no copy ctor
+	BitCanvas& operator=(const BitCanvas&) = delete; // no assignment
+	BitCanvas(BitCanvas&&) = delete; // no move ctor
+	BitCanvas& operator=(BitCanvas&&) = delete; // no move assignment
 
 	/*
 	 * instance creation

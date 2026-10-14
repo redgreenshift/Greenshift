@@ -536,7 +536,6 @@ namespace GreenshiftUnitTest
 				utf8_to_wstring(original));
 		}
 
-
 		TEST_METHOD(UTF8_EQUALS_REFERENCES_EmbeddedNulAndEmoji)
 		{
 			// Exercise several tricky cases simultaneously:

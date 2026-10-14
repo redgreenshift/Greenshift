@@ -27,13 +27,14 @@
   *
   ****************************************************************************/
 
-#ifndef _DeltaField_H_
-#define _DeltaField_H_
-
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "MersenneTwister.h"
-#include "MyDictionary.h"
 #include "PhaseFunction.h"
+
+#if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
+#endif
 
 
 /**
@@ -87,7 +88,4 @@ private:
 	bool                    m_bEdgeWrap = false;
 	bool                    m_bZoom = false;
 };
-
-
-#endif  /* _DeltaField_H_ */
 

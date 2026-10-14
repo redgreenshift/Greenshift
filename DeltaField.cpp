@@ -28,10 +28,14 @@
 
 #include "DeltaField.h"
 
-#include "Diagnostics.hpp"
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
+#include "MemoryUtils.hpp"
 #include "PhaseFunction.h"
+
+#if EXTREME_DEBUGGING
+#include "Diagnostics.hpp"
+#endif
 
 #include <cmath>
 
