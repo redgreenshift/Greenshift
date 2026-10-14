@@ -27,17 +27,14 @@
   *
   ****************************************************************************/
 
-#ifndef _FilingClerk_H_
-#define _FilingClerk_H_
-
 #include "MyDictionary.h"
 
-  //#include <fstream.h>
+//#include <fstream.h>
 #include <io.h>
 #include <cctype>  /* for tolower */
 #include <cstdio>  /* for FILE access */
 #include <string.h>
-#include <Windows.h> // DWORD
+
 
 #define WINDOWS_PATH_DELIMITER  "\\"
 #define UNIX_PATH_DELIMITER     "/"
@@ -136,8 +133,8 @@ public:
 	/*
 	 * load config files
 	 */
-	error_t     LoadConfig(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated, bool handleColorMaps = false);
-	error_t     LoadColorMaps(MyDictionary<mychar_t*>** ppConfig, DWORD* inoutNumAllocated);
+	error_t     LoadConfig(MyDictionary<mychar_t*>** ppConfig, dword_t* inoutNumAllocated, bool handleColorMaps = false);
+	error_t     LoadColorMaps(MyDictionary<mychar_t*>** ppConfig, dword_t* inoutNumAllocated);
 	error_t     GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary, MyDictionary<MyDictionary<mychar_t*>*>* outExtra = NULL);
 	error_t     GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDictionary);
 
@@ -227,7 +224,4 @@ protected:
 	char* GetNextFile(void);
 	char* EndSearch(void);
 };
-
-
-#endif    /* _FilingClerk_H_ */
 

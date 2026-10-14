@@ -151,10 +151,10 @@ protected:
 		 */
 	value_t                     m_nBASS;                /* BASS */
 
-	DWORD                       m_dwNumDeltaFields;        /* size of the deltafield array */
-	DWORD                       m_dwNumWaveShapes;        /* size of the waveshape array */
-	DWORD                       m_dwNumParticles;        /* size of the particle array */
-	DWORD                       m_dwNumPalettes;        /* size of the palette array */
+	dword_t                     m_dwNumDeltaFields;     /* size of the deltafield array */
+	dword_t                     m_dwNumWaveShapes;      /* size of the waveshape array */
+	dword_t                     m_dwNumParticles;       /* size of the particle array */
+	dword_t                     m_dwNumPalettes;        /* size of the palette array */
 
 	MyDictionary<mychar_t*>* m_pDeltaFieldConfigs;
 	MyDictionary<mychar_t*>* m_pWaveShapeConfigs;

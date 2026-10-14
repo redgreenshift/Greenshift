@@ -30,6 +30,7 @@
 
 #include "Diagnostics.hpp"
 #include "MyDictionary.h"
+#include "MemoryUtils.hpp"
 
 #include <cctype>
 #include <cstdlib> /* for tolower and _MAX_PATH */
@@ -37,7 +38,7 @@
 #include <io.h>
 #include <malloc.h>
 #include <string.h>
-#include <Windows.h> // BYTE, DWORD
+
 
   /****************************************************************************
    *
@@ -178,7 +179,7 @@ int FilingClerk::GetChar(void)
 
 	if ((c = getc(m_pFile)) != EOF)
 	{
-		m_pTokenBuffer[m_nUsedLength++] = static_cast<BYTE>(c);
+		m_pTokenBuffer[m_nUsedLength++] = static_cast<byte_t>(c);
 		m_pTokenBuffer[m_nUsedLength] = '\0';
 	}
 
@@ -634,13 +635,13 @@ FilingClerk::token_t    FilingClerk::GetToken(void)
  ****************************************************************************/
 error_t FilingClerk::LoadConfig(
 	MyDictionary<mychar_t*>** ppConfig,
-	DWORD* inoutNumAllocated,
+	dword_t* inoutNumAllocated,
 	bool handleColorMaps /* = false */)
 {
 	error_t				err = SUCCESS;
 	char*				strFile = NULL;
-	DWORD				nConfig = 0;
-	DWORD				nNewConfigs = 0; // number of new configs found in current folder
+	dword_t				nConfig = 0;
+	dword_t				nNewConfigs = 0; // number of new configs found in current folder
 	MyDictionary<mychar_t*>* pTmpConfig = NULL;
 
 	if (ppConfig == NULL || inoutNumAllocated == NULL)
@@ -648,7 +649,7 @@ error_t FilingClerk::LoadConfig(
 
 	// if (*inoutNumAllocated > 0) then we're currently loading the G-Force Configs after the Greenshift configs
 	// This doesn't result in duplicated configs, or rather, if configs are duplicated between folders, then duplicates are expected.
-	DWORD const nOldConfigs = *inoutNumAllocated; // number of old configs passed in
+	dword_t const nOldConfigs = *inoutNumAllocated; // number of old configs passed in
 
 	strFile = GetFirstFile("*.*");
 
@@ -664,7 +665,7 @@ error_t FilingClerk::LoadConfig(
 
 	if (nNewConfigs > 0)
 	{
-		DWORD nTotalConfigs = nNewConfigs + nOldConfigs; // calculate total needed
+		dword_t nTotalConfigs = nNewConfigs + nOldConfigs; // calculate total needed
 		/*
 		 * allocate space for nTotalConfigs Dictionaries
 		 */
@@ -782,7 +783,7 @@ error_t FilingClerk::LoadConfig(
  ****************************************************************************/
 error_t FilingClerk::LoadColorMaps(
 	MyDictionary<mychar_t*>** ppConfig,
-	DWORD* inoutNumAllocated)
+	dword_t* inoutNumAllocated)
 {
 	return LoadConfig(ppConfig, inoutNumAllocated, true /*handleColorMaps*/);
 }
@@ -803,7 +804,7 @@ error_t FilingClerk::GetColorMap(mychar_t* id, MyDictionary<mychar_t*>* outMyDic
 	char* strToken = NULL;
 	char* strTmp = NULL;
 	enum { look_for_red, look_for_green, look_for_blue } state = look_for_red;
-	DWORD    nEntryNumber = 0;
+	dword_t nEntryNumber = 0;
 
 
 	//    return FAILURE;  /* hack to get it to work */
@@ -1180,7 +1181,8 @@ error_t    FilingClerk::GetData(mychar_t* id, MyDictionary<mychar_t*>* outMyDict
 				 */
 				strToken[strlen(strToken) - 1] = '\0';
 				strToken++;
-				__fallthrough;
+				/* FALLTHROUGH */
+				[[fallthrough]];
 			case tokID:
 			default:
 

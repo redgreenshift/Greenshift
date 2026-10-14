@@ -26,7 +26,7 @@
   *
   ****************************************************************************/
 
-#include <Windows.h>
+#include <Windows.h> // DWORD
 
 #include <string.h>
 #include <cstdlib>
@@ -949,8 +949,8 @@ BOOL    WindowDevice::MessageHandler(HWND hWindow, UINT message, WPARAM wParam, 
 	}
 	//            return 0;
 
-		/* FALLTHROUGH! */
-		__fallthrough;
+		/* FALLTHROUGH */
+		[[fallthrough]];
 
 	case WM_KEYDOWN:
 

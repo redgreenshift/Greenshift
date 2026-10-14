@@ -303,7 +303,7 @@ void* TweenThread::GetFrame(void)
 		m_state = TweenState::Tweening;
 		LeaveCS();
 		/* FALLTHROUGH */
-		__fallthrough;
+		[[fallthrough]];
 
 	case TweenState::Tweening:	// The interpolation/tween motion itself between two fields.
 
@@ -330,7 +330,7 @@ void* TweenThread::GetFrame(void)
 							  * so let frame 1 go next
 							  */
 		/* FALLTHROUGH */
-		__fallthrough;
+		[[fallthrough]];
 
 	default:
 		return m_pPlainFrames[0];
