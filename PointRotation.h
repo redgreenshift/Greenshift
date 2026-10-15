@@ -27,9 +27,6 @@
   *
   ****************************************************************************/
 
-#ifndef _PointRotation_H_
-#define _PointRotation_H_
-
 #include <cmath>
 
   /****************************************************************************
@@ -164,6 +161,4 @@ protected:
 	value_t h;
 	value_t i;
 };
-
-#endif  /* _PointRotation_H_ */
 

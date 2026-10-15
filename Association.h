@@ -27,9 +27,6 @@
   *
   ****************************************************************************/
 
-#ifndef _Association_H_
-#define _Association_H_
-
 #include "MemoryUtils.hpp"
 
 #include <cstring> // strlen
@@ -189,6 +186,4 @@ protected:
 
 	//char        m_strDebugKey[256];
 };
-
-#endif  /* _Association_H_ */
 

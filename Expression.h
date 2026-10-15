@@ -32,9 +32,6 @@
    *
    */
 
-#ifndef _Expression_H_
-#define _Expression_H_
-
 #include "MyDictionary.h"
 
 #include <memory>
@@ -254,7 +251,7 @@ typedef struct tagEXPRESSIONDESCRIPTION
 	const char* strName;    /* the name of the expression */
 	//    union {
 	value_t             value;
-	//        DWORD               dwValue;
+	//        dword_t               dwValue;
 	//    };
 
 	union {
@@ -1486,6 +1483,4 @@ public:
 #if EXTREME_DEBUGGING
 void DumpToFile(const char* fileName, EXPRESSIONDESCRIPTION* pED, const char* anotherString = "");
 #endif
-
-#endif /* _Expression_H_ */
 

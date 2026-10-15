@@ -26,8 +26,7 @@
   *
   ****************************************************************************/
 
-  //ESP reference instructions are larger than EBP references.
-
+//ESP reference instructions are larger than EBP references.
 
 #include "BitCanvas.h"
 
@@ -36,10 +35,10 @@
 #include "ContiguousAlignedMemoryAllocator.h"
 #include "DeltaField.h"
 #include "DeltaTween.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "MathUtils.hpp"
 #include "MemoryUtils.hpp"
-#include "MyDictionary.h"
 #include "Palette.h"
 #include "TweenThread.h"
 
@@ -58,7 +57,10 @@
 //#include <Regstr.h>
 //#include <Sqlole.h>
 //#include <Wininet.h>
-#include <Windows.h> // DWORD
+
+//#include <complex>
+//_INFCODE
+//_NANCODE
 
 /*
  * extra size should be multiple of DWORD so generic copy last line
@@ -84,7 +86,7 @@
    /*
 	* HACK to get OpenGL to work
 	*/
-void* BitCanvas::GetPixelMemory(DWORD* nWidth, DWORD* nHeight, DWORD* nPixelFormat)
+void* BitCanvas::GetPixelMemory(dword_t* nWidth, dword_t* nHeight, dword_t* nPixelFormat)
 {
 
 	*nWidth = BufferWidth();
@@ -95,10 +97,6 @@ void* BitCanvas::GetPixelMemory(DWORD* nWidth, DWORD* nHeight, DWORD* nPixelForm
 }
 
 
-//#include <complex>
-//_INFCODE
-//_NANCODE
-
 /****************************************************************************
  *
  * New - creates a new BitCanvas with the specified arguments
@@ -106,21 +104,21 @@ void* BitCanvas::GetPixelMemory(DWORD* nWidth, DWORD* nHeight, DWORD* nPixelForm
  * pre: *outBitCanvas is not NULL
  *
  ****************************************************************************/
-error_t    BitCanvas::New( //const DWORD dwWidth,
-	//const DWORD dwHeight,
-	//const DWORD dwBitDepth,
+error_t    BitCanvas::New( //const dword_t dwWidth,
+	//const dword_t dwHeight,
+	//const dword_t dwBitDepth,
 	BitCanvas** outBitCanvas,
 	MyDictionary<mychar_t*>* inConfig,
 	MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 	MyDictionary<value_t*>* inValues)
 {
 	error_t  err = SUCCESS;
-	DWORD    dwWidth;
-	DWORD    dwHeight;
-	DWORD    dwBitDepth;
-	DWORD    dwByteDepth;
-	DWORD    dwLCM;
-	DWORD    dwDWORDPitch;
+	dword_t  dwWidth;
+	dword_t  dwHeight;
+	dword_t  dwBitDepth;
+	dword_t  dwByteDepth;
+	dword_t  dwLCM;
+	dword_t  dwDWORDPitch;
 	PIXELMAPDESCRIPTION pmd{};
 	TWEENDESCRIPTION    tween_description{};
 	value_t nWidth, nHeight, nBitDepth;
@@ -144,22 +142,22 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 	//    dwHeight   = LCLIP( atol( inConfig->GetValue( "visible_height", "360" )) );
 	//    dwBitDepth = LCLIP( atol( inConfig->GetValue( "calculated_depth", "8" )) );
 
-	dwBitDepth = (DWORD)Expression::Evaluate(inConfig->GetValue("canvas_depth"), nBitDepth, inValues, inGlobals);
+	dwBitDepth = (dword_t)Expression::Evaluate(inConfig->GetValue("canvas_depth"), nBitDepth, inValues, inGlobals);
 	nBitDepth = (value_t)dwBitDepth;
 
-	dwWidth = (DWORD)Expression::Evaluate(inConfig->GetValue("canvas_width"), nWidth, inValues, inGlobals);
+	dwWidth = (dword_t)Expression::Evaluate(inConfig->GetValue("canvas_width"), nWidth, inValues, inGlobals);
 	nWidth = (value_t)dwWidth;
 	if (inValues != NULL)
 	{
 		pValue = inValues->GetValue("buffer_width", &nWidth);
 		if (*pValue < nWidth)
 		{
-			dwWidth = (DWORD)*pValue;
+			dwWidth = (dword_t)*pValue;
 			nWidth = (value_t)dwWidth;
 		}
 	}
 
-	dwHeight = (DWORD)Expression::Evaluate(inConfig->GetValue("canvas_height"), nHeight, inValues, inGlobals);
+	dwHeight = (dword_t)Expression::Evaluate(inConfig->GetValue("canvas_height"), nHeight, inValues, inGlobals);
 	dwHeight -= dwHeight % 2; /* make the height even */
 	nHeight = (value_t)dwHeight;
 	if (inValues != NULL)
@@ -167,7 +165,7 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 		pValue = inValues->GetValue("buffer_height", &nHeight);
 		if (*pValue < nHeight)
 		{
-			dwHeight = (DWORD)*pValue;
+			dwHeight = (dword_t)*pValue;
 			dwHeight -= dwHeight % 2; /* make the height even */
 			nHeight = (value_t)dwHeight;
 		}
@@ -207,7 +205,7 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 
 	dwWidth = dwWidth - (dwWidth % dwLCM);
 
-	dwDWORDPitch = dwWidth * dwByteDepth / sizeof(DWORD);
+	dwDWORDPitch = dwWidth * dwByteDepth / sizeof(dword_t);
 
 
 	/*
@@ -303,9 +301,9 @@ error_t    BitCanvas::New( //const DWORD dwWidth,
 	 *  dwords_to_cache   = (bytes_to_cache - 1) / bytes_per_dword + 1
 	 *
  ****************************************************************************/
-BitCanvas::BitCanvas(const DWORD dwWidth,
-	const DWORD dwHeight,
-	const DWORD dwBitDepth,
+BitCanvas::BitCanvas(const dword_t dwWidth,
+	const dword_t dwHeight,
+	const dword_t dwBitDepth,
 	const TWEENDESCRIPTION& tween_description) :
 	m_dwBitDepth(dwBitDepth),
 	m_dwBufferWidth(dwWidth),
@@ -315,7 +313,7 @@ BitCanvas::BitCanvas(const DWORD dwWidth,
 	m_hTransitionTable(tween_description),
 	m_dwBufferByteLength(dwWidth* dwHeight* dwBitDepth / BITS_PER_BYTE),
 	m_dwBufferLength(dwWidth* dwHeight),
-	m_dwCacheLength(((dwWidth + 1)* dwBitDepth / BITS_PER_BYTE - 1) / sizeof(DWORD) + 1),
+	m_dwCacheLength(((dwWidth + 1)* dwBitDepth / BITS_PER_BYTE - 1) / sizeof(dword_t) + 1),
 	m_nLineWidthFactor(dwWidth / 640.0f)
 {
 	/*
@@ -561,11 +559,11 @@ void BitCanvas::SetOptimizationLevel(const opt_level_t enumOptLevel)
  ****************************************************************************/
 error_t BitCanvas::Initialize(void)
 {
-	const    DWORD        nBytes_to_Align = 16;
-	const    DWORD        nBytes_per_Pixel = BitDepth() / BITS_PER_BYTE;
-	const    DWORD        nBuffer_Length = BufferWidth() * BufferHeight();
-	const    DWORD        nCache_Size = m_dwCacheLength * sizeof(DWORD);
-	const    DWORD        nBuffer_Size = nBuffer_Length * nBytes_per_Pixel
+	const    dword_t        nBytes_to_Align = 16;
+	const    dword_t        nBytes_per_Pixel = BitDepth() / BITS_PER_BYTE;
+	const    dword_t        nBuffer_Length = BufferWidth() * BufferHeight();
+	const    dword_t        nCache_Size = m_dwCacheLength * sizeof(dword_t);
+	const    dword_t        nBuffer_Size = nBuffer_Length * nBytes_per_Pixel
 		+ nCache_Size;
 
 #ifdef USE_BITMAP
@@ -805,18 +803,18 @@ void BitCanvas::CopyTo(const DWORD nWidth,
  *
  ****************************************************************************/
 void BitCanvas::CopyTo(void* lpSurface,
-	const DWORD nWidth,
-	const DWORD nHeight,
-	const DWORD nPitch,
-	const DWORD nPixelFormat)
+	const dword_t nWidth,
+	const dword_t nHeight,
+	const dword_t nPitch,
+	const dword_t nPixelFormat)
 {
-	const    DWORD    nPixelWidth = nPitch / (nPixelFormat + 1);
-	const    DWORD    nDeadSpace = nPixelWidth - m_dwBufferWidth;
-	const    DWORD    nStartOffset = (
+	const    dword_t    nPixelWidth = nPitch / (nPixelFormat + 1);
+	const    dword_t    nDeadSpace = nPixelWidth - m_dwBufferWidth;
+	const    dword_t    nStartOffset = (
 		nPixelWidth * (nHeight - m_dwBufferHeight) +
 		(nWidth - m_dwBufferWidth)
 		) >> 1;
-	void* lpSurfaceStart = ((BYTE*)lpSurface) +
+	void* lpSurfaceStart = ((byte_t*)lpSurface) +
 		nStartOffset * (nPixelFormat + 1);
 
 
@@ -1021,7 +1019,7 @@ void BitCanvas::PlotLineBresenham(
 	long y0,
 	const long x1,
 	long y1,
-	const BYTE color)
+	const byte_t color)
 {
 	static const long buffer_width = BufferWidth();
 	static const long buffer_length = buffer_width * (BufferHeight() - 1);
@@ -1094,7 +1092,7 @@ void BitCanvas::PlotLineBresenhamThick(
 	long x1,
 	long y1,
 	const long line_width,
-	const BYTE color)
+	const byte_t color)
 {
 	static const long buffer_width = BufferWidth();
 	static const long buffer_length = buffer_width * (BufferHeight() - 1);
@@ -1298,7 +1296,7 @@ void    BitCanvas::DrawLine(const value_t x1,
 
 	//    long lWidth;
 
-	BYTE q;
+	byte_t q;
 
 	/*
 	 * Don't try to draw lines that don't even enter the screen
@@ -1316,7 +1314,7 @@ void    BitCanvas::DrawLine(const value_t x1,
 	else if (color <= 0.0f)
 		q = 0;
 	else
-		q = (BYTE)(color * 255.0f + 0.5f);
+		q = (byte_t)(color * 255.0f + 0.5f);
 
 #ifndef FORCE_LINE_WIDTH_TO_1
 	if (line_width >= 1.5f)
@@ -1383,14 +1381,14 @@ void    BitCanvas::PlotDot(const value_t x,
 	long    ipx;
 	long    slice_width;
 
-	BYTE    q;
+	byte_t    q;
 
 	if (color >= 1.0f)
 		q = 255;
 	else if (color <= 0.0f)
 		q = 0;
 	else
-		q = (BYTE)(color * 255.0f + 0.5f);
+		q = (byte_t)(color * 255.0f + 0.5f);
 
 
 #ifndef FORCE_LINE_WIDTH_TO_1
@@ -1424,7 +1422,7 @@ void    BitCanvas::PlotDot(const value_t x,
 					slice_width = (ipx << 1) + dot_odd; /* this looks idiotic, but that's what makes it work */
 				}
 
-			this->PutPixel((lX - ipx), (lY + lpy), (WORD)slice_width, q);
+			this->PutPixel((lX - ipx), (lY + lpy), (word_t)slice_width, q);
 		}
 	}
 	else
@@ -1548,7 +1546,7 @@ error_t    BitCanvas::SetPalette(Palette* pPalette1, Palette* pPalette2, const v
   * BitCanvas8
   *
   ****************************************************************************/
-BitCanvas8::BitCanvas8(const DWORD dwWidth, const DWORD dwHeight,
+BitCanvas8::BitCanvas8(const dword_t dwWidth, const dword_t dwHeight,
 	const TWEENDESCRIPTION& td)
 	: BitCanvas(dwWidth, dwHeight, 8, td)
 {
@@ -1560,7 +1558,7 @@ BitCanvas8::BitCanvas8(const DWORD dwWidth, const DWORD dwHeight,
  * PutPixel
  *
  ****************************************************************************/
-void BitCanvas8::PutPixel(const DWORD pixelOffset, const BYTE color)
+void BitCanvas8::PutPixel(const dword_t pixelOffset, const byte_t color)
 {
 	m_pWriteBuffer8[pixelOffset] = color;
 }
@@ -1570,9 +1568,9 @@ void BitCanvas8::PutPixel(const DWORD pixelOffset, const BYTE color)
  * PutPixel
  *
  ****************************************************************************/
-void BitCanvas8::PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color)
+void BitCanvas8::PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color)
 {
-	WORD    i;
+	word_t    i;
 
 	for (i = 0; i < pixel_width; i++)
 		m_pWriteBuffer8[pixelOffset + i] = color;
@@ -1585,13 +1583,14 @@ void BitCanvas8::PutPixel(const DWORD pixelOffset, const WORD pixel_width, const
  * GetPixel
  *
  ****************************************************************************/
-DWORD BitCanvas8::GetPixel(const DWORD pixelOffset)
+dword_t BitCanvas8::GetPixel(const dword_t pixelOffset)
 {
 	return m_pReadBuffer8[pixelOffset];
 }
 
 
 
+// Don't need OKLab interpolation because it's COLOR INDEXES not color values in a color space.... maybe consider using OKLab for 16/32bit color???
 
 /*
 Function	Read Method				Math Approach				Loop Structure
@@ -1611,13 +1610,13 @@ DoDelta_MMX	2 WORD reads			Bitmasking -> decay256[]	Single do-while
  ****************************************************************************/
 void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	DWORD    pixelOffset = 0;
-	DWORD    width;
-	DWORD    height;
-	DWORD    pixel, pixel3;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
-	BYTE    p1, p2, p3, p4;
+	dword_t  pixelOffset = 0;
+	dword_t  width;
+	dword_t  height;
+	dword_t  pixel, pixel3;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
+	byte_t  p1, p2, p3, p4;
 
 	for (height = 0; height < m_dwBufferHeight; height++)
 	{
@@ -1639,10 +1638,10 @@ void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 			pixelOffset++;
 		}
 	}
-	srcBuffer = (DWORD*)m_pWriteBuffer8;
-	dstBuffer = (DWORD*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 }
 
@@ -1663,20 +1662,20 @@ void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
-	DWORD   pixelOffset = 0;
-	DWORD   p1, p2;
-	DWORD   pixel, pixel3;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
-	BYTE* pReadBuffer = m_pReadBuffer8;
-	BYTE* pWriteBuffer = m_pWriteBuffer8;
+	dword_t  pixelOffset = 0;
+	dword_t  p1, p2;
+	dword_t  pixel, pixel3;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
+	byte_t*  pReadBuffer = m_pReadBuffer8;
+	byte_t*  pWriteBuffer = m_pWriteBuffer8;
 
 	do
 	{
 		pixel = lpTransitionTable[pixelOffset];
 		pixel3 = pixel + m_dwBufferWidth; // faster than using local, becaus it's already CONST
-		pixel = *(WORD*)(&(pReadBuffer[pixel]));
-		pixel3 = *(WORD*)(&(pReadBuffer[pixel3]));
+		pixel = *(word_t*)(&(pReadBuffer[pixel]));
+		pixel3 = *(word_t*)(&(pReadBuffer[pixel3]));
 
 		p1 = (pixel & 0x00FF) + (pixel3 & 0x00FF);
 
@@ -1685,7 +1684,7 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 		p1 = (p1 + (p2 >> 8)) DECAY8;
 
 		//m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
-		pWriteBuffer[pixelOffset] = (BYTE)p1;
+		pWriteBuffer[pixelOffset] = (byte_t)p1;
 
 
 #if 0
@@ -1710,10 +1709,10 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 		pixelOffset++;
 	}/**/
 
-	srcBuffer = (DWORD*)pWriteBuffer;
-	dstBuffer = (DWORD*)(pWriteBuffer + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)pWriteBuffer;
+	dstBuffer = (dword_t*)(pWriteBuffer + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 }
 
@@ -1726,20 +1725,20 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	DWORD   pixelOffset = 0;
-	DWORD   p1, p2;
-	DWORD   pixel, pixel3;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
-	BYTE* pReadBuffer = m_pReadBuffer8;
-	BYTE* pWriteBuffer = m_pWriteBuffer8;
+	dword_t  pixelOffset = 0;
+	dword_t  p1, p2;
+	dword_t  pixel, pixel3;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
+	byte_t*  pReadBuffer = m_pReadBuffer8;
+	byte_t*  pWriteBuffer = m_pWriteBuffer8;
 
 	do
 	{
 		pixel = lpTransitionTable[pixelOffset];
 		pixel3 = pixel + m_dwBufferWidth; // faster than using local, becaus it's already CONST
-		pixel = *(WORD*)(&(pReadBuffer[pixel]));
-		pixel3 = *(WORD*)(&(pReadBuffer[pixel3]));
+		pixel = *(word_t*)(&(pReadBuffer[pixel]));
+		pixel3 = *(word_t*)(&(pReadBuffer[pixel3]));
 
 		p1 = (pixel & 0x00FF) + (pixel3 & 0x00FF);
 
@@ -1774,10 +1773,10 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 		pixelOffset++;
 	}/**/
 
-	srcBuffer = (DWORD*)pWriteBuffer;
-	dstBuffer = (DWORD*)(pWriteBuffer + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)pWriteBuffer;
+	dstBuffer = (dword_t*)(pWriteBuffer + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 }
 
@@ -1786,10 +1785,10 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
  * CopyTo8
  *
  ****************************************************************************/
-void    BitCanvas8::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas8::CopyTo8(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	BYTE* lpBuffer = m_pReadBuffer8;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	byte_t* lpBuffer = m_pReadBuffer8;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -1810,10 +1809,10 @@ void    BitCanvas8::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo16
  *
  ****************************************************************************/
-void    BitCanvas8::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas8::CopyTo16(void* lpSurface, const dword_t nDeadSpace)
 {
-	WORD* lpSurface2 = (WORD*)lpSurface;
-	BYTE* lpBuffer = m_pReadBuffer8;
+	word_t* lpSurface2 = (word_t*)lpSurface;
+	byte_t* lpBuffer = m_pReadBuffer8;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -1838,10 +1837,10 @@ void    BitCanvas8::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo24
  *
  ****************************************************************************/
-void    BitCanvas8::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas8::CopyTo24(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	BYTE* lpBuffer = m_pReadBuffer8;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	byte_t* lpBuffer = m_pReadBuffer8;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -1864,10 +1863,10 @@ void    BitCanvas8::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo32
  *
  ****************************************************************************/
-void    BitCanvas8::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas8::CopyTo32(void* lpSurface, const dword_t nDeadSpace)
 {
-	DWORD* lpSurface2 = (DWORD*)lpSurface;
-	BYTE* lpBuffer = m_pReadBuffer8;
+	dword_t* lpSurface2 = (dword_t*)lpSurface;
+	byte_t*  lpBuffer = m_pReadBuffer8;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -1908,7 +1907,7 @@ void    BitCanvas8::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
   * BitCanvas16
   *
   ****************************************************************************/
-BitCanvas16::BitCanvas16(const DWORD dwWidth, const DWORD dwHeight,
+BitCanvas16::BitCanvas16(const dword_t dwWidth, const dword_t dwHeight,
 	const TWEENDESCRIPTION& td)
 	: BitCanvas(dwWidth, dwHeight, 16, td)
 {
@@ -1920,9 +1919,9 @@ BitCanvas16::BitCanvas16(const DWORD dwWidth, const DWORD dwHeight,
  * PutPixel
  *
  ****************************************************************************/
-void BitCanvas16::PutPixel(const DWORD pixelOffset, const BYTE color)
+void BitCanvas16::PutPixel(const dword_t pixelOffset, const byte_t color)
 {
-	m_pWriteBuffer16[pixelOffset] = (WORD)RGB16(r32to16(GetRed(color)),
+	m_pWriteBuffer16[pixelOffset] = (word_t)RGB16(r32to16(GetRed(color)),
 		g32to16(GetGreen(color)),
 		b32to16(GetBlue(color)));
 }
@@ -1932,12 +1931,12 @@ void BitCanvas16::PutPixel(const DWORD pixelOffset, const BYTE color)
  * PutPixel
  *
  ****************************************************************************/
-void BitCanvas16::PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color)
+void BitCanvas16::PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color)
 {
-	WORD    i;
+	word_t    i;
 
 	for (i = 0; i < pixel_width; i++)
-		m_pWriteBuffer16[pixelOffset + i] = (WORD)RGB16(r32to16(GetRed(color)),
+		m_pWriteBuffer16[pixelOffset + i] = (word_t)RGB16(r32to16(GetRed(color)),
 			g32to16(GetGreen(color)),
 			b32to16(GetBlue(color)));
 }
@@ -1949,7 +1948,7 @@ void BitCanvas16::PutPixel(const DWORD pixelOffset, const WORD pixel_width, cons
  * GetPixel
  *
  ****************************************************************************/
-DWORD BitCanvas16::GetPixel(const DWORD pixelOffset)
+dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
 {
 	return m_pReadBuffer16[pixelOffset];
 }
@@ -1968,12 +1967,12 @@ DWORD BitCanvas16::GetPixel(const DWORD pixelOffset)
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	DWORD   pixelOffset = 0;
-	DWORD   pixel, pixel3;
-	WORD    p1, p2, p3, p4;
-	DWORD   bufferLength = m_dwBufferWidth * m_dwBufferHeight;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
+	dword_t   pixelOffset = 0;
+	dword_t   pixel, pixel3;
+	word_t    p1, p2, p3, p4;
+	dword_t   bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
 
 	do
 	{
@@ -1995,10 +1994,10 @@ void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 	} while (pixelOffset < bufferLength);
 
 	//    CopyLastLine();
-	srcBuffer = (DWORD*)m_pWriteBuffer8;
-	dstBuffer = (DWORD*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 
 }
@@ -2015,15 +2014,15 @@ void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
-	DWORD   destPixelOffset = 0;  /* initialize destination pixel offset */
-	DWORD   srcPixelOffset, srcPixelOffset3;
-	DWORD   srcPixel12, srcPixel34;
-	DWORD   redHi, redLow;
-	DWORD   greenHi, greenLow;
-	DWORD   blueHi, blueLow;
-	DWORD   destPixel;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
+	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
+	dword_t  srcPixelOffset, srcPixelOffset3;
+	dword_t  srcPixel12, srcPixel34;
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
 
 
 	/*
@@ -2057,8 +2056,8 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;   /* p3 offset */
 
 		/* get the packed p1p2 and p3p4 values */
-		srcPixel12 = *(DWORD*)(&(m_pReadBuffer16[srcPixelOffset]));
-		srcPixel34 = *(DWORD*)(&(m_pReadBuffer16[srcPixelOffset3]));
+		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
+		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
 
 		/* RED:
 		 * this next line does a lot.
@@ -2156,7 +2155,7 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 				/*
 				 * write the destination pixel data to the destination pixel
 				 */
-		m_pWriteBuffer16[destPixelOffset] = (WORD)destPixel;
+		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
 
 
 		/* progress to the next pixel */
@@ -2164,10 +2163,10 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 	} while (destPixelOffset < m_dwBufferLength);
 
 
-	srcBuffer = (DWORD*)m_pWriteBuffer8;
-	dstBuffer = (DWORD*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 
 
@@ -2192,15 +2191,15 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	DWORD   destPixelOffset = 0;  /* initialize destination pixel offset */
-	DWORD   srcPixelOffset, srcPixelOffset3;
-	DWORD   srcPixel12, srcPixel34;
-	DWORD   redHi, redLow;
-	DWORD   greenHi, greenLow;
-	DWORD   blueHi, blueLow;
-	DWORD   destPixel;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
+	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
+	dword_t  srcPixelOffset, srcPixelOffset3;
+	dword_t  srcPixel12, srcPixel34;
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
 
 
 	/*
@@ -2234,8 +2233,8 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;   /* p3 offset */
 
 		/* get the packed p1p2 and p3p4 values */
-		srcPixel12 = *(DWORD*)(&(m_pReadBuffer16[srcPixelOffset]));
-		srcPixel34 = *(DWORD*)(&(m_pReadBuffer16[srcPixelOffset3]));
+		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
+		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
 
 		/* RED:
 		 * this next line does a lot.
@@ -2323,7 +2322,7 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 		/*
 		 * write the destination pixel data to the destination pixel
 		 */
-		m_pWriteBuffer16[destPixelOffset] = (WORD)destPixel;
+		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
 
 
 		/* progress to the next pixel */
@@ -2331,10 +2330,10 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 	} while (destPixelOffset < m_dwBufferLength);
 
 
-	srcBuffer = (DWORD*)m_pWriteBuffer8;
-	dstBuffer = (DWORD*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 
 	/*    for( srcPixelOffset = 0;  srcPixelOffset <= m_nBufferWidth;  srcPixelOffset++ )
@@ -2352,10 +2351,10 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
  * CopyTo8
  *
  ****************************************************************************/
-void    BitCanvas16::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas16::CopyTo8(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	WORD* lpBuffer = m_pReadBuffer16;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	word_t* lpBuffer = m_pReadBuffer16;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2380,10 +2379,10 @@ void    BitCanvas16::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo16
  *
  ****************************************************************************/
-void    BitCanvas16::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas16::CopyTo16(void* lpSurface, const dword_t nDeadSpace)
 {
-	WORD* lpSurface2 = (WORD*)lpSurface;
-	WORD* lpBuffer = m_pReadBuffer16;
+	word_t* lpSurface2 = (word_t*)lpSurface;
+	word_t* lpBuffer = m_pReadBuffer16;
 
 
 
@@ -2405,10 +2404,10 @@ void    BitCanvas16::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo24
  *
  ****************************************************************************/
-void    BitCanvas16::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas16::CopyTo24(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	WORD* lpBuffer = m_pReadBuffer16;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	word_t* lpBuffer = m_pReadBuffer16;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2416,9 +2415,9 @@ void    BitCanvas16::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
-			*lpSurface2++ = r16to32(RED16(*lpBuffer));
-			*lpSurface2++ = g16to32(GREEN16(*lpBuffer));
-			*lpSurface2++ = b16to32(BLUE16(*lpBuffer++));
+			*lpSurface2++ = r16to32(RFromRGB16(*lpBuffer));
+			*lpSurface2++ = g16to32(GFromRGB16(*lpBuffer));
+			*lpSurface2++ = b16to32(BFromRGB16(*lpBuffer++));
 		}
 
 		//skip over the cache area
@@ -2431,10 +2430,10 @@ void    BitCanvas16::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo32
  *
  ****************************************************************************/
-void    BitCanvas16::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas16::CopyTo32(void* lpSurface, const dword_t nDeadSpace)
 {
-	DWORD* lpSurface2 = (DWORD*)lpSurface;
-	WORD* lpBuffer = m_pReadBuffer16;
+	dword_t* lpSurface2 = (dword_t*)lpSurface;
+	word_t*  lpBuffer = m_pReadBuffer16;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2480,7 +2479,7 @@ void    BitCanvas16::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
   * BitCanvas32
   *
   ****************************************************************************/
-BitCanvas32::BitCanvas32(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td)
+BitCanvas32::BitCanvas32(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td)
 	: BitCanvas(dwWidth, dwHeight, 32, td)
 {
 }
@@ -2504,7 +2503,7 @@ BitCanvas32::BitCanvas32(const DWORD dwWidth, const DWORD dwHeight, const TWEEND
   * PutPixel
   *
   ****************************************************************************/
-void BitCanvas32::PutPixel(const DWORD pixelOffset, const BYTE color)
+void BitCanvas32::PutPixel(const dword_t pixelOffset, const byte_t color)
 {
 	m_pWriteBuffer32[pixelOffset] = RGB32(GetRed(color),
 		GetGreen(color),
@@ -2517,9 +2516,9 @@ void BitCanvas32::PutPixel(const DWORD pixelOffset, const BYTE color)
  * PutPixel
  *
  ****************************************************************************/
-void BitCanvas32::PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color)
+void BitCanvas32::PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color)
 {
-	WORD    i;
+	word_t    i;
 
 	for (i = 0; i < pixel_width; i++)
 		m_pWriteBuffer32[pixelOffset + i] = RGB32(GetRed(color),
@@ -2533,10 +2532,11 @@ void BitCanvas32::PutPixel(const DWORD pixelOffset, const WORD pixel_width, cons
  * GetPixel
  *
  ****************************************************************************/
-DWORD BitCanvas32::GetPixel(const DWORD pixelOffset)
+dword_t BitCanvas32::GetPixel(const dword_t pixelOffset)
 {
 	return m_pReadBuffer32[pixelOffset];
 }
+
 
 
 /****************************************************************************
@@ -2551,11 +2551,11 @@ DWORD BitCanvas32::GetPixel(const DWORD pixelOffset)
  ****************************************************************************/
 void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	DWORD    pixelOffset = 0;
-	DWORD    width;
-	DWORD    height;
-	DWORD    p1, p2, p3, p4;
-	DWORD    pixel, pixel3;
+	dword_t    pixelOffset = 0;
+	dword_t    width;
+	dword_t    height;
+	dword_t    p1, p2, p3, p4;
+	dword_t    pixel, pixel3;
 
 	for (height = 0; height < m_dwBufferHeight; height++)
 	{
@@ -2578,7 +2578,7 @@ void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 		}
 	}
 
-	for (DWORD i = 0; i <= m_dwBufferWidth; i++)
+	for (dword_t i = 0; i <= m_dwBufferWidth; i++)
 	{
 		m_pWriteBuffer32[pixelOffset] = m_pWriteBuffer32[i];
 		pixelOffset++;
@@ -2623,15 +2623,15 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 	__m64    px3;
 	__m64    px4;
 	__m64    final_pixel;
-	const DWORD* readBase = m_pReadBuffer32;
-	DWORD* writeBase = m_pWriteBuffer32;
-	//    const DWORD    bufferWidth = m_nBufferWidth;
-	const DWORD    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
-	DWORD    pixelOffset = 0;
-	DWORD    pixel;
-	DWORD    pixel3;
-	DWORD* srcBuffer;
-	DWORD* dstBuffer;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	//    const dword_t    bufferWidth = m_nBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t  pixelOffset = 0;
+	dword_t  pixel;
+	dword_t  pixel3;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
 #pragma message( "hehe" )
 
 	do
@@ -2668,10 +2668,10 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 
 	//    CopyLastLine();
 
-	srcBuffer = (DWORD*)m_pWriteBuffer8;
-	dstBuffer = (DWORD*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (DWORD i = m_dwCacheLength; i != 0; i--)
+	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
 
 
@@ -2705,11 +2705,11 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	const   DWORD    widthPixels = m_dwBufferWidth;
-	const   DWORD    bufferLength = widthPixels * m_dwBufferHeight;
-	DWORD* readBase = m_pReadBuffer32;
-	DWORD* writeBase = m_pWriteBuffer32;
-	DWORD    espBackup;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const   dword_t    bufferLength = widthPixels * m_dwBufferHeight;
+	dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	dword_t    espBackup;
 
 	__asm
 	{
@@ -2791,10 +2791,10 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
  * CopyTo8
  *
  ****************************************************************************/
-void    BitCanvas32::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas32::CopyTo8(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	DWORD* lpBuffer = m_pReadBuffer32;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	dword_t* lpBuffer = m_pReadBuffer32;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2802,7 +2802,7 @@ void    BitCanvas32::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
-			*lpSurface2++ = (BYTE)((
+			*lpSurface2++ = (byte_t)((
 								RED32(*lpBuffer) +
 								GREEN32(*lpBuffer) +
 								BLUE32(*lpBuffer++)
@@ -2820,10 +2820,10 @@ void    BitCanvas32::CopyTo8(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo16 - the compiler already optimizes the loop to go backwards
  *
  ****************************************************************************/
-void    BitCanvas32::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas32::CopyTo16(void* lpSurface, const dword_t nDeadSpace)
 {
-	WORD* lpSurface2 = (WORD*)lpSurface;
-	DWORD* lpBuffer = m_pReadBuffer32;
+	word_t* lpSurface2 = (word_t*)lpSurface;
+	dword_t* lpBuffer = m_pReadBuffer32;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2831,7 +2831,7 @@ void    BitCanvas32::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
-			*lpSurface2++ = (WORD)RGB16(
+			*lpSurface2++ = (word_t)RGB16(
 										r32to16(RED32(*lpBuffer)),
 										g32to16(GREEN32(*lpBuffer)),
 										b32to16(BLUE32(*lpBuffer++))
@@ -2849,10 +2849,10 @@ void    BitCanvas32::CopyTo16(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo24
  *
  ****************************************************************************/
-void    BitCanvas32::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas32::CopyTo24(void* lpSurface, const dword_t nDeadSpace)
 {
-	BYTE* lpSurface2 = (BYTE*)lpSurface;
-	BYTE* lpBuffer = m_pReadBuffer8;
+	byte_t* lpSurface2 = (byte_t*)lpSurface;
+	byte_t* lpBuffer = m_pReadBuffer8;
 
 
 	COPYTO_HEIGHT_LOOP
@@ -2876,10 +2876,10 @@ void    BitCanvas32::CopyTo24(void* lpSurface, const DWORD nDeadSpace)
  * CopyTo32
  *
  ****************************************************************************/
-void    BitCanvas32::CopyTo32(void* lpSurface, const DWORD nDeadSpace)
+void    BitCanvas32::CopyTo32(void* lpSurface, const dword_t nDeadSpace)
 {
-	DWORD* lpSurface2 = (DWORD*)lpSurface;
-	DWORD* lpBuffer = m_pReadBuffer32;
+	dword_t* lpSurface2 = (dword_t*)lpSurface;
+	dword_t* lpBuffer = m_pReadBuffer32;
 
 	COPYTO_HEIGHT_LOOP
 	{

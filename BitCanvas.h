@@ -27,9 +27,6 @@
   *
   ****************************************************************************/
 
-#ifndef _BitCanvas_H_
-#define _BitCanvas_H_
-
 #define USE_MMX_INTRINSICS  1
 #define USE_MMX_ASSEMBLY    1
 
@@ -41,8 +38,6 @@
 #include "MyDictionary.h"
 #include "Palette.h"
 #include "TweenThread.h"
-
-#include <Windows.h> // DWORD, PALETTEENTRY, LPPALETTEENTRY
 
 
 //#define MAX_LINE_WIDTH  32
@@ -110,8 +105,8 @@
 //#define DECAY32 * 0xFFFFFE >> 26
 
 
-#define COPYTO_HEIGHT_LOOP for( DWORD j = m_dwBufferHeight; j != 0; j-- )
-#define COPYTO_WIDTH_LOOP  for( DWORD i = m_dwBufferWidth;  i != 0; i-- )
+#define COPYTO_HEIGHT_LOOP for( dword_t j = m_dwBufferHeight; j != 0; --j )
+#define COPYTO_WIDTH_LOOP  for( dword_t i = m_dwBufferWidth;  i != 0; --i )
 
 /****************************************************************************
  *
@@ -132,7 +127,7 @@ DECAY256( x##8 ),\
 DECAY256( x##9 ),
 
 
-static const BYTE decay256[256] = {
+static const byte_t decay256[256] = {
 DECAY256_TENS(0x)
 DECAY256_TENS(1)
 DECAY256_TENS(2)
@@ -300,9 +295,9 @@ public:
 	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE } opt_level_t;
 
 
-	BitCanvas(const DWORD dwWidth,
-		const DWORD dwHeight,
-		const DWORD dwBitDepth,
+	BitCanvas(const dword_t dwWidth,
+		const dword_t dwHeight,
+		const dword_t dwBitDepth,
 		const TWEENDESCRIPTION& tween_description);
 	virtual ~BitCanvas();
 	// BitCanvas owns substantial pixel memory.
@@ -332,9 +327,9 @@ public:
 	 *
 	 * see above comment for corresponding variable
 	 */
-	inline DWORD    BufferWidth(void) const { return m_dwBufferWidth; };
-	inline DWORD    BufferHeight(void) const { return m_dwBufferHeight; };
-	inline DWORD    BitDepth(void) const { return m_dwBitDepth; };
+	inline dword_t    BufferWidth(void) const { return m_dwBufferWidth; };
+	inline dword_t    BufferHeight(void) const { return m_dwBufferHeight; };
+	inline dword_t    BitDepth(void) const { return m_dwBitDepth; };
 
 	/*
 	 * swap the buffer pointers
@@ -372,10 +367,10 @@ public:
 		HDC hDC);
 #endif
 	void            CopyTo(void* lpSurface,
-		const DWORD   nWidth,
-		const DWORD   nHeight,
-		const DWORD   nPitch,
-		const DWORD   nPixelFormat);
+		const dword_t   nWidth,
+		const dword_t   nHeight,
+		const dword_t   nPitch,
+		const dword_t   nPixelFormat);
 protected:
 	/// <summary>
 	/// Copies pixel data from the object's internal 32-bit read buffer to the
@@ -385,20 +380,20 @@ protected:
 	/// <param name="lpSurface">Pointer to the destination surface memory where pixel data will be written (treated as DWORD*).</param>
 	/// <param name="dwPitch">Surface scanline pitch in bytes (total bytes between starts of consecutive rows).</param>
 	void            CopyToSameBitdepth(void* lpSurface,
-		const DWORD   dwPitch)
-		//const DWORD   dwPixelFormat )
+		const dword_t   dwPitch)
+		//const dword_t   dwPixelFormat )
 	{
-		static const DWORD dwBufferDWORDPitch = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(DWORD);
-		const DWORD dwSurfaceDWORDPitch = dwPitch / sizeof(DWORD);
-		const DWORD dwDeadSpace = dwSurfaceDWORDPitch - dwBufferDWORDPitch;
-		DWORD* lpSurface2 = (DWORD*)lpSurface;
-		DWORD* lpBuffer = m_pReadBuffer32;
+		static const dword_t dwBufferDWORDPitch = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(dword_t);
+		const dword_t dwSurfaceDWORDPitch = dwPitch / sizeof(dword_t);
+		const dword_t dwDeadSpace = dwSurfaceDWORDPitch - dwBufferDWORDPitch;
+		dword_t* lpSurface2 = (dword_t*)lpSurface;
+		dword_t* lpBuffer = m_pReadBuffer32;
 
 
-		for (DWORD j = m_dwBufferHeight; j != 0; j--)
+		for (dword_t j = m_dwBufferHeight; j != 0; j--)
 		{
 			//for( i = 0;  i < dwBufferDWORDPitch;  i++ )
-			for (DWORD i = dwBufferDWORDPitch; i != 0; i--)
+			for (dword_t i = dwBufferDWORDPitch; i != 0; i--)
 			{
 				//assign the value to the surface
 				*lpSurface2++ = *lpBuffer++;
@@ -432,14 +427,14 @@ protected:
 		long y0,
 		const long x1,
 		long y1,
-		const BYTE color);
+		const byte_t color);
 	void PlotLineBresenhamThick(
 		long x0,
 		long y0,
 		long x1,
 		long y1,
 		const long line_width,
-		const BYTE color);
+		const byte_t color);
 	void PlotDot(const value_t x,
 		const value_t y,
 		const value_t dot_size,
@@ -460,12 +455,11 @@ public:
 		logpalette_t* PGetPalette(void)
 	{
 		return m_pPalette.PGetLogicalPalette();
-		//    return &m_pPalette.GetLogicalPalette();
 	}
 
 
 
-
+#if UNDEFINED
 	/*
 	 * TODO: JRDV: Why did I define BlahPutPixel? there is a comment "hack for graphics project"
 	 * AHA! That was for CS4451a_project_3, so this was intended to be temporary, and I can clean it up
@@ -473,23 +467,24 @@ public:
 	inline void     BlahPutPixel(const long x, const long y,
 		const byte_t r, const byte_t g, const byte_t b)
 	{
-		const DWORD    pixelOffset = BufferWidth() * y + x;
+		const dword_t    pixelOffset = BufferWidth() * y + x;
 
 		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
 			BlahPutPixel(pixelOffset, r, g, b);
 	};
+#endif
 	inline void     PutPixel(const long x, const long y,
-		const BYTE color)
+		const byte_t color)
 	{
-		const DWORD    pixelOffset = BufferWidth() * y + x;
+		const dword_t    pixelOffset = BufferWidth() * y + x;
 
 		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
 			PutPixel(pixelOffset, color);
 	};
 	inline void     PutPixel(const long x, const long y,
-		const WORD pixel_width, const BYTE color)
+		const word_t pixel_width, const byte_t color)
 	{
-		const DWORD    pixelOffset = BufferWidth() * y + x;
+		const dword_t    pixelOffset = BufferWidth() * y + x;
 
 		//if( y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x + pixel_width < (long)BufferWidth() )
 		if (y >= 0 &&/**/ y < (long)BufferHeight() && x >= 0 &&/**/ x < (long)BufferWidth())
@@ -498,16 +493,16 @@ public:
 			if (wid <= 0)
 				PutPixel(pixelOffset, pixel_width, color);
 			else
-				PutPixel(pixelOffset, (WORD)wid - 1, color);
+				PutPixel(pixelOffset, (word_t)wid - 1, color);
 		}
 	};
-	inline DWORD    GetPixel(const long x, const long y);
+//	inline DWORD    GetPixel(const long x, const long y);
 
 
 	/*
 	 * hack for OpenGL.... it needs direct access...
 	 */
-	void* GetPixelMemory(DWORD* nWidth, DWORD* nHeight, DWORD* nPixelFormat);
+	void* GetPixelMemory(dword_t* nWidth, dword_t* nHeight, dword_t* nPixelFormat);
 
 
 protected:
@@ -516,25 +511,25 @@ protected:
 	 * the following functions should be defined in derived classes
 	 *
 	 ************************************************************************/
-	inline virtual DWORD    GetPixel(const DWORD pixelOffset) = 0;
-	inline virtual void     PutPixel(const DWORD pixelOffset,
-		const BYTE color) = 0;
-	inline virtual void     BlahPutPixel(const DWORD pixelOffset,
+	inline virtual dword_t    GetPixel(const dword_t pixelOffset) = 0;
+	inline virtual void     PutPixel(const dword_t pixelOffset,
+		const byte_t color) = 0;
+	inline virtual void     BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) = 0;
-	inline virtual void     PutPixel(const DWORD pixelOffset,
-		const WORD pixel_width,
-		const BYTE color) = 0;
+	inline virtual void     PutPixel(const dword_t pixelOffset,
+		const word_t pixel_width,
+		const byte_t color) = 0;
 
 	virtual void    DoDelta_cpp(const PIXELMAP* lpTransitionTable) = 0;
 	virtual void    DoDelta_x86(const PIXELMAP* lpTransitionTable);
 	virtual void    DoDelta_MMX(const PIXELMAP* lpTransitionTable);
 	virtual void    DoDelta_SSE(const PIXELMAP* lpTransitionTable);
-	virtual void    CopyTo8(void* lpSurface, const DWORD nDeadSpace) = 0;
-	virtual void    CopyTo16(void* lpSurface, const DWORD nDeadSpace) = 0;
-	virtual void    CopyTo24(void* lpSurface, const DWORD nDeadSpace) = 0;
-	virtual void    CopyTo32(void* lpSurface, const DWORD nDeadSpace) = 0;
+	virtual void    CopyTo8(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void    CopyTo16(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void    CopyTo24(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void    CopyTo32(void* lpSurface, const dword_t nDeadSpace) = 0;
 
 
 
@@ -545,7 +540,7 @@ protected:
 	 * GetRed -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetRed(const BYTE nIndex)
+	inline byte_t     GetRed(const byte_t nIndex)
 	{
 		return PGetPalette()->palPalEntry[nIndex].peRed;
 	};
@@ -556,7 +551,7 @@ protected:
 	 * GetGreen -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetGreen(const BYTE nIndex)
+	inline byte_t     GetGreen(const byte_t nIndex)
 	{
 		return PGetPalette()->palPalEntry[nIndex].peGreen;
 	};
@@ -567,7 +562,7 @@ protected:
 	 * GetBlue -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetBlue(const BYTE nIndex)
+	inline byte_t     GetBlue(const byte_t nIndex)
 	{
 		return PGetPalette()->palPalEntry[nIndex].peBlue;
 	};
@@ -578,7 +573,7 @@ protected:
 	 * GetRed -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetRed(const BYTE nIndex)
+	inline byte_t     GetRed(const byte_t nIndex)
 	{
 		return m_pPaletteEntry[nIndex].peRed;
 	};
@@ -589,7 +584,7 @@ protected:
 	 * GetGreen -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetGreen(const BYTE nIndex)
+	inline byte_t     GetGreen(const byte_t nIndex)
 	{
 		return m_pPaletteEntry[nIndex].peGreen;
 	};
@@ -600,7 +595,7 @@ protected:
 	 * GetBlue -
 	 *
 	 ****************************************************************************/
-	inline BYTE     GetBlue(const BYTE nIndex)
+	inline byte_t     GetBlue(const byte_t nIndex)
 	{
 		return m_pPaletteEntry[nIndex].peBlue;
 	};
@@ -611,7 +606,7 @@ protected:
 	 * GetEntry -
 	 *
 	 ****************************************************************************/
-	inline PALETTEENTRY  GetEntry(const BYTE nIndex)
+	inline paletteentry_t GetEntry(const byte_t nIndex)
 	{
 		return m_pPaletteEntry[nIndex];
 	};
@@ -623,7 +618,7 @@ protected:
 	 ****************************************************************************/
 	inline void GetRGB(const BYTE nIndex, BYTE* outRed, BYTE* outGreen, BYTE* outBlue)
 	{
-		const PALETTEENTRY  tmpPE = m_pPaletteEntry[nIndex];
+		const paletteentry_t  tmpPE = m_pPaletteEntry[nIndex];
 
 		*outRed = tmpPE.peRed;
 		*outGreen = tmpPE.peGreen;
@@ -647,15 +642,15 @@ private:
 
 protected:
 
-	const DWORD     m_dwBitDepth;    /* number of bits per pixel
+	const dword_t	m_dwBitDepth;    /* number of bits per pixel
 									 */
-	const DWORD     m_dwBufferWidth; /* the width in pixels
+	const dword_t	m_dwBufferWidth; /* the width in pixels
 									 * of ReadOnlyBuffer and WriteOnlyBuffer
 									 */
-	const DWORD     m_dwBufferHeight;/* the height in pixels
+	const dword_t	m_dwBufferHeight;/* the height in pixels
 									 * of ReadOnlyBuffer and WriteOnlyBuffer
 									 */
-	const DWORD     m_dwCacheLength; /* the number of DWORD's allocated past
+	const dword_t	m_dwCacheLength; /* the number of DWORD's allocated past
 									 * the end of the buffer.  The extra
 									 * space is used to cache the first line
 									 * of pixels.
@@ -663,11 +658,11 @@ protected:
 									 /* Width * Height + CacheLength should
 									  * also be an even multiple of DQWORD
 									  */
-	const DWORD     m_dwBufferByteLength;
-	const DWORD     m_dwBufferLength;
+	const dword_t	m_dwBufferByteLength;
+	const dword_t	m_dwBufferLength;
 
-	const DWORD     m_dwHalfWidth;
-	const DWORD     m_dwHalfHeight;
+	const dword_t	m_dwHalfWidth;
+	const dword_t	m_dwHalfHeight;
 
 	const value_t   m_nLineWidthFactor;
 
@@ -675,21 +670,21 @@ protected:
 	union {
 		void* m_pWriteOnlyBuffer;/* the frame currently being drawn
 								  */
-		BYTE* m_pWriteBuffer8;   /* accessor for BitCanvas8  */
-		WORD* m_pWriteBuffer16;  /* accessor for BitCanvas16 */
-		DWORD* m_pWriteBuffer32; /* accessor for BitCanvas32 */
+		byte_t* m_pWriteBuffer8;   /* accessor for BitCanvas8  */
+		word_t* m_pWriteBuffer16;  /* accessor for BitCanvas16 */
+		dword_t* m_pWriteBuffer32; /* accessor for BitCanvas32 */
 	};
 
 	union {
 		void* m_pReadOnlyBuffer; /* the completed frame
 								  */
-		BYTE* m_pReadBuffer8;    /* accessor for BitCanvas8  */
-		WORD* m_pReadBuffer16;   /* accessor for BitCanvas16 */
-		DWORD* m_pReadBuffer32;  /* accessor for BitCanvas32 */
+		byte_t* m_pReadBuffer8;    /* accessor for BitCanvas8  */
+		word_t* m_pReadBuffer16;   /* accessor for BitCanvas16 */
+		dword_t* m_pReadBuffer32;  /* accessor for BitCanvas32 */
 	};
 
 	Palette         m_pPalette;
-	//PALETTEENTRY    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
+	//paletteentry_t    *m_pPaletteEntry; /* accessor to static buffer in m_pPalette */
 
 
 #ifdef USE_BITMAP
@@ -711,16 +706,16 @@ protected:
 class BitCanvas8 : public BitCanvas
 {
 public:
-	BitCanvas8(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
+	BitCanvas8(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
 	/*
 	 * removed inline next to Get/PutPixel since it's in the base class
 	 */
-	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
-	virtual void     BlahPutPixel(const DWORD pixelOffset,
+	virtual dword_t           GetPixel(const dword_t pixelOffset) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void     BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -732,10 +727,10 @@ protected:
 	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
-	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
 
 
@@ -743,13 +738,13 @@ protected:
 class BitCanvas16 : public BitCanvas
 {
 public:
-	BitCanvas16(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
+	BitCanvas16(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
-	virtual void     BlahPutPixel(const DWORD pixelOffset,
+	virtual dword_t         GetPixel(const dword_t pixelOffset) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void     BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -761,10 +756,10 @@ protected:
 	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
-	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
 
 
@@ -772,13 +767,13 @@ protected:
 class BitCanvas32 : public BitCanvas
 {
 public:
-	BitCanvas32(const DWORD dwWidth, const DWORD dwHeight, const TWEENDESCRIPTION& td);
+	BitCanvas32(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	virtual DWORD           GetPixel(const DWORD pixelOffset) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const BYTE color) override;
-	virtual void            PutPixel(const DWORD pixelOffset, const WORD pixel_width, const BYTE color) override;
-	virtual void     BlahPutPixel(const DWORD pixelOffset,
+	virtual dword_t           GetPixel(const dword_t pixelOffset) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void     BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -796,12 +791,9 @@ protected:
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
 	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
-	virtual void            CopyTo8(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const DWORD nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const DWORD nDeadSpace) override;
+	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
-
-
-#endif /* _BitCanvas_H_ */
 

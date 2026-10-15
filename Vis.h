@@ -10,10 +10,8 @@
 // ints are 32 bits, and structure members are aligned on the default 8 byte boundaries
 // tested with VC++ 4.2 and 5.0
 
-#ifndef _Vis_H_
-#define _Vis_H_
+#include <Windows.h> // HWND, HINSTANCE
 
-#include <windows.h>
 
 #ifndef SOUND_DATA_LENGTH
 #define SOUND_DATA_LENGTH 576
@@ -24,7 +22,7 @@ typedef struct winampVisModule {
   HWND hwndParent;   // parent window (filled in by calling app)
   HINSTANCE hDllInstance; // instance handle to this DLL (filled in by calling app)
   int sRate;         // sample rate (filled in by calling app)
-  int nCh;             // number of channels (filled in...)
+  int nCh;           // number of channels (filled in...)
   int latencyMs;     // latency from call of RenderFrame to actual drawing
                      // (calling app looks at this value when getting data)
   int delayMs;       // delay between calls in ms
@@ -54,6 +52,4 @@ typedef winampVisHeader* (*winampVisGetHeaderType)();
 
 // version of current module (0x101 == 1.01)
 #define VIS_HDRVER 0x101
-
-#endif /* _Vis_H_ */
 

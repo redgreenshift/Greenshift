@@ -158,7 +158,7 @@ protected:
 	inline dword_t      FullscreenHeight(void) const { return m_dwFullscreenHeight; };
 	inline dword_t      BitDepth(void) const { return m_dwBitDepth; };
 	inline bgr32_t      ColorKey(void) const { return BGR32FromRGB32(m_dwOverlayColorKey); };
-	inline BitCanvas* GetBitCanvas(void) { return m_pBitCanvas; };
+	inline BitCanvas*   GetBitCanvas(void) { return m_pBitCanvas; };
 	inline HWND         GetWindow(void) const { return m_hWindow; };
 	inline DWORD        ShouldFlip(void)
 	{

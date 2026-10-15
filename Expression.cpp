@@ -26,6 +26,12 @@
   *
   ****************************************************************************/
 
+#include "Expression.h"
+
+#include "MyDictionary.h"
+#include "MathUtils.hpp"
+#include "MemoryUtils.hpp"
+
 #include <algorithm>
 #include <cmath> // std::tgamma
 #include <cstdio>
@@ -36,9 +42,6 @@
 #include <memory>
 #include <string>
 #include <string.h>
-
-#include "Expression.h"
-#include "MyDictionary.h"
 
 
 #ifdef REGULAR_EXPRESSION

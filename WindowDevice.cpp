@@ -771,40 +771,40 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 {
 	switch (dwKey)
 	{
+	case 'D':
+		ClearScreenAll();
+		//Update( 'Pal' );
+		m_bShowDebug = !m_bShowDebug;
+		break;
 	case 'F':
 		PrintPrivate(0, 0, "           ");
 		m_bShowFramerate = !m_bShowFramerate;
 		break;
-	case 'D':
-		ClearScreenAll();
-		//        Update( 'Pal' );
-		m_bShowDebug = !m_bShowDebug;
-		break;
-		//    case 'C':
-		//        ClearScreenAll();
-		//        break;
-		//    case VK_F1:
+	//case 'C':
+	//	ClearScreenAll();
+	//	break;
+	//case VK_F1:
 	case '1':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_CPP);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "default optimization");
 		break;
 
-		//    case VK_F2:
+	//case VK_F2:
 	case '2':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_x86);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "x86 assembly optimization");
 		break;
 
-		//    case VK_F3:
+	//case VK_F3:
 	case '3':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_MMX);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "MMX assembly optimization");
 		break;
 
-		//    case VK_F4:
+	//case VK_F4:
 	case '4':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE);
 		ClearScreenAll();
@@ -813,7 +813,7 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 
 
 	default:    /* display character code */
-		/*//        DumpToFile( "error.txt", DXError(lpWindowDevice->ClearScreenAll()) , "\n");
+		/*//	DumpToFile( "error.txt", DXError(lpWindowDevice->ClearScreenAll()) , "\n");
 				ClearScreenAll();
 				char strBuffer[128];  //* static buffer for itoa
 				itoa(dwKey, strBuffer, 10);
