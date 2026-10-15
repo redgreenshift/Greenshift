@@ -25,6 +25,7 @@
 #include "..\CollectionsAbstract.h"
 #include "..\Expression.h"
 #include "..\MyDictionary.h"
+#include "..\HighResolutionTimer.h"
 #include "..\PhaseFunction.h"
 #include "..\TextUtils.hpp"
 #include "..\Diagnostics.cpp"
@@ -74,6 +75,7 @@ namespace GreenshiftUnitTest
 	{
 	public:
 		value_t const defaultTolerance = 0.0001f; // common default float tolerance; accounts for typical rounding errors, unless greater precision is required
+		HighResolutionTimer timer;
 		MyDictionary<EXPRESSIONDESCRIPTION*> m_dGlobals;
 		EXPRESSIONDESCRIPTION    m_edGForceFunctions[4] =
 		{
@@ -545,8 +547,6 @@ namespace GreenshiftUnitTest
 		/********************************************************************
 		 * Random Number Generators
 		 */
-#pragma warning(push)
-#pragma warning(disable:4189) // C4189 -- 'v1': local variable is initialized but not referenced
 
 #ifdef _DEBUG
 		const uint32_t maxEndTest = 10;
@@ -555,48 +555,67 @@ namespace GreenshiftUnitTest
 		//const uint32_t maxEndTest = 1000000000;
 		//const uint32_t maxEndTest = 0xFFFFFFFF;
 #endif
+		// 1,000,000,000 iterations, 20.1 seconds (DEBUG)
+		// 1,000,000,000 iterations, 5.9 seconds (SHIP)
+		// 4,294,967,295 iterations, 25.2 seconds (SHIP)
+		TEST_METHOD(TestRandStandardTime)
+		{
+			srand(1);
+			dword_t sink = 0;
+
+			timer.Start();
+			for (uint32_t i = 0; i < maxEndTest; ++i)
+			{
+				sink ^= rand();
+			}
+			timer.Stop();
+			std::wstring s =
+				L"Elapsed ms = " +
+				std::to_wstring(timer.StoppedMilliseconds());
+			Logger::WriteMessage(s.c_str());
+			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
+		}
+
+		// 4,294,967,295 iterations, 11.5 seconds (SHIP)
+		TEST_METHOD(TestRandStdMT_Time)
+		{
+			std::mt19937 rng(1);
+			// rng.seed(1)
+			dword_t sink = 0;
+
+			timer.Start();
+			for (uint32_t i = 0; i < maxEndTest; ++i)
+			{
+				sink ^= rng();
+			}
+			timer.Stop();
+			std::wstring s =
+				L"Elapsed ms = " +
+				std::to_wstring(timer.StoppedMilliseconds());
+			Logger::WriteMessage(s.c_str());
+			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
+		}
+
 		// 1,000,000,000 iterations, 70 seconds (DEBUG)
 		// 1,000,000,000 iterations, 1.8 seconds (SHIP)
 		// 4,294,967,295 iterations, 8.0 seconds (SHIP)
 		TEST_METHOD(TestRandV0Time)
 		{
 			MTRand	mtRand1 = MTRand(1);
+			dword_t sink = 0;
 
+			timer.Start();
 			for (uint32_t i = 0; i < maxEndTest; ++i)
 			{
-				unsigned int v1 = mtRand1.randInt();
+				sink ^= mtRand1.randInt();
 			}
-			Assert::AreEqual(1, 1);
+			timer.Stop();
+			std::wstring s =
+				L"Elapsed ms = " +
+				std::to_wstring(timer.StoppedMilliseconds());
+			Logger::WriteMessage(s.c_str());
+			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
 		}
-
-		// 1,000,000,000 iterations, 20.1 seconds (DEBUG)
-		// 1,000,000,000 iterations, 5.9 seconds (SHIP)
-		// 4,294,967,295 iterations, 25.2 seconds (SHIP)
-		TEST_METHOD(TestRandTime)
-		{
-			srand(1);
-
-			for (uint32_t i = 0; i < maxEndTest; ++i)
-			{
-				unsigned int v1 = rand();
-			}
-			Assert::AreEqual(1, 1);
-		}
-
-		// 4,294,967,295 iterations, 11.5 seconds (SHIP)
-		TEST_METHOD(TestStdMTRandTime)
-		{
-			std::mt19937 rng(1);
-			// rng.seed(1)
-
-			for (uint32_t i = 0; i < maxEndTest; ++i)
-			{
-				unsigned int v1 = rng();
-			}
-			Assert::AreEqual(1, 1);
-		}
-
-#pragma warning(pop) // C4189 -- 'v1': local variable is initialized but not referenced
 
 		TEST_METHOD(TestMTRand0_Verification)
 		{
