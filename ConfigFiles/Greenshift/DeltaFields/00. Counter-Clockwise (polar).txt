@@ -1,0 +1,9 @@
+//srcR = "r*1.1",
+//srcT = "theta",
+srcR = "r",
+srcT = "theta-0.05",
+EedgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

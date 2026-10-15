@@ -1,0 +1,8 @@
+srcX = "sinh(x)/cosh(y)",
+srcY = "sinh(y)/cosh(x)",
+
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

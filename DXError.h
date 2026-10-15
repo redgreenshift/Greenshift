@@ -1,10 +1,6 @@
 #pragma once
-#ifndef _DirectX_Error_Messages_H_
-#define _DirectX_Error_Messages_H_
 
-#include "ColorUtils.hpp"
-
-#include <Windows.h>
+#include <Windows.h> // HRESULT
 #include <ddraw.h>
 
 /****************************************************************************
@@ -224,7 +220,4 @@ inline const char* DXError(HRESULT error)
 }
 
 #endif
-
-
-#endif  /* _DirectX_Error_Messages_H_ */
 

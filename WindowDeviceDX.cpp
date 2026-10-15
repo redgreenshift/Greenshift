@@ -36,8 +36,9 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <Windows.h>
+#include <Windows.h> // COLORREF, DWORD
 #include <ddraw.h>
+
 
   //#define NO_WAIT
 
@@ -232,7 +233,7 @@ HRESULT    WindowDeviceDX::Flip(BitCanvas* pBitCanvas)
 	UnlockDX();
 	LeaveCS();
 
-	return max(hRet, hRet2);
+	return std::max(hRet, hRet2);
 }
 
 
@@ -325,7 +326,7 @@ error_t    WindowDeviceDX::ClearScreen(void)
  * ClearSurface - clears the passed surface
  *
  ****************************************************************************/
-error_t    WindowDeviceDX::FillSurface(LPDIRECTDRAWSURFACE7 lpSurface, DWORD dwFillColor)
+error_t    WindowDeviceDX::FillSurface(LPDIRECTDRAWSURFACE7 lpSurface, COLORREF dwFillColor)
 {
 	HRESULT hRet = DD_OK;
 	DDBLTFX fx;

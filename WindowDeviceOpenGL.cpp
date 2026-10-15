@@ -30,6 +30,7 @@
 
 #include "WindowDeviceOpenGL.h"
 
+#include <Windows.h> // HWND
 
 
   // Enable OpenGL
@@ -221,9 +222,9 @@ error_t    WindowDeviceOpenGL::ClearScreen(void)
 {
 	error_t err = SUCCESS;
 	//    void *pPixels;
-	//    DWORD    nWidth;
-	//    DWORD    nHeight;
-	//    DWORD    nPixelFormat;
+	//    dword_t    nWidth;
+	//    dword_t    nHeight;
+	//    dword_t    nPixelFormat;
 
 
 	//    glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -300,9 +301,9 @@ HRESULT    WindowDeviceOpenGL::Blit(void)
 	//    HDC        hDC;
 	//    HGLRC    hRC;
 	void* pPixels;
-	DWORD    nWidth;
-	DWORD    nHeight;
-	DWORD    nPixelFormat;
+	dword_t    nWidth;
+	dword_t    nHeight;
+	dword_t    nPixelFormat;
 
 	//    hRet = GetRC( &hRC, &hDC );
 	//    if( hRet != SUCCESS )
@@ -364,7 +365,7 @@ HRESULT    WindowDeviceOpenGL::OnFlip(void)
 
 	SwapBuffers(m_hDC);
 
-	//    DumpToFile("error.txt", (DWORD)m_hDC, "\n" );
+	//    DumpToFile("error.txt", (dword_t)m_hDC, "\n" );
 	//  DumpToFile("error.txt", "Finished Flip!\n" );
 
 

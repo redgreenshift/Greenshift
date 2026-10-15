@@ -68,7 +68,17 @@ The name was inspired by a technical quirk discovered during development. When w
 
 ### Design Philosophy: Preserving the "Feel"
 
-The design philosophy behind Greenshift centers on an attempt to preserve the visual and behavioral "feel" of its configs, regardless of the hardware or system settings. This approach focuses on decoupling the artistic output from the technical implementation so that system upgrades don't fundamentally alter the character of the art. This includes using normalized ranges to maintain composition across various resolutions, narrowing precision during the RNG seeding process to keep random behaviors consistent when moving between 32-bit and 64-bit math, and normalizing line widths so that drawing scales naturally with screen resolution. The intent is that the character of each visualization remains stable and recognizable, even as system parameters are changed or improved.
+The design philosophy behind Greenshift centers on an attempt to preserve the
+visual and behavioral "feel" of its configs, regardless of the hardware or
+system settings. This approach focuses on decoupling the artistic output from
+the technical implementation so that system upgrades don't fundamentally alter
+the character of the art. This includes using normalized ranges to maintain
+composition across various resolutions, narrowing precision during the RNG
+seeding process to keep random behaviors consistent when moving between
+32-bit and 64-bit math, and normalizing line widths so that drawing scales
+naturally with screen resolution. The intent is that the character of each
+visualization remains stable and recognizable, even as system parameters are
+changed or improved.
 
 ![Example screenshot, showing debug output including FPS, currently playing song, and which configs are loaded and/or transitioning (DeltaFields, Palettes, WaveShapes, and Particles)](https://raw.githubusercontent.com/redgreenshift/assets/main/greenshift/Untitled1.png)
 
@@ -128,7 +138,10 @@ The original name for Project Greenshift was “expressionconsole,” reflecting
 
 #### Successor Projects
 
-[`FireDemo`](https://github.com/redgreenshift/firedemo) is a looser successor to Greenshift. It carries forward ideas including `BitCanvas`, frame-to-frame decay values, and configurable color palettes, while exploring a broader range of real-time lighting effects.
+[`FireDemo`](https://github.com/redgreenshift/firedemo) is a looser successor to
+Greenshift. It carries forward ideas including `BitCanvas`, frame-to-frame decay
+values, and configurable color palettes, while exploring a broader range of
+real-time lighting effects.
 
 
 ## AI Policy

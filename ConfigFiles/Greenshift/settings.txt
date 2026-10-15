@@ -372,7 +372,7 @@ buffer_height = 360,
 overlay_mode      = "0",/* 0 = don't use overlay */
                         /* 1 = start in overlay mode */
                         /* double right click toggles at runtime */
-overlay_color_key = "0",/* the color the overlay replaces */
+overlay_color_key = "0",/* the color the overlay replaces; 0x00RRGGBB format */
                         /* suggestion: set desktop background to this color,
                          * maximize the window, and then minimize the window
                          */
@@ -407,13 +407,13 @@ keyB="0",
   /* an alias is a way to map one string onto another
    * (say a less descriptive name to a more descriptive one)
    * G-Force uses a lot of hard to remember abbreviations.
-   * to make my life easier, I include the ability to map the
+   * To make my life easier, I include the ability to map the
    * 4 character or less G-Force abbreviations to my set of variable
    * names which may have any length without affecting speed
    */
 /* MACROS
  *
- * external alias's - for things to the right of an equals sign in a config
+ * external aliases - for things to the right of an equals sign in a config
  *
  * used by expressions in configs to convert from
  * G-Force functions/variables, to the actual function/variable names I use
@@ -432,7 +432,7 @@ arcsinh         = asinh,
 arctanh         = atanh,
 
 /*
- * internal alias's - for things to the left of an equals sign in a config
+ * internal aliases - for things to the left of an equals sign in a config
  *
  * used by my code internally
  * to convert from what I look for to the G-Force variable names

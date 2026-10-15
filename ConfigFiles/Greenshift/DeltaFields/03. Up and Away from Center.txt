@@ -1,0 +1,8 @@
+srcX = "x-(x*x)^0.5/x*0.003",
+srcY = "y-0.003",
+
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

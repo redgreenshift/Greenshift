@@ -27,20 +27,13 @@
   *
   ****************************************************************************/
 
-#ifndef _WindowDevice_H_
-#define _WindowDevice_H_
-
 #include "BitCanvas.h"
 #include "ColorUtils.hpp"
-#include "Expression.h"
 #include "MyDictionary.h"
+#include "Expression.h"
 #include "ThreadedEntity.h"
 
-  /* define strict before including windows */
-#ifndef STRICT
-#define STRICT 1
-#endif
-#include <windows.h>
+#include <Windows.h> // HWND, HINSTANCE, WNDPROC, COLORREF, CRITICAL_SECTION, LRESULT, LPARAM, WPARAM, DWORD, UINT
 
 
 #define GS_WindowStyle   ( WS_SYSMENU     \
@@ -157,14 +150,14 @@ protected:
 	/*
 	 * accessors
 	 */
-	inline DWORD        Width(void) const { return m_dwWidth; };
-	inline DWORD        Height(void) const { return m_dwHeight; };
-	inline DWORD        WindowWidth(void) const { return m_dwWindowWidth; };
-	inline DWORD        WindowHeight(void) const { return m_dwWindowHeight; };
-	inline DWORD        FullscreenWidth(void) const { return m_dwFullscreenWidth; };
-	inline DWORD        FullscreenHeight(void) const { return m_dwFullscreenHeight; };
-	inline DWORD        BitDepth(void) const { return m_dwBitDepth; };
-	inline DWORD        ColorKey(void) const { return m_dwOverlayColorKey; };
+	inline dword_t      Width(void) const { return m_dwWidth; };
+	inline dword_t      Height(void) const { return m_dwHeight; };
+	inline dword_t      WindowWidth(void) const { return m_dwWindowWidth; };
+	inline dword_t      WindowHeight(void) const { return m_dwWindowHeight; };
+	inline dword_t      FullscreenWidth(void) const { return m_dwFullscreenWidth; };
+	inline dword_t      FullscreenHeight(void) const { return m_dwFullscreenHeight; };
+	inline dword_t      BitDepth(void) const { return m_dwBitDepth; };
+	inline bgr32_t      ColorKey(void) const { return BGR32FromRGB32(m_dwOverlayColorKey); };
 	inline BitCanvas* GetBitCanvas(void) { return m_pBitCanvas; };
 	inline HWND         GetWindow(void) const { return m_hWindow; };
 	inline DWORD        ShouldFlip(void)
@@ -220,21 +213,21 @@ protected:
 
 private:
 	char                m_strWindowTitle[256];
-	WNDCLASSEXA          m_hWindowClass;
+	WNDCLASSEXA         m_hWindowClass;
 	HWND                m_hWindow;
 	HWND                m_hParentWindow;
 	WNDPROC             m_hDefWindowProc;    /* default window procedure  */
 
-	DWORD               m_dwWidth;      /* the width  of the screen       */
-	DWORD               m_dwHeight;     /* the height of the screen       */
-	DWORD               m_dwBitDepth;   /* current display bit depth      */
+	dword_t             m_dwWidth;      /* the width  of the screen       */
+	dword_t             m_dwHeight;     /* the height of the screen       */
+	dword_t             m_dwBitDepth;   /* current display bit depth      */
 	DWORD               m_dwFlags;      /* storage for various attributes */
-	DWORD               m_dwOverlayColorKey;
+	rgb32_t             m_dwOverlayColorKey;
 
-	DWORD               m_dwFullscreenWidth;
-	DWORD               m_dwFullscreenHeight;
-	DWORD               m_dwWindowWidth;
-	DWORD               m_dwWindowHeight;
+	dword_t             m_dwFullscreenWidth;
+	dword_t             m_dwFullscreenHeight;
+	dword_t             m_dwWindowWidth;
+	dword_t             m_dwWindowHeight;
 
 protected:
 	BitCanvas* m_pBitCanvas;    /* the entity that draws on me  */
@@ -263,7 +256,4 @@ private:
 	DWORD               WindowStyleEx(void);
 	DWORD               FullscreenStyleEx(void);
 };
-
-
-#endif  /* _WindowDevice_H_ */
 

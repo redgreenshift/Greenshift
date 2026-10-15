@@ -1,0 +1,9 @@
+srcX = "sin(y)/cos(x)",
+srcY = "sin(x)/cos(y)",
+
+Zoom       = "1",
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

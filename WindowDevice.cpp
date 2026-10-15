@@ -26,17 +26,18 @@
   *
   ****************************************************************************/
 
-#include <Windows.h> // DWORD
+#include "WindowDevice.h"
+
+#include "BitCanvas.h"
+#include "ColorUtils.hpp"
+#include "MyDictionary.h"
+#include "Expression.h"
+#include "HighResolutionTimer.h"
 
 #include <string.h>
 #include <cstdlib>
 #include <cstdio>
-
-#include "BitCanvas.h"
-#include "Expression.h"
-#include "HighResolutionTimer.h"
-#include "MyDictionary.h"
-#include "WindowDevice.h"
+#include <Windows.h> // HINSTANCE, WNDPROC, HWND
 
   /*
   case WM_ACTIVATE:
@@ -66,7 +67,7 @@ WindowDevice::WindowDevice()
 	m_dwHeight = 480;
 	m_dwBitDepth = 8;
 	m_dwFlags = WD_DEFAULT;
-	m_dwOverlayColorKey = 0x00000000;
+	m_dwOverlayColorKey = RGB32(0,0, 0);
 	m_strWindowTitle[0] = '\0';
 	m_pBitCanvas = NULL;
 	m_bShowFramerate = false;
@@ -156,11 +157,11 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 	if (strcpy_s(m_strWindowTitle, _countof(m_strWindowTitle), strWindowTitle) != 0)
 		return FAILURE;
 
-	m_dwBitDepth = (DWORD)Expression::Evaluate(inConfig->GetValue("screen_depth"), m_nBitDepth, inValues, inGlobals);
+	m_dwBitDepth = (dword_t)Expression::Evaluate(inConfig->GetValue("screen_depth"), m_nBitDepth, inValues, inGlobals);
 	m_nBitDepth = (value_t)m_dwBitDepth;
-	m_dwWidth = (DWORD)Expression::Evaluate(inConfig->GetValue("buffer_width"), m_nWidth, inValues, inGlobals);
+	m_dwWidth = (dword_t)Expression::Evaluate(inConfig->GetValue("buffer_width"), m_nWidth, inValues, inGlobals);
 	m_nWidth = (value_t)m_dwWidth;
-	m_dwHeight = (DWORD)Expression::Evaluate(inConfig->GetValue("buffer_height"), m_nHeight, inValues, inGlobals);
+	m_dwHeight = (dword_t)Expression::Evaluate(inConfig->GetValue("buffer_height"), m_nHeight, inValues, inGlobals);
 	m_nHeight = (value_t)m_dwHeight;
 
 	m_dwFlags = WD_DIRECTX;  /* DirectX is default, need to allow OpenGL */
@@ -168,7 +169,17 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 		0, NULL, inGlobals) != 0) ? WD_FULLSCREEN : WD_DEFAULT;
 	m_dwFlags |= (Expression::Evaluate(inConfig->GetValue("overlay_mode"),
 		0, NULL, inGlobals) != 0) ? WD_OVERLAY : WD_DEFAULT;
-	m_dwOverlayColorKey = (DWORD)Expression::Evaluate(
+	// REVIEW(JRDV): It was unclear whether the `overlay_color_key` setting was 0x00RRGGBB or 0x00BBGGRR format.
+	// Since I was likely the only one ever using it, and the setting.txt defaults to black (0), I made the
+	// arbitrary decision to say it's in RGB format (not COLORREF which is BGR), and then convert before using.
+	// `rgb32_t` is the standard/normalized format used internally by Greenshift. Colors are only converted to
+	// `bgr32_t` format when necessary for platform display purposes.
+	//
+	// In either case, this setting is ambiguous, and I'm not sure the Expression system allows for hexadecimal constants,
+	// so entering a packed RGB color in decimal is really awkward. There are unused settings named keyR, keyG,
+	// and keyB, so the idea was to separate the components to avoid the ambiguity, but it was not implemented.
+	// Consider naming something more clear like `overlay_color_keyR` / `overlay_color_keyG` / `overlay_color_keyB`
+	m_dwOverlayColorKey = (rgb32_t)Expression::Evaluate(
 		inConfig->GetValue("overlay_color_key"), 0, inValues, inGlobals);
 
 
@@ -180,13 +191,13 @@ error_t    WindowDevice::Initialize(const char* strWindowTitle,
 		atol(inConfig->GetValue("show_debug_info", "0")
 		) != 0) ? true : false;
 
-	m_dwWindowWidth = (DWORD)Expression::Evaluate(inConfig->GetValue("window_width"), m_nWindowWidth, inValues, inGlobals);
+	m_dwWindowWidth = (dword_t)Expression::Evaluate(inConfig->GetValue("window_width"), m_nWindowWidth, inValues, inGlobals);
 	m_nWindowWidth = (value_t)m_dwWindowWidth;
-	m_dwWindowHeight = (DWORD)Expression::Evaluate(inConfig->GetValue("window_height"), m_nWindowHeight, inValues, inGlobals);
+	m_dwWindowHeight = (dword_t)Expression::Evaluate(inConfig->GetValue("window_height"), m_nWindowHeight, inValues, inGlobals);
 	m_nWindowHeight = (value_t)m_dwWindowHeight;
-	m_dwFullscreenWidth = (DWORD)Expression::Evaluate(inConfig->GetValue("screen_width"), m_nFullscreenWidth, inValues, inGlobals);
+	m_dwFullscreenWidth = (dword_t)Expression::Evaluate(inConfig->GetValue("screen_width"), m_nFullscreenWidth, inValues, inGlobals);
 	m_nFullscreenWidth = (value_t)m_dwFullscreenWidth;
-	m_dwFullscreenHeight = (DWORD)Expression::Evaluate(inConfig->GetValue("screen_height"), m_nFullscreenHeight, inValues, inGlobals);
+	m_dwFullscreenHeight = (dword_t)Expression::Evaluate(inConfig->GetValue("screen_height"), m_nFullscreenHeight, inValues, inGlobals);
 	m_nFullscreenHeight = (value_t)m_dwFullscreenHeight;
 
 
@@ -337,7 +348,7 @@ int        WindowDevice::ThreadProcedure(void* /*pData*/)
 	while ((hRet = GetMessage(&msg, NULL, 0, 0)) != 0)
 	{
 		if (hRet == -1
-			|| msg.message == WM_QUIT)
+			|| msg.message == WM_QUIT) // REVIEW(JRDV): Is the WM_QUIT check actually reachable?
 		{
 			break;
 		}
@@ -588,7 +599,7 @@ void    WindowDevice::SetBitCanvas(BitCanvas* pBitCanvas)
 error_t    WindowDevice::Flip(void)
 {
 	static char                 strFPS[128] = "0.0";
-	static DWORD                dwFrames = 0;
+	static dword_t              dwFrames = 0;
 	static value_t              nTime;
 	static HighResolutionTimer  hrtClock;
 	error_t                     err = SUCCESS;

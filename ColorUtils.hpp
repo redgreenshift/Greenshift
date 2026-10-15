@@ -98,6 +98,18 @@ inline constexpr byte_t BFromBGR32(bgr32_t rgb)
     return static_cast<byte_t>((rgb >> 16) & BLUEMASK32);
 }
 
+// Convert from RGB to BGR/COLORREF
+inline constexpr bgr32_t BGR32FromRGB32(rgb32_t color)
+{
+    return BGR32(RFromRGB32(color), GFromRGB32(color), BFromRGB32(color));
+}
+
+// Convert from BGR/COLORREF to RGB
+inline constexpr rgb32_t RGB32FromBGR32(bgr32_t color)
+{
+    return RGB32(RFromBGR32(color), GFromBGR32(color), BFromBGR32(color));
+}
+
 inline constexpr word_t REDSHIFT16 = 11;
 inline constexpr word_t GREENSHIFT16 = 5;
 inline constexpr word_t BLUESHIFT16 = 0;

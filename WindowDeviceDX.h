@@ -27,14 +27,11 @@
   *
   ****************************************************************************/
 
-#ifndef _WindowDeviceDX_H_
-#define _WindowDeviceDX_H_
-
 #include "BitCanvas.h"
 #include "ColorUtils.hpp"
 #include "WindowDevice.h"
 
-#include <Windows.h>
+#include <Windows.h> // COLORREF, DWORD
 #include <ddraw.h>
 
 
@@ -85,7 +82,7 @@ protected:
 	error_t             ClearScreen(void);    /* clears the back surface */
 	virtual error_t     ClearScreenAll(void) override; /* clears all surfaces */
 	error_t             FillSurface(LPDIRECTDRAWSURFACE7 lpSurface,
-		DWORD dwFillColor = PALETTERGB(0, 0, 0));
+		COLORREF dwFillColor = PALETTERGB(0, 0, 0));
 	/* clear a surface
 	 * using the
 	 * specified color
@@ -141,7 +138,7 @@ protected:
 	inline void LockDX(void) { EnterCriticalSection(&m_csDX); };
 	inline void UnlockDX(void) { LeaveCriticalSection(&m_csDX); };
 private:
-	CRITICAL_SECTION        m_csDX;
+	CRITICAL_SECTION        m_csDX;           // REVIEW(JRDV): what does this protect, spcifically?
 	LPDIRECTDRAW7           m_pDD;            /* The DirectDraw7 Object     */
 	LPDIRECTDRAWSURFACE7    m_pDDSPrimary;    /* DirectDraw primary surface */
 	LPDIRECTDRAWSURFACE7    m_pDDSBack;       /* DirectDraw back surface    */
@@ -164,7 +161,4 @@ private:
 	 * if not already
 	 */
 };
-
-
-#endif  /* _WindowDeviceDX_H_ */
 

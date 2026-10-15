@@ -1,0 +1,41 @@
+srcX = "sin(x)/cos(y)",
+srcY = "sin(y)/cos(x)",
+
+
+EdgeWrap   = "1",
+DispFactor = "1", /* unused */
+Aspc       = "1.0",
+
+Zoom       = "1",
+/*
+ * What is Zoom?  The easiest way to explain is it's like TV vs. letterbox format.
+
+I'm sure that makes absolutely no sense, but allow me to explain.
+
+You should be familiar with the logical coordinate system Greenshift uses, right?
+
+Okay, just in case, I'll explain the logical coordinate system.  In an effort to maintain resolution independence...  Resolution independence is just a fancy way of saying Greenshift should look the same no matter what the resolution.  In an effort to maintain resolution independence, there is no way for configs to know anything about the display, like the resolution, number of pixels, or bit depth.  Instead of directly calculating pixel coordinates, configs pretend that there are an infinite number of pixels, each indexed by a floating point value on the interval (-1,1).
+
+The top left of the screen is (-1,1), the bottom right is (1,-1), and the center is (0,0).
+
+Everything is described in terms of this logical coordinate system.
+
+
+That would be just fine if everything you ever wanted to do was square.  Since this isn't the case, the Aspect variable was added to control how the width/height ratio should be interpreted, even though both are on the interval (-1,1).
+
+The designated value 0 is used to mean the aspect should be the same as the visible portion of the screen.
+
+However, when the aspect is not the same as the screen, the logical coordinates still have to be mapped to screen coordinates.
+
+Greenshift's original method guaranteed every pixel was within the (-1,1) interval, so some logical coordinates were located offscreen.  G-Force's method is to guarantee both intervals fit entirely on the screen, so some screen coordinates are outside the (-1,1) logical interval.
+
+Greenshift now defaults to G-Force's method, but the Zoom variable allows the other method to be used.
+
+Zoom = "0", shrinks it down so everything fits onscreen (letterbox)
+Zoom = "1", zooms in so that one axis fills the entire screen (pan & scan)
+
+
+ */
+
+Vers    = "100"
+

@@ -1,0 +1,9 @@
+srcX = "sin(x*pi/4)/cos(y*pi/4)",
+srcY = "sin(y*pi/4)/cos(x*pi/4)",
+
+//Zoom       = "1",
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

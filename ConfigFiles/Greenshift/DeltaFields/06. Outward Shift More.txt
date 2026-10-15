@@ -1,0 +1,7 @@
+srcX = "sin(x)*cos(y)",
+srcY = "sin(y)*cos(x)",
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

@@ -1,0 +1,7 @@
+srcX = "1.02 * x",
+srcY = "1.02 * y",
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

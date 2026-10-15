@@ -1,0 +1,8 @@
+srcX = "x*cos(pi/180)+y*sin(pi/180)",
+srcY = "-x*sin(pi/180)+y*cos(pi/180)",
+
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"
+

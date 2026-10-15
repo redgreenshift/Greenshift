@@ -27,22 +27,19 @@
   *
   ****************************************************************************/
 
-#ifndef _WindowDeviceOpenGL_H_
-#define _WindowDeviceOpenGL_H_
-
 #include "WindowDevice.h"
-#include <gl/gl.h>
-  //#include <gl/glu.h>
+//#include <gl/gl.h>
+//#include <gl/glu.h>
 
 #include <Windows.h> // HDC
 
-  /****************************************************************************
-   *
-   * WindowDeviceOpenGL -
-   *
-   * this is what creates the OpenGL objects
-   *
-   ****************************************************************************/
+/****************************************************************************
+ *
+ * WindowDeviceOpenGL -
+ *
+ * this is what creates the OpenGL objects
+ *
+ ****************************************************************************/
 class WindowDeviceOpenGL : public WindowDevice
 {
 public:
@@ -55,7 +52,7 @@ protected:
 	error_t             ClearScreen(void);    /* clears the back surface */
 	virtual error_t     ClearScreenAll(void) override; /* clears all surfaces */
 	/*    error_t                FillSurface( LPDIRECTDRAWSURFACE7 lpSurface,
-										DWORD dwFillColor = 0 ); /* clear a surface
+										COLORREF dwFillColor = 0 ); /* clear a surface
 																  * using the
 																  * specified color
 																  */
@@ -99,7 +96,4 @@ private:
 	 * if not already
 	 */
 };
-
-
-#endif  /* _WindowDeviceOpenGL_H_ */
 

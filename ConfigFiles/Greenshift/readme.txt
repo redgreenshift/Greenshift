@@ -2,6 +2,12 @@
  *
  * Welcome to Greenshift v0.4.2b.  Copyright (c) 2001-2026 Jared Ivey
  *
+ * NOTE — This file is updated occasionally, but may not reflect the project’s
+ * current status. Older sections, including plans recorded at the time, are
+ * preserved for historical interest and may no longer reflect my intentions.
+ *
+ * See README.md for the current project status and documentation.
+ *
 \****************************************************************************/
 
 This software is OSI Certified Open Source Software.

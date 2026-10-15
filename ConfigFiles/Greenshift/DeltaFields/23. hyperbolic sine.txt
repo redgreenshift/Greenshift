@@ -1,0 +1,7 @@
+srcX = "sinh(x)",
+srcY = "sinh(y)",
+
+EdgeWrap   = "1",
+DispFactor = "1",
+Aspc     = "1.0",
+Vers    = "100"

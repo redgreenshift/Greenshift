@@ -13,6 +13,24 @@
       <UniqueIdentifier>{a55653df-7a60-4f40-a758-1c95af941847}</UniqueIdentifier>
       <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
     </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{35ae385f-ba0e-4398-b24f-f873af848576}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles">
+      <UniqueIdentifier>{d4646bf8-c5eb-4f25-98c7-e5a8fe20237d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles\ColorMaps">
+      <UniqueIdentifier>{74b3b71c-b95b-47e2-b970-5a6261f9932e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles\DeltaFields">
+      <UniqueIdentifier>{d9692c6f-6b33-4b07-ae44-e9013b8edb57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles\Particles">
+      <UniqueIdentifier>{285e197c-928a-4c16-ae25-0e1bb4c37ce9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigFiles\WaveShapes">
+      <UniqueIdentifier>{176b5efc-17e9-4094-9af3-160a32e259e9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitCanvas.cpp">
@@ -229,6 +247,214 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="settings.txt" />
+    <None Include="README.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="AGENTS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="CLAUDE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="LICENSE">
+      <Filter>Documentation</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ConfigFiles\Greenshift\settings.txt">
+      <Filter>Documentation</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\readme.txt">
+      <Filter>Documentation</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Blue.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Blueshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Cyan.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example CMY Cyanshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example CMY Magentashift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example CMY Yellowshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example CMYK Dark Greenshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example HLS palette.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example HSV palette.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Example OKLab palette.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Green.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Greenshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Grey.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Orange.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Red.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Redshift.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Violet.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\ColorMaps\Yellow.txt">
+      <Filter>ConfigFiles\ColorMaps</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\17. Static.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\18. Up.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\19. Right.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\3d Dancing Line.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\4d Flat Plane.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\Dancing Lines.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\Radar.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\Traveling Wave.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\Particles\Wandering Line.txt">
+      <Filter>ConfigFiles\Particles</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\3d Dancing Line.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Color Plane.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Magic Carpet.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Rotating Color Plane.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Rotating Color Plane2.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Sine Sum.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Sine Wave.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\4d Trig.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\Bezier.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\Bezier2.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\Infinity.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\Irritating 4dParticle.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\question.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\WaveShapes\TechTV.txt">
+      <Filter>ConfigFiles\WaveShapes</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\00. Counter-Clockwise (polar).txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\01. Counter-Clockwise 1 degree (cartesian).txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\02. Linear Outward.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\03. Up and Away from Center.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\04. Up and Right.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\05. Outward.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\06. Outward Shift More.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\07. Greenshift.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\08. Outer Weirdness.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\09. Inner Weirdness.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\10. Outer Weirdness, displacement factor 1.5.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\11. Inner-Outer Weirdness.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\12. Blinky, NO!.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\13. Flip-Flop, NO!.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\14. Up and Center.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\15. In.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\16. Out.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\20. Greenshift Variation.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\21. Hyperbolic Greenshift.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\22. hyperbolic cosine.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\23. hyperbolic sine.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
+    <Text Include="ConfigFiles\Greenshift\DeltaFields\24. hyperbolic tangent.txt">
+      <Filter>ConfigFiles\DeltaFields</Filter>
+    </Text>
   </ItemGroup>
 </Project>
