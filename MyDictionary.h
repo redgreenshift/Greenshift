@@ -63,7 +63,7 @@ protected:
 	//    DataType    *m_pArray;
 public:
 	Set() {};
-	virtual     ~Set() {};
+	virtual     ~Set() override {};
 
 protected:
 
@@ -77,7 +77,7 @@ protected:
 	 ****************************************************************************/
 	virtual error_t MoveContents(DataType* pNewArray,
 		DataType* pOldArray,
-		const dword_t dwNewSize)
+		const dword_t dwNewSize) override
 	{
 		dword_t   i;
 
@@ -172,7 +172,7 @@ public:
 		m_pAlternate = NULL;
 		m_dwAliasCount = 0;
 	};
-	virtual ~MyDictionary()
+	virtual ~MyDictionary() override
 	{
 	};
 
@@ -379,7 +379,7 @@ protected:
 	 * Compare - determine if two DataTypes are equal
 	 *
 	 ****************************************************************************/
-	virtual bool    Compare(data_t inValue1, data_t inValue2)
+	virtual bool    Compare(data_t inValue1, data_t inValue2) override
 	{
 		if (this->IsValid(inValue1) && this->IsValid(inValue2))
 			return StringsMatch(inValue1->GetKey(), inValue2->GetKey());
@@ -398,7 +398,7 @@ protected:
 	 ****************************************************************************/
 	virtual error_t    MoveContents(data_t* pNewArray,
 		data_t* pOldArray,
-		const dword_t dwNewSize)
+		const dword_t dwNewSize) override
 	{
 		dword_t    i;
 
@@ -435,7 +435,7 @@ protected:
 	 *        return value != SUCCESS means inValue is not in the Collection
 	 *
 	 ****************************************************************************/
-	 /*    virtual error_t    IndexOf( data_t inValue, DWORD *outIndex )
+	 /*    virtual error_t    IndexOf( data_t inValue, DWORD *outIndex ) override
 		 {
 			 error_t    err;
 			 DWORD    i;
@@ -522,7 +522,7 @@ public:
 		this->m_pArray = m_pData;
 	};
 
-	virtual         ~FiniteSet()
+	virtual         ~FiniteSet() override
 	{
 	};
 
@@ -555,7 +555,7 @@ protected:
 	 *
 	 * @return error_t returns SUCCESS once the set has been prepared/re-indexed.
 	 */
-	virtual error_t FullCheck(void)
+	virtual error_t FullCheck(void) override
 	{
 		dword_t    i;
 
@@ -604,7 +604,7 @@ protected:
 		 m_bDeleteEntries = false;
 	 };
 
-	 virtual        ~OrderedSet()
+	 virtual        ~OrderedSet() override
 	 {
 	 };
 

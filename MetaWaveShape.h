@@ -77,7 +77,7 @@ public:
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals) override;
 
 
-	virtual error_t     ReduceTime(void);
+	virtual error_t     ReduceTime(void) override;
 
 protected:
 	virtual error_t     UpdateDerived(BitCanvas* pBitCanvas) override;

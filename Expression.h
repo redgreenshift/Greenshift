@@ -574,7 +574,7 @@ class ExpressionValue : public Expression
 {
 public:
 	ExpressionValue(); /* default constructor */
-	virtual     ~ExpressionValue();
+	virtual     ~ExpressionValue() override;
 
 	const char* Operator(void) override;
 	int         Size(void) override;
@@ -596,7 +596,7 @@ protected:
 	inline Expression* UnaryTerm(void) { return m_pUnaryTerm; };
 public:
 	ExpressionUnary(Expression* inExpression1);
-	virtual     ~ExpressionUnary();
+	virtual     ~ExpressionUnary() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool        IsConstantExpression(void) override;
@@ -611,7 +611,7 @@ class ExpressionTrigonometric : public ExpressionUnary
 {
 public:
 	ExpressionTrigonometric() {};
-	virtual     ~ExpressionTrigonometric() {};
+	virtual     ~ExpressionTrigonometric() override {};
 
 };
 
@@ -619,7 +619,7 @@ class ExpressionHyperbolic : public ExpressionUnary
 {
 public:
 	ExpressionHyperbolic() {};
-	virtual     ~ExpressionHyperbolic() {};
+	virtual     ~ExpressionHyperbolic() override {};
 
 };
 
@@ -641,7 +641,7 @@ protected:
 public:
 	ExpressionBinary(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionBinary();
+	virtual ~ExpressionBinary() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool    IsConstantExpression(void) override;
@@ -656,7 +656,7 @@ class ExpressionAdditive : public ExpressionBinary
 public:
 	ExpressionAdditive(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionAdditive();
+	virtual ~ExpressionAdditive() override;
 };
 
 class ExpressionMultiplicative : public ExpressionBinary
@@ -664,7 +664,7 @@ class ExpressionMultiplicative : public ExpressionBinary
 public:
 	ExpressionMultiplicative(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionMultiplicative();
+	virtual ~ExpressionMultiplicative() override;
 };
 
 class ExpressionExponential : public ExpressionBinary
@@ -672,7 +672,7 @@ class ExpressionExponential : public ExpressionBinary
 public:
 	ExpressionExponential(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionExponential();
+	virtual ~ExpressionExponential() override;
 };
 
 class ExpressionRelational : public ExpressionBinary
@@ -680,7 +680,7 @@ class ExpressionRelational : public ExpressionBinary
 public:
 	ExpressionRelational(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionRelational();
+	virtual ~ExpressionRelational() override;
 };
 
 class ExpressionList : public ExpressionBinary
@@ -688,7 +688,7 @@ class ExpressionList : public ExpressionBinary
 public:
 	ExpressionList(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionList();
+	virtual ~ExpressionList() override;
 };
 
 
@@ -717,7 +717,7 @@ public:
 	ExpressionTernary(Expression* inExpression1,
 		Expression* inExpression2,
 		Expression* inExpression3);
-	virtual     ~ExpressionTernary();
+	virtual     ~ExpressionTernary() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool        IsConstantExpression(void) override;
@@ -747,7 +747,7 @@ protected:
 public:
 	ExpressionNAry(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual ~ExpressionNAry();
+	virtual ~ExpressionNAry() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool    IsConstantExpression(void) override;
@@ -788,7 +788,7 @@ protected:    /* returns the constant value */
 	inline const value_t    ConstantValue(void) const { return m_nConstantValue; };
 public:
 	ExpressionConstant(const value_t inValue);
-	virtual     ~ExpressionConstant();
+	virtual     ~ExpressionConstant() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool        IsConstantExpression(void) override;
@@ -811,7 +811,7 @@ protected:
 	inline char* VariableName(void) { return m_strVariableName; };
 public:
 	ExpressionVariable(char* inName, value_t* inValue);
-	virtual     ~ExpressionVariable();
+	virtual     ~ExpressionVariable() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool        IsConstantExpression(void) override;
@@ -831,7 +831,7 @@ protected:
 public:
 	ExpressionUserDefined(EXPRESSIONDESCRIPTION* pExpDescription,
 		Expression* inExpression1);
-	virtual     ~ExpressionUserDefined();
+	virtual     ~ExpressionUserDefined() override;
 
 	const char* Operator(void) override;
 	value_t     Evaluate(void) override;
@@ -1341,7 +1341,7 @@ protected:
 	inline long    SymbolValue(void) { return m_nSymbolValue; };
 public:
 	ExpressionSymbol(const long inValue);
-	virtual     ~ExpressionSymbol();
+	virtual     ~ExpressionSymbol() override;
 
 	char* PrintString(char* inStr, int& nLength) override;
 	bool        IsConstantExpression(void) override;
@@ -1371,7 +1371,7 @@ class ExpressionStar : public ExpressionUnary//, public RegularExpression
 {
 public:
 	ExpressionStar(Expression* inExpression1);
-	virtual     ~ExpressionStar();
+	virtual     ~ExpressionStar() override;
 
 	const char* Operator(void) override;
 	value_t     Evaluate(void) override;
@@ -1408,7 +1408,7 @@ class ExpressionOr : public ExpressionBinary//, public RegularExpression
 public:
 	ExpressionOr(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual     ~ExpressionOr();
+	virtual     ~ExpressionOr() override;
 
 	const char* Operator(void) override;
 	value_t     Evaluate(void) override;
@@ -1448,7 +1448,7 @@ class ExpressionAnd : public ExpressionBinary//, public RegularExpression
 public:
 	ExpressionAnd(Expression* inExpression1,
 		Expression* inExpression2);
-	virtual     ~ExpressionAnd();
+	virtual     ~ExpressionAnd() override;
 
 	const char* Operator(void) override;
 	value_t     Evaluate(void) override;
