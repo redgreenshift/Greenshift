@@ -23,6 +23,7 @@
 
 #include "CollectionsAbstract.h"
 
+#include <algorithm>
 
 /**
  * @brief A fixed-capacity, ordered set with FIFO-by-insertion semantics.

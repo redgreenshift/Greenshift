@@ -57,7 +57,7 @@ unsigned char cWaveformData[2][SOUND_DATA_LENGTH];
 #define WINMAIN2    WinMain
 #endif
 
-#include "MersenneTwister.h"
+#include "MTRand.hpp"
 #define HIDE_FROM_WINDOWS
 //#include "..\\..\\cs\\cs4451a\\cs4451a\\cs4451_a1.c"
 

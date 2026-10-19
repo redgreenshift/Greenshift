@@ -29,7 +29,7 @@
 #include "GForceFunctions.h"
 
 #include "Greenshift.h"
-#include "MersenneTwister.h"
+#include "MTRand.hpp"
 
 #include <cmath>
 #include <cstdint>

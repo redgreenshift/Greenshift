@@ -1,4 +1,5 @@
 #pragma once
+#include "Project Greenshift.h"
 /*
  *  Copyright (C) 2001-2026 Jared Ivey
  *
@@ -44,8 +45,6 @@
    * access to be 16 byte aligned.
    *
    ****************************************************************************/
-
-#include "Project Greenshift.h"
 
 #include <memory>
 

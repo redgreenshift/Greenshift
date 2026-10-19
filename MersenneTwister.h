@@ -47,13 +47,9 @@
 // Not thread safe (unless auto-initialization is avoided and each thread has
 // its own MTRand object)
 
-#include <atomic>
-#if __cpp_lib_bit_cast >= 201806L
-#include <bit>
-#endif
-#include <chrono>
+#include "RandUtils.hpp"
+
 #include <climits>
-#include <cstdarg>
 #include <cstdint> // uint32_t
 #include <cstdio>
 #if __cpp_lib_bit_cast < 201806L
@@ -61,7 +57,6 @@
 #endif
 #include <iostream>
 #include <istream>
-#include <thread>   // std::thread::id
 #include <version>
 
 #if defined(_MSC_VER)
@@ -69,109 +64,11 @@
 #pragma warning(disable: 5033) // "'register' is no longer a supported storage class"
 #endif
 
-inline std::atomic<uint64_t> g_seed_event_counter{ 0 };
-
-/**
- * @brief Generates a 64-bit pseudorandom value using the SplitMix64 algorithm;
- * a high-performance, non-cryptographic pseudorandom number generator (PRNG)
- * that functions as a counter-based generator.
- *
- * This function updates the provided state and applies a mixing function
- * to produce a high-quality 64-bit hash.
- *
- * These specific operations are chosen to maximize the avalanche effect,
- * ensuring that even a difference of a single bit in the input state results
- * in an output where roughly half of the bits flip.
- *
- * @param x The current state of the generator, updated in-place.
- * @return A mixed 64-bit unsigned integer.
- *
- * NOTE: SplitMix64 is widely respected for its balance of speed and statistical quality,
- * making it a common choice for seeding more complex generators (such as the Xoshiro family)
- * or for use in environments where multiple independent streams of random numbers are needed.
- */
-inline uint64_t SplitMix64(uint64_t& x) {
-	uint64_t z = (x += 0x9e3779b97f4a7c15ULL);   // increment state by a value derived from the golden ratio, so it will not repeat a sequence until every possible 64-bit value has been used
-	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL; /* 1011111101011000010001110110110100011100111001001110010110111001 */
-	z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL; /* 1001010011010000010010011011101100010011001100010001000111101011 */
-	return z ^ (z >> 31);
-}
-
-/**
- * @brief Generates a 32-bit pseudorandom value using the SplitMix32 algorithm.
- *
- * This function updates the provided state and applies a mixing function
- * to produce a high-quality 32-bit hash.
- *
- * @param x The current state of the generator, updated in-place.
- * @return A mixed 32-bit unsigned integer.
- *
- * IMPORTANT NOTE: If you are aiming for statistical purity, you should almost
- * always prefer SplitMix64 with truncation over SplitMix32.
- */
-inline uint32_t SplitMix32(uint32_t& x) {
-	x += 0x9e3779b9u;
-	uint32_t z = x;
-	z = (z ^ (z >> 16)) * 0x85ebca6bu; // 10000101111010111100101001101011
-	z = (z ^ (z >> 13)) * 0xc2b2ae35u; // 11000010101100101010111000110101
-	z = z ^ (z >> 16);
-	return z;
-}
-
-/**
- * @brief Hashes a thread identifier into a 64-bit unsigned integer.
- *
- * Converts the opaque std::thread::id into a numeric representation and
- * applies an avalanche function to ensure a uniform distribution of bits.
- *
- * NOTE: This uses the MurmurHash3 64-bit finalizer, which is better than
- * trying to use SplitMix64 to generate a single hash value.
- *
- * @param tid The thread identifier to hash.
- * @return A 64-bit hash of the thread ID.
- */
-inline uint64_t hash_thread_id(std::thread::id tid) {
-	// Use the standard-defined way to get a numeric representation of the thread ID.
-	// We cast to uint64_t to ensure we have a consistent starting width for the mixer.
-	uint64_t x = static_cast<uint64_t>(std::hash<std::thread::id>{}(tid));
-
-	// MurmurHash3 64-bit finalizer (The "Avalanche" stage)
-	// This ensures that even if std::hash is a simple pass-through,
-	// the resulting seed is uniformly distributed.
-	x ^= x >> 33;
-	x *= 0xff51afd7ed558ccdULL;
-	x ^= x >> 33;
-	x *= 0xc4ceb9fe1a85ec53ULL;
-	x ^= x >> 33;
-	return x;
-}
-
-// Deterministic float->u32 bitcast (no numeric conversion).
-inline uint32_t float_to_u32_bits(float f) {
-#if __cpp_lib_bit_cast >= 201806L
-	return std::bit_cast<uint32_t>(f);
-#else
-	uint32_t u;
-	std::memcpy(&u, &f, sizeof(u));
-	return u;
-#endif
-}
-
-// Deterministic double->u64 bitcast (no numeric conversion).
-inline uint64_t double_to_u64_bits(double f) {
-#if __cpp_lib_bit_cast >= 201806L
-	return std::bit_cast<uint64_t>(f);
-#else
-	uint64_t u;
-	std::memcpy(&u, &f, sizeof(u));
-	return u;
-#endif
-}
-
 // Q: Why not reinterpret cast?
 // ANSWER: https://stackoverflow.com/questions/53401654/why-was-stdbit-cast-added-if-reinterpret-cast-could-do-the-same#53402217
 
-class MTRand {
+
+class MTRand2001 {
 // Data
 public:
 	typedef uint32_t uint32;  // unsigned integer type, at least 32 bits
@@ -191,9 +88,9 @@ protected:
 
 //Methods
 public:
-	MTRand( const uint32& oneSeed );  // low-entropy - LEGACY constructor: initialize with a simple uint32 (prefer other constructors)
-	MTRand( uint32 *const bigSeed );  // initialize with an array of N uint32's
-	MTRand();  // HIGH-ENTROPY: auto-initialize with /dev/urandom or unique_seed() -- RECOMMENDED for new code
+	MTRand2001( const uint32& oneSeed );  // low-entropy - LEGACY constructor: initialize with a simple uint32 (prefer other constructors)
+	MTRand2001( uint32 *const bigSeed );  // initialize with an array of N uint32's
+	MTRand2001();  // HIGH-ENTROPY: auto-initialize with /dev/urandom or unique_seed() -- RECOMMENDED for new code
 
 	// Access to 32-bit random numbers
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
@@ -223,8 +120,8 @@ public:
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
-	friend std::ostream& operator<<( std::ostream& os, const MTRand& mtrand );
-	friend std::istream& operator>>( std::istream& is, MTRand& mtrand );
+	friend std::ostream& operator<<( std::ostream& os, const MTRand2001& mtrand );
+	friend std::istream& operator>>( std::istream& is, MTRand2001& mtrand );
 
 protected:
 	void reload();
@@ -241,17 +138,17 @@ protected:
 };
 
 
-inline MTRand::MTRand( const uint32& oneSeed )
+inline MTRand2001::MTRand2001( const uint32& oneSeed )
 	{ seed(oneSeed); }
 
-inline MTRand::MTRand( uint32 *const bigSeed )
+inline MTRand2001::MTRand2001( uint32 *const bigSeed )
 	{ seed(bigSeed); }
 
-inline MTRand::MTRand()
+inline MTRand2001::MTRand2001()
 	{ seed(); }
 
 // @returns real number in [0,1]
-inline double MTRand::rand()
+inline double MTRand2001::rand()
 {
 	constexpr double RAND_MAGIC = 2.3283064370807974e-10;
 	static_assert(double(UINT_MAX) * RAND_MAGIC == 1.0,
@@ -260,11 +157,11 @@ inline double MTRand::rand()
 }
 
 // @returns real number in [0,n]
-inline double MTRand::rand( const double& n )
+inline double MTRand2001::rand( const double& n )
 	{ return rand() * n; }
 
 // @returns real number in [0,1)
-inline double MTRand::randExc()
+inline double MTRand2001::randExc()
 {
 	constexpr double RANDEXC_MAGIC = 2.3283064365386963e-10;
 	static_assert(double(UINT_MAX) * RANDEXC_MAGIC < 1.0,
@@ -273,11 +170,11 @@ inline double MTRand::randExc()
 }
 
 // @returns real number in [0,n)
-inline double MTRand::randExc( const double& n )
+inline double MTRand2001::randExc( const double& n )
 	{ return randExc() * n; }
 
 // @returns integer in [0,2^32-1]
-inline MTRand::uint32 MTRand::randInt()
+inline MTRand2001::uint32 MTRand2001::randInt()
 {
 	if( left == 0 ) reload();
 	--left;
@@ -291,7 +188,7 @@ inline MTRand::uint32 MTRand::randInt()
 }
 
 // @returns integer in [0,n] for n < 2^32
-inline MTRand::uint32 MTRand::randInt( const uint32& n )
+inline MTRand2001::uint32 MTRand2001::randInt( const uint32& n )
 {
 	// Find which bits are used in n
 	uint32 used = ~0u;
@@ -325,7 +222,7 @@ inline MTRand::uint32 MTRand::randInt( const uint32& n )
  * Accepts simple integer values for backward compatibility.
  * Internally promoted to SplitMix64-based seeding, but max entropy remains 32-bit.
  */
-inline void MTRand::seed( uint32 oneSeed )
+inline void MTRand2001::seed( uint32 oneSeed )
 {
 	deterministic_seed_u32(oneSeed);
 }
@@ -336,7 +233,7 @@ inline void MTRand::seed( uint32 oneSeed )
  * Integrates with legacy code using basic srand() style seeding (e.g., time(NULL) or constant int).
  * Internally promoted to high-quality SplitMix64 expansion, but max entropy capped at input value bits.
  */
-inline void MTRand::deterministic_seed_u32(uint32 seedU32)
+inline void MTRand2001::deterministic_seed_u32(uint32 seedU32)
 {
 	// SplitMix64 is the superior algorithm, so just call that instead of SplitMix32;
 	// in a 64-bit space, there is far more "room" for the avalanche effect to occur.
@@ -350,7 +247,7 @@ inline void MTRand::deterministic_seed_u32(uint32 seedU32)
  * Integrates with legacy code using basic srand() style seeding (e.g., time(NULL) or constant float).
  * Internally promoted to high-quality SplitMix64 expansion, but max entropy capped at input value bits.
  */
-inline void MTRand::deterministic_seed_f32(float seedF32)
+inline void MTRand2001::deterministic_seed_f32(float seedF32)
 {
 	const uint32_t seedU32 = float_to_u32_bits(seedF32);
 
@@ -359,7 +256,7 @@ inline void MTRand::deterministic_seed_f32(float seedF32)
 #pragma endregion // LEGACY SEED INTERFACES
 
 
-inline void MTRand::seed( uint32 *const bigSeed )
+inline void MTRand2001::seed( uint32 *const bigSeed )
 {
 	// Seed the generator with an array of 624 uint32's
 	// There are 2^19937-1 possible initial states.  This function allows
@@ -383,7 +280,7 @@ inline void MTRand::seed( uint32 *const bigSeed )
  *
  * RECOMMENDED for new code.
  */
-inline void MTRand::seed()
+inline void MTRand2001::seed()
 {
 	// First try getting an array from /dev/urandom
 	FILE* urandom = fopen( "/dev/urandom", "rb" );
@@ -423,23 +320,9 @@ inline void MTRand::seed()
  *
  * RECOMMENDED for new code.
  */
-inline void MTRand::unique_seed()
+inline void MTRand2001::unique_seed()
 {
-	uint64_t t = (uint64_t)std::chrono::steady_clock::now().time_since_epoch().count();
-	uint64_t global_event = g_seed_event_counter.fetch_add(1, std::memory_order_acq_rel);
-	uint64_t local_reseed = ++reseed_counter;
-
-	uint64_t addr = (uint64_t)(uintptr_t)this; // extra decorrelation
-
-	uint64_t tid_hash = hash_thread_id(std::this_thread::get_id());
-
-	uint64_t base = t
-		^ (global_event * 0x9e3779b97f4a7c15ULL)
-		^ (local_reseed * 0xbf58476d1ce4e5b9ULL)
-		^ (addr * 0x94d049bb133111ebULL)
-		^ (tid_hash);
-
-	deterministic_seed_u64(base);
+	deterministic_seed_u64(unique_seedU64(this, reseed_counter));
 }
 
 
@@ -465,7 +348,7 @@ inline void MTRand::unique_seed()
  *
  * @param seed64 - The 64-bit seed used to initialize the generator.
  */
-inline void MTRand::deterministic_seed_u64(uint64_t seed64)
+inline void MTRand2001::deterministic_seed_u64(uint64_t seed64)
 {
 	uint32 seed_array[N]; // Intentionally uninitialized.
 	// The loop below assigns every element before use.
@@ -500,7 +383,7 @@ inline void MTRand::deterministic_seed_u64(uint64_t seed64)
  *
  * @param seedF64 - The 64-bit seed used to initialize the generator.
  */
-inline void MTRand::deterministic_seed_f64(double seedF64)
+inline void MTRand2001::deterministic_seed_f64(double seedF64)
 {
 	const uint64_t seedU64 = double_to_u64_bits(seedF64);
 
@@ -560,7 +443,7 @@ inline void MTRand::deterministic_seed_f64(double seedF64)
 */
 
 /* initializes state[N] with a seed */
-inline void MTRand::init_genrand(uint32 s)
+inline void MTRand2001::init_genrand(uint32 s)
 {
 	int j;
 	state[0] = s & 0xffffffffUL;
@@ -580,7 +463,7 @@ inline void MTRand::init_genrand(uint32 s)
 /* init_key is the array for initializing keys */
 /* key_length is its length */
 /* slight change for C++, 2004/2/26 */
-inline void MTRand::init_by_array(uint32 init_key[], int key_length)
+inline void MTRand2001::init_by_array(uint32 init_key[], int key_length)
 {
 	int i, j, k;
 	init_genrand(19650218UL);
@@ -609,7 +492,7 @@ inline void MTRand::init_by_array(uint32 init_key[], int key_length)
 #pragma endregion // 2002-version mt19937ar-cok init implementations
 
 
-inline void MTRand::reload()
+inline void MTRand2001::reload()
 {
 	// Generate N new values in state
 	// Made clearer and faster by Matthew Bellew (matthew.bellew@home.com)
@@ -625,7 +508,7 @@ inline void MTRand::reload()
 }
 
 
-inline void MTRand::save( uint32* saveArray ) const
+inline void MTRand2001::save( uint32* saveArray ) const
 {
 	register uint32 *sa = saveArray;
 	register const uint32 *s = state;
@@ -635,7 +518,7 @@ inline void MTRand::save( uint32* saveArray ) const
 }
 
 
-inline void MTRand::load( uint32 *const loadArray )
+inline void MTRand2001::load( uint32 *const loadArray )
 {
 	register uint32 *s = state;
 	register uint32 *la = loadArray;
@@ -646,18 +529,18 @@ inline void MTRand::load( uint32 *const loadArray )
 }
 
 
-inline std::ostream& operator<<( std::ostream& os, const MTRand& mtrand )
+inline std::ostream& operator<<( std::ostream& os, const MTRand2001& mtrand )
 {
-	register const MTRand::uint32 *s = mtrand.state;
+	register const MTRand2001::uint32 *s = mtrand.state;
 	register int i = mtrand.N;
 	for( ; i--; os << *s++ << "\t" ) {}
 	return os << mtrand.left;
 }
 
 
-inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
+inline std::istream& operator>>( std::istream& is, MTRand2001& mtrand )
 {
-	register MTRand::uint32 *s = mtrand.state;
+	register MTRand2001::uint32 *s = mtrand.state;
 	register int i = mtrand.N;
 	for( ; i--; is >> *s++ ) {}
 	is >> mtrand.left;

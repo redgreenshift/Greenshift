@@ -31,6 +31,15 @@
     <Filter Include="ConfigFiles\WaveShapes">
       <UniqueIdentifier>{176b5efc-17e9-4094-9af3-160a32e259e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SFMT">
+      <UniqueIdentifier>{810f9521-0298-4f18-b480-920b5a6d05fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SFMT">
+      <UniqueIdentifier>{45d1d894-22d6-4fd2-b05a-6ad827055085}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\mersenne_twister">
+      <UniqueIdentifier>{ed8cca57-8226-48c7-9d2a-2ed19bc751ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitCanvas.cpp">
@@ -113,6 +122,9 @@
     </ClCompile>
     <ClCompile Include="Diagnostics.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SFMT\SFMT.c">
+      <Filter>Source Files\SFMT</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,6 +230,9 @@
     <ClInclude Include="MyDictionary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MTRand2002.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="InsertionOrderedMap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -245,6 +260,66 @@
     <ClInclude Include="MemoryUtils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SFMTRand.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MTRand.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RandUtils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-alti.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-common.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-neon.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params607.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params1279.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params2281.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params4253.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params11213.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params19937.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params44497.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params86243.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params132049.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-params216091.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-sse2.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="SFMT\SFMT-sse2-msc.h">
+      <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md">
@@ -258,6 +333,9 @@
     </None>
     <None Include="LICENSE">
       <Filter>Documentation</Filter>
+    </None>
+    <None Include="reference\mersenne_twister\README.md">
+      <Filter>Documentation\mersenne_twister</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

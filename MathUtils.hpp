@@ -1,7 +1,7 @@
 #pragma once
 #include "Project Greenshift.h"
 /*
- *  Copyright (C) 2001-2026 Jared Ivey
+ *  Copyright (C) 2026 Jared Ivey
  *
  *  This file is part of Project Greenshift
  *
@@ -421,3 +421,4 @@ static inline void long_sqrt_rounded(const long lValue, long* outValue)
 };
 
 #endif // UNDEFINED
+

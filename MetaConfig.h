@@ -30,7 +30,7 @@
 #include "BitCanvas.h"
 #include "Expression.h"
 #include "HighResolutionTimer.h"
-#include "MersenneTwister.h"
+#include "MTRand.hpp"
 #include "MyDictionary.h"
 #include "WindowDevice.h"
 
@@ -112,7 +112,7 @@ public:
 private:
 	dword_t               RandomConfigNum(void)
 	{
-		MTRand::uint32  ui32_NumConfigs = (m_dwNumConfigs > 0) ? (m_dwNumConfigs - 1) : 0;
+		uint32_t  ui32_NumConfigs = (m_dwNumConfigs > 0) ? (m_dwNumConfigs - 1) : 0;
 
 		return m_mtRand.randInt(ui32_NumConfigs);
 	};/**/

@@ -29,6 +29,7 @@
 
 #include "MyDictionary.h"
 #include "Expression.h"
+#include "MTRand.hpp"
 #include "PhaseFunction.h"
 #include "PointRotation.h"
 

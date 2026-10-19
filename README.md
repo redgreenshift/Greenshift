@@ -178,6 +178,10 @@ You should have received a copy of the GNU General Public License along with thi
 
 Greenshift uses the MersenneTwister library (Richard J. Wagner), which is licensed separately under the GNU Lesser General Public License, version 2.1 (or later). See <a href="MersenneTwister.h">`MersenneTwister.h`</a> and <a href="licenses/LGPL-2.1-or-later.txt">`licenses/LGPL-2.1-or-later.txt`</a> for details.
 
+Greenshift includes the [SIMD-oriented Fast Mersenne Twister (SFMT): twice faster than Mersenne Twister](https://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/SFMT/index.html) library by Mutsuo Saito and Makoto Matsumoto.
+
+`SFMT` is distributed under its own 3-clause BSD license. See [`SFMT/LICENSE.txt`](SFMT/LICENSE.txt) for details.
+
 ---
 
 ## Contact & Links

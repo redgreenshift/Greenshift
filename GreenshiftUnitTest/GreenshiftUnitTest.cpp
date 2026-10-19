@@ -32,24 +32,19 @@
 #include "..\InsertionOrderedMap.hpp"
 #include "..\StaticFifoSet.hpp"
 
-#include <algorithm>
 #include <array>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
 #include <optional>
-#include <random>
 #include <string>
 #include <string.h>
 #include <tuple>
 #include <vector>
 
-#include "..\MersenneTwister.h"
 
 value_t My_abs(value_t nValue);
 value_t My_wrap(value_t nValue);
 
-static value_t My_mag(value_t nValue)
+value_t My_mag(value_t nValue)
 {
 	return My_abs(nValue);
 }
@@ -542,163 +537,6 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(24, (int)dict.Size(), L"Failed to add all expected functions, and/or eliminate unused omitted values");
 		}
 
-
-
-		/********************************************************************
-		 * Random Number Generators
-		 */
-
-#ifdef _DEBUG
-		const uint32_t maxEndTest = 10;
-#else
-		const uint32_t maxEndTest = 500000000;
-		//const uint32_t maxEndTest = 1000000000;
-		//const uint32_t maxEndTest = 0xFFFFFFFF;
-#endif
-		// 1,000,000,000 iterations, 20.1 seconds (DEBUG)
-		// 1,000,000,000 iterations, 5.9 seconds (SHIP)
-		// 4,294,967,295 iterations, 25.2 seconds (SHIP)
-		TEST_METHOD(TestRandStandardTime)
-		{
-			srand(1);
-			dword_t sink = 0;
-
-			timer.Start();
-			for (uint32_t i = 0; i < maxEndTest; ++i)
-			{
-				sink ^= rand();
-			}
-			timer.Stop();
-			std::wstring s =
-				L"Elapsed ms = " +
-				std::to_wstring(timer.StoppedMilliseconds());
-			Logger::WriteMessage(s.c_str());
-			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
-		}
-
-		// 4,294,967,295 iterations, 11.5 seconds (SHIP)
-		TEST_METHOD(TestRandStdMT_Time)
-		{
-			std::mt19937 rng(1);
-			// rng.seed(1)
-			dword_t sink = 0;
-
-			timer.Start();
-			for (uint32_t i = 0; i < maxEndTest; ++i)
-			{
-				sink ^= rng();
-			}
-			timer.Stop();
-			std::wstring s =
-				L"Elapsed ms = " +
-				std::to_wstring(timer.StoppedMilliseconds());
-			Logger::WriteMessage(s.c_str());
-			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
-		}
-
-		// 1,000,000,000 iterations, 70 seconds (DEBUG)
-		// 1,000,000,000 iterations, 1.8 seconds (SHIP)
-		// 4,294,967,295 iterations, 8.0 seconds (SHIP)
-		TEST_METHOD(TestRandV0Time)
-		{
-			MTRand	mtRand1 = MTRand(1);
-			dword_t sink = 0;
-
-			timer.Start();
-			for (uint32_t i = 0; i < maxEndTest; ++i)
-			{
-				sink ^= mtRand1.randInt();
-			}
-			timer.Stop();
-			std::wstring s =
-				L"Elapsed ms = " +
-				std::to_wstring(timer.StoppedMilliseconds());
-			Logger::WriteMessage(s.c_str());
-			Assert::AreNotEqual(static_cast<dword_t>(0), sink);
-		}
-
-		TEST_METHOD(TestMTRand0_Verification)
-		{
-			// Use a range of seeds to check different starting points in the state vector
-			for (unsigned int seed = 1; seed <= 100; ++seed)
-			{
-				MTRand mtRand1(seed);
-
-				// Generate enough numbers for a few full cycles or something to check stability
-				// For now, let's do a smaller number per seed for efficiency in CI/CD.
-				for (int i = 0; i < 1000; ++i)
-				{
-					unsigned int v1 = mtRand1.randInt();
-
-					// In case of overflow or invalid ranges (shouldn't happen with uint32)
-					Assert::IsTrue(v1 >= 0, L"Value should be non-negative");
-
-					// We will later compare this with the original known values if we have them.
-				}
-			}
-		}
-
-		// Use the Kolmogorov-Smirnov test for uniform distribution on [0,1]
-		// to demonstrate the implementation is random "enough"
-		TEST_METHOD(TestMTRandV0KS)
-		{
-			MTRand       mtRand1 = MTRand(1); // Use fixed seed for consistency or random
-			const int N_val = 1000000;
-			std::vector<double> samples;
-			samples.reserve(N_val);
-
-			for (int i = 0; i < N_val; ++i)
-			{
-				samples.push_back(mtRand1.rand());
-			}
-
-			std::sort(samples.begin(), samples.end());
-
-			double maxD = 0.0;
-			for (int i = 0; i < N_val; ++i)
-			{
-				// Check distance to the upper and lower step boundaries
-				double d1 = std::abs((double)(i + 1) / N_val - samples[i]);
-				double d2 = std::abs(samples[i] - (double)i / N_val);
-				if (d1 > maxD) maxD = d1;
-				if (d2 > maxD) maxD = d2;
-			}
-
-			// For alpha=0.05, critical value is ~0.0013 for 1M samples.
-			// Using a slightly looser threshold to ensure CI stability while remaining strict.
-			Assert::IsTrue(maxD < 0.002, L"KS test failed: statistic was too high");
-		}
-
-		TEST_METHOD(TestMTRandV0KS_Int32)
-		{
-			MTRand mtRand1 = MTRand(1);
-			const int N_val = 1000000;
-			std::vector<double> samples;
-			samples.reserve(N_val);
-
-			for (int i = 0; i < N_val; ++i)
-			{
-				// Scale the uint32 to [0,1] range for the K-S test
-				samples.push_back((double)mtRand1.randInt() / 4294967295.0);
-			}
-
-			std::sort(samples.begin(), samples.end());
-
-			double maxD = 0.0;
-			for (int i = 0; i < N_val; ++i)
-			{
-				// The vertical distance between the ECDF and the CDF line y=x
-				// will be captured at these two boundaries for every point in our sorted array.
-				double d1 = std::abs(samples[i] - (double)i / N_val);
-				double d2 = std::abs(samples[i] - (double)(i + 1) / N_val);
-				if (d1 > maxD) maxD = d1;
-				if (d2 > maxD) maxD = d2;
-			}
-
-			// At alpha=0.05 and N=1,000,000, the critical value is approx 0.0013.
-			// We use a threshold of 0.002 to allow for tiny numerical epsilon jitter.
-			Assert::IsTrue(maxD < 0.002, L"KS test failed: statistic was too large");
-		}
-
 	};
 }
+

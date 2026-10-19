@@ -29,7 +29,7 @@
 
 #include "MyDictionary.h"
 #include "Expression.h"
-#include "MersenneTwister.h"
+#include "MTRand.hpp"
 #include "PhaseFunction.h"
 
 #if EXTREME_DEBUGGING

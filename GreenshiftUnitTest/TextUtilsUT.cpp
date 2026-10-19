@@ -32,6 +32,7 @@
 #include "CppUnitTest.h"
 #include "..\TextUtils.hpp"
 #include "..\TextUtils.cpp"
+#include "..\Diagnostics.hpp"
 
 // DEPRECATED
 // 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017 :

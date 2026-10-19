@@ -31,6 +31,7 @@
 #include "MyDictionary.h"
 #include "Expression.h"  /* for HSV color; EXPRESSIONDESCRIPTION */
 #include "HighResolutionTimer.h"
+#include "MTRand.hpp"
 #include "PhaseFunction.h"
 
 

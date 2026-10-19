@@ -629,6 +629,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">
       </AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="SFMT\SFMT.c" />
     <ClCompile Include="TextUtils.cpp" />
     <ClCompile Include="ThreadedEntity.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">
@@ -696,6 +697,7 @@
     <ClInclude Include="MathUtils.hpp" />
     <ClInclude Include="MemoryUtils.hpp" />
     <ClInclude Include="MersenneTwister.h" />
+    <ClInclude Include="MTRand.hpp" />
     <ClInclude Include="MyDictionary.h" />
     <ClInclude Include="DXError.h" />
     <ClInclude Include="Expression.h" />
@@ -711,12 +713,32 @@
     <ClInclude Include="MetaPalette.h" />
     <ClInclude Include="MetaParticle.h" />
     <ClInclude Include="MetaWaveShape.h" />
+    <ClInclude Include="MTRand2002.h" />
     <ClInclude Include="OKLab.hpp" />
     <ClInclude Include="Palette.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="PhaseFunction.h" />
     <ClInclude Include="PointRotation.h" />
     <ClInclude Include="Project Greenshift.h" />
+    <ClInclude Include="RandUtils.hpp" />
+    <ClInclude Include="SFMTRand.hpp" />
+    <ClInclude Include="SFMT\SFMT-alti.h" />
+    <ClInclude Include="SFMT\SFMT-common.h" />
+    <ClInclude Include="SFMT\SFMT-neon.h" />
+    <ClInclude Include="SFMT\SFMT-params.h" />
+    <ClInclude Include="SFMT\SFMT-params11213.h" />
+    <ClInclude Include="SFMT\SFMT-params1279.h" />
+    <ClInclude Include="SFMT\SFMT-params132049.h" />
+    <ClInclude Include="SFMT\SFMT-params19937.h" />
+    <ClInclude Include="SFMT\SFMT-params216091.h" />
+    <ClInclude Include="SFMT\SFMT-params2281.h" />
+    <ClInclude Include="SFMT\SFMT-params4253.h" />
+    <ClInclude Include="SFMT\SFMT-params44497.h" />
+    <ClInclude Include="SFMT\SFMT-params607.h" />
+    <ClInclude Include="SFMT\SFMT-params86243.h" />
+    <ClInclude Include="SFMT\SFMT-sse2-msc.h" />
+    <ClInclude Include="SFMT\SFMT-sse2.h" />
+    <ClInclude Include="SFMT\SFMT.h" />
     <ClInclude Include="StaticFifoSet.hpp" />
     <ClInclude Include="TextUtils.hpp" />
     <ClInclude Include="ThreadedEntity.h" />
@@ -799,6 +821,7 @@
     <None Include="CLAUDE.md" />
     <None Include="LICENSE" />
     <None Include="README.md" />
+    <None Include="reference\mersenne_twister\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
