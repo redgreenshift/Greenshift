@@ -1599,6 +1599,30 @@ DoDelta_x86	2 WORD reads			Bitmasking -> DECAY8		Single do-while
 DoDelta_MMX	2 WORD reads			Bitmasking -> decay256[]	Single do-while
 */
 
+// DISPATCH:
+
+void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_BASELINE(lpTransitionTable);
+}
+
+void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
+}
+
+void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_experiment1(lpTransitionTable);
+}
+
+void BitCanvas8::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment1(lpTransitionTable);
+}
+
+// IMPLEMENTATIONS:
+
 /****************************************************************************
  * @brief This is a baseline/REFERENCE implementation of the straightforward
  * algorithm for 8bit color.
@@ -1608,7 +1632,7 @@ DoDelta_MMX	2 WORD reads			Bitmasking -> decay256[]	Single do-while
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+void BitCanvas8::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  pixelOffset = 0;
 	dword_t  width;
@@ -1645,9 +1669,6 @@ void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 		*dstBuffer++ = *srcBuffer++;
 }
 
-
-
-
 /****************************************************************************
  *
  * @brief DEFAULT for 8bit color
@@ -1660,7 +1681,7 @@ void BitCanvas8::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
  * Of course, measuring performance and only keeping tweaks that actually had a benefit.
  *
  ****************************************************************************/
-void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+void BitCanvas8::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  pixelOffset = 0;
 	dword_t  p1, p2;
@@ -1716,14 +1737,13 @@ void BitCanvas8::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 		*dstBuffer++ = *srcBuffer++;
 }
 
-
 /****************************************************************************
  *
  * @brief EXPERIMENTAL, place to explore potential optimizations;
  * NOT actually tied to MMX intrinsics/assembly
  *
  ****************************************************************************/
-void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  pixelOffset = 0;
 	dword_t  p1, p2;
@@ -1778,6 +1798,12 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 	for (dword_t i = m_dwCacheLength; i != 0; i--)
 		*dstBuffer++ = *srcBuffer++;
+}
+
+
+void BitCanvas8::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
 }
 
 /****************************************************************************
@@ -1954,7 +1980,29 @@ dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
 }
 
 
+// DISPATCH:
 
+void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_BASELINE(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_experiment1(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment1(lpTransitionTable);
+}
+
+// IMPLEMENTATIONS:
 
 /****************************************************************************
  * @brief This is a baseline/REFERENCE implementation of the straightforward
@@ -1965,7 +2013,7 @@ dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 {
 	dword_t   pixelOffset = 0;
 	dword_t   pixel, pixel3;
@@ -2002,9 +2050,6 @@ void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 
 }
 
-
-
-
 /****************************************************************************
  * @brief This is the DEFAULT implementation used for 16bit color;
  * optimized
@@ -2012,7 +2057,7 @@ void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+void    BitCanvas16::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
 	dword_t  srcPixelOffset, srcPixelOffset3;
@@ -2189,7 +2234,7 @@ void    BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
 	dword_t  srcPixelOffset, srcPixelOffset3;
@@ -2343,6 +2388,12 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 			destPixelOffset++;
 		}
 	/**/
+}
+
+
+void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
 }
 
 
@@ -2537,7 +2588,32 @@ dword_t BitCanvas32::GetPixel(const dword_t pixelOffset)
 	return m_pReadBuffer32[pixelOffset];
 }
 
+// DISPATCH:
+void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_cpp_BASELINE(lpTransitionTable);
+}
 
+#ifdef USE_MMX_INTRINSICS
+void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_MMX_Intrinsics(lpTransitionTable);
+}
+#endif
+
+#ifdef USE_MMX_ASSEMBLY
+void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_MMX_Assembly(lpTransitionTable);
+}
+#endif
+
+void BitCanvas32::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment1(lpTransitionTable);
+}
+
+// IMPLEMENTATIONS:
 
 /****************************************************************************
  * @brief This is a baseline/reference implementation of the straightforward
@@ -2549,7 +2625,7 @@ dword_t BitCanvas32::GetPixel(const dword_t pixelOffset)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 {
 	dword_t    pixelOffset = 0;
 	dword_t    width;
@@ -2610,7 +2686,7 @@ void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable)
 {
 	const __m64    m_zero = _mm_setzero_si64();
 	const __m64    decay_factor = _mm_set1_pi16(0x3F);
@@ -2703,7 +2779,7 @@ void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
  * This is the version used if the processor supports MMX instructions
  *
  ****************************************************************************/
-void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable)
 {
 	const   dword_t    widthPixels = m_dwBufferWidth;
 	const   dword_t    bufferLength = widthPixels * m_dwBufferHeight;
@@ -2786,6 +2862,10 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 }
 #endif
 
+void BitCanvas32::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_MMX_Assembly(lpTransitionTable);
+}
 /****************************************************************************
  *
  * CopyTo8

@@ -723,10 +723,18 @@ protected:
 		m_pWriteBuffer8[pixelOffset] = (unsigned char)RGB32(r, g, b);
 	};
 
+	// DISPATCH:
 	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+
+	// IMPLEMENTATIONS:
+	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+
 	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
@@ -752,10 +760,18 @@ protected:
 		m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16(r, g, b);
 	};
 
+	// DISPATCH:
 	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+
+	// IMPLEMENTATIONS:
+	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+
 	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
@@ -783,6 +799,7 @@ protected:
 		//DumpToFile( "error.txt", "blah!", "");
 	};
 
+	// DISPATCH:
 	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 #ifdef USE_MMX_INTRINSICS
 	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
@@ -790,7 +807,18 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
-	//virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+
+	// IMPLEMENTATIONS:
+	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
+#ifdef USE_MMX_INTRINSICS
+	void					DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable);
+#endif
+#ifdef USE_MMX_ASSEMBLY
+	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
+#endif
+	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+
 	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
