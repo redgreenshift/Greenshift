@@ -2678,6 +2678,9 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 #endif
 #ifndef DECAY_SHIFT
 #define DECAY_SHIFT 6  //2^6 - 1 == 003F
+// WARNING: Leave this a macro!!! Never blindly accept "replace macro with constexpr" suggestions for anything referenced inside __asm.
+// BAD: inline constexpr dword_t  DECAY_SHIFT = 6; //2^6 - 1 == 003F
+// BAD! Made the MMX assembly routine look like TV Static!
 #endif
 
 
