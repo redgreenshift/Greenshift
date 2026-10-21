@@ -44,6 +44,7 @@
 
   //I don't think I should include math just for fabs()
 #include <cstdlib>
+#include <emmintrin.h> // SSE2 intrinsics
 //#include <mm3dnow.h>
 //#include <emmintrin.h>
 //#include <xmmintrin.h>
@@ -2620,7 +2621,7 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas32::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment1(lpTransitionTable);
+	DoDelta_SSE2_Intrinsics_FIXED(lpTransitionTable);
 }
 
 // IMPLEMENTATIONS:
@@ -2890,8 +2891,8 @@ void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTabl
 	__m128i    pixel_sum_13_24;
 	__m128i    px12;
 	__m128i    px34;
-	__m128i    high_bits_sum;
-	__m128i    low_bits_sum;
+	__m128i    high_bits_sum_13;
+	__m128i    low_bits_sum_24;
 	__m128i    final_pixel;
 	const dword_t* readBase = m_pReadBuffer32;
 	dword_t* writeBase = m_pWriteBuffer32;
@@ -2908,28 +2909,31 @@ void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTabl
 		pixel = lpTransitionTable[pixelOffset];
 		pixel3 = pixel + m_dwBufferWidth;
 
-		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));    /* read in pixels 1 & 2 using a single memory read operation */
-		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3])));   /* read in pixels 3 & 4 using a single memory read operation */
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3]))); /* read in pixels 3 & 4 using a single memory read operation */
 
-		px12 = _mm_unpacklo_epi8(pixels_12, m_zero);  /* unpack pixels 12 */
-		px34 = _mm_unpacklo_epi8(pixels_34, m_zero);  /* unpack pixels 34 */
-		pixel_sum_13_24 = _mm_add_epi16(px12, px34);   /* sum pixel rows (1+3, and 2+4) */
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
 
 		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
 		// More accurate to sum BEFORE decay step
-		high_bits_sum = _mm_srli_si128(pixel_sum_13_24, 8); // shift right 8 bytes
-		low_bits_sum = _mm_move_epi64(pixel_sum_13_24);
+		high_bits_sum_13 = _mm_srli_si128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
 
-		final_pixel = _mm_add_epi16(high_bits_sum, low_bits_sum);    /* sum the 2 sums */
+		final_pixel = _mm_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
 
 		/* decay the buffer (ie: make it slightly darker than the average) */
-		final_pixel = _mm_mullo_epi16(final_pixel, decay_factor);
-		final_pixel = _mm_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
 
-		final_pixel = _mm_packus_epi16(final_pixel, m_zero);    /* pack the average back into pixel format */
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
 
-		writeBase[pixelOffset] = _mm_cvtsi128_si32(final_pixel);
+		writeBase[pixelOffset] = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);

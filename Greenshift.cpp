@@ -1023,7 +1023,7 @@ void    Greenshift::UpdateDisplayText(void)
 		m_mpMetaPalette.Update(m_pWindowDevice);
 		/**/
 
-		std::string optLevel = { "OL_CPP" };
+		std::string optLevel = { "CPP Baseline" };
 
 		switch (m_pBitCanvas->GetOptimizationLevel())
 		{
@@ -1031,13 +1031,13 @@ void    Greenshift::UpdateDisplayText(void)
 		case BitCanvas::OL_CPP:
 			break;
 		case BitCanvas::OL_x86:
-			optLevel = { "OL_x86" };
+			optLevel = { "x86 optimized" };
 			break;
 		case BitCanvas::OL_MMX:
-			optLevel = { "OL_MMX" };
+			optLevel = { "MMX" };
 			break;
 		case BitCanvas::OL_SSE2:
-			optLevel = { "OL_SSE2" };
+			optLevel = { "SSE2" };
 			break;
 		}
 
