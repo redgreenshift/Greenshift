@@ -806,9 +806,9 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 
 	//case VK_F4:
 	case '4':
-		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE);
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE2);
 		ClearScreenAll();
-		PrintPrivate(-1, 0, "SSE assembly optimization");
+		PrintPrivate(-1, 0, "SSE2 assembly optimization");
 		break;
 
 

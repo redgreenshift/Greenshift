@@ -273,6 +273,16 @@ error_t    BitCanvas::New( //const dword_t dwWidth,
 
 }
 
+bool cpu_has_sse2()
+{
+#if defined(_M_X64) || defined(_M_AMD64)
+	return true;  // SSE2 is guaranteed on x64
+#else
+	int regs[4];
+	__cpuid(regs, 1);  // CPUID leaf 1
+	return (regs[3] & (1 << 26)) != 0;  // EDX bit 26 = SSE2
+#endif
+}
 
 /****************************************************************************
  *
@@ -332,7 +342,7 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 		 * So, the fastest C++ only routines for 8 and 16 are "x86"
 		 */
 	if (m_dwBitDepth == 32)
-		m_nDeltaOptimizationLevel = GetCPUCaps(HAS_MMX) ? OL_MMX : OL_CPP; // OL_x86 has MMX intrinsics
+		m_nDeltaOptimizationLevel = cpu_has_sse2() ? OL_SSE2 : (GetCPUCaps(HAS_MMX) ? OL_MMX : OL_CPP); // OL_x86 has MMX intrinsics
 	else
 		m_nDeltaOptimizationLevel = OL_x86;
 
@@ -898,7 +908,7 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 	case OL_MMX:
 		this->DoDelta_MMX(lpTransitionTable);
 		break;
-	case OL_SSE:
+	case OL_SSE2:
 		this->DoDelta_SSE(lpTransitionTable);
 		break;
 	default:  /* what should default do? */
@@ -2719,7 +2729,7 @@ void BitCanvas32::DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable)
 		pixels_34 = *((__m64*) & (readBase[pixel3]));   /* read in pixels 3 & 4 using a single memory read operation */
 
 		px1 = _m_punpckhbw(pixels_12, m_zero);  /* unpack pixel 1 */
-		px2 = _m_punpcklbw(pixels_12, m_zero);  /* unpack pixel 1 */
+		px2 = _m_punpcklbw(pixels_12, m_zero);  /* unpack pixel 2 */
 		upper_pixel_sum = _m_paddw(px1, px2);   /* sum the top 2 pixels */
 
 
@@ -2866,6 +2876,69 @@ void BitCanvas32::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_MMX_Assembly(lpTransitionTable);
 }
+
+// Human implementation, found and FIXED the problems!
+void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i    m_zero = _mm_setzero_si128();
+	const __m128i    decay_factor = _mm_set1_epi16(0x3F);
+	__m128i    pixels_12;
+	__m128i    pixels_34;
+	__m128i    pixel_sum_13_24;
+	__m128i    px12;
+	__m128i    px34;
+	__m128i    high_bits_sum;
+	__m128i    low_bits_sum;
+	__m128i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	//const dword_t    bufferWidth = m_nBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t  pixelOffset = 0;
+	dword_t  pixel;
+	dword_t  pixel3;
+	dword_t* srcBuffer;
+	dword_t* dstBuffer;
+
+	do
+	{
+		pixel = lpTransitionTable[pixelOffset];
+		pixel3 = pixel + m_dwBufferWidth;
+
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));    /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3])));   /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero);  /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero);  /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34);   /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum = _mm_srli_si128(pixel_sum_13_24, 8); // shift right 8 bytes
+		low_bits_sum = _mm_move_epi64(pixel_sum_13_24);
+
+		final_pixel = _mm_add_epi16(high_bits_sum, low_bits_sum);    /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		final_pixel = _mm_mullo_epi16(final_pixel, decay_factor);
+		final_pixel = _mm_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero);    /* pack the average back into pixel format */
+
+
+		writeBase[pixelOffset] = _mm_cvtsi128_si32(final_pixel);
+
+		pixelOffset++;
+	} while (pixelOffset < bufferLength);
+
+	// CopyLastLine
+	srcBuffer = (dword_t*)m_pWriteBuffer8;
+	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+
+	for (dword_t i = m_dwCacheLength; i != 0; --i)
+		*dstBuffer++ = *srcBuffer++;
+}
+
 /****************************************************************************
  *
  * CopyTo8

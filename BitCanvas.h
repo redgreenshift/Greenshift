@@ -292,7 +292,7 @@ public:
 	/*
 	 * Optimization Level Type
 	 */
-	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE } opt_level_t;
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2 } opt_level_t;
 
 
 	BitCanvas(const dword_t dwWidth,
@@ -321,6 +321,7 @@ public:
 	 * change the optimization level
 	 */
 	void            SetOptimizationLevel(const opt_level_t enumOptLevel);
+	opt_level_t		GetOptimizationLevel() const { return m_nDeltaOptimizationLevel; };
 
 	/*
 	 * accessors
@@ -818,6 +819,7 @@ protected:
 	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
 #endif
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
 
 	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

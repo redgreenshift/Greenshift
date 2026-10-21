@@ -1023,7 +1023,28 @@ void    Greenshift::UpdateDisplayText(void)
 		m_mpMetaPalette.Update(m_pWindowDevice);
 		/**/
 
-		DisplayString(0, "", strTitle);
+		std::string optLevel = { "OL_CPP" };
+
+		switch (m_pBitCanvas->GetOptimizationLevel())
+		{
+		default:
+		case BitCanvas::OL_CPP:
+			break;
+		case BitCanvas::OL_x86:
+			optLevel = { "OL_x86" };
+			break;
+		case BitCanvas::OL_MMX:
+			optLevel = { "OL_MMX" };
+			break;
+		case BitCanvas::OL_SSE2:
+			optLevel = { "OL_SSE2" };
+			break;
+		}
+
+		std::string canvasName = std::format("{1}x{2}, {0}-bit", m_pBitCanvas->BitDepth(), m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight());
+
+		// Display resolution, bit depth and optimization level next to FPS
+		DisplayString(0, canvasName.c_str(), optLevel.c_str());
 
 		m_hrDisplayTimer.Start();
 	}
