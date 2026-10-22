@@ -65,14 +65,14 @@ namespace GreenshiftUnitTest
 		static BitCanvas* m_pBitCanvas8;
 		HighResolutionTimer timer;
 
-		static void InitCanvas32()
+		static void InitCanvas(BitCanvas** ppBitCanvas, size_t bitDepth)
 		{
 			//error_t err = SUCCESS;
 
 			MyDictionary<mychar_t*> dConfig;
 
-			//dConfig.SetValue("screen_depth", strdup("32"));
-			//dConfig.SetValue("canvas_depth", "32");
+			//dConfig.SetValue("screen_depth", strDepth.c_str());
+			//dConfig.SetValue("canvas_depth", strDepth.c_str());
 			//dConfig.SetValue("buffer_width", "800");
 			//dConfig.SetValue("buffer_height", "600");
 			//dConfig.SetValue("canvas_width", "512");
@@ -92,8 +92,10 @@ namespace GreenshiftUnitTest
 			//dConfig.SetValue("overlay_mode", "0");
 			//dConfig.SetValue("overlay_color_key", "0");
 
-			dConfig.SetValue("screen_depth", strdup("32"));
-			dConfig.SetValue("canvas_depth", strdup("32"));
+			std::string strDepth = std::format("{0}", bitDepth);
+
+			dConfig.SetValue("screen_depth", strdup(strDepth.c_str()));
+			dConfig.SetValue("canvas_depth", strdup(strDepth.c_str()));
 			dConfig.SetValue("buffer_width", strdup("800"));
 			dConfig.SetValue("buffer_height", strdup("600"));
 			dConfig.SetValue("canvas_width", strdup("512"));
@@ -114,7 +116,7 @@ namespace GreenshiftUnitTest
 			dConfig.SetValue("overlay_color_key", strdup("0"));
 
 			//WindowDevice::New(hInstance, &window_device, "CS4451_a3 - Ray Tracer", &dConfig, NULL, NULL, NULL);
-			BitCanvas::New(&m_pBitCanvas32, &dConfig, NULL, NULL);
+			BitCanvas::New(ppBitCanvas, &dConfig, NULL, NULL);
 
 
 			Palette palette;
@@ -122,7 +124,22 @@ namespace GreenshiftUnitTest
 			{
 				palette.SetPaletteEntry(i, RGB32(static_cast<byte_t>(255 - i), static_cast<byte_t>(i), ((255 - i) + 127) % 256));
 			}
-			m_pBitCanvas32->SetPalette(&palette);
+			(*ppBitCanvas)->SetPalette(&palette);
+		}
+
+		static void InitCanvas32()
+		{
+			InitCanvas(&m_pBitCanvas32, 32);
+		}
+
+		static void InitCanvas16()
+		{
+			InitCanvas(&m_pBitCanvas16, 16);
+		}
+
+		static void InitCanvas8()
+		{
+			InitCanvas(&m_pBitCanvas8, 8);
 		}
 
 	public:
@@ -131,6 +148,8 @@ namespace GreenshiftUnitTest
 			// Runs ONCE before any test in this class
 			Logger::WriteMessage("Class setup...\n");
 			InitCanvas32();
+			InitCanvas16();
+			InitCanvas8();
 		}
 
 		TEST_CLASS_CLEANUP(ClassCleanup)
@@ -156,8 +175,6 @@ namespace GreenshiftUnitTest
 
 			Assert::AreEqual(RGB32(255 - 128, 128, ((255 - 128) + 127) % 256), *(rgb32_t*)pPixelData);
 		}
-
-		const size_t maxEndTest = 100;
 
 		std::unique_ptr<PIXELMAP[]> CreateTransitionTable(size_t width, size_t height)
 		{
@@ -191,14 +208,14 @@ namespace GreenshiftUnitTest
 			Logger::WriteMessage(s.c_str());
 		}
 
-		void InitializeBenchmarkCanvas32(BitCanvas* pBitCanvas32, MTRand& rng)
+		void ResetBenchmarkCanvas(BitCanvas* pBitCanvas, MTRand& rng)
 		{
-			size_t bufferLength = pBitCanvas32->BufferWidth() * pBitCanvas32->BufferHeight();
+			size_t bufferLength = pBitCanvas->BufferWidth() * pBitCanvas->BufferHeight();
 
 			for (dword_t pixelOffset = 0; pixelOffset < bufferLength; ++pixelOffset)
 			{
 				byte_t c = static_cast<byte_t>(rng.randInt(255));
-				pBitCanvas32->PutPixel(pixelOffset, c);
+				pBitCanvas->PutPixel(pixelOffset, c);
 			}
 		}
 
@@ -220,79 +237,257 @@ namespace GreenshiftUnitTest
 			}
 		}
 
+		/*********************************************************
+		* THIRTY TWO BIT BENCHMARKS
+		*/
+		const size_t maxEndTest = 10000;
+		const uint32_t c_seed = 12345;
+
 		TEST_METHOD(TestBitCanvas32BenchmarkCPP)
 		{
-			MTRand rng(12345);
-			size_t dwWidth = m_pBitCanvas32->BufferWidth();
-			size_t dwHeight = m_pBitCanvas32->BufferHeight();
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
 			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
 
-			InitializeBenchmarkCanvas32(m_pBitCanvas32, rng);
+			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"CPP_BASELINE",
+				L"32bit CPP_BASELINE",
 				[&]()
 				{
-					DrawRandomPixels(m_pBitCanvas32, rng); // Draw to Write buffer
-					m_pBitCanvas32->FlipBuffers(); // Swap the read and write buffers
-					m_pBitCanvas32->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
+					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
 				});
 		}
 
 		TEST_METHOD(TestBitCanvas32BenchmarkMMXint)
 		{
-			MTRand rng(12345);
-			size_t dwWidth = m_pBitCanvas32->BufferWidth();
-			size_t dwHeight = m_pBitCanvas32->BufferHeight();
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
 			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
 
-			InitializeBenchmarkCanvas32(m_pBitCanvas32, rng);
+			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"MMX_INTRINSICS",
+				L"32bit MMX_INTRINSICS",
 				[&]()
 				{
-					DrawRandomPixels(m_pBitCanvas32, rng);
-					m_pBitCanvas32->FlipBuffers();
-					m_pBitCanvas32->DoDelta_x86(pPixelMap.get());
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_x86(pPixelMap.get());
 				});
 		}
 
 		TEST_METHOD(TestBitCanvas32BenchmarkMMXasm)
 		{
-			MTRand rng(12345);
-			size_t dwWidth = m_pBitCanvas32->BufferWidth();
-			size_t dwHeight = m_pBitCanvas32->BufferHeight();
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
 			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
 
-			InitializeBenchmarkCanvas32(m_pBitCanvas32, rng);
+			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"MMX_ASSEMBLY",
+				L"32bit MMX_ASSEMBLY",
 				[&]()
 				{
-					DrawRandomPixels(m_pBitCanvas32, rng);
-					m_pBitCanvas32->FlipBuffers();
-					m_pBitCanvas32->DoDelta_MMX(pPixelMap.get());
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_MMX(pPixelMap.get());
 				});
 		}
 
 		TEST_METHOD(TestBitCanvas32BenchmarkSSEint)
 		{
-			MTRand rng(12345);
-			size_t dwWidth = m_pBitCanvas32->BufferWidth();
-			size_t dwHeight = m_pBitCanvas32->BufferHeight();
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
 			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
 
-			InitializeBenchmarkCanvas32(m_pBitCanvas32, rng);
+			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"SSE2_INTRINSICS",
+				L"32bit SSE2_INTRINSICS",
 				[&]()
 				{
-					DrawRandomPixels(m_pBitCanvas32, rng);
-					m_pBitCanvas32->FlipBuffers();
-					m_pBitCanvas32->DoDelta_SSE(pPixelMap.get());
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+				});
+		}
+
+		/************************************************************************
+		* SIXTEEN BIT BENCHMARKS
+		*/
+		TEST_METHOD(TestBitCanvas16BenchmarkCPP)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit CPP_BASELINE",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
+					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkCPPOptimized)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit CPP_OPTIMIZED",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_x86(pPixelMap.get());
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkCPPExperiment1)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit CPP_Exp1",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSEint)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+				});
+		}
+
+
+		/*************************************************************************
+		* EIGHT BIT BENCHMARKS
+		*/
+
+		TEST_METHOD(TestBitCanvas8BenchmarkCPP)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit CPP_BASELINE",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
+					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkCPPOptimized)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit CPP_OPTIMIZED",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_x86(pPixelMap.get());
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkCPPExperiment1)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit CPP_Exp1",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSEint)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					pBitCanvas->DoDelta_SSE(pPixelMap.get());
 				});
 		}
 

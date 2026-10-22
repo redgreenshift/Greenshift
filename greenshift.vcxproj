@@ -183,6 +183,7 @@
       </AdditionalOptions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_with_Debug_Info\expressionconsole.tlb</TypeLibraryName>
@@ -220,6 +221,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Debug\expressionconsole.tlb</TypeLibraryName>
@@ -258,6 +260,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Debug_Windows\expressionconsole.tlb</TypeLibraryName>
@@ -295,6 +298,7 @@
       </AdditionalOptions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows_DLL\expressionconsole.tlb</TypeLibraryName>
@@ -334,6 +338,7 @@
       </AdditionalOptions>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Windows\expressionconsole.tlb</TypeLibraryName>
@@ -370,6 +375,7 @@
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Debug_Console\expressionconsole.tlb</TypeLibraryName>
@@ -406,6 +412,7 @@
       <ProgramDataBaseFileName>.\expressionconsole___Win32_Release_Console\</ProgramDataBaseFileName>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\expressionconsole___Win32_Release_Console\expressionconsole.tlb</TypeLibraryName>
@@ -441,6 +448,7 @@
       <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
       <LanguageStandard>stdcpp23</LanguageStandard>
       <ConformanceMode>true</ConformanceMode>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Midl>
       <TypeLibraryName>.\Release\expressionconsole.tlb</TypeLibraryName>
