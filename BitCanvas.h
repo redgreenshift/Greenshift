@@ -505,8 +505,9 @@ public:
 	 */
 	void* GetPixelMemory(dword_t* nWidth, dword_t* nHeight, dword_t* nPixelFormat);
 
-
+#if !UNIT_TEST
 protected:
+#endif
 	/************************************************************************
 	 *
 	 * the following functions should be defined in derived classes
