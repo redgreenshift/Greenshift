@@ -62,10 +62,12 @@ namespace GreenshiftUnitTest
 	{
 		static BitCanvas* m_pBitCanvas32;
 		static BitCanvas* m_pBitCanvas16;
+		static BitCanvas* m_pBitCanvas16Drift;
 		static BitCanvas* m_pBitCanvas8;
+		static BitCanvas* m_pBitCanvas8BitCurve;
 		HighResolutionTimer timer;
 
-		static void InitCanvas(BitCanvas** ppBitCanvas, size_t bitDepth)
+		static void InitCanvas(BitCanvas** ppBitCanvas, size_t bitDepth, size_t width, size_t height)
 		{
 			//error_t err = SUCCESS;
 
@@ -93,13 +95,15 @@ namespace GreenshiftUnitTest
 			//dConfig.SetValue("overlay_color_key", "0");
 
 			std::string strDepth = std::format("{0}", bitDepth);
+			std::string strWidth = std::format("{0}", width);
+			std::string strHeight = std::format("{0}", height);
 
 			dConfig.SetValue("screen_depth", strdup(strDepth.c_str()));
 			dConfig.SetValue("canvas_depth", strdup(strDepth.c_str()));
 			dConfig.SetValue("buffer_width", strdup("800"));
 			dConfig.SetValue("buffer_height", strdup("600"));
-			dConfig.SetValue("canvas_width", strdup("512"));
-			dConfig.SetValue("canvas_height", strdup("512"));
+			dConfig.SetValue("canvas_width", strdup(strWidth.c_str()));
+			dConfig.SetValue("canvas_height", strdup(strHeight.c_str()));
 			dConfig.SetValue("canvas_aspect", strdup("1"));
 			dConfig.SetValue("window_width", strdup("800"));
 			dConfig.SetValue("window_height", strdup("600"));
@@ -125,6 +129,11 @@ namespace GreenshiftUnitTest
 				palette.SetPaletteEntry(i, RGB32(static_cast<byte_t>(255 - i), static_cast<byte_t>(i), ((255 - i) + 127) % 256));
 			}
 			(*ppBitCanvas)->SetPalette(&palette);
+		}
+
+		static void InitCanvas(BitCanvas** ppBitCanvas, size_t bitDepth)
+		{
+			InitCanvas(ppBitCanvas, bitDepth, 512, 512);
 		}
 
 		static void InitCanvas32()
@@ -162,6 +171,10 @@ namespace GreenshiftUnitTest
 			m_pBitCanvas16 = nullptr;
 			delete m_pBitCanvas8;
 			m_pBitCanvas8 = nullptr;
+			delete m_pBitCanvas16Drift;
+			m_pBitCanvas16Drift = nullptr;
+			delete m_pBitCanvas8BitCurve;
+			m_pBitCanvas8BitCurve = nullptr;
 		}
 
 		TEST_METHOD(TestBitCanvas32ADrawing1)
@@ -219,6 +232,16 @@ namespace GreenshiftUnitTest
 			}
 		}
 
+		void FillCanvas(BitCanvas* pBitCanvas, byte_t color)
+		{
+			size_t bufferLength = pBitCanvas->BufferWidth() * pBitCanvas->BufferHeight();
+
+			for (dword_t pixelOffset = 0; pixelOffset < bufferLength; ++pixelOffset)
+			{
+				pBitCanvas->PutPixel(pixelOffset, color);
+			}
+		}
+
 		void DrawRandomPixels(BitCanvas* pBitCanvas32, MTRand& rng)
 		{
 			constexpr size_t c_MinLines = 25;
@@ -259,7 +282,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -279,7 +305,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -299,7 +328,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -319,7 +351,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -342,7 +377,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -362,7 +400,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -382,7 +423,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -402,7 +446,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -427,7 +474,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng); // Draw to Write buffer
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -447,7 +497,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -467,7 +520,10 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
@@ -487,13 +543,291 @@ namespace GreenshiftUnitTest
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
 					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
+		/// <summary>
+		/// Performs a drift analysis by simulating the lifetime of 5-bit and 6-bit values under repeated averaging, then logs the average lifetimes and their ratio.
+		/// 
+		///     5-bit average lifetime = 4.161290
+		///     6 - bit average lifetime = 5.095238
+		///     Ratio = 1.224437
+		/// </summary>
+		TEST_METHOD(GreenshiftDriftAnalysis)
+		{
+			auto ComputeLifetime =
+				[](uint32_t initialValue)
+				{
+					uint32_t value = initialValue;
+					uint32_t iterations = 0;
+
+					while (value != 0)
+					{
+						// Simulate averaging:
+						// two pixels have this value,
+						// two pixels are black.
+						value = (value + value) >> 2;
+
+						++iterations;
+					}
+
+					return iterations;
+				};
+
+			uint64_t normal5Total = 0;
+			uint64_t normal6Total = 0;
+
+			for (uint32_t v = 1; v <= 31; ++v)
+			{
+				normal5Total += ComputeLifetime(v);
+			}
+
+			for (uint32_t v = 1; v <= 63; ++v)
+			{
+				normal6Total += ComputeLifetime(v);
+			}
+
+			double avg5 =
+				static_cast<double>(normal5Total) / 31.0;
+
+			double avg6 =
+				static_cast<double>(normal6Total) / 63.0;
+
+			double ratio = avg6 / avg5;
+
+			std::wstring s =
+				L"5-bit average lifetime = " +
+				std::to_wstring(avg5) +
+				L"\n6-bit average lifetime = " +
+				std::to_wstring(avg6) +
+				L"\nRatio = " +
+				std::to_wstring(ratio);
+
+			Logger::WriteMessage(s.c_str());
+		}
+
+		/// <summary>
+		/// Unit test method that computes and logs the 'lifetime' of two values using a custom ComputeLifetime lambda function.
+		/// 
+		///     Red lifetime = 5
+		///     Green lifetime = 6
+		///     Ratio = 1.200000
+		/// </summary>
+		TEST_METHOD(GreenshiftExtremes)
+		{
+			auto ComputeLifetime =
+				[](uint32_t value)
+				{
+					uint32_t iterations = 0;
+
+					while (value != 0)
+					{
+						value = (value + value) >> 2;
+						++iterations;
+					}
+
+					return iterations;
+				};
+
+			uint32_t redLifetime =
+				ComputeLifetime(31);
+
+			uint32_t greenLifetime =
+				ComputeLifetime(63);
+
+			std::wstring s =
+				L"Red lifetime = " +
+				std::to_wstring(redLifetime) +
+				L"\nGreen lifetime = " +
+				std::to_wstring(greenLifetime) +
+				L"\nRatio = " +
+				std::to_wstring(
+					static_cast<double>(greenLifetime) /
+					static_cast<double>(redLifetime));
+
+			Logger::WriteMessage(s.c_str());
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeToBlack)
+		{
+			//MTRand rng(c_seed);
+			delete m_pBitCanvas16Drift;
+			m_pBitCanvas16Drift = nullptr;
+			InitCanvas(&m_pBitCanvas16Drift, 16, 4, 4);
+			BitCanvas* pBitCanvas = m_pBitCanvas16Drift;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			Palette palette;
+			for (int i = 0; i < 256; ++i)
+			{
+				palette.SetPaletteEntry(i, RGB32(i, i, i));
+			}
+			pBitCanvas->SetPalette(&palette);
+			FillCanvas(pBitCanvas, 255);
+			pBitCanvas->FlipBuffers();
+			FillCanvas(pBitCanvas, 255);
+			//pBitCanvas->PutPixel(0, 0);
+			//pBitCanvas->PutPixel(1, 0);
+
+			size_t frame_count = 0;
+
+			BenchmarkDoDelta(
+				L"16bit Fade to Black",
+				[&]()
+				{
+					//DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+					dword_t px = pBitCanvas->GetPixel(0); // This gets the READ BUFFER
+					if (RGB32(0, 0, 0) != px)
+						++frame_count;
+
+					pBitCanvas->PrepareForDoDelta();
+					pBitCanvas->DoDelta_cpp(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+
+			pBitCanvas->FlipBuffers();
+			dword_t px = pBitCanvas->GetPixel(0); // This gets the READ BUFFER
+
+			Assert::AreEqual(RGB32(0, 0, 0), px);
+
+			Assert::AreEqual(63u, frame_count);
+		}
+
+		void GetTotalMinMaxIntensity(BitCanvas* pBitCanvas, double& totalIntensity, byte_t& valMin, byte_t& valMax, size_t& pixelCount)
+		{
+			dword_t width; dword_t height; dword_t pixelFormat;
+			byte_t* pPixels =
+				static_cast<byte_t*>(
+					pBitCanvas->GetPixelMemory(
+						&width,
+						&height,
+						&pixelFormat));
+			pixelCount =
+				width * height;
+
+			totalIntensity = 0.0;
+			valMin = valMax = pPixels[0];
+
+			for (size_t i = 0; i < pixelCount; ++i)
+			{
+				const byte pixel = pPixels[i];
+				if (pixel > valMax)
+					valMax = pixel;
+				if (pixel < valMin)
+					valMin = pixel;
+				totalIntensity += pixel;
+			}
+		}
+
+		TEST_METHOD(TestBitCanvas8FadeCurve)
+		{
+			constexpr size_t SAMPLE_INTERVAL = 10;
+			constexpr size_t MAX_FRAMES = 200;
+			constexpr size_t c_width = 4;
+			constexpr size_t c_height = 4;
+
+			std::vector<double> intensityCurve;
+
+			//
+			// Small canvas.
+			//
+			delete m_pBitCanvas8BitCurve;
+			m_pBitCanvas8BitCurve = nullptr;
+			InitCanvas(&m_pBitCanvas8BitCurve, 8, c_width, c_height);
+			BitCanvas* pBitCanvas = m_pBitCanvas8BitCurve;
+
+			//
+			// Grayscale palette.
+			//
+			Palette palette;
+			for (int i = 0; i < 256; ++i)
+			{
+				palette.SetPaletteEntry(i, RGB32(i, i, i));
+			}
+			pBitCanvas->SetPalette(&palette);
+
+			//
+			// Fill everything white.
+			//
+			FillCanvas(pBitCanvas, 255);
+			pBitCanvas->FlipBuffers();
+			FillCanvas(pBitCanvas, 255);
+
+			auto pTransitionTable =
+				CreateTransitionTable(c_width, c_height);
+
+			double totalIntensity = 0.0;
+
+			dword_t width = 0;
+			dword_t height = 0;
+			dword_t pixelFormat = 0;
+			byte_t valMin, valMax;
+			size_t pixelCount = 0;
+
+			GetTotalMinMaxIntensity(pBitCanvas, totalIntensity, valMin, valMax, pixelCount);
+
+			double valAvg = totalIntensity /
+				static_cast<double>(pixelCount);
+
+			std::string message = std::format("Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity);
+			Logger::WriteMessage(message.c_str());
+
+
+			for (size_t frame = 0; frame < MAX_FRAMES; ++frame)
+			{
+				pBitCanvas->FlipBuffers();
+
+				pBitCanvas->PrepareForDoDelta();
+				pBitCanvas->DoDelta_cpp(
+					pTransitionTable.get());
+				pBitCanvas->FinalizeDoDelta();
+
+				if ((frame % SAMPLE_INTERVAL) == 0)
+				{
+					GetTotalMinMaxIntensity(pBitCanvas, totalIntensity, valMin, valMax, pixelCount);
+
+					if (frame == 0)
+					{
+						valAvg = totalIntensity /
+							static_cast<double>(pixelCount);
+						std::string message = std::format("Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity);
+						Logger::WriteMessage(message.c_str());
+					}
+
+
+					intensityCurve.push_back(
+						totalIntensity /
+						static_cast<double>(pixelCount));
+				}
+			}
+
+			std::wstring report;
+
+			report += L"8-bit fade curve\n";
+
+			for (size_t i = 0; i < intensityCurve.size(); ++i)
+			{
+				report +=
+					std::to_wstring(i * SAMPLE_INTERVAL) +
+					L"," +
+					std::to_wstring(intensityCurve[i]) +
+					L"\n";
+			}
+
+			Logger::WriteMessage(report.c_str());
+		}
 	};
 
 	BitCanvas* BitCanvasUT::m_pBitCanvas32 = nullptr;
 	BitCanvas* BitCanvasUT::m_pBitCanvas16 = nullptr;
+	BitCanvas* BitCanvasUT::m_pBitCanvas16Drift = nullptr;
 	BitCanvas* BitCanvasUT::m_pBitCanvas8 = nullptr;
+	BitCanvas* BitCanvasUT::m_pBitCanvas8BitCurve = nullptr;
 }

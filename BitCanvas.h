@@ -405,7 +405,29 @@ protected:
 		}
 	};
 
+	// NOTE: Yes, m_pReadOnlyBuffer is correct in all cases. It's an alias for whatever buffer we're using for the current bit depth
+	inline void SynchronizeReadBufferCache() { CopyFirstRowToCache((byte_t*)m_pReadOnlyBuffer); }
+	// NOTE: Yes, m_pWriteOnlyBuffer is correct in all cases. It's an alias for whatever buffer we're using for the current bit depth
+	inline void SynchronizeWriteBufferCache() { CopyFirstRowToCache((byte_t*)m_pWriteOnlyBuffer); }
+	inline void CopyFirstRowToCache(byte_t* pBuffer)
+	{
+		dword_t* srcBuffer = (dword_t*)pBuffer;
+		dword_t* dstBuffer = (dword_t*)(pBuffer + m_dwBufferByteLength);
+
+		for (dword_t i = m_dwCacheLength; i != 0; --i)
+			*dstBuffer++ = *srcBuffer++;
+	}
+
 public:
+	inline void PrepareForDoDelta()
+	{
+		SynchronizeReadBufferCache();
+	}
+
+	inline void FinalizeDoDelta()
+	{
+		SynchronizeWriteBufferCache();
+	}
 	//inline void     CopyLastLine( void );
 
 	/*

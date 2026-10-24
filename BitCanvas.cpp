@@ -616,6 +616,10 @@ error_t BitCanvas::Initialize(void)
 	m_pReadOnlyBuffer = pPageTable[0];
 	m_pWriteOnlyBuffer = pPageTable[1];
 
+	// Be sure to initialize the extra line, the cache past the end that contains a COPY of the first line of pixels!
+	memset(m_pReadOnlyBuffer, 0, nBuffer_Size + nCache_Size);
+	memset(m_pWriteOnlyBuffer, 0, nBuffer_Size + nCache_Size);
+
 #endif
 
 	return SUCCESS;
@@ -898,6 +902,8 @@ error_t    BitCanvas::SetDelta(DeltaField* pDelta)
  ****************************************************************************/
 void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 {
+	SynchronizeReadBufferCache();
+
 	switch (m_nDeltaOptimizationLevel)
 	{
 	case OL_CPP:
@@ -913,10 +919,11 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 		this->DoDelta_SSE(lpTransitionTable);
 		break;
 	default:  /* what should default do? */
-		return;
+		break;
 	}
-}
 
+	SynchronizeWriteBufferCache();
+}
 
 /****************************************************************************
  *
@@ -1649,8 +1656,6 @@ void BitCanvas8::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 	dword_t  width;
 	dword_t  height;
 	dword_t  pixel, pixel3;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 	byte_t  p1, p2, p3, p4;
 
 	for (height = 0; height < m_dwBufferHeight; height++)
@@ -1673,11 +1678,6 @@ void BitCanvas8::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 			pixelOffset++;
 		}
 	}
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
-
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
 }
 
 /****************************************************************************
@@ -1697,8 +1697,6 @@ void BitCanvas8::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 	dword_t  pixelOffset = 0;
 	dword_t  p1, p2;
 	dword_t  pixel, pixel3;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 	byte_t*  pReadBuffer = m_pReadBuffer8;
 	byte_t*  pWriteBuffer = m_pWriteBuffer8;
 
@@ -1740,12 +1738,6 @@ void BitCanvas8::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 		((DWORD*)pWriteBuffer)[pixelOffset] = ((DWORD*)pWriteBuffer)[i];
 		pixelOffset++;
 	}/**/
-
-	srcBuffer = (dword_t*)pWriteBuffer;
-	dstBuffer = (dword_t*)(pWriteBuffer + m_dwBufferByteLength);
-
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
 }
 
 /****************************************************************************
@@ -1759,8 +1751,6 @@ void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 	dword_t  pixelOffset = 0;
 	dword_t  p1, p2;
 	dword_t  pixel, pixel3;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 	byte_t*  pReadBuffer = m_pReadBuffer8;
 	byte_t*  pWriteBuffer = m_pWriteBuffer8;
 
@@ -1803,12 +1793,6 @@ void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 		((DWORD*)pWriteBuffer)[pixelOffset] = ((DWORD*)pWriteBuffer)[i];
 		pixelOffset++;
 	}/**/
-
-	srcBuffer = (dword_t*)pWriteBuffer;
-	dstBuffer = (dword_t*)(pWriteBuffer + m_dwBufferByteLength);
-
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
 }
 
 
@@ -1995,17 +1979,17 @@ dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
 
 void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_BASELINE(lpTransitionTable);
+	DoDelta_cpp_BASELINE_WITH_DECAY_63(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_experiment1(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
@@ -2024,14 +2008,12 @@ void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
  * pre: delta fields are precalculated
  *
  ****************************************************************************/
-void BitCanvas16::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable)
 {
-	dword_t   pixelOffset = 0;
-	dword_t   pixel, pixel3;
-	word_t    p1, p2, p3, p4;
-	dword_t   bufferLength = m_dwBufferWidth * m_dwBufferHeight;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
+	dword_t  pixelOffset = 0;
+	dword_t  pixel, pixel3;
+	word_t   p1, p2, p3, p4;
+	dword_t  bufferLength = m_dwBufferWidth * m_dwBufferHeight;
 
 	do
 	{
@@ -2051,14 +2033,44 @@ void BitCanvas16::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
+}
 
-	//    CopyLastLine();
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+/****************************************************************************
+ * @brief This is a baseline/REFERENCE implementation of the straightforward
+ * algorithm for 16bit color.
+ *
+ * I expect to use one of the more optimized implementations.
+ *
+ * pre: delta fields are precalculated
+ *
+ * No decay. Just average. This is faster than decay.
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable)
+{
+	dword_t  pixelOffset = 0;
+	dword_t  pixel, pixel3;
+	word_t   p1, p2, p3, p4;
+	dword_t  bufferLength = m_dwBufferWidth * m_dwBufferHeight;
 
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
+	do
+	{
+		pixel = lpTransitionTable[pixelOffset];
+		pixel3 = pixel + m_dwBufferWidth;
+		p1 = m_pReadBuffer16[pixel];
+		p2 = m_pReadBuffer16[pixel + 1];
+		p3 = m_pReadBuffer16[pixel3];
+		p4 = m_pReadBuffer16[pixel3 + 1];
 
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * 63) >> 8),// & ~0x1, //16bit greenshift correction
+				(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * 63) >> 8)
+			);
+
+		pixelOffset++;
+	} while (pixelOffset < bufferLength);
 }
 
 /****************************************************************************
@@ -2067,8 +2079,10 @@ void BitCanvas16::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
  *
  * pre: delta fields are precalculated
  *
+ * Intention was to try to combat the "greenshift" effect by decaying the green channel slightly faster.
+ *
  ****************************************************************************/
-void    BitCanvas16::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
+void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
 	dword_t  srcPixelOffset, srcPixelOffset3;
@@ -2077,8 +2091,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 	dword_t  greenHi, greenLow;
 	dword_t  blueHi, blueLow;
 	dword_t  destPixel;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 
 
 	/*
@@ -2218,14 +2230,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 		destPixelOffset++;
 	} while (destPixelOffset < m_dwBufferLength);
 
-
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
-
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
-
-
 	/*    for( srcPixelOffset = 0;  srcPixelOffset <= m_nBufferWidth;  srcPixelOffset++ )
 		{
 	//        m_pWriteBuffer16[destPixelOffset+srcPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
@@ -2244,8 +2248,11 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
  *
  * pre: delta fields are precalculated
  *
+ * I think the intention was to remove the decay, but try to combat the "greenshift" effect
+ * a different way, which could mean 16bit could run as fast as the BASELINE
+ *
  ****************************************************************************/
-void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable)
 {
 	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
 	dword_t  srcPixelOffset, srcPixelOffset3;
@@ -2254,9 +2261,6 @@ void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 	dword_t  greenHi, greenLow;
 	dword_t  blueHi, blueLow;
 	dword_t  destPixel;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
-
 
 	/*
 	 * the source pixel actually consists of 4 pixels, the RGB components of
@@ -2286,7 +2290,7 @@ void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 	do
 	{
 		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
-		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;   /* p3 offset */
+		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
 
 		/* get the packed p1p2 and p3p4 values */
 		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
@@ -2385,13 +2389,6 @@ void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 		destPixelOffset++;
 	} while (destPixelOffset < m_dwBufferLength);
 
-
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
-
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
-
 	/*    for( srcPixelOffset = 0;  srcPixelOffset <= m_nBufferWidth;  srcPixelOffset++ )
 		{
 	//        m_pWriteBuffer16[destPixelOffset+srcPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
@@ -2404,7 +2401,7 @@ void BitCanvas16::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
 }
 
 
@@ -2446,8 +2443,6 @@ void    BitCanvas16::CopyTo16(void* lpSurface, const dword_t nDeadSpace)
 	word_t* lpSurface2 = (word_t*)lpSurface;
 	word_t* lpBuffer = m_pReadBuffer16;
 
-
-
 	COPYTO_HEIGHT_LOOP
 	{
 		COPYTO_WIDTH_LOOP
@@ -2470,7 +2465,6 @@ void    BitCanvas16::CopyTo24(void* lpSurface, const dword_t nDeadSpace)
 {
 	byte_t* lpSurface2 = (byte_t*)lpSurface;
 	word_t* lpBuffer = m_pReadBuffer16;
-
 
 	COPYTO_HEIGHT_LOOP
 	{
@@ -2496,7 +2490,6 @@ void    BitCanvas16::CopyTo32(void* lpSurface, const dword_t nDeadSpace)
 {
 	dword_t* lpSurface2 = (dword_t*)lpSurface;
 	word_t*  lpBuffer = m_pReadBuffer16;
-
 
 	COPYTO_HEIGHT_LOOP
 	{
@@ -2665,11 +2658,11 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 		}
 	}
 
-	for (dword_t i = 0; i <= m_dwBufferWidth; i++)
-	{
-		m_pWriteBuffer32[pixelOffset] = m_pWriteBuffer32[i];
-		pixelOffset++;
-	}
+	//for (dword_t i = 0; i <= m_dwBufferWidth; i++)
+	//{
+	//	m_pWriteBuffer32[pixelOffset] = m_pWriteBuffer32[i];
+	//	pixelOffset++;
+	//}
 }
 
 
@@ -2756,13 +2749,13 @@ void BitCanvas32::DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable)
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
 
-	//    CopyLastLine();
+	////    CopyLastLine();
 
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	//srcBuffer = (dword_t*)m_pWriteBuffer8;
+	//dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (dword_t i = m_dwCacheLength; i != 0; i--)
-		*dstBuffer++ = *srcBuffer++;
+	//for (dword_t i = m_dwCacheLength; i != 0; --i)
+	//	*dstBuffer++ = *srcBuffer++;
 
 
 	_m_empty();  /* clear the MMX state */
@@ -2868,10 +2861,10 @@ void BitCanvas32::DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable)
 		emms;                      /* clear the mmx state */
 
 		/* CopyLastLine */
-		mov       esi, write_base;
-		lea       edi, [write_base + buffer_length * 4];
-		lea       ecx, [buffer_width + 1];
-		rep       movsd; /* copy ecx dwords from [esi] to [edi]*/
+		//mov       esi, write_base;
+		//lea       edi, [write_base + buffer_length * 4];
+		//lea       ecx, [buffer_width + 1];
+		//rep       movsd; /* copy ecx dwords from [esi] to [edi]*/
 	}
 }
 #endif
@@ -2939,11 +2932,11 @@ void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTabl
 	} while (pixelOffset < bufferLength);
 
 	// CopyLastLine
-	srcBuffer = (dword_t*)m_pWriteBuffer8;
-	dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
+	//srcBuffer = (dword_t*)m_pWriteBuffer8;
+	//dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
 
-	for (dword_t i = m_dwCacheLength; i != 0; --i)
-		*dstBuffer++ = *srcBuffer++;
+	//for (dword_t i = m_dwCacheLength; i != 0; --i)
+	//	*dstBuffer++ = *srcBuffer++;
 }
 
 /****************************************************************************
