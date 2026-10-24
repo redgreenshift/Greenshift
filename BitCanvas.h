@@ -792,8 +792,9 @@ protected:
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
@@ -843,7 +844,7 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
 #endif
-	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment1_FIXED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
 
 	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;

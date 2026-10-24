@@ -1041,10 +1041,10 @@ void    Greenshift::UpdateDisplayText(void)
 			break;
 		}
 
-		std::string canvasName = std::format("{1}x{2}, {0}-bit", m_pBitCanvas->BitDepth(), m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight());
+		std::string engineStats = std::format("{1}x{2}, {0}-bit", m_pBitCanvas->BitDepth(), m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight());
 
 		// Display resolution, bit depth and optimization level next to FPS
-		DisplayString(0, canvasName.c_str(), optLevel.c_str());
+		DisplayString(EDSP_EngineStats, engineStats.c_str(), optLevel.c_str());
 
 		m_hrDisplayTimer.Start();
 	}
@@ -1080,33 +1080,34 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 				return FAILURE;
 		}
 
+		// TODO: JRDV: This is DUPLICATED in MetaConfig::DisplayString
 		switch (position)
 		{
-		case 0:  /* deltafield */
+		case EDSP_EngineStats:  /* resolution/bit_depth/optimization : next to FPS counter */
 			x = 60;
 			y = 0;
 			break;
-		case 1:  /* waveshape */
+		case EDSP_DeltaFieldCurrent:  /* CURRENT deltafield */
 			x = 0;
 			y = 20;
 			break;
-		case 2: /* particle */
+		case EDSP_DeltaFieldNext: /* NEXT deltafield */
 			x = 0;
 			y = 40;
 			break;
-		case 3: /* palette */
+		case 3: /* unknown : above current palette */
 			x = 350;
 			y = 0;
 			break;
-		case 4: /* palette */
+		case EDSP_PaletteCurrent: /* CURRENT palette */
 			x = 320;
 			y = 20;
 			break;
-		case 5: /* palette */
+		case EDSP_PaletteNext: /* NEXT palette */
 			x = 320;
 			y = 40;
 			break;
-/*        case 6: // unused
+/*		case 6: // unused
 			x = 320;
 			y = 40;
 			break;
@@ -1114,31 +1115,31 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 60;
 			break;/**/
-		case 8:  /* deltafield */
+		case EDSP_WaveShapeCurrent:  /* CURRENT waveshape */
 			x = 0;
 			y = 420;
 			break;
-		case 9:  /* waveshape */
+		case EDSP_WaveShapeNext:  /* NEXT waveshape */
 			x = 0;
 			y = 440;
 			break;
-		case 10: /* particle */
+		case EDSP_Particle0: /* particle0 */
 			x = 0;
 			y = 460;
 			break;
-		case 11: /* palette */
+		case EDSP_Particle1: /* particle1 */
 			x = 320;
 			y = 420;
 			break;
-		case 12: /* palette */
+		case EDSP_Particle2: /* particle2 */
 			x = 320;
 			y = 440;
 			break;
-		case 13: /* palette */
+		case EDSP_Particle3: /* particle3 */
 			x = 320;
 			y = 460;
 			break;
-/*        case 6: // unused
+/*		case 6: // unused
 			x = 320;
 			y = 460;
 			break;
@@ -1146,7 +1147,7 @@ error_t    Greenshift::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 460;
 			break;/**/
-		default:
+		default: // stomps over the FPS counter :(
 			x = 0;
 			y = 0;
 			break;

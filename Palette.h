@@ -35,7 +35,7 @@
 #include "PhaseFunction.h"
 
 
-inline constexpr word_t PALETTE_SIZE = 256;
+constexpr word_t PALETTE_SIZE = 256;
 
 enum {
 	PALETTE_UNKNOWN = -1,

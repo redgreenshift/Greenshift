@@ -221,7 +221,7 @@ enum
 	/* arguments are represented as a parenthesis enclosed
 	 * list of comma separated expressions.
 	 */
-	ED_FUNCTIONEX        /* function with an extra pointer
+	ED_FUNCTIONEX,        /* function with an extra pointer
 						 */
 
 /*
@@ -359,8 +359,8 @@ public:
 										   * and Value classes
 										   ***********************************************/
 	virtual char* PrintString(char* inStr, int& nLength) = 0;    /* builds a string representation
-														 * of the expression it defines
-														 */
+																 * of the expression it defines
+																 */
 
 
 	virtual bool    IsConstantExpression(void) = 0;
@@ -1295,7 +1295,7 @@ public:
 class ExpressionConditional : public ExpressionTernary
 {
 private:
-	Expression* m_pCondition = nullptr; /* WHAT is this for again? */
+	//Expression* m_pCondition = nullptr; /* WHAT is this for again? */
 public:
 	ExpressionConditional(Expression* inExpression1, Expression* inExpression2, Expression* inExpression3)
 		: ExpressionTernary(inExpression1, inExpression2, inExpression3) {

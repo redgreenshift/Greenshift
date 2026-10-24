@@ -45,7 +45,6 @@ public:
 	SFMTRand(uint32_t oneSeed);  // low-entropy - LEGACY constructor: initialize with a simple uint32 (prefer other constructors)
 	SFMTRand(uint32_t* bigSeed, int length);  // initialize with an array of `length` uint32's
 
-	//inline dword_t sfmt_genrand_uint32();
 	double rand();                      // real number in [0,1]
 	double rand(double n);     // real number in [0,n]
 	double randExc();                   // real number in [0,1)
@@ -136,9 +135,9 @@ inline void SFMTRand::seed(uint32_t oneSeed)               // low-entropy - LEGA
 	::sfmt_init_gen_rand(&rng, oneSeed);
 }
 
-inline void SFMTRand::seed(uint32_t* init_key, int key_length)
+inline void SFMTRand::seed(uint32_t* bigSeed, int key_length)
 {
-	::sfmt_init_by_array(&rng, init_key, key_length);
+	::sfmt_init_by_array(&rng, bigSeed, key_length);
 }
 
 inline void SFMTRand::seed() // DEFAULT: HIGH-ENTROPY: auto-seed with /dev/urandom (if available) or system entropy -- Recommended for new code

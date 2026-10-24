@@ -225,6 +225,40 @@ typedef mychar_t* string_t;
  */
 typedef value_t* pvalue_t;
 
+//	FPS 0 <stats>		3 <none>
+//	1 CurrentDF			4 CurrentPalette
+//	2 NextDF			5 NextPalette
+// ...................................
+// ........ the visualization ........
+// ...................................
+//	8 CurrentWaveShape	11 Particle1
+//	9 NextWaveShape		12 Particle2
+//	10 Particle0		13 Particle3
+//
+enum EDisplayStringPosition
+{
+	EDSP_EngineStats = 0, // Engine stats / DisplayResolution_BitDepth_OptimizationLevel
+
+	EDSP_DeltaFieldCurrent = 1,
+	EDSP_DeltaFieldNext = 2,
+
+	EDSP_Undefined3 = 3,
+
+	EDSP_PaletteCurrent = 4,
+	EDSP_PaletteNext = 5,
+
+	EDSP_Unused6 = 6,
+	EDSP_Unused7 = 7,
+
+	EDSP_WaveShapeCurrent = 8,
+	EDSP_WaveShapeNext = 9,
+
+	EDSP_Particle0 = 10,
+	EDSP_Particle1 = 11,
+	EDSP_Particle2 = 12,
+	EDSP_Particle3 = 13,
+};
+
 
 /*
  * I know I shouldn't have these typedef's and define's, but I don't want to

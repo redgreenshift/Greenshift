@@ -165,14 +165,14 @@ error_t    MetaDeltaField::InitializeDerived(
 error_t    MetaDeltaField::UpdateDerived(WindowDevice* pWindowDevice)
 {
 	if (m_dwCurrent != 0xBADC0DE)
-		DisplayString(1, "Current DeltaField ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_DeltaFieldCurrent, "Current DeltaField ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(1, "Current DeltaField ", "                                        ", pWindowDevice);
+		DisplayString(EDSP_DeltaFieldCurrent, "Current DeltaField ", "                                        ", pWindowDevice);
 
 	if (m_dwNext != 0xBADC0DE)
-		DisplayString(2, "Next     DeltaField ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_DeltaFieldNext, "Next     DeltaField ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(2, "Next     DeltaField ", "                                          ", pWindowDevice);
+		DisplayString(EDSP_DeltaFieldNext, "Next     DeltaField ", "                                          ", pWindowDevice);
 
 	return SUCCESS;
 }

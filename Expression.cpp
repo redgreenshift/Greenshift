@@ -2293,8 +2293,12 @@ error_t Expression::Compile(const char* inString,
 
 
 
-
-
+/// <summary>
+/// Determines whether the given character sequence represents a simple numeric token: it must start with a digit, '+' or '-', or '.', and all subsequent characters must be digits or '.'.
+/// </summary>
+/// <param name="inString">Pointer to the character sequence to check (may not be null-terminated).</param>
+/// <param name="inLength">Number of characters in inString to examine.</param>
+/// <returns>true if the examined characters form a numeric token according to the function's rules; false otherwise. (If inLength is 0 or inString is null, behavior is undefined.)</returns>
 bool Expression::MatchNumber(const char* inString, int inLength)
 {
 	int i;
@@ -2541,7 +2545,6 @@ Expression::parsingLogic_t* Expression::ParsingLogic(void)
  *    The core of the expression parser... the thing that makes it go...
  ****************************************************************************/
 
-
  /*
   *pre:    inString is NOT NULL,
   *pre:    inString is NOT a constant
@@ -2761,7 +2764,7 @@ error_t Expression::Compile(char* inString,
 								if (currentOperation->opType == UNARY_POSTFIX_OP)
 								{
 									// We need to revamp the parser. Postfix unary doesn't work right in all cases.
-									// This is sortof a hack to convert to unary prefix function to allow correct parse.
+									// This is a bit of a hack to convert to unary prefix function to allow correct parse.
 									std::string repackedExpression = std::format("{2}({0}){1}", strTerm1, strTerm2, currentOperation->altPrefixFunction);
 									return Expression::Compile(repackedExpression.data(), outExpression, inValues, inGlobals);
 								}
@@ -2873,7 +2876,6 @@ error_t Expression::Compile(char* inString,
 					*strTerm1 = '\0';
 					/* should free term1 on error */
 					return NewUserDefined(pExpDesc, term1, outExpression);
-
 				}
 				//                else
 				//                    return err;  /* no, don't return err, let the below code try */

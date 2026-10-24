@@ -142,14 +142,14 @@ error_t    MetaPalette::UpdateDerived(WindowDevice* pWindowDevice)
 	//error_t    err = SUCCESS;
 
 	if (m_dwCurrent != 0xBADC0DE)
-		DisplayString(4, "Current Palette ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_PaletteCurrent, "Current Palette ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(4, "Current Palette ", "                                        ", pWindowDevice);
+		DisplayString(EDSP_PaletteCurrent, "Current Palette ", "                                        ", pWindowDevice);
 
 	if (m_dwNext != 0xBADC0DE)
-		DisplayString(5, "Next     Palette ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_PaletteNext, "Next     Palette ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(5, "Next     Palette ", "                                          ", pWindowDevice);
+		DisplayString(EDSP_PaletteNext, "Next     Palette ", "                                          ", pWindowDevice);
 
 	return SUCCESS;
 }

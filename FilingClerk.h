@@ -36,9 +36,9 @@
 #include <string.h>
 
 
-inline constexpr char WINDOWS_PATH_DELIMITER[] = "\\";
-inline constexpr char UNIX_PATH_DELIMITER[] = "/";
-inline constexpr char MAC_PATH_DELIMITER[] = ":";
+constexpr char WINDOWS_PATH_DELIMITER[] = "\\";
+constexpr char UNIX_PATH_DELIMITER[] = "/";
+constexpr char MAC_PATH_DELIMITER[] = ":";
 
 #ifdef _WIN32
 

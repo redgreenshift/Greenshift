@@ -1711,11 +1711,11 @@ void BitCanvas8::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 
 		p2 = (pixel & 0xFF00) + (pixel3 & 0xFF00);
 
+		/* decay the buffer (ie: make it slightly darker than the average) */
 		p1 = (p1 + (p2 >> 8)) DECAY8;
 
 		//m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
 		pWriteBuffer[pixelOffset] = (byte_t)p1;
-
 
 #if 0
 #if EXTREME_DEBUGGING
@@ -1726,24 +1726,19 @@ void BitCanvas8::DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable)
 #endif
 #endif
 
-
 		pixelOffset++;
 	} while (pixelOffset < m_dwBufferByteLength);
-
-	/*
-	pixelOffset /= sizeof(DWORD);
-
-	for( i = 0; i <= m_nCacheLength; i++ )
-	{
-		((DWORD*)pWriteBuffer)[pixelOffset] = ((DWORD*)pWriteBuffer)[i];
-		pixelOffset++;
-	}/**/
 }
 
 /****************************************************************************
  *
  * @brief EXPERIMENTAL, place to explore potential optimizations;
  * NOT actually tied to MMX intrinsics/assembly
+ *
+ * cpp_OPTIMIZED and experiment1 are nearly identical — both use packed WORD loads.
+ * The divergence is in the final decay step: cpp_OPTIMIZED keeps the same DECAY8 formula
+ * while "experiment1" swaps it for a simpler >> 2 shift plus a saturation table lookup
+ * that avoids overflow issues without branches.
  *
  ****************************************************************************/
 void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
@@ -1757,7 +1752,7 @@ void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 	do
 	{
 		pixel = lpTransitionTable[pixelOffset];
-		pixel3 = pixel + m_dwBufferWidth; // faster than using local, becaus it's already CONST
+		pixel3 = pixel + m_dwBufferWidth; // faster than using local, because it's already CONST
 		pixel = *(word_t*)(&(pReadBuffer[pixel]));
 		pixel3 = *(word_t*)(&(pReadBuffer[pixel3]));
 
@@ -1765,7 +1760,7 @@ void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 
 		p2 = (pixel & 0xFF00) + (pixel3 & 0xFF00);
 
-		//        p1 = (p1 + (p2 >> 8)) DECAY8;
+		//p1 = (p1 + (p2 >> 8)) DECAY8;
 		p1 = (p1 + (p2 >> 8)) >> 2;
 
 #if 0
@@ -1777,24 +1772,13 @@ void BitCanvas8::DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable)
 #endif
 #endif
 
-
+		/* decay the buffer (ie: make it slightly darker than the average) */
 		//m_pWriteBuffer8[pixelOffset] = (BYTE)p1;
 		pWriteBuffer[pixelOffset] = decay256[p1];
 
-
 		pixelOffset++;
 	} while (pixelOffset < m_dwBufferByteLength);
-
-	/*
-	pixelOffset /= sizeof(DWORD);
-
-	for( i = 0; i <= m_nCacheLength; i++ )
-	{
-		((DWORD*)pWriteBuffer)[pixelOffset] = ((DWORD*)pWriteBuffer)[i];
-		pixelOffset++;
-	}/**/
 }
-
 
 void BitCanvas8::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
@@ -1994,8 +1978,9 @@ void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment1(lpTransitionTable);
+	DoDelta_cpp_BASELINE_WITH_DECAY_31(lpTransitionTable);
 }
+
 
 // IMPLEMENTATIONS:
 
@@ -2006,6 +1991,8 @@ void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
  * I expect to use one of the more optimized implementations.
  *
  * pre: delta fields are precalculated
+ *
+ * No decay. Just average. This is faster than decay.
  *
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable)
@@ -2026,9 +2013,194 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
 
 		m_pWriteBuffer16[pixelOffset] =
 			RGB16(
-				((RED16(p1) + RED16(p2) + RED16(p3) + RED16(p4)) DECAY16),
-				((GREEN16(p1) + GREEN16(p2) + GREEN16(p3) + GREEN16(p4)) DECAY16),// & ~0x1, //16bit greenshift correction
-				((BLUE16(p1) + BLUE16(p2) + BLUE16(p3) + BLUE16(p4)) DECAY16)
+				((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) DECAY16),
+				((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) DECAY16),// & ~0x1, //16bit greenshift correction (probably bad/invalid idea)
+				((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) DECAY16)
+			);
+
+		pixelOffset++;
+	} while (pixelOffset < bufferLength);
+}
+
+/****************************************************************************
+ * @brief This is a REFERENCE implementation used for 16bit color;
+ * optimized
+ *
+ * pre: delta fields are precalculated
+ *
+ * TODO: JRDV: Need to determine why it doesn't match the BASELINE!
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable)
+{
+	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
+	dword_t  srcPixelOffset, srcPixelOffset3;
+	dword_t  srcPixel12, srcPixel34;
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+
+	/*
+	 * the source pixel actually consists of 4 pixels, the RGB components of
+	 * which must be averaged to find the value for the destination pixel.
+	 *
+	 * the 4 pixels are numbered as follows:
+	 *     p1 | p2
+	 *     ---+---
+	 *     p3 | p4
+	 *
+	 *  p1 and p3 are considered the high pixels
+	 *  p2 and p4 are the low pixels, since they are stored in the high order
+	 *  bits and low order bits of a DWORD respectively.
+	 *
+	 * the below code may be a little confusing, because of the way I acquire
+	 * the pixel values, and then average them.
+	 *
+	 * Exploiting the fact memory reads access 32 bits of
+	 * information, and each pixel is 16 bits, the code is written to read in
+	 * two pixels using a single memory read.  Memory access is one of the
+	 * slowest operations, so any reduction in those operations can
+	 * potentially speed things up significantly.
+	 *
+	 * Another optimization was using "clever data structure" to use
+	 * 2 additions to perform the work of 3 additions
+	 */
+	do
+	{
+		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
+		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
+
+		/* get the packed p1p2 and p3p4 values */
+		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
+		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
+
+		/* RED:
+		 * this next line does a lot.
+		 *
+		 * 1) mask the red bits.
+		 *    there are two pixels in each DWORD so 0xF800F800 is necessary to
+		 *    clear the green and blue bits in both pixels.
+		 *
+		 * 2) shift each packed red pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 *
+		 * 3) sum the two packed pixels.
+		 *    this may be the most confusing part.
+		 *    Since the pixel data is packed, a single addition can sum the
+		 *    two high pixels and the two low pixels in parallel
+		 */
+		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
+			((srcPixel34 & 0xF800F800) >> 2);
+
+		/* the next step is to unpack the pixel data,
+		 * so get the high pixel data into the low bits
+		 */
+		redHi = redLow >> 16;
+
+		/*
+		 * sum the high order sum and low order sum, and mask to red bits only
+		 */
+		destPixel = (redLow + redHi) & 0xF800;
+
+
+		/* GREEN:
+		 * this next line does a lot.  And is slightly different from red
+		 *
+		 * 1) mask the green bits.
+		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
+		 *    clear the red and blue bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 *
+		 * 3) shift the packed green sum pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 */
+		greenLow = (((srcPixel12 & 0x07E007E0)) +
+			((srcPixel34 & 0x07E007E0))) >> 2;
+
+		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
+
+		/*
+		 * sum the hi and low green data,
+		 * mask it to the green bits only,
+		 * and then or the green bits with the red in the destination pixel
+		 */
+		destPixel |= ((greenLow + greenHi)) & 0x07E0;
+
+
+		/* BLUE:
+		 * this next line does a lot.  And different from either red or green
+		 *
+		 * 1) mask the blue bits.
+		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
+		 *    clear the red and green bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 */
+		blueLow = ((srcPixel12 & 0x001F001F)) +
+			((srcPixel34 & 0x001F001F));
+
+		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
+
+		/*
+		 * this next line does more than either red or green
+		 *
+		 * 1) sum the hi and low blue data
+		 *
+		 * 2) average the blue pixel data
+		 *
+		 * 3) mask it to the blue bits only
+		 *
+		 * 4) or the blue bits into the destination pixel
+		 */
+		destPixel |= ((blueLow + blueHi) >> 2) & 0x001F;
+
+
+
+		/*
+		 * write the destination pixel data to the destination pixel
+		 */
+		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
+
+
+		/* progress to the next pixel */
+		destPixelOffset++;
+	} while (destPixelOffset < m_dwBufferLength);
+}
+
+/****************************************************************************
+ * @brief This is a baseline/REFERENCE implementation of the straightforward
+ * algorithm for 16bit color.
+ *
+ * I expect to use one of the more optimized implementations.
+ *
+ * pre: delta fields are precalculated
+ *
+ * Faster decay to black. Unsure if I like. NEED to numerically compare to 8bit grayscale, and decide the ideal 16 (and 32bit) decay values
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable)
+{
+	dword_t  pixelOffset = 0;
+	dword_t  pixel, pixel3;
+	word_t   p1, p2, p3, p4;
+	dword_t  bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	do
+	{
+		pixel = lpTransitionTable[pixelOffset];
+		pixel3 = pixel + m_dwBufferWidth;
+		p1 = m_pReadBuffer16[pixel];
+		p2 = m_pReadBuffer16[pixel + 1];
+		p3 = m_pReadBuffer16[pixel3];
+		p4 = m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * 31 >> 7),
+				((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * 31 >> 7),
+				((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * 31 >> 7)
 			);
 
 		pixelOffset++;
@@ -2043,7 +2215,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
  *
  * pre: delta fields are precalculated
  *
- * No decay. Just average. This is faster than decay.
+ * Decay to black, same as 32bit.
  *
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable)
@@ -2065,7 +2237,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
 		m_pWriteBuffer16[pixelOffset] =
 			RGB16(
 				(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * 63) >> 8),// & ~0x1, //16bit greenshift correction
+				(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * 63) >> 8),
 				(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * 63) >> 8)
 			);
 
@@ -2121,7 +2293,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 	do
 	{
 		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
-		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;   /* p3 offset */
+		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
 
 		/* get the packed p1p2 and p3p4 values */
 		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
@@ -2213,10 +2385,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 * 4) or the blue bits into the destination pixel
 		 */
 		destPixel |= (((blueLow + blueHi) * 511) >> 11) & 0x001F;
-		//        destPixel |= (((blueLow + blueHi)*255) >> 10) & 0x001F;
-		//        destPixel |= (((blueLow + blueHi)*127) >> 9) & 0x001F;
+		//destPixel |= (((blueLow + blueHi)*255) >> 10) & 0x001F;
+		//destPixel |= (((blueLow + blueHi)*127) >> 9) & 0x001F;
 		//        destPixel |= (((blueLow + blueHi)*63) >> 8) & 0x001F;
-		//        destPixel |= (((blueLow + blueHi)*15) >> 6) & 0x001F;
+		//destPixel |= (((blueLow + blueHi)*15) >> 6) & 0x001F;
 
 
 
@@ -2238,7 +2410,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		}
 	/**/
 }
-
 
 /****************************************************************************
  *
@@ -2415,16 +2586,15 @@ void    BitCanvas16::CopyTo8(void* lpSurface, const dword_t nDeadSpace)
 	byte_t* lpSurface2 = (byte_t*)lpSurface;
 	word_t* lpBuffer = m_pReadBuffer16;
 
-
 	COPYTO_HEIGHT_LOOP
 	{
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
 			*lpSurface2++ = (
-							r16to32(RED16(*lpBuffer)) +
-							g16to32(GREEN16(*lpBuffer)) +
-							b16to32(BLUE16(*lpBuffer++))
+							r16to32(RFromRGB16(*lpBuffer)) +
+							g16to32(GFromRGB16(*lpBuffer)) +
+							b16to32(BFromRGB16(*lpBuffer++))
 							) / 3;
 		}
 
@@ -2497,9 +2667,9 @@ void    BitCanvas16::CopyTo32(void* lpSurface, const dword_t nDeadSpace)
 		{
 			//assign the value to the surface
 			*lpSurface2++ = RGB32(
-								r16to32(RED16(*lpBuffer)),
-								g16to32(GREEN16(*lpBuffer)),
-								b16to32(BLUE16(*lpBuffer++))
+								r16to32(RFromRGB16(*lpBuffer)),
+								g16to32(GFromRGB16(*lpBuffer)),
+								b16to32(BFromRGB16(*lpBuffer++))
 								);
 		}
 
@@ -2650,19 +2820,13 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 
 			m_pWriteBuffer32[pixelOffset] =
 				RGB32(
-					((RED32(p1) + RED32(p2) + RED32(p3) + RED32(p4)) DECAY8),
-					((GREEN32(p1) + GREEN32(p2) + GREEN32(p3) + GREEN32(p4)) DECAY8),
-					((BLUE32(p1) + BLUE32(p2) + BLUE32(p3) + BLUE32(p4)) DECAY8)
+					((RFromRGB32(p1) + RFromRGB32(p2) + RFromRGB32(p3) + RFromRGB32(p4)) DECAY32),
+					((GFromRGB32(p1) + GFromRGB32(p2) + GFromRGB32(p3) + GFromRGB32(p4)) DECAY32),
+					((BFromRGB32(p1) + BFromRGB32(p2) + BFromRGB32(p3) + BFromRGB32(p4)) DECAY32)
 				);
 			pixelOffset++;
 		}
 	}
-
-	//for (dword_t i = 0; i <= m_dwBufferWidth; i++)
-	//{
-	//	m_pWriteBuffer32[pixelOffset] = m_pWriteBuffer32[i];
-	//	pixelOffset++;
-	//}
 }
 
 
@@ -2713,8 +2877,6 @@ void BitCanvas32::DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable)
 	dword_t  pixelOffset = 0;
 	dword_t  pixel;
 	dword_t  pixel3;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 #pragma message( "hehe" )
 
 	do
@@ -2748,15 +2910,6 @@ void BitCanvas32::DoDelta_MMX_Intrinsics(const PIXELMAP* lpTransitionTable)
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
-
-	////    CopyLastLine();
-
-	//srcBuffer = (dword_t*)m_pWriteBuffer8;
-	//dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
-
-	//for (dword_t i = m_dwCacheLength; i != 0; --i)
-	//	*dstBuffer++ = *srcBuffer++;
-
 
 	_m_empty();  /* clear the MMX state */
 }
@@ -2869,12 +3022,83 @@ void BitCanvas32::DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable)
 }
 #endif
 
-void BitCanvas32::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
+
+// Intrinsics Experiment (AI)
+// AI implementation, Human found and FIXED the problem!
+void BitCanvas32::DoDelta_SSE2_experiment1_FIXED(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_MMX_Assembly(lpTransitionTable);
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = widthPixels * m_dwBufferHeight;
+	const __m128i zero = _mm_setzero_si128(); // 128-bit zero value
+	const __m128i decay = _mm_set1_epi16(0x003f);
+
+	for (dword_t pixelOffset = 0;
+		pixelOffset < bufferLength;
+		++pixelOffset)
+	{
+		dword_t pixel = lpTransitionTable[pixelOffset];
+
+		dword_t* src = &m_pReadBuffer32[pixel];
+
+		//
+		// p1 p2
+		//
+		const __m128i top = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(src)); // loads 8 bytes from memory into the low 64 bits of an __m128i value and sets the upper 64 bits to zero.
+
+		//
+		// p3 p4
+		//
+		const __m128i bottom = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(src + widthPixels)); // loads 8 bytes from memory into the low 64 bits of an __m128i value and sets the upper 64 bits to zero.
+
+		//
+		// unpack to 16-bit channels
+		//
+		__m128i topLo = _mm_unpacklo_epi8(top, zero); // interleaves the lower 8 bytes of two 128 - bit vectors, alternating bytes from a and b. (a0, b0, a1, b1, a2, b2, a3, b3)
+		__m128i topHi = _mm_unpackhi_epi8(top, zero); // interleaves the upper 8 bytes of two 128-bit vectors, alternating bytes from a and b. [a8, b8, a9, b9, …, a15, b15]
+		__m128i bottomLo = _mm_unpacklo_epi8(bottom, zero);
+		__m128i bottomHi = _mm_unpackhi_epi8(bottom, zero);
+
+		//
+		// sum p1+p2
+		//
+		__m128i sum = _mm_add_epi16(topLo, topHi);
+
+		//
+		// sum p3+p4
+		//
+		sum = _mm_add_epi16(sum, _mm_add_epi16(bottomLo, bottomHi));
+
+		//
+		// apply decay
+		//
+		sum = _mm_mullo_epi16(sum, decay); // multiplies the eight corresponding 16-bit lanes in two 128-bit integer vectors and keeps the low 16 bits of each product.
+		sum = _mm_srli_epi16(sum, DECAY_SHIFT + 2); // shifts each of the eight 16-bit lanes in a right by count bits, filling the vacated high bits with zeros. Bits shifted off the right are discarded.
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// NOTE: this works, but I think would be more accurate to sum BEFORE the decay
+		// That said, if this is significantly faster, it may be worth considering loosing a bit of precision for speed.
+		// But the main point is that we HAD the data in the original implementatioon, but we discarded the upper 32bits of the lower 64bits.
+		__m128i    high_bits_sum = _mm_srli_si128(sum, 8); // shift right 8 bytes
+		__m128i    low_bits_sum = _mm_move_epi64(sum); // take the low 64 bits
+
+		sum = _mm_add_epi16(high_bits_sum, low_bits_sum);    /* sum the 2 sums */
+
+		//
+		// repack
+		//
+		__m128i packed = _mm_packus_epi16(sum, zero); // converts the 16 signed 16-bit lanes in a and b into 16 unsigned 8-bit values, saturating each value to the range 0–255.
+													// The result’s low 8 bytes come from a; its high 8 bytes come from b.For example, a negative input becomes 0, and a value above 255 becomes 255.
+
+
+		//
+		// store one result pixel
+		//
+		m_pWriteBuffer32[pixelOffset] = _mm_cvtsi128_si32(packed); // extracts the lowest 32 bits of an __m128i value and returns them as a signed 32-bit integer (int). The other 96 bits are ignored.
+	}
 }
 
-// Human implementation, found and FIXED the problems!
+
+// Human implementation, Human found and FIXED the problems!
 void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable)
 {
 	const __m128i    m_zero = _mm_setzero_si128();
@@ -2894,8 +3118,6 @@ void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTabl
 	dword_t  pixelOffset = 0;
 	dword_t  pixel;
 	dword_t  pixel3;
-	dword_t* srcBuffer;
-	dword_t* dstBuffer;
 
 	do
 	{
@@ -2930,14 +3152,8 @@ void BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTabl
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
-
-	// CopyLastLine
-	//srcBuffer = (dword_t*)m_pWriteBuffer8;
-	//dstBuffer = (dword_t*)(m_pWriteBuffer8 + m_dwBufferByteLength);
-
-	//for (dword_t i = m_dwCacheLength; i != 0; --i)
-	//	*dstBuffer++ = *srcBuffer++;
 }
+
 
 /****************************************************************************
  *
@@ -2949,16 +3165,15 @@ void    BitCanvas32::CopyTo8(void* lpSurface, const dword_t nDeadSpace)
 	byte_t* lpSurface2 = (byte_t*)lpSurface;
 	dword_t* lpBuffer = m_pReadBuffer32;
 
-
 	COPYTO_HEIGHT_LOOP
 	{
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
 			*lpSurface2++ = (byte_t)((
-								RED32(*lpBuffer) +
-								GREEN32(*lpBuffer) +
-								BLUE32(*lpBuffer++)
+								RFromRGB32(*lpBuffer) +
+								GFromRGB32(*lpBuffer) +
+								BFromRGB32(*lpBuffer++)
 								) / 3);
 		}
 
@@ -2978,16 +3193,15 @@ void    BitCanvas32::CopyTo16(void* lpSurface, const dword_t nDeadSpace)
 	word_t* lpSurface2 = (word_t*)lpSurface;
 	dword_t* lpBuffer = m_pReadBuffer32;
 
-
 	COPYTO_HEIGHT_LOOP
 	{
 		COPYTO_WIDTH_LOOP
 		{
 			//assign the value to the surface
 			*lpSurface2++ = (word_t)RGB16(
-										r32to16(RED32(*lpBuffer)),
-										g32to16(GREEN32(*lpBuffer)),
-										b32to16(BLUE32(*lpBuffer++))
+										r32to16(RFromRGB32(*lpBuffer)),
+										g32to16(GFromRGB32(*lpBuffer)),
+										b32to16(BFromRGB32(*lpBuffer++))
 										);
 		}
 
@@ -3006,7 +3220,6 @@ void    BitCanvas32::CopyTo24(void* lpSurface, const dword_t nDeadSpace)
 {
 	byte_t* lpSurface2 = (byte_t*)lpSurface;
 	byte_t* lpBuffer = m_pReadBuffer8;
-
 
 	COPYTO_HEIGHT_LOOP
 	{

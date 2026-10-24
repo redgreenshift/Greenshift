@@ -21,10 +21,14 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-// 0x00RRGGBB
+/// <summary>
+/// Represents a 32-bit RGB color value packed into 24-bits: 0x00RRGGBB
+/// </summary>
 using rgb32_t = dword_t;
 
-// 0xAARRGGBB
+/// <summary>
+/// Represents a 32-bit ARGB color value packed into 32-bits: 0xAARRGGBB
+/// </summary>
 using argb32_t = dword_t;
 
 // ---------------------------------------------------------------------------
@@ -52,6 +56,13 @@ inline constexpr dword_t _REDMASK32 = 0xFF00;
 inline constexpr dword_t _GREENMASK32 = 0x0FF0;
 inline constexpr dword_t _BLUEMASK32 = 0x00FF;
 
+/// <summary>
+/// Creates a 32-bit packed RGB color value from red, green, and blue components.
+/// </summary>
+/// <param name="r">Red channel (8-bit) placed in the third byte (bits 16-23).</param>
+/// <param name="g">Green channel (8-bit) placed in the second byte (bits 8-15).</param>
+/// <param name="b">Blue channel (8-bit) placed in the least-significant byte (bits 0-7).</param>
+/// <returns>A rgb32_t value with channels packed as 0x00RRGGBB (most-significant byte is zero or unused).</returns>
 inline constexpr rgb32_t RGB32(byte_t r, byte_t g, byte_t b)
 {
     return
@@ -75,6 +86,15 @@ inline constexpr byte_t BFromRGB32(rgb32_t rgb)
     return static_cast<byte_t>((rgb >> BLUESHIFT32) & BLUEMASK32);
 }
 
+/// <summary>
+/// Constructs a 32-bit packed BGR color from 8-bit channel components.
+///
+/// NOTE: compatible with Windows RGB() macro which produces a COLORREF
+/// </summary>
+/// <param name="r">Red channel (8-bit) placed in the least-significant byte (bits 0-7).</param>
+/// <param name="g">Green channel (8-bit) placed in the second byte (bits 8-15).</param>
+/// <param name="b">Blue channel (8-bit) placed in the third byte (bits 16-23).</param>
+/// <returns>A bgr32_t value with channels packed as 0x00BBGGRR (most-significant byte is zero or unused).</returns>
 inline constexpr bgr32_t BGR32(byte_t r, byte_t g, byte_t b)
 {
     return
@@ -120,6 +140,13 @@ inline constexpr word_t _REDMASK16 = 0xF800;
 inline constexpr word_t _GREENMASK16 = 0x07E0;
 inline constexpr word_t _BLUEMASK16 = 0x001F;
 
+/// <summary>
+/// Packs 8-bit red, green, and blue components into a 16-bit RGB565 value.
+/// </summary>
+/// <param name="r">Red component (8-bit). The lower 5 bits are placed into bits 11-15 of the result.</param>
+/// <param name="g">Green component (8-bit). The lower 6 bits are placed into bits 5-10 of the result.</param>
+/// <param name="b">Blue component (8-bit). The lower 5 bits are placed into bits 0-4 of the result.</param>
+/// <returns>A rgb16_t value containing the packed 16-bit RGB (5-6-5) color.</returns>
 inline constexpr rgb16_t RGB16(byte_t r, byte_t g, byte_t b)
 {
     return
@@ -143,6 +170,13 @@ constexpr byte_t BFromRGB16(rgb16_t rgb)
     return static_cast<byte_t>((rgb >> BLUESHIFT16) & BLUEMASK16);
 }
 
+/// <summary>
+/// Packs 8-bit red, green, and blue components into a 16-bit BGR565 value.
+/// </summary>
+/// <param name="r">Red component (8-bit). The lower 5 bits are placed into bits 0-4 of the result.</param>
+/// <param name="g">Green component (8-bit). The lower 6 bits are placed into bits 5-10 of the result.</param>
+/// <param name="b">Blue component (8-bit). The lower 5 bits are placed into bits 11-15 of the result.</param>
+/// <returns>A bgr16_t value containing the packed 16-bit BGR (5-6-5) color.</returns>
 inline constexpr bgr16_t BGR16(byte_t r, byte_t g, byte_t b)
 {
     return

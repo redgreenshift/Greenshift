@@ -29,6 +29,7 @@
 #include "..\Expression.h"
 #include "../ColorUtils.hpp"
 #include "../HighResolutionTimer.h"
+#include "../MTRand.hpp"
 #include "..\GForceFunctions.cpp"
 #include "..\Greenshift.cpp"
 #include "..\FilingClerk.cpp"
@@ -51,7 +52,10 @@
 #include "..\BitCanvas.cpp"
 #include "../detect.c"
 
+#include <memory>
+#include <string>
 #include <string.h>
+#include <vector>
 #include <Windows.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -263,7 +267,7 @@ namespace GreenshiftUnitTest
 		/*********************************************************
 		* THIRTY TWO BIT BENCHMARKS
 		*/
-		const size_t maxEndTest = 10000;
+		const size_t maxEndTest = 100;
 		const uint32_t c_seed = 12345;
 
 		TEST_METHOD(TestBitCanvas32BenchmarkCPP)

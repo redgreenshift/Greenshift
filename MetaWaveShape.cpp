@@ -168,14 +168,14 @@ error_t    MetaWaveShape::InitializeDerived(
 error_t    MetaWaveShape::UpdateDerived(WindowDevice* pWindowDevice)
 {
 	if (m_dwCurrent != 0xBADC0DE)
-		DisplayString(8, "Current WaveShape ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_WaveShapeCurrent, "Current WaveShape ", m_pConfigs[m_dwCurrent].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(8, "Current WaveShape ", "                                        ", pWindowDevice);
+		DisplayString(EDSP_WaveShapeCurrent, "Current WaveShape ", "                                        ", pWindowDevice);
 
 	if (m_dwNext != 0xBADC0DE)
-		DisplayString(9, "Next     WaveShape ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
+		DisplayString(EDSP_WaveShapeNext, "Next     WaveShape ", m_pConfigs[m_dwNext].GetValue("NAME"), pWindowDevice);
 	else
-		DisplayString(9, "Next     WaveShape ", "                                          ", pWindowDevice);
+		DisplayString(EDSP_WaveShapeNext, "Next     WaveShape ", "                                          ", pWindowDevice);
 
 	return SUCCESS;
 }

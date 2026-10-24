@@ -183,13 +183,13 @@ error_t    MetaParticle::UpdateDerived(WindowDevice* pWindowDevice)
 			int nCount = snprintf(strName, _countof(strName), "Particle %d", dwNum);
 			if (nCount < 0 || (size_t)nCount >= _countof(strName))
 				return FAILURE;
-			DisplayString(10 + dwNum, strName, m_pConfigs[particle].GetValue("NAME"), pWindowDevice);
+			DisplayString(EDSP_Particle0 + dwNum, strName, m_pConfigs[particle].GetValue("NAME"), pWindowDevice);
 			dwNum++;
 		}
 	}
 
 	for (; dwNum < MAX_RUNNING_PARTICLES; dwNum++)
-		DisplayString(10 + dwNum, "", "                                        ", pWindowDevice);
+		DisplayString(EDSP_Particle0 + dwNum, "", "                                        ", pWindowDevice);
 
 
 	return SUCCESS;

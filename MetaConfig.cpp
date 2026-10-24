@@ -316,33 +316,35 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 				return FAILURE;
 		}
 
+		// TODO: JRDV: This is DUPLICATED in Greenshift::DisplayString
+		// IS THIS EVEN USED??? I see lots of x=-1 values
 		switch (position)
 		{
-		case 0:  /* deltafield */
+		case EDSP_EngineStats:  /* resolution/bit_depth/optimization : next to FPS counter */
 			x = 60;
 			y = 0;
 			break;
-		case 1:  /* waveshape */
+		case EDSP_DeltaFieldCurrent:  /* CURRENT deltafield */
 			x = 0;
 			y = 17;
 			break;
-		case 2: /* particle */
+		case EDSP_DeltaFieldNext: /* NEXT deltafield */
 			x = 0;
 			y = 34;
 			break;
-		case 3: /* nothing */
+		case 3: /* nothing : above current palette  */
 			x = -1; // 350
 			y = 0;
 			break;
-		case 4: /* palette */
+		case EDSP_PaletteCurrent: /* CURRENT palette */
 			x = -1; // 320
 			y = 17;
 			break;
-		case 5: /* palette */
+		case EDSP_PaletteNext: /* NEXT palette */
 			x = -1;
 			y = 34;
 			break;
-/*        case 6: // unused
+/*		case 6: // unused
 			x = 320;
 			y = 40;
 			break;
@@ -350,31 +352,31 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 60;
 			break;/**/
-		case 8:  /* deltafield */
+		case EDSP_WaveShapeCurrent:  /* CURRENT waveshape */
 			x = 0;
 			y = -50;
 			break;
-		case 9:  /* waveshape */
+		case EDSP_WaveShapeNext:  /* NEXT waveshape */
 			x = 0;
 			y = -33;
 			break;
-		case 10: /* particle */
+		case EDSP_Particle0: /* particle0 */
 			x = 0;
 			y = -16;
 			break;
-		case 11: /* palette */
+		case EDSP_Particle1: /* particle1 */
 			x = -1;
 			y = -50;
 			break;
-		case 12: /* palette */
+		case EDSP_Particle2: /* particle2 */
 			x = -1;
 			y = -33;
 			break;
-		case 13: /* palette */
+		case EDSP_Particle3: /* particle3 */
 			x = -1;
 			y = -16;
 			break;
-/*        case 6: // unused
+/*		case 6: // unused
 			x = 320;
 			y = 460;
 			break;
@@ -382,7 +384,7 @@ error_t    MetaConfig::DisplayString(const int position, const char* strName, co
 			x = 320;
 			y = 460;
 			break;/**/
-		default:
+		default: // stomps over the FPS counter :(
 			x = 0;
 			y = 0;
 			break;

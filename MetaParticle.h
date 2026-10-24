@@ -37,7 +37,7 @@
 #include "WindowDevice.h"
 
 
-inline constexpr dword_t MAX_RUNNING_PARTICLES = 4;
+constexpr dword_t MAX_RUNNING_PARTICLES = 4;
 
 /**
  * @brief MetaParticleAbstract provides the smarts for drawing and tweening;

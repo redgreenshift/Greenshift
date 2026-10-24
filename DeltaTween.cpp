@@ -496,8 +496,8 @@ void DeltaTween::ExperimentalPrerenderFrame(
 	DeltaField* pDF1 = (DeltaField*)pObject1;
 	value_t     logicalX;
 	value_t     logicalY;
-	//    value_t     deltaX;
-	//    value_t     deltaY;
+	//value_t     deltaX;
+	//value_t     deltaY;
 	value_t     deltaX1;
 	value_t     deltaY1;
 	long        destX;
