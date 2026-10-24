@@ -617,8 +617,8 @@ error_t BitCanvas::Initialize(void)
 	m_pWriteOnlyBuffer = pPageTable[1];
 
 	// Be sure to initialize the extra line, the cache past the end that contains a COPY of the first line of pixels!
-	memset(m_pReadOnlyBuffer, 0, nBuffer_Size + nCache_Size);
-	memset(m_pWriteOnlyBuffer, 0, nBuffer_Size + nCache_Size);
+	memset(m_pReadOnlyBuffer, 0, nBuffer_Size);
+	memset(m_pWriteOnlyBuffer, 0, nBuffer_Size);
 
 #endif
 
