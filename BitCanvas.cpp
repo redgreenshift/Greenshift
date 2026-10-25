@@ -1994,6 +1994,7 @@ void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
  *
  * No decay. Just average. This is faster than decay.
  *
+ * VERIFIED ACCURATE.
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable)
 {
@@ -2020,153 +2021,6 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
-}
-
-/****************************************************************************
- * @brief This is a REFERENCE implementation used for 16bit color;
- * optimized
- *
- * pre: delta fields are precalculated
- *
- * TODO: JRDV: Need to determine why it doesn't match the BASELINE!
- *
- ****************************************************************************/
-void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable)
-{
-	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
-	dword_t  srcPixelOffset, srcPixelOffset3;
-	dword_t  srcPixel12, srcPixel34;
-	dword_t  redHi, redLow;
-	dword_t  greenHi, greenLow;
-	dword_t  blueHi, blueLow;
-	dword_t  destPixel;
-
-	/*
-	 * the source pixel actually consists of 4 pixels, the RGB components of
-	 * which must be averaged to find the value for the destination pixel.
-	 *
-	 * the 4 pixels are numbered as follows:
-	 *     p1 | p2
-	 *     ---+---
-	 *     p3 | p4
-	 *
-	 *  p1 and p3 are considered the high pixels
-	 *  p2 and p4 are the low pixels, since they are stored in the high order
-	 *  bits and low order bits of a DWORD respectively.
-	 *
-	 * the below code may be a little confusing, because of the way I acquire
-	 * the pixel values, and then average them.
-	 *
-	 * Exploiting the fact memory reads access 32 bits of
-	 * information, and each pixel is 16 bits, the code is written to read in
-	 * two pixels using a single memory read.  Memory access is one of the
-	 * slowest operations, so any reduction in those operations can
-	 * potentially speed things up significantly.
-	 *
-	 * Another optimization was using "clever data structure" to use
-	 * 2 additions to perform the work of 3 additions
-	 */
-	do
-	{
-		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
-		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
-
-		/* get the packed p1p2 and p3p4 values */
-		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
-		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
-
-		/* RED:
-		 * this next line does a lot.
-		 *
-		 * 1) mask the red bits.
-		 *    there are two pixels in each DWORD so 0xF800F800 is necessary to
-		 *    clear the green and blue bits in both pixels.
-		 *
-		 * 2) shift each packed red pixel 2 bits to the right
-		 *    effectively dividing by 4 for averaging the pixels
-		 *
-		 * 3) sum the two packed pixels.
-		 *    this may be the most confusing part.
-		 *    Since the pixel data is packed, a single addition can sum the
-		 *    two high pixels and the two low pixels in parallel
-		 */
-		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
-			((srcPixel34 & 0xF800F800) >> 2);
-
-		/* the next step is to unpack the pixel data,
-		 * so get the high pixel data into the low bits
-		 */
-		redHi = redLow >> 16;
-
-		/*
-		 * sum the high order sum and low order sum, and mask to red bits only
-		 */
-		destPixel = (redLow + redHi) & 0xF800;
-
-
-		/* GREEN:
-		 * this next line does a lot.  And is slightly different from red
-		 *
-		 * 1) mask the green bits.
-		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
-		 *    clear the red and blue bits in both pixels.
-		 *
-		 * 2) sum the two packed pixels.
-		 *
-		 * 3) shift the packed green sum pixel 2 bits to the right
-		 *    effectively dividing by 4 for averaging the pixels
-		 */
-		greenLow = (((srcPixel12 & 0x07E007E0)) +
-			((srcPixel34 & 0x07E007E0))) >> 2;
-
-		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
-
-		/*
-		 * sum the hi and low green data,
-		 * mask it to the green bits only,
-		 * and then or the green bits with the red in the destination pixel
-		 */
-		destPixel |= ((greenLow + greenHi)) & 0x07E0;
-
-
-		/* BLUE:
-		 * this next line does a lot.  And different from either red or green
-		 *
-		 * 1) mask the blue bits.
-		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
-		 *    clear the red and green bits in both pixels.
-		 *
-		 * 2) sum the two packed pixels.
-		 */
-		blueLow = ((srcPixel12 & 0x001F001F)) +
-			((srcPixel34 & 0x001F001F));
-
-		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
-
-		/*
-		 * this next line does more than either red or green
-		 *
-		 * 1) sum the hi and low blue data
-		 *
-		 * 2) average the blue pixel data
-		 *
-		 * 3) mask it to the blue bits only
-		 *
-		 * 4) or the blue bits into the destination pixel
-		 */
-		destPixel |= ((blueLow + blueHi) >> 2) & 0x001F;
-
-
-
-		/*
-		 * write the destination pixel data to the destination pixel
-		 */
-		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
-
-
-		/* progress to the next pixel */
-		destPixelOffset++;
-	} while (destPixelOffset < m_dwBufferLength);
 }
 
 /****************************************************************************
@@ -2217,6 +2071,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitio
  *
  * Decay to black, same as 32bit.
  *
+ * VERIFIED ACCURATE.
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable)
 {
@@ -2246,6 +2101,157 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
 }
 
 /****************************************************************************
+ * @brief This is a REFERENCE implementation used for 16bit color;
+ * optimized
+ *
+ * pre: delta fields are precalculated
+ *
+ * TODO: JRDV: Need to determine why it doesn't match the BASELINE!
+ *
+ * VERIFIED ACCURATE w.r.t. BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY
+ ****************************************************************************/
+void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable)
+{
+	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
+	dword_t  srcPixelOffset, srcPixelOffset3;
+	dword_t  srcPixel12, srcPixel34;
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+
+	/*
+	 * the source pixel actually consists of 4 pixels, the RGB components of
+	 * which must be averaged to find the value for the destination pixel.
+	 *
+	 * the 4 pixels are numbered as follows:
+	 *     p1 | p2
+	 *     ---+---
+	 *     p3 | p4
+	 *
+	 *  p1 and p3 are considered the "high pixels"
+	 *  p2 and p4 are the low pixels, since they are stored in the high order
+	 *  bits and low order bits of a DWORD respectively.
+	 *
+	 * the below code may be a little confusing, because of the way I acquire
+	 * the pixel values, and then average them.
+	 *
+	 * Exploiting the fact memory reads access 32 bits of
+	 * information, and each pixel is 16 bits, the code is written to read in
+	 * two pixels using a single memory read.  Memory access is one of the
+	 * slowest operations, so any reduction in those operations can
+	 * potentially speed things up significantly.
+	 *
+	 * Another optimization was using "clever data structure" to use
+	 * 2 additions to perform the work of 3 additions
+	 */
+	do
+	{
+		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
+		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
+
+		/* get the packed p1p2 and p3p4 values */
+		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
+		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
+
+		/* RED:
+		 * this next line does a lot.
+		 *
+		 * 1) mask the red bits.
+		 *    there are two pixels in each DWORD so 0xF800F800 is necessary to
+		 *    clear the green and blue bits in both pixels.
+		 *
+		 * 2) shift each packed red pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 *
+		 * 3) sum the two packed pixels.
+		 *    this may be the most confusing part.
+		 *    Since the pixel data is packed, a single addition can sum the
+		 *    two high pixels and the two low pixels in parallel
+		 */
+		 // NOTE: Divide RED first, so we don't overflow when adding.
+		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
+			((srcPixel34 & 0xF800F800) >> 2);
+
+		/* the next step is to unpack the pixel data,
+		 * so get the high pixel data into the low bits
+		 */
+		redHi = redLow >> 16;
+
+		/*
+		 * sum the high order sum and low order sum, and mask to red bits only
+		 */
+		destPixel = (redLow + redHi) & 0xF800;
+
+
+		/* GREEN:
+		 * this next line does a lot.  And is slightly different from red
+		 *
+		 * 1) mask the green bits.
+		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
+		 *    clear the red and blue bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 *
+		 * 3) shift the packed green sum pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 */
+		 // NOTE: Green should add and divide to combine
+		greenLow = (((srcPixel12 & 0x07E007E0)) +
+			((srcPixel34 & 0x07E007E0))) >> 2;
+
+		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
+
+		/*
+		 * sum the hi and low green data,
+		 * mask it to the green bits only,
+		 * and then or the green bits with the red in the destination pixel
+		 */
+		destPixel |= ((greenLow + greenHi)) & 0x07E0;
+
+
+		/* BLUE:
+		 * this next line does a lot.  And different from either red or green
+		 *
+		 * 1) mask the blue bits.
+		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
+		 *    clear the red and green bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 */
+		 // NOTE: Add BLUE first, so we don't drop bits by dividing early.
+		blueLow = ((srcPixel12 & 0x001F001F)) +
+			((srcPixel34 & 0x001F001F));
+
+		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
+
+		/*
+		 * this next line does more than either red or green
+		 *
+		 * 1) sum the hi and low blue data
+		 *
+		 * 2) average the blue pixel data
+		 *
+		 * 3) mask it to the blue bits only
+		 *
+		 * 4) or the blue bits into the destination pixel
+		 */
+		destPixel |= ((blueLow + blueHi) >> 2) & 0x001F;
+
+
+
+		/*
+		 * write the destination pixel data to the destination pixel
+		 */
+		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
+
+
+		/* progress to the next pixel */
+		destPixelOffset++;
+	} while (destPixelOffset < m_dwBufferLength);
+}
+
+/****************************************************************************
  * @brief This is the DEFAULT implementation used for 16bit color;
  * optimized
  *
@@ -2253,6 +2259,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
  *
  * Intention was to try to combat the "greenshift" effect by decaying the green channel slightly faster.
  *
+ * VERIFIED ACCURATE w.r.t. BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63
  ****************************************************************************/
 void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTransitionTable)
 {
@@ -2314,6 +2321,157 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 *    Since the pixel data is packed, a single addition can sum the
 		 *    two high pixels and the two low pixels in parallel
 		 */
+		 // NOTE: Divide RED first, so we don't overflow when adding.
+		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
+			((srcPixel34 & 0xF800F800) >> 2);
+
+		/* the next step is to unpack the pixel data,
+		 * so get the high pixel data into the low bits
+		 */
+		redHi = redLow >> 16;
+
+		/*
+		 * sum the high order sum and low order sum, and mask to red bits only
+		 */
+		destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+
+		/* GREEN:
+		 * this next line does a lot.  And is slightly different from red
+		 *
+		 * 1) mask the green bits.
+		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
+		 *    clear the red and blue bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 *
+		 * 3) shift the packed green sum pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 */
+		 // NOTE: Green should add and divide to combine
+		greenLow = (((srcPixel12 & 0x07E007E0)) +
+			((srcPixel34 & 0x07E007E0)));
+		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
+
+		/*
+		 * sum the hi and low green data,
+		 * mask it to the green bits only,
+		 * and then or the green bits with the red in the destination pixel
+		 */
+		destPixel |= (((greenLow + greenHi) * 63) >> 8) & 0x07E0;
+
+
+		/* BLUE:
+		 * this next line does a lot.  And different from either red or green
+		 *
+		 * 1) mask the blue bits.
+		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
+		 *    clear the red and green bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 */
+		 // NOTE: Add BLUE first, so we don't drop bits by dividing early.
+		blueLow = ((srcPixel12 & 0x001F001F)) +
+			((srcPixel34 & 0x001F001F));
+
+		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
+
+		/*
+		 * this next line does more than either red or green
+		 *
+		 * 1) sum the hi and low blue data
+		 *
+		 * 2) average the blue pixel data
+		 *
+		 * 3) mask it to the blue bits only
+		 *
+		 * 4) or the blue bits into the destination pixel
+		 */
+		destPixel |= (((blueLow + blueHi) * 63) >> 8) & 0x001F;
+
+
+
+				/*
+				 * write the destination pixel data to the destination pixel
+				 */
+		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
+
+
+		/* progress to the next pixel */
+		destPixelOffset++;
+	} while (destPixelOffset < m_dwBufferLength);
+}
+
+/****************************************************************************
+ * @brief This is the DEFAULT implementation used for 16bit color;
+ * optimized
+ *
+ * pre: delta fields are precalculated
+ *
+ * Intention was to try to combat the "greenshift" effect by decaying the green channel slightly faster.
+ *
+ ****************************************************************************/
+void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(const PIXELMAP* lpTransitionTable)
+{
+	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
+	dword_t  srcPixelOffset, srcPixelOffset3;
+	dword_t  srcPixel12, srcPixel34;
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+
+
+	/*
+	 * the source pixel actually consists of 4 pixels, the RGB components of
+	 * which must be averaged to find the value for the destination pixel.
+	 *
+	 * the 4 pixels are numbered as follows:
+	 *     p1 | p2
+	 *     ---+---
+	 *     p3 | p4
+	 *
+	 *  p1 and p3 are considered the "high pixels"
+	 *  p2 and p4 are the low pixels, since they are stored in the high order
+	 *  bits and low order bits of a DWORD respectively.
+	 *
+	 * the below code may be a little confusing, because of the way I acquire
+	 * the pixel values, and then average them.
+	 *
+	 * Exploiting the fact memory reads access 32 bits of
+	 * information, and each pixel is 16 bits, the code is written to read in
+	 * two pixels using a single memory read.  Memory access is one of the
+	 * slowest operations, so any reduction in those operations can
+	 * potentially speed things up significantly.
+	 *
+	 * Another optimization was using "clever data structure" to use
+	 * 2 additions to perform the work of 3 additions
+	 */
+	do
+	{
+		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
+		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
+
+		/* get the packed p1p2 and p3p4 values */
+		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
+		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
+
+		/* RED:
+		 * this next line does a lot.
+		 *
+		 * 1) mask the red bits.
+		 *    there are two pixels in each DWORD so 0xF800F800 is necessary to
+		 *    clear the green and blue bits in both pixels.
+		 *
+		 * 2) shift each packed red pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 *
+		 * 3) sum the two packed pixels.
+		 *    this may be the most confusing part.
+		 *    Since the pixel data is packed, a single addition can sum the
+		 *    two high pixels and the two low pixels in parallel
+		 */
+		 // NOTE: Divide RED first, so we don't overflow when adding.
 		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
 			((srcPixel34 & 0xF800F800) >> 2);
 
@@ -2326,24 +2484,25 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 * sum the high order sum and low order sum, and mask to red bits only
 		 */
 		destPixel = (((redLow + redHi) * 511) >> 9) & 0xF800;
-		//        destPixel = (destPixel * 255) >> 8;
-		//        destPixel = (destPixel * 127) >> 7;
-		//        destPixel = (destPixel * 63) >> 6;
-		//        destPixel = (destPixel * 15) >> 4;
+		//destPixel = ((redLow + redHi) * 255) >> 8;
+		//destPixel = ((redLow + redHi) * 127) >> 7;
+		//destPixel = ((redLow + redHi) * 63) >> 8;
+		//destPixel = ((redLow + redHi) * 15) >> 4;
 
 
-				/* GREEN:
-				 * this next line does a lot.  And is slightly different from red
-				 *
-				 * 1) mask the green bits.
-				 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
-				 *    clear the red and blue bits in both pixels.
-				 *
-				 * 2) sum the two packed pixels.
-				 *
-				 * 3) shift the packed green sum pixel 2 bits to the right
-				 *    effectively dividing by 4 for averaging the pixels
-				 */
+		/* GREEN:
+		 * this next line does a lot.  And is slightly different from red
+		 *
+		 * 1) mask the green bits.
+		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
+		 *    clear the red and blue bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 *
+		 * 3) shift the packed green sum pixel 2 bits to the right
+		 *    effectively dividing by 4 for averaging the pixels
+		 */
+		 // NOTE: Green should add and divide to combine (DO WE NEED TO DIVIDE FIRST TO ENSURE NO OVERFLOW DURING MULTIPLY? It gets more complex with decay and green correction)
 		greenLow = (((srcPixel12 & 0x07E007E0)) +
 			((srcPixel34 & 0x07E007E0))) >> 2;
 		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
@@ -2353,21 +2512,22 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 * mask it to the green bits only,
 		 * and then or the green bits with the red in the destination pixel
 		 */
-		 //        destPixel |= (((greenLow + greenHi)*255)>>8) & 0x07E0;
-		destPixel |= (((greenLow + greenHi) * 127) >> 7) & 0x07E0;
-		//        destPixel |= (((greenLow + greenHi)*63)>>6) & 0x07E0;
-		//        destPixel |= (((greenLow + greenHi)*15)>>4) & 0x07E0;
+		//destPixel |= (((greenLow + greenHi)*255)>>8) & 0x07E0;
+		//destPixel |= (((greenLow + greenHi) * 127) >> 7) & 0x07E0;
+		destPixel |= (((greenLow + greenHi)*63)>>6) & 0x07E0;
+		//destPixel |= (((greenLow + greenHi)*15)>>4) & 0x07E0;
 
 
-				/* BLUE:
-				 * this next line does a lot.  And different from either red or green
-				 *
-				 * 1) mask the blue bits.
-				 *    there are two pixels in each DWORD so 0x001F001F is necessary to
-				 *    clear the red and green bits in both pixels.
-				 *
-				 * 2) sum the two packed pixels.
-				 */
+		/* BLUE:
+		 * this next line does a lot.  And different from either red or green
+		 *
+		 * 1) mask the blue bits.
+		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
+		 *    clear the red and green bits in both pixels.
+		 *
+		 * 2) sum the two packed pixels.
+		 */
+		 // NOTE: Add BLUE first, so we don't drop bits by dividing early.
 		blueLow = ((srcPixel12 & 0x001F001F)) +
 			((srcPixel34 & 0x001F001F));
 
@@ -2387,7 +2547,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		destPixel |= (((blueLow + blueHi) * 511) >> 11) & 0x001F;
 		//destPixel |= (((blueLow + blueHi)*255) >> 10) & 0x001F;
 		//destPixel |= (((blueLow + blueHi)*127) >> 9) & 0x001F;
-		//        destPixel |= (((blueLow + blueHi)*63) >> 8) & 0x001F;
+		//destPixel |= (((blueLow + blueHi)*63) >> 8) & 0x001F;
 		//destPixel |= (((blueLow + blueHi)*15) >> 6) & 0x001F;
 
 

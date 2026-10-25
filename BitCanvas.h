@@ -796,6 +796,7 @@ protected:
 	void					DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 
