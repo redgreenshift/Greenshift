@@ -62,6 +62,15 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace GreenshiftUnitTest
 {
+	using PaletteInitializer =
+		void (*)(BitCanvas*);
+
+	using DoDeltaMethod8 =
+		void (BitCanvas8::*)(const PIXELMAP*);
+	using DoDeltaMethod16 =
+		void (BitCanvas16::*)(const PIXELMAP*);
+	using DoDeltaMethod32 =
+		void (BitCanvas32::*)(const PIXELMAP*);
 	TEST_CLASS(BitCanvasUT)
 	{
 		static BitCanvas* m_pBitCanvas32;
@@ -923,7 +932,51 @@ namespace GreenshiftUnitTest
 			Logger::WriteMessage(report.c_str());
 		}
 
-		TEST_METHOD(TestBitCanvas16OptimizedMatchesBaseline_NoDecay)
+		void CompareCanvases16(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
+		{
+			dword_t width1 = 0;
+			dword_t height1 = 0;
+			dword_t pixelFormat1 = 0;
+
+			dword_t width2 = 0;
+			dword_t height2 = 0;
+			dword_t pixelFormat2 = 0;
+
+			auto* pBaselinePixels =
+				static_cast<rgb16_t*>(
+					pBaselineCanvas->GetPixelMemory(
+						&width1,
+						&height1,
+						&pixelFormat1));
+
+			auto* pOptimizedPixels =
+				static_cast<rgb16_t*>(
+					pOptimizedCanvas->GetPixelMemory(
+						&width2,
+						&height2,
+						&pixelFormat2));
+
+			const size_t pixelCount =
+				static_cast<size_t>(width1) *
+				static_cast<size_t>(height1);
+
+			for (size_t i = 0; i < pixelCount; ++i)
+			{
+				if (pBaselinePixels[i] != pOptimizedPixels[i])
+				{
+					std::wstring s = std::format(
+						L"Test {0} Frame {1}, Pixel {2}: baseline={3}, optimized={4}", pszTestName, frame, i, pBaselinePixels[i], pOptimizedPixels[i]);
+
+					Assert::Fail(s.c_str());
+				}
+			}
+		}
+
+		void VerifyEquivalence16(
+			const wchar_t* pszTestName,
+			PaletteInitializer pfnPalette,
+			DoDeltaMethod16 pfnBaseline,
+			DoDeltaMethod16 pfnOptimized)
 		{
 			constexpr size_t c_width = 32;
 			constexpr size_t c_height = 32;
@@ -935,14 +988,8 @@ namespace GreenshiftUnitTest
 			InitCanvas(&pBaselineCanvas, 16, c_width, c_height);
 			InitCanvas(&pOptimizedCanvas, 16, c_width, c_height);
 
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
-
-			//
-			// Distinct palette.
-			//
-			SetDistinctChannelPalette(pBaselineCanvas);
-			SetDistinctChannelPalette(pOptimizedCanvas);
+			pfnPalette(pBaselineCanvas);
+			pfnPalette(pOptimizedCanvas);
 
 			//
 			// Fill both canvases identically.
@@ -970,63 +1017,28 @@ namespace GreenshiftUnitTest
 			pBaselineCanvas->FlipBuffers();
 			pOptimizedCanvas->FlipBuffers();
 
+			auto spTransitionTable =
+				CreateTransitionTable(c_width, c_height);
+
 			for (size_t frame = 0; frame < c_frames; ++frame)
 			{
 				pBaselineCanvas->PrepareForDoDelta();
-				static_cast<BitCanvas16*>(pBaselineCanvas)
-					->DoDelta_cpp_BASELINE_NO_DECAY(
+				(static_cast<BitCanvas16*>(pBaselineCanvas)
+					->*pfnBaseline)(
 						spTransitionTable.get());
 				pBaselineCanvas->FinalizeDoDelta();
 
 				pOptimizedCanvas->PrepareForDoDelta();
-				static_cast<BitCanvas16*>(pOptimizedCanvas)
-					->DoDelta_cpp_OPTIMIZED_NO_DECAY(
+				(static_cast<BitCanvas16*>(pOptimizedCanvas)
+					->*pfnOptimized)(
 						spTransitionTable.get());
 				pOptimizedCanvas->FinalizeDoDelta();
 
-				dword_t width1 = 0;
-				dword_t height1 = 0;
-				dword_t pixelFormat1 = 0;
-
-				dword_t width2 = 0;
-				dword_t height2 = 0;
-				dword_t pixelFormat2 = 0;
-
-				auto* pBaselinePixels =
-					static_cast<rgb16_t*>(
-						pBaselineCanvas->GetPixelMemory(
-							&width1,
-							&height1,
-							&pixelFormat1));
-
-				auto* pOptimizedPixels =
-					static_cast<rgb16_t*>(
-						pOptimizedCanvas->GetPixelMemory(
-							&width2,
-							&height2,
-							&pixelFormat2));
-
-				const size_t pixelCount =
-					static_cast<size_t>(width1) *
-					static_cast<size_t>(height1);
-
-				for (size_t i = 0; i < pixelCount; ++i)
-				{
-					if (pBaselinePixels[i] != pOptimizedPixels[i])
-					{
-						std::wstring s =
-							L"Frame " +
-							std::to_wstring(frame) +
-							L", Pixel " +
-							std::to_wstring(i) +
-							L": baseline=" +
-							std::to_wstring(pBaselinePixels[i]) +
-							L", optimized=" +
-							std::to_wstring(pOptimizedPixels[i]);
-
-						Assert::Fail(s.c_str());
-					}
-				}
+				CompareCanvases16(
+					frame,
+					pszTestName,
+					pBaselineCanvas,
+					pOptimizedCanvas);
 
 				pBaselineCanvas->FlipBuffers();
 				pOptimizedCanvas->FlipBuffers();
@@ -1035,118 +1047,79 @@ namespace GreenshiftUnitTest
 			delete pBaselineCanvas;
 			delete pOptimizedCanvas;
 		}
-
-		TEST_METHOD(TestBitCanvas16OptimizedMatchesBaseline_WithDecay63)
+		TEST_METHOD(TestBitCanvas16_NoDecay_Grayscale)
 		{
-			constexpr size_t c_width = 32;
-			constexpr size_t c_height = 32;
-			constexpr size_t c_frames = 100;
+			VerifyEquivalence16(
+				L"NoDecay Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
+		}
+		TEST_METHOD(TestBitCanvas16_NoDecay_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"NoDecay DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
+		}
+		TEST_METHOD(TestBitCanvas16_NoDecay_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"NoDecay PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
+		}
+		TEST_METHOD(TestBitCanvas16_NoDecay_BitBoundaryPalette)
+		{
+			VerifyEquivalence16(
+				L"NoDecay BitBoundaryPalette",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
+		}
 
-			BitCanvas* pBaselineCanvas = nullptr;
-			BitCanvas* pOptimizedCanvas = nullptr;
 
-			InitCanvas(&pBaselineCanvas, 16, c_width, c_height);
-			InitCanvas(&pOptimizedCanvas, 16, c_width, c_height);
-
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
-
-			//
-			// Distinct palette.
-			//
-			SetDistinctChannelPalette(pBaselineCanvas);
-			SetDistinctChannelPalette(pOptimizedCanvas);
-
-			//
-			// Fill both canvases identically.
-			//
-			MTRand rng(12345);
-
-			for (size_t y = 0; y < c_height; ++y)
-			{
-				for (size_t x = 0; x < c_width; ++x)
-				{
-					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
-
-					pBaselineCanvas->PutPixel(
-						static_cast<long>(x),
-						static_cast<long>(y),
-						iColor);
-
-					pOptimizedCanvas->PutPixel(
-						static_cast<long>(x),
-						static_cast<long>(y),
-						iColor);
-				}
-			}
-
-			pBaselineCanvas->FlipBuffers();
-			pOptimizedCanvas->FlipBuffers();
-
-			for (size_t frame = 0; frame < c_frames; ++frame)
-			{
-				pBaselineCanvas->PrepareForDoDelta();
-				static_cast<BitCanvas16*>(pBaselineCanvas)
-					->DoDelta_cpp_BASELINE_WITH_DECAY_63(
-						spTransitionTable.get());
-				pBaselineCanvas->FinalizeDoDelta();
-
-				pOptimizedCanvas->PrepareForDoDelta();
-				static_cast<BitCanvas16*>(pOptimizedCanvas)
-					->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(
-						spTransitionTable.get());
-				pOptimizedCanvas->FinalizeDoDelta();
-
-				dword_t width1 = 0;
-				dword_t height1 = 0;
-				dword_t pixelFormat1 = 0;
-
-				dword_t width2 = 0;
-				dword_t height2 = 0;
-				dword_t pixelFormat2 = 0;
-
-				auto* pBaselinePixels =
-					static_cast<rgb16_t*>(
-						pBaselineCanvas->GetPixelMemory(
-							&width1,
-							&height1,
-							&pixelFormat1));
-
-				auto* pOptimizedPixels =
-					static_cast<rgb16_t*>(
-						pOptimizedCanvas->GetPixelMemory(
-							&width2,
-							&height2,
-							&pixelFormat2));
-
-				const size_t pixelCount =
-					static_cast<size_t>(width1) *
-					static_cast<size_t>(height1);
-
-				for (size_t i = 0; i < pixelCount; ++i)
-				{
-					if (pBaselinePixels[i] != pOptimizedPixels[i])
-					{
-						std::wstring s =
-							L"Frame " +
-							std::to_wstring(frame) +
-							L", Pixel " +
-							std::to_wstring(i) +
-							L": baseline=" +
-							std::to_wstring(pBaselinePixels[i]) +
-							L", optimized=" +
-							std::to_wstring(pOptimizedPixels[i]);
-
-						Assert::Fail(s.c_str());
-					}
-				}
-
-				pBaselineCanvas->FlipBuffers();
-				pOptimizedCanvas->FlipBuffers();
-			}
-
-			delete pBaselineCanvas;
-			delete pOptimizedCanvas;
+		TEST_METHOD(TestBitCanvas16_Decay63_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"Decay63 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
+		}
+		TEST_METHOD(TestBitCanvas16_Decay63_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"Decay63 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
+		}
+		TEST_METHOD(TestBitCanvas16_Decay63_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"Decay63 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
+		}
+		TEST_METHOD(TestBitCanvas16_Decay63_BitBoundaryPalette)
+		{
+			VerifyEquivalence16(
+				L"Decay63 BitBoundaryPalette",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
 	};
 
