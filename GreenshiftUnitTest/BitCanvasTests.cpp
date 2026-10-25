@@ -127,12 +127,118 @@ namespace GreenshiftUnitTest
 			BitCanvas::New(ppBitCanvas, &dConfig, NULL, NULL);
 
 
+			SetDistinctChannelPalette(*ppBitCanvas);
+		}
+
+		/**@brief
+		 * Initializes a palette for validating color-channel correctness.
+		 *
+		 * Grayscale palettes (R == G == B) are useful when measuring fade
+		 * curves and decay behavior, but can conceal bugs such as swapped
+		 * channels, incorrect masks, or incorrect bit shifts because all
+		 * channels contain the same value.
+		 *
+		 * This palette intentionally assigns different red, green, and blue
+		 * values to every entry so channel-related bugs become obvious.
+		 * It is primarily used when verifying that baseline, optimized,
+		 * intrinsic, and assembly implementations produce identical results.
+		 */
+		static void SetDistinctChannelPalette(BitCanvas* pBitCanvas)
+		{
 			Palette palette;
-			for (int i = 0; i < 256; ++i)
+			byte_t i = 0;
+			do
 			{
-				palette.SetPaletteEntry(i, RGB32(static_cast<byte_t>(255 - i), static_cast<byte_t>(i), ((255 - i) + 127) % 256));
-			}
-			(*ppBitCanvas)->SetPalette(&palette);
+				byte_t r = static_cast<byte_t>(255 - i);
+				byte_t g = static_cast<byte_t>(i);
+				byte_t b = ((255 - i) + 127) % 256;
+				Assert::AreNotEqual(r, g, L"Every channel should be distinct");
+				Assert::AreNotEqual(r, b, L"Every channel should be distinct");
+				palette.SetPaletteEntry(i, RGB32(r, g, b));
+			} while (i++ != 255);
+			pBitCanvas->SetPalette(&palette);
+		}
+
+		static void SetGrayscalePalette(BitCanvas* pBitCanvas)
+		{
+			Palette palette;
+			byte_t i = 0;
+			do
+			{
+				palette.SetPaletteEntry(i, RGB32(i, i, i));
+			} while (i++ != 255);
+			pBitCanvas->SetPalette(&palette);
+		}
+
+		static void SetPrimaryColorCyclePalette(BitCanvas* pBitCanvas)
+		{
+			Palette palette;
+			byte_t i = 0;
+			do
+			{
+				switch (i % 3)
+				{
+				case 0:
+					palette.SetPaletteEntry(i, RGB32(255, 0, 0));
+					break;
+
+				case 1:
+					palette.SetPaletteEntry(i, RGB32(0, 255, 0));
+					break;
+
+				case 2:
+					palette.SetPaletteEntry(i, RGB32(0, 0, 255));
+					break;
+				}
+			} while (i++ != 255);
+			pBitCanvas->SetPalette(&palette);
+		}
+
+		static void SetBitBoundaryPalette(BitCanvas* pBitCanvas)
+		{
+			Palette palette;
+
+			static const rgb32_t testColors[] =
+			{
+				RGB32(0,   0,   0),   // all bits clear
+				RGB32(255, 255, 255),   // all bits set
+
+				RGB32(248,   0,   0),   // max 5-bit red
+				RGB32(255,   0,   0),   // red saturation
+
+				RGB32(0, 252,   0),   // max 6-bit green
+				RGB32(0, 255,   0),   // green saturation
+
+				RGB32(0,   0, 248),   // max 5-bit blue
+				RGB32(0,   0, 255),   // blue saturation
+
+				RGB32(128, 128, 128),   // middle values
+
+				RGB32(8,   4,   8),   // low nonzero values
+
+				RGB32(248, 252, 248),   // RGB565 max values
+
+				RGB32(248, 252,   0),   // red+green
+				RGB32(248,   0, 248),   // red+blue
+				RGB32(0, 252, 248),   // green+blue
+
+				RGB32(255, 127,   0),
+				RGB32(127, 255,   0),
+			};
+
+			constexpr size_t cColors =
+				sizeof(testColors) /
+				sizeof(testColors[0]);
+
+			byte_t i = 0;
+			do
+			{
+				palette.SetPaletteEntry(
+					i,
+					testColors[i % cColors]);
+			} while (i++ != 255);
+
+			pBitCanvas->SetPalette(&palette);
 		}
 
 		static void InitCanvas(BitCanvas** ppBitCanvas, size_t bitDepth)
@@ -183,6 +289,7 @@ namespace GreenshiftUnitTest
 
 		TEST_METHOD(TestBitCanvas32ADrawing1)
 		{
+			SetDistinctChannelPalette(m_pBitCanvas32);
 			m_pBitCanvas32->PutPixel(0, 0, 32, 128);
 
 			dword_t dwWidth = 0;
@@ -667,17 +774,11 @@ namespace GreenshiftUnitTest
 			size_t dwHeight = pBitCanvas->BufferHeight();
 			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
 
-			Palette palette;
-			for (int i = 0; i < 256; ++i)
-			{
-				palette.SetPaletteEntry(i, RGB32(i, i, i));
-			}
-			pBitCanvas->SetPalette(&palette);
+			SetGrayscalePalette(pBitCanvas);
+
 			FillCanvas(pBitCanvas, 255);
 			pBitCanvas->FlipBuffers();
 			FillCanvas(pBitCanvas, 255);
-			//pBitCanvas->PutPixel(0, 0);
-			//pBitCanvas->PutPixel(1, 0);
 
 			size_t frame_count = 0;
 
@@ -707,12 +808,14 @@ namespace GreenshiftUnitTest
 		void GetTotalMinMaxIntensity(BitCanvas* pBitCanvas, double& totalIntensity, byte_t& valMin, byte_t& valMax, size_t& pixelCount)
 		{
 			dword_t width; dword_t height; dword_t pixelFormat;
+
 			byte_t* pPixels =
 				static_cast<byte_t*>(
 					pBitCanvas->GetPixelMemory(
 						&width,
 						&height,
 						&pixelFormat));
+
 			pixelCount =
 				width * height;
 
@@ -750,12 +853,7 @@ namespace GreenshiftUnitTest
 			//
 			// Grayscale palette.
 			//
-			Palette palette;
-			for (int i = 0; i < 256; ++i)
-			{
-				palette.SetPaletteEntry(i, RGB32(i, i, i));
-			}
-			pBitCanvas->SetPalette(&palette);
+			SetGrayscalePalette(pBitCanvas);
 
 			//
 			// Fill everything white.
@@ -769,9 +867,6 @@ namespace GreenshiftUnitTest
 
 			double totalIntensity = 0.0;
 
-			dword_t width = 0;
-			dword_t height = 0;
-			dword_t pixelFormat = 0;
 			byte_t valMin, valMax;
 			size_t pixelCount = 0;
 
@@ -801,7 +896,7 @@ namespace GreenshiftUnitTest
 					{
 						valAvg = totalIntensity /
 							static_cast<double>(pixelCount);
-						std::string message = std::format("Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity);
+						message = std::format("Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity);
 						Logger::WriteMessage(message.c_str());
 					}
 
@@ -844,15 +939,10 @@ namespace GreenshiftUnitTest
 				CreateTransitionTable(c_width, c_height);
 
 			//
-			// Grayscale palette.
+			// Distinct palette.
 			//
-			Palette palette;
-			for (int i = 0; i < 256; ++i)
-			{
-				palette.SetPaletteEntry(i, RGB32(i, i, i));
-			}
-			pBaselineCanvas->SetPalette(&palette);
-			pOptimizedCanvas->SetPalette(&palette);
+			SetDistinctChannelPalette(pBaselineCanvas);
+			SetDistinctChannelPalette(pOptimizedCanvas);
 
 			//
 			// Fill both canvases identically.
@@ -863,17 +953,17 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					byte_t pixel = rng.randInt(255);
+					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
 						static_cast<long>(y),
-						pixel);
+						iColor);
 
 					pOptimizedCanvas->PutPixel(
 						static_cast<long>(x),
 						static_cast<long>(y),
-						pixel);
+						iColor);
 				}
 			}
 
@@ -962,15 +1052,10 @@ namespace GreenshiftUnitTest
 				CreateTransitionTable(c_width, c_height);
 
 			//
-			// Grayscale palette.
+			// Distinct palette.
 			//
-			Palette palette;
-			for (int i = 0; i < 256; ++i)
-			{
-				palette.SetPaletteEntry(i, RGB32(i, i, i));
-			}
-			pBaselineCanvas->SetPalette(&palette);
-			pOptimizedCanvas->SetPalette(&palette);
+			SetDistinctChannelPalette(pBaselineCanvas);
+			SetDistinctChannelPalette(pOptimizedCanvas);
 
 			//
 			// Fill both canvases identically.
@@ -981,17 +1066,17 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					byte_t pixel = rng.randInt(255);
+					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
 						static_cast<long>(y),
-						pixel);
+						iColor);
 
 					pOptimizedCanvas->PutPixel(
 						static_cast<long>(x),
 						static_cast<long>(y),
-						pixel);
+						iColor);
 				}
 			}
 
