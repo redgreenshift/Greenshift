@@ -315,12 +315,12 @@ public:
 		MyDictionary<EXPRESSIONDESCRIPTION*>* inGlobals,
 		MyDictionary<value_t*>* inValues);
 
-	error_t         Initialize(void);
+	error_t			Initialize(void);
 
 	/*
 	 * change the optimization level
 	 */
-	void            SetOptimizationLevel(const opt_level_t enumOptLevel);
+	void			SetOptimizationLevel(const opt_level_t enumOptLevel);
 	opt_level_t		GetOptimizationLevel() const { return m_nDeltaOptimizationLevel; };
 
 	/*
@@ -354,7 +354,7 @@ protected:
 	/*
 	 * apply the pixel transition
 	 */
-	void            DoDelta(const PIXELMAP* lpTransitionTable);
+	void			DoDelta(const PIXELMAP* lpTransitionTable);
 	/*
 	 * copy buffer contents to
 	 * the alternate pixel medium
@@ -363,11 +363,11 @@ protected:
 	 */
 public:
 #ifdef USE_BITMAP
-	void            CopyTo(const DWORD nWidth,
+	void			CopyTo(const DWORD nWidth,
 		const DWORD nHeight,
 		HDC hDC);
 #endif
-	void            CopyTo(void* lpSurface,
+	void			CopyTo(void* lpSurface,
 		const dword_t   nWidth,
 		const dword_t   nHeight,
 		const dword_t   nPitch,
@@ -380,9 +380,9 @@ protected:
 	/// </summary>
 	/// <param name="lpSurface">Pointer to the destination surface memory where pixel data will be written (treated as DWORD*).</param>
 	/// <param name="dwPitch">Surface scanline pitch in bytes (total bytes between starts of consecutive rows).</param>
-	void            CopyToSameBitdepth(void* lpSurface,
-		const dword_t   dwPitch)
-		//const dword_t   dwPixelFormat )
+	void			CopyToSameBitdepth(void* lpSurface,
+									   const dword_t   dwPitch)
+									   //const dword_t   dwPixelFormat )
 	{
 		static const dword_t dwBufferDWORDPitch = m_dwBufferWidth * BitDepth() / BITS_PER_BYTE / sizeof(dword_t);
 		const dword_t dwSurfaceDWORDPitch = dwPitch / sizeof(dword_t);
@@ -409,6 +409,46 @@ protected:
 	inline void SynchronizeReadBufferCache() { CopyFirstRowToCache((byte_t*)m_pReadOnlyBuffer); }
 	// NOTE: Yes, m_pWriteOnlyBuffer is correct in all cases. It's an alias for whatever buffer we're using for the current bit depth
 	inline void SynchronizeWriteBufferCache() { CopyFirstRowToCache((byte_t*)m_pWriteOnlyBuffer); }
+
+	/**
+	 * Copies the first visible scanline of a buffer into the cached scanline
+	 * stored immediately after the end of the image.
+	 *
+	 * Why this exists:
+	 *
+	 * DoDelta averages four source pixels:
+	 *
+	 *     p[x]
+	 *     p[x + 1]
+	 *     p[x + width]
+	 *     p[x + width + 1]
+	 *
+	 * For pixels on the final scanline, the "next" row must wrap around to
+	 * the first scanline of the image.
+	 *
+	 * Rather than checking for the last row inside the inner DoDelta loop,
+	 * BitCanvas allocates an extra cached copy of the first scanline at the
+	 * end of the buffer:
+	 *
+	 *     [row0]
+	 *     [row1]
+	 *     ...
+	 *     [rowN-1]
+	 *     [cached row0]
+	 *
+	 * This allows DoDelta to access wrapped pixels using ordinary linear
+	 * memory reads without any conditional branches or modulo operations in
+	 * the hot path.
+	 *
+	 * The cache row must always match the first visible scanline before a
+	 * buffer is used as a source for DoDelta. Failure to synchronize the
+	 * cache row can result in stale or uninitialized data being read when
+	 * processing the final scanline of the image.
+	 *
+	 * Historically this bug was difficult to observe during normal
+	 * Greenshift execution because stale values quickly decayed, but unit
+	 * tests exposed the resulting nondeterministic behavior.
+	 */
 	inline void CopyFirstRowToCache(byte_t* pBuffer)
 	{
 		dword_t* srcBuffer = (dword_t*)pBuffer;
@@ -736,10 +776,10 @@ protected:
 	/*
 	 * removed inline next to Get/PutPixel since it's in the base class
 	 */
-	virtual dword_t           GetPixel(const dword_t pixelOffset) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
-	virtual void     BlahPutPixel(const dword_t pixelOffset,
+	virtual dword_t			GetPixel(const dword_t pixelOffset) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void			BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -748,10 +788,10 @@ protected:
 	};
 
 	// DISPATCH:
-	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
@@ -759,10 +799,10 @@ protected:
 	void					DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 
-	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
 
 
@@ -773,10 +813,10 @@ public:
 	BitCanvas16(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	virtual dword_t         GetPixel(const dword_t pixelOffset) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
-	virtual void     BlahPutPixel(const dword_t pixelOffset,
+	virtual dword_t			GetPixel(const dword_t pixelOffset) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void			BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -784,11 +824,14 @@ protected:
 		m_pWriteBuffer16[pixelOffset] = (unsigned short)RGB16(r, g, b);
 	};
 
+#if UNIT_TEST
+public:
+#endif
 	// DISPATCH:
-	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
@@ -800,10 +843,10 @@ protected:
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 
-	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
 
 
@@ -814,10 +857,10 @@ public:
 	BitCanvas32(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
 protected:
-	virtual dword_t           GetPixel(const dword_t pixelOffset) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const byte_t color) override;
-	virtual void            PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
-	virtual void     BlahPutPixel(const dword_t pixelOffset,
+	virtual dword_t			GetPixel(const dword_t pixelOffset) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const byte_t color) override;
+	virtual void			PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;
+	virtual void			BlahPutPixel(const dword_t pixelOffset,
 		const byte_t r,
 		const byte_t g,
 		const byte_t b) override
@@ -828,14 +871,14 @@ protected:
 	};
 
 	// DISPATCH:
-	virtual void            DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 #ifdef USE_MMX_INTRINSICS
-	virtual void            DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 #endif
 #ifdef USE_MMX_ASSEMBLY
-	virtual void            DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
-	virtual void            DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
@@ -848,9 +891,9 @@ protected:
 	void					DoDelta_SSE2_experiment1_FIXED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
 
-	virtual void            CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
-	virtual void            CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
+	virtual void			CopyTo32(void* lpSurface, const dword_t nDeadSpace) override;
 };
 
