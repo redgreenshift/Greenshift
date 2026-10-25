@@ -844,6 +844,17 @@ namespace GreenshiftUnitTest
 				CreateTransitionTable(c_width, c_height);
 
 			//
+			// Grayscale palette.
+			//
+			Palette palette;
+			for (int i = 0; i < 256; ++i)
+			{
+				palette.SetPaletteEntry(i, RGB32(i, i, i));
+			}
+			pBaselineCanvas->SetPalette(&palette);
+			pOptimizedCanvas->SetPalette(&palette);
+
+			//
 			// Fill both canvases identically.
 			//
 			MTRand rng(12345);
@@ -852,11 +863,7 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					rgb16_t pixel =
-						RGB16(
-							rng.randInt(31),
-							rng.randInt(63),
-							rng.randInt(31));
+					byte_t pixel = rng.randInt(255);
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
@@ -955,6 +962,17 @@ namespace GreenshiftUnitTest
 				CreateTransitionTable(c_width, c_height);
 
 			//
+			// Grayscale palette.
+			//
+			Palette palette;
+			for (int i = 0; i < 256; ++i)
+			{
+				palette.SetPaletteEntry(i, RGB32(i, i, i));
+			}
+			pBaselineCanvas->SetPalette(&palette);
+			pOptimizedCanvas->SetPalette(&palette);
+
+			//
 			// Fill both canvases identically.
 			//
 			MTRand rng(12345);
@@ -963,11 +981,7 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					rgb16_t pixel =
-						RGB16(
-							rng.randInt(31),
-							rng.randInt(63),
-							rng.randInt(31));
+					byte_t pixel = rng.randInt(255);
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
