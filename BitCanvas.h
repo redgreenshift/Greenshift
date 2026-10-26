@@ -837,6 +837,7 @@ public:
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTable, dword_t decayNumerator, dword_t decayDenominator);
 	void					DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable);

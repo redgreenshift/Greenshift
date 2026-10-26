@@ -1973,7 +1973,7 @@ void BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
@@ -1995,6 +1995,12 @@ void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
  * No decay. Just average. This is faster than decay.
  *
  * VERIFIED ACCURATE.
+ *
+ * VERIFIED BAD IDEA: it often works fine, but periodically gets LARGE sections
+ * of a single color which don't decay, so I think "No Decay" is probably a bad idea.
+ * NoDecay does not guarantee convergence. Large areas of a single color can
+ * get stuck for a while and not continually fade/dissapate/decay every frame.
+ * Implementation is DEPRECATED outside of testing/verification and research.
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable)
 {
@@ -2031,7 +2037,15 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
  *
  * pre: delta fields are precalculated
  *
- * Faster decay to black. Unsure if I like. NEED to numerically compare to 8bit grayscale, and decide the ideal 16 (and 32bit) decay values
+ * Faster decay to black. Unsure if I like. NEED to numerically compare to
+ * 8bit grayscale, and decide the ideal 16 (and 32bit) decay values
+ *
+ * NOTE: 8bit takes around 190 frames to decay to black (at 127/128 decay).
+ * 16bit takes a MAXIMUM of 62 frames to decay to black.
+ * There is no benefit to use a smaller decay like 1023/1024, as it decays
+ * at the same rate as 63/64. Furthermore, the decay is identical to subtracting 1
+ * before dividing by 4 for the average, which presents an optimization opportunity.
+ * If substraction produces the same result, then why multiply at all?
  *
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable)
@@ -2069,7 +2083,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitio
  *
  * pre: delta fields are precalculated
  *
- * Decay to black, same as 32bit.
+ * Decay to black, same value as 32bit (which may take longer and therefore not look the same).
  *
  * VERIFIED ACCURATE.
  ****************************************************************************/
@@ -2101,6 +2115,61 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
 }
 
 /****************************************************************************
+ * @brief This is a baseline/REFERENCE implementation of the straightforward
+ * algorithm for 16bit color.
+ *
+ * I expect to use one of the more optimized implementations.
+ *
+ * pre: delta fields are precalculated
+ *
+ * Decay to black, same as 32bit.
+ *
+ * NOTE: Just for testing and experimentation, NOT for production use!
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTable, dword_t decayNumerator, dword_t decayDenominator)
+{
+	dword_t  pixelOffset = 0;
+	dword_t  pixel, pixel3;
+	word_t   p1, p2, p3, p4;
+	dword_t  bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	do
+	{
+		pixel = lpTransitionTable[pixelOffset];
+		pixel3 = pixel + m_dwBufferWidth;
+		p1 = m_pReadBuffer16[pixel];
+		p2 = m_pReadBuffer16[pixel + 1];
+		p3 = m_pReadBuffer16[pixel3];
+		p4 = m_pReadBuffer16[pixel3 + 1];
+
+		if (decayDenominator > 0)
+		{
+			m_pWriteBuffer16[pixelOffset] =
+				RGB16(
+					(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
+					(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
+					(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator))
+				);
+		}
+		else
+		{
+			// EXPERIMENTAL, just subtract 1 before average
+			// NOTE: This behaves IDENTICALLY to decay 63/64, but may be faster
+			m_pWriteBuffer16[pixelOffset] =
+				RGB16(
+					(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) - 1) / (4)),
+					(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) - 1) / (4)),
+					(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) - 1) / (4))
+				);
+
+		}
+
+		pixelOffset++;
+	} while (pixelOffset < bufferLength);
+}
+
+/****************************************************************************
  * @brief This is a REFERENCE implementation used for 16bit color;
  * optimized
  *
@@ -2109,6 +2178,12 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
  * TODO: JRDV: Need to determine why it doesn't match the BASELINE!
  *
  * VERIFIED ACCURATE w.r.t. BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY
+ *
+ * VERIFIED BAD IDEA: it often works fine, but periodically gets LARGE sections
+ * of a single color which don't decay, so I think "No Decay" is probably a bad idea.
+ * NoDecay does not guarantee convergence. Large areas of a single color can
+ * get stuck for a while and not continually fade/dissapate/decay every frame.
+ * Implementation is DEPRECATED outside of testing/verification and research.
  ****************************************************************************/
 void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable)
 {
@@ -2403,12 +2478,21 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 }
 
 /****************************************************************************
- * @brief This is the DEFAULT implementation used for 16bit color;
+ * @brief This is the CANDIDATE implementation used for 16bit color;
  * optimized
  *
  * pre: delta fields are precalculated
  *
  * Intention was to try to combat the "greenshift" effect by decaying the green channel slightly faster.
+ *
+ * At 63/64 decay rate:
+ * RED and BLUE converge to zero/black afetr 30 frames.
+ * GREEN converges to zero/black after 62 frames.
+ * At 14/15 decay rate:
+ * GREEN converges to black after 30 frames (but has terrible artifacting)
+ * At 15/16 decay rate:
+ * GREEN converges to black after 32 frames (and has no noticable artifacting)
+ * Therefore, 15/16 decay rate for GREEN is the current candidate for counteracting the greenshift effect.
  *
  ****************************************************************************/
 void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(const PIXELMAP* lpTransitionTable)
@@ -2483,11 +2567,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 		/*
 		 * sum the high order sum and low order sum, and mask to red bits only
 		 */
-		destPixel = (((redLow + redHi) * 511) >> 9) & 0xF800;
-		//destPixel = ((redLow + redHi) * 255) >> 8;
-		//destPixel = ((redLow + redHi) * 127) >> 7;
-		//destPixel = ((redLow + redHi) * 63) >> 8;
-		//destPixel = ((redLow + redHi) * 15) >> 4;
+		destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
 
 
 		/* GREEN:
@@ -2504,18 +2584,23 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 		 */
 		 // NOTE: Green should add and divide to combine (DO WE NEED TO DIVIDE FIRST TO ENSURE NO OVERFLOW DURING MULTIPLY? It gets more complex with decay and green correction)
 		greenLow = (((srcPixel12 & 0x07E007E0)) +
-			((srcPixel34 & 0x07E007E0))) >> 2;
+			((srcPixel34 & 0x07E007E0))) >> (2);
 		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
 
 		/*
 		 * sum the hi and low green data,
 		 * mask it to the green bits only,
 		 * and then or the green bits with the red in the destination pixel
+		 *
+		 * NOTE: I tried using 14/15 for greenshift correction, and it ended up with bizarre artifacting.
+		 * I bet the numbers don't fit exactly in the mack space for green: 0x07E0 (but that doesn't make sense... it _should_ work)
+		 * So, I tried using 15/16 for greenshift correction, has no noticable problems. I'll save this off as a likely candidate.
 		 */
-		//destPixel |= (((greenLow + greenHi)*255)>>8) & 0x07E0;
-		//destPixel |= (((greenLow + greenHi) * 127) >> 7) & 0x07E0;
-		destPixel |= (((greenLow + greenHi)*63)>>6) & 0x07E0;
-		//destPixel |= (((greenLow + greenHi)*15)>>4) & 0x07E0;
+		//destPixel |= ((((greenLow + greenHi) * 14) / 15) << 3) & 0x07E0;
+		//destPixel |= ((((greenLow + greenHi) * 15) / 16) << 3) & 0x07E0;
+		//destPixel |= ((((greenLow + greenHi) * 63) / 64) << 3) & 0x07E0;
+		//destPixel |= ((((greenLow + greenHi) * 14) / 15)) & 0x07E0;
+		destPixel |= ((((greenLow + greenHi) * 15) / 16)) & 0x07E0;
 
 
 		/* BLUE:
@@ -2544,11 +2629,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 		 *
 		 * 4) or the blue bits into the destination pixel
 		 */
-		destPixel |= (((blueLow + blueHi) * 511) >> 11) & 0x001F;
-		//destPixel |= (((blueLow + blueHi)*255) >> 10) & 0x001F;
-		//destPixel |= (((blueLow + blueHi)*127) >> 9) & 0x001F;
-		//destPixel |= (((blueLow + blueHi)*63) >> 8) & 0x001F;
-		//destPixel |= (((blueLow + blueHi)*15) >> 6) & 0x001F;
+		destPixel |= (((blueLow + blueHi)*63) >> 8) & 0x001F;
 
 
 
@@ -2561,14 +2642,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 		/* progress to the next pixel */
 		destPixelOffset++;
 	} while (destPixelOffset < m_dwBufferLength);
-
-	/*    for( srcPixelOffset = 0;  srcPixelOffset <= m_nBufferWidth;  srcPixelOffset++ )
-		{
-	//        m_pWriteBuffer16[destPixelOffset+srcPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
-			m_pWriteBuffer16[destPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
-			destPixelOffset++;
-		}
-	/**/
 }
 
 /****************************************************************************
@@ -2719,16 +2792,7 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
 		/* progress to the next pixel */
 		destPixelOffset++;
 	} while (destPixelOffset < m_dwBufferLength);
-
-	/*    for( srcPixelOffset = 0;  srcPixelOffset <= m_nBufferWidth;  srcPixelOffset++ )
-		{
-	//        m_pWriteBuffer16[destPixelOffset+srcPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
-			m_pWriteBuffer16[destPixelOffset] = m_pWriteBuffer16[srcPixelOffset];
-			destPixelOffset++;
-		}
-	/**/
 }
-
 
 void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {

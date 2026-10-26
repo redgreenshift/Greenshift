@@ -934,6 +934,176 @@ namespace GreenshiftUnitTest
 		}
 
 
+		void Run16BitFadeCurveTest(
+			const wchar_t* pName,
+			uint32_t decayNumerator,
+			uint32_t decayDenominator)
+		{
+			constexpr size_t SAMPLE_INTERVAL = 1;
+			constexpr size_t MAX_FRAMES = 70;
+			constexpr size_t c_width = 4;
+			constexpr size_t c_height = 4;
+
+			delete m_pBitCanvas16Drift;
+			m_pBitCanvas16Drift = nullptr;
+
+			InitCanvas(
+				&m_pBitCanvas16Drift,
+				16,
+				c_width,
+				c_height);
+
+			BitCanvas16* pCanvas =
+				dynamic_cast<BitCanvas16*>(m_pBitCanvas16Drift);
+
+			Assert::IsNotNull(pCanvas);
+
+			//
+			// Grayscale palette.
+			//
+			SetGrayscalePalette(pCanvas);
+
+			FillCanvas(pCanvas, 255);
+
+			pCanvas->FlipBuffers();
+
+			FillCanvas(pCanvas, 255);
+
+			auto spTransitionTable =
+				CreateTransitionTable(c_width, c_height);
+
+			std::wstring s =
+				std::wstring(pName) +
+				L"\n";
+
+			for (size_t frame = 0; frame < MAX_FRAMES; ++frame)
+			{
+				pCanvas->PrepareForDoDelta();
+
+				pCanvas->DoDelta_cpp_BASELINE_WITH_DECAY(
+					spTransitionTable.get(),
+					decayNumerator,
+					decayDenominator
+				);
+
+				pCanvas->FinalizeDoDelta();
+
+				if ((frame % SAMPLE_INTERVAL) == 0)
+				{
+					double avgRed = 0.0;
+					double avgGreen = 0.0;
+					double avgBlue = 0.0;
+
+					// Scan buffer and accumulate channels here.
+					double totalRed = 0.0;
+					double totalGreen = 0.0;
+					double totalBlue = 0.0;
+
+					dword_t width = 0;
+					dword_t height = 0;
+					dword_t pixelFormat = 0;
+
+					rgb16_t* pPixels =
+						static_cast<rgb16_t*>(
+							pCanvas->GetPixelMemory(
+								&width,
+								&height,
+								&pixelFormat));
+
+					const size_t pixelCount =
+						static_cast<size_t>(width) *
+						static_cast<size_t>(height);
+
+					for (size_t i = 0; i < pixelCount; ++i)
+					{
+						rgb16_t pixel = pPixels[i];
+
+						totalRed += RFromRGB16(pixel);
+						totalGreen += GFromRGB16(pixel);
+						totalBlue += BFromRGB16(pixel);
+					}
+
+					avgRed =
+						totalRed / static_cast<double>(pixelCount);
+
+					avgGreen =
+						totalGreen / static_cast<double>(pixelCount);
+
+					avgBlue =
+						totalBlue / static_cast<double>(pixelCount);
+
+					double avgIntensity =
+						((avgRed / 31.0) +
+							(avgGreen / 63.0) +
+							(avgBlue / 31.0)) / 3.0;
+
+					s +=
+						std::to_wstring(frame) +
+						L"," +
+						std::to_wstring(avgRed) +
+						L"," +
+						std::to_wstring(avgGreen) +
+						L"," +
+						std::to_wstring(avgBlue) +
+						L"," +
+						std::to_wstring(avgIntensity) +
+						L"\n";
+				}
+
+				pCanvas->FlipBuffers();
+			}
+
+			Logger::WriteMessage(s.c_str());
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_14)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (14/15)",
+				14,
+				15);
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_15)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (15/16)",
+				15,
+				16);
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_31)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (31/32)",
+				31,
+				32);
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_63)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (63/64)",
+				63,
+				64);
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_1023)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (1023/1024)",
+				1023,
+				1024);
+		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_OneDecay)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (OneDecay)",
+				1,
+				0);
+		}
+
 		void CompareCanvases8(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
 		{
 			dword_t width1 = 0;
