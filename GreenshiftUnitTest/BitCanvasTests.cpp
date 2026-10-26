@@ -405,7 +405,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_cpp_BASELINE(pPixelMap.get()); // Read from ReadBuffer
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -428,7 +428,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Intrinsics(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -451,12 +451,12 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Assembly(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas32BenchmarkSSEint)
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2int)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
@@ -474,7 +474,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_Intrinsics_FIXED(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -500,7 +500,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_BASELINE_WITH_DECAY_63(pPixelMap.get()); // Read from ReadBuffer
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -523,12 +523,35 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas16BenchmarkCPPExperiment1)
+		TEST_METHOD(TestBitCanvas16BenchmarkCPPGreenshiftCorrection)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit Opt Green Correct",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkCPPExperiment1NoDecayGreenCorrect)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
@@ -546,12 +569,58 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas16BenchmarkSSEint)
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE2Exp1)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT1",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment1(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE2Exp2)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT2",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment2(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE2int)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
@@ -569,7 +638,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_Intrinsics(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -597,7 +666,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_cpp(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_BASELINE(pPixelMap.get()); // Read from ReadBuffer
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -620,7 +689,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_x86(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -643,12 +712,12 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_MMX(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_experiment1(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas8BenchmarkSSEint)
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2int)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
@@ -666,7 +735,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_SSE(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment1(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -845,9 +914,70 @@ namespace GreenshiftUnitTest
 			}
 		}
 
+		/*
+			What I'd really add is a helper that extracts the milestone frames:
+
+			Frame when intensity first falls below:
+
+			75%
+			50%
+			25%
+			10%
+			5%
+			1%
+
+			For example:
+
+			8-bit:
+
+			75% -> frame 48
+			50% -> frame 102
+			25% -> frame 193
+			10% -> frame 311
+			5% -> frame 405
+			1% -> frame 622
+
+			Then compare those against:
+
+			16-bit 63/64
+			16-bit 127/128
+			16-bit 511/512
+
+			Whichever set of milestone crossings is closest to the 8-bit reference is your best decay ratio.
+
+			-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+			-=-=-=- Long story short:  I'm abandoning this for now. -=-=-=-
+			-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+			BitCanvas8::DoDelta_With_Decay127 takes around 190 frames to fade to black.
+			BitCanvas16::DoDelta_With_Decay63 takes around 62 frames to fade to black.
+			BitCanvas16::DoDelta_With_Decay1023 takes around 62 frames to fade to black.
+			There is no benefit to smaller decay rates, because we're limited by the bit precision in RGB565.
+			I can't approximate the 8bit experience in 16bit mode.
+
+			What I did find is that in RGB565 using Decay rate of 63/64 and starting with a white filled buffer:
+				1) the RED and BLUE channels fade to 0 in 30 frames.
+				2) the GREEN channel fades to 0 in 62 frames.
+
+			If I use a decay rate of 14/15 for the GREEN channel,
+			then it will fade at the same rate as the other channels,
+			effectively eliminating the "greenshift" bug that the project is named after.
+
+			The 14/15 rate created some awful visual artifacts, so I tried 15/16 instead.
+
+			The 15/16 rate, GREEN fades to 0 after 32 frames, so fairly close. It looks
+			correct, and is more easy to optimize with bit shifts, so that is the current
+			contender for the "greenshift correction" algorithm.
+
+			The biggest downside is that this further restricts the "time to 0" down to
+			~30 frames, so straying even further from the desired 190 frames to match 8bit.
+
+			It was a fun experiment, and now I have the data for "correcting"
+			the greenshift effect, so I'll offer that as an option.
+		*/
 		TEST_METHOD(TestBitCanvas8FadeCurve)
 		{
-			constexpr size_t SAMPLE_INTERVAL = 10;
+			constexpr size_t SAMPLE_INTERVAL = 1;
 			constexpr size_t MAX_FRAMES = 200;
 			constexpr size_t c_width = 4;
 			constexpr size_t c_height = 4;
@@ -905,15 +1035,19 @@ namespace GreenshiftUnitTest
 				{
 					GetTotalMinMaxIntensity(pBitCanvas, totalIntensity, valMin, valMax, pixelCount);
 
-					if (frame == 0)
+					//if (frame == 0)
 					{
 						valAvg = totalIntensity /
 							static_cast<double>(pixelCount);
-						message = std::format("Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity);
+						message = std::format("Frame{4}, Avg:{0}, Min:{1}, Max:{2}, Total:{3}\n", valAvg, valMin, valMax, totalIntensity, frame);
 						Logger::WriteMessage(message.c_str());
 					}
 
 
+					//dword_t px = pBitCanvas->GetPixel(0);
+					//intensityCurve.push_back(
+					//	double(px) /
+					//	static_cast<double>(255));
 					intensityCurve.push_back(
 						totalIntensity /
 						static_cast<double>(pixelCount));
@@ -926,6 +1060,9 @@ namespace GreenshiftUnitTest
 
 			for (size_t i = 0; i < intensityCurve.size(); ++i)
 			{
+				//if (i < 116)
+				//	continue;
+
 				report +=
 					std::to_wstring(i * SAMPLE_INTERVAL) +
 					L"," +
@@ -1059,6 +1196,22 @@ namespace GreenshiftUnitTest
 			Logger::WriteMessage(s.c_str());
 		}
 
+		//TEST_METHOD(TestBitCanvas16FadeCurve_7)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (7/8)",
+		//		7,
+		//		8);
+		//}
+
+		//TEST_METHOD(TestBitCanvas16FadeCurve_13)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (13/14)",
+		//		13,
+		//		14);
+		//}
+
 		TEST_METHOD(TestBitCanvas16FadeCurve_14)
 		{
 			Run16BitFadeCurveTest(
@@ -1083,6 +1236,7 @@ namespace GreenshiftUnitTest
 				32);
 		}
 
+		// No difference between 63 through 1023, so no benefit from higher values.
 		TEST_METHOD(TestBitCanvas16FadeCurve_63)
 		{
 			Run16BitFadeCurveTest(
@@ -1091,6 +1245,30 @@ namespace GreenshiftUnitTest
 				64);
 		}
 
+		//TEST_METHOD(TestBitCanvas16FadeCurve_127)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (127/128)",
+		//		127,
+		//		128);
+		//}
+
+		//TEST_METHOD(TestBitCanvas16FadeCurve_255)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (255/256)",
+		//		255,
+		//		256);
+		//}
+
+		//TEST_METHOD(TestBitCanvas16FadeCurve_511)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (511/512)",
+		//		511,
+		//		512);
+		//}
+
 		TEST_METHOD(TestBitCanvas16FadeCurve_1023)
 		{
 			Run16BitFadeCurveTest(
@@ -1098,6 +1276,15 @@ namespace GreenshiftUnitTest
 				1023,
 				1024);
 		}
+
+		// This one just gets stuck on full WHITE and never reduces the intensity
+		//TEST_METHOD(TestBitCanvas16FadeCurve_NoDecay)
+		//{
+		//	Run16BitFadeCurveTest(
+		//		L"16-bit fade curve (NoDecay)",
+		//		1,
+		//		1);
+		//}
 
 		TEST_METHOD(TestBitCanvas16FadeCurve_OneDecay)
 		{
@@ -1558,7 +1745,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
 		}
 
-		TEST_METHOD(TestBitCanvas16_SSE2_Grayscale)
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp1_Grayscale)
 		{
 			VerifyEquivalence16(
 				L"SSE2 Grayscale",
@@ -1566,7 +1753,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
-		TEST_METHOD(TestBitCanvas16_SSE2_DistinctChannels)
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp1_DistinctChannels)
 		{
 			VerifyEquivalence16(
 				L"SSE2 DistinctChannels",
@@ -1574,7 +1761,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
-		TEST_METHOD(TestBitCanvas16_SSE2_PrimaryColorCycle)
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp1_PrimaryColorCycle)
 		{
 			VerifyEquivalence16(
 				L"SSE2 PrimaryColorCycle",
@@ -1582,7 +1769,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
-		TEST_METHOD(TestBitCanvas16_SSE2_BitBoundary)
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp1_BitBoundary)
 		{
 			VerifyEquivalence16(
 				L"SSE2 BitBoundary",
@@ -1590,6 +1777,72 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
+
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp2_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment2);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp2_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment2);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp2_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment2);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp2_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment2);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Int_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_Intrinsics);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Int_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_Intrinsics);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Int_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_Intrinsics);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Int_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_Intrinsics);
+		}
+
 
 		/************************************
 		* VERIFY 32 BIT!

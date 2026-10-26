@@ -2798,11 +2798,575 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
 	} while (destPixelOffset < m_dwBufferLength);
 }
 
+
+// AI Created, baseline SSE2 implementation just to determine what we're working with.
 void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi16(_REDMASK16);
+
+	const __m128i greenMask =
+		_mm_set1_epi16(_GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(_BLUEMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+	const __m128i zero =
+		_mm_setzero_si128();
+
+	dword_t pixelOffset = 0;
+
+	while (pixelOffset + 7 < bufferLength)
+	{
+		word_t src1[8];
+		word_t src2[8];
+		word_t src3[8];
+		word_t src4[8];
+
+		//
+		// Scalar gather.
+		//
+		for (int i = 0; i < 8; ++i)
+		{
+			const dword_t pixel =
+				lpTransitionTable[pixelOffset + i];
+
+			const dword_t pixel3 =
+				pixel + m_dwBufferWidth;
+
+			src1[i] = m_pReadBuffer16[pixel];
+			src2[i] = m_pReadBuffer16[pixel + 1];
+			src3[i] = m_pReadBuffer16[pixel3];
+			src4[i] = m_pReadBuffer16[pixel3 + 1];
+		}
+
+		const __m128i p1 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src1));
+
+		const __m128i p2 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src2));
+
+		const __m128i p3 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src3));
+
+		const __m128i p4 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src4));
+
+		//
+		// Unpack R.
+		//
+		__m128i r =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p1, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p2, redMask),
+						REDSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p3, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p4, redMask),
+						REDSHIFT16)));
+
+		//
+		// Unpack G.
+		//
+		__m128i g =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p1, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p2, greenMask),
+						GREENSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p3, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p4, greenMask),
+						GREENSHIFT16)));
+
+		//
+		// Unpack B.
+		//
+		__m128i b =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_and_si128(p1, blueMask),
+					_mm_and_si128(p2, blueMask)),
+				_mm_add_epi16(
+					_mm_and_si128(p3, blueMask),
+					_mm_and_si128(p4, blueMask)));
+
+		//
+		// (sum * 63) >> 8
+		//
+		r = _mm_mullo_epi16(r, decay63);
+		g = _mm_mullo_epi16(g, decay63);
+		b = _mm_mullo_epi16(b, decay63);
+
+		r = _mm_srli_epi16(r, 8);
+		g = _mm_srli_epi16(g, 8);
+		b = _mm_srli_epi16(b, 8);
+
+		//
+		// Repack RGB565.
+		//
+		r = _mm_slli_epi16(r, REDSHIFT16);
+		g = _mm_slli_epi16(g, GREENSHIFT16);
+
+		__m128i result =
+			_mm_or_si128(
+				_mm_or_si128(r, g),
+				b);
+
+		_mm_storeu_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer16[pixelOffset]),
+			result);
+
+		pixelOffset += 8;
+	}
+
+	//
+	// Scalar tail.
+	//
+	while (pixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[pixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++pixelOffset;
+	}
 }
 
+// AI created. Work in Progress. Attempting to improve upon Round1
+// Remove temporary arrays
+// Doubled the speed by avoiding memory access. Same lesson I learned long ago in
+// DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
+void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi16(_REDMASK16);
+
+	const __m128i greenMask =
+		_mm_set1_epi16(_GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(_BLUEMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+	dword_t pixelOffset = 0;
+
+	while (pixelOffset + 7 < bufferLength)
+	{
+		dword_t p[8];
+		dword_t p3[8];
+
+		for (int i = 0; i < 8; ++i)
+		{
+			p[i] =
+				lpTransitionTable[pixelOffset + i];
+
+			p3[i] =
+				p[i] + m_dwBufferWidth;
+		}
+
+		const __m128i a =
+			_mm_set_epi16(
+				m_pReadBuffer16[p[7]],
+				m_pReadBuffer16[p[6]],
+				m_pReadBuffer16[p[5]],
+				m_pReadBuffer16[p[4]],
+				m_pReadBuffer16[p[3]],
+				m_pReadBuffer16[p[2]],
+				m_pReadBuffer16[p[1]],
+				m_pReadBuffer16[p[0]]);
+
+		const __m128i b =
+			_mm_set_epi16(
+				m_pReadBuffer16[p[7] + 1],
+				m_pReadBuffer16[p[6] + 1],
+				m_pReadBuffer16[p[5] + 1],
+				m_pReadBuffer16[p[4] + 1],
+				m_pReadBuffer16[p[3] + 1],
+				m_pReadBuffer16[p[2] + 1],
+				m_pReadBuffer16[p[1] + 1],
+				m_pReadBuffer16[p[0] + 1]);
+
+		const __m128i c =
+			_mm_set_epi16(
+				m_pReadBuffer16[p3[7]],
+				m_pReadBuffer16[p3[6]],
+				m_pReadBuffer16[p3[5]],
+				m_pReadBuffer16[p3[4]],
+				m_pReadBuffer16[p3[3]],
+				m_pReadBuffer16[p3[2]],
+				m_pReadBuffer16[p3[1]],
+				m_pReadBuffer16[p3[0]]);
+
+		const __m128i d =
+			_mm_set_epi16(
+				m_pReadBuffer16[p3[7] + 1],
+				m_pReadBuffer16[p3[6] + 1],
+				m_pReadBuffer16[p3[5] + 1],
+				m_pReadBuffer16[p3[4] + 1],
+				m_pReadBuffer16[p3[3] + 1],
+				m_pReadBuffer16[p3[2] + 1],
+				m_pReadBuffer16[p3[1] + 1],
+				m_pReadBuffer16[p3[0] + 1]);
+
+		__m128i r =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(a, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(b, redMask),
+						REDSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(c, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(d, redMask),
+						REDSHIFT16)));
+
+		__m128i g =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(a, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(b, greenMask),
+						GREENSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(c, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(d, greenMask),
+						GREENSHIFT16)));
+
+		__m128i bl =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_and_si128(a, blueMask),
+					_mm_and_si128(b, blueMask)),
+				_mm_add_epi16(
+					_mm_and_si128(c, blueMask),
+					_mm_and_si128(d, blueMask)));
+
+		r = _mm_srli_epi16(
+			_mm_mullo_epi16(r, decay63),
+			8);
+
+		g = _mm_srli_epi16(
+			_mm_mullo_epi16(g, decay63),
+			8);
+
+		bl = _mm_srli_epi16(
+			_mm_mullo_epi16(bl, decay63),
+			8);
+
+		r = _mm_slli_epi16(r, REDSHIFT16);
+		g = _mm_slli_epi16(g, GREENSHIFT16);
+
+		const __m128i result =
+			_mm_or_si128(
+				_mm_or_si128(r, g),
+				bl);
+
+		_mm_storeu_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer16[pixelOffset]),
+			result);
+
+		pixelOffset += 8;
+	}
+
+	//
+	// Scalar tail.
+	//
+	while (pixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[pixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++pixelOffset;
+	}
+}
+
+
+// Human created TBD. See if I can do better once I learn from what the AI tries.
+void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi16(_REDMASK16);
+
+	const __m128i greenMask =
+		_mm_set1_epi16(_GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(_BLUEMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+	const __m128i zero =
+		_mm_setzero_si128();
+
+	dword_t pixelOffset = 0;
+
+	while (pixelOffset + 7 < bufferLength)
+	{
+		word_t src1[8];
+		word_t src2[8];
+		word_t src3[8];
+		word_t src4[8];
+
+		//
+		// Scalar gather.
+		//
+		for (int i = 0; i < 8; ++i)
+		{
+			const dword_t pixel =
+				lpTransitionTable[pixelOffset + i];
+
+			const dword_t pixel3 =
+				pixel + m_dwBufferWidth;
+
+			src1[i] = m_pReadBuffer16[pixel];
+			src2[i] = m_pReadBuffer16[pixel + 1];
+			src3[i] = m_pReadBuffer16[pixel3];
+			src4[i] = m_pReadBuffer16[pixel3 + 1];
+		}
+
+		const __m128i p1 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src1));
+
+		const __m128i p2 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src2));
+
+		const __m128i p3 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src3));
+
+		const __m128i p4 =
+			_mm_loadu_si128(
+				reinterpret_cast<const __m128i*>(src4));
+
+		//
+		// Unpack R.
+		//
+		__m128i r =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p1, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p2, redMask),
+						REDSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p3, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p4, redMask),
+						REDSHIFT16)));
+
+		//
+		// Unpack G.
+		//
+		__m128i g =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p1, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p2, greenMask),
+						GREENSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(p3, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(p4, greenMask),
+						GREENSHIFT16)));
+
+		//
+		// Unpack B.
+		//
+		__m128i b =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_and_si128(p1, blueMask),
+					_mm_and_si128(p2, blueMask)),
+				_mm_add_epi16(
+					_mm_and_si128(p3, blueMask),
+					_mm_and_si128(p4, blueMask)));
+
+		//
+		// (sum * 63) >> 8
+		//
+		r = _mm_mullo_epi16(r, decay63);
+		g = _mm_mullo_epi16(g, decay63);
+		b = _mm_mullo_epi16(b, decay63);
+
+		r = _mm_srli_epi16(r, 8);
+		g = _mm_srli_epi16(g, 8);
+		b = _mm_srli_epi16(b, 8);
+
+		//
+		// Repack RGB565.
+		//
+		r = _mm_slli_epi16(r, REDSHIFT16);
+		g = _mm_slli_epi16(g, GREENSHIFT16);
+
+		__m128i result =
+			_mm_or_si128(
+				_mm_or_si128(r, g),
+				b);
+
+		_mm_storeu_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer16[pixelOffset]),
+			result);
+
+		pixelOffset += 8;
+	}
+
+	//
+	// Scalar tail.
+	//
+	while (pixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[pixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++pixelOffset;
+	}
+}
 
 /****************************************************************************
  *
