@@ -803,7 +803,9 @@ namespace GreenshiftUnitTest
 						++frame_count;
 
 					pBitCanvas->PrepareForDoDelta();
-					pBitCanvas->DoDelta_cpp(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)
+						->DoDelta_cpp_BASELINE_WITH_DECAY_63(
+							pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 
@@ -894,8 +896,9 @@ namespace GreenshiftUnitTest
 				pBitCanvas->FlipBuffers();
 
 				pBitCanvas->PrepareForDoDelta();
-				pBitCanvas->DoDelta_cpp(
-					pTransitionTable.get());
+				static_cast<BitCanvas8*>(pBitCanvas)
+					->DoDelta_cpp_BASELINE(
+						pTransitionTable.get());
 				pBitCanvas->FinalizeDoDelta();
 
 				if ((frame % SAMPLE_INTERVAL) == 0)
@@ -1103,6 +1106,15 @@ namespace GreenshiftUnitTest
 				1,
 				0);
 		}
+
+		TEST_METHOD(TestBitCanvas16FadeCurve_GreenshiftCorrection)
+		{
+			Run16BitFadeCurveTest(
+				L"16-bit fade curve (GreenshiftCorrection)",
+				0,
+				0);
+		}
+
 
 		void CompareCanvases8(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
 		{
@@ -1551,7 +1563,31 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence16(
 				L"SSE2 Grayscale",
 				SetGrayscalePalette,
-				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment1);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment1);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment1);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
 		}
 

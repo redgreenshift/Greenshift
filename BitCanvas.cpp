@@ -2143,7 +2143,11 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTa
 		p3 = m_pReadBuffer16[pixel3];
 		p4 = m_pReadBuffer16[pixel3 + 1];
 
-		if (decayDenominator > 0)
+		if (decayNumerator == 0)
+		{
+			DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
+		}
+		else if (decayDenominator > 0)
 		{
 			m_pWriteBuffer16[pixelOffset] =
 				RGB16(
