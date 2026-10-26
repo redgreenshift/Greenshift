@@ -772,7 +772,9 @@ class BitCanvas8 : public BitCanvas
 public:
 	BitCanvas8(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
+#if !UNIT_TEST
 protected:
+#endif
 	/*
 	 * removed inline next to Get/PutPixel since it's in the base class
 	 */
@@ -856,7 +858,9 @@ class BitCanvas32 : public BitCanvas
 public:
 	BitCanvas32(const dword_t dwWidth, const dword_t dwHeight, const TWEENDESCRIPTION& td);
 
+#if !UNIT_TEST
 protected:
+#endif
 	virtual dword_t			GetPixel(const dword_t pixelOffset) override;
 	virtual void			PutPixel(const dword_t pixelOffset, const byte_t color) override;
 	virtual void			PutPixel(const dword_t pixelOffset, const word_t pixel_width, const byte_t color) override;

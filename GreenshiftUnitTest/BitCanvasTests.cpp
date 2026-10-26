@@ -71,6 +71,7 @@ namespace GreenshiftUnitTest
 		void (BitCanvas16::*)(const PIXELMAP*);
 	using DoDeltaMethod32 =
 		void (BitCanvas32::*)(const PIXELMAP*);
+
 	TEST_CLASS(BitCanvasUT)
 	{
 		static BitCanvas* m_pBitCanvas32;
@@ -932,6 +933,47 @@ namespace GreenshiftUnitTest
 			Logger::WriteMessage(report.c_str());
 		}
 
+
+		void CompareCanvases8(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
+		{
+			dword_t width1 = 0;
+			dword_t height1 = 0;
+			dword_t pixelFormat1 = 0;
+
+			dword_t width2 = 0;
+			dword_t height2 = 0;
+			dword_t pixelFormat2 = 0;
+
+			auto* pBaselinePixels =
+				static_cast<byte_t*>(
+					pBaselineCanvas->GetPixelMemory(
+						&width1,
+						&height1,
+						&pixelFormat1));
+
+			auto* pOptimizedPixels =
+				static_cast<byte_t*>(
+					pOptimizedCanvas->GetPixelMemory(
+						&width2,
+						&height2,
+						&pixelFormat2));
+
+			const size_t pixelCount =
+				static_cast<size_t>(width1) *
+				static_cast<size_t>(height1);
+
+			for (size_t i = 0; i < pixelCount; ++i)
+			{
+				if (pBaselinePixels[i] != pOptimizedPixels[i])
+				{
+					std::wstring s = std::format(
+						L"Test {0} Frame {1}, Pixel {2}: baseline={3}, optimized={4}", pszTestName, frame, i, pBaselinePixels[i], pOptimizedPixels[i]);
+
+					Assert::Fail(s.c_str());
+				}
+			}
+		}
+
 		void CompareCanvases16(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
 		{
 			dword_t width1 = 0;
@@ -972,6 +1014,122 @@ namespace GreenshiftUnitTest
 			}
 		}
 
+		void CompareCanvases32(size_t frame, const wchar_t* pszTestName, BitCanvas* pBaselineCanvas, BitCanvas* pOptimizedCanvas)
+		{
+			dword_t width1 = 0;
+			dword_t height1 = 0;
+			dword_t pixelFormat1 = 0;
+
+			dword_t width2 = 0;
+			dword_t height2 = 0;
+			dword_t pixelFormat2 = 0;
+
+			auto* pBaselinePixels =
+				static_cast<rgb32_t*>(
+					pBaselineCanvas->GetPixelMemory(
+						&width1,
+						&height1,
+						&pixelFormat1));
+
+			auto* pOptimizedPixels =
+				static_cast<rgb32_t*>(
+					pOptimizedCanvas->GetPixelMemory(
+						&width2,
+						&height2,
+						&pixelFormat2));
+
+			const size_t pixelCount =
+				static_cast<size_t>(width1) *
+				static_cast<size_t>(height1);
+
+			for (size_t i = 0; i < pixelCount; ++i)
+			{
+				if (pBaselinePixels[i] != pOptimizedPixels[i])
+				{
+					std::wstring s = std::format(
+						L"Test {0} Frame {1}, Pixel {2}: baseline={3}, optimized={4}", pszTestName, frame, i, pBaselinePixels[i], pOptimizedPixels[i]);
+
+					Assert::Fail(s.c_str());
+				}
+			}
+		}
+
+		void VerifyEquivalence8(
+			const wchar_t* pszTestName,
+			PaletteInitializer pfnPalette,
+			DoDeltaMethod8 pfnBaseline,
+			DoDeltaMethod8 pfnOptimized)
+		{
+			constexpr size_t c_width = 32;
+			constexpr size_t c_height = 32;
+			constexpr size_t c_frames = 1000;
+
+			BitCanvas* pBaselineCanvas = nullptr;
+			BitCanvas* pOptimizedCanvas = nullptr;
+
+			InitCanvas(&pBaselineCanvas, 8, c_width, c_height);
+			InitCanvas(&pOptimizedCanvas, 8, c_width, c_height);
+
+			pfnPalette(pBaselineCanvas);
+			pfnPalette(pOptimizedCanvas);
+
+			//
+			// Fill both canvases identically.
+			//
+			MTRand rng(12345);
+
+			for (size_t y = 0; y < c_height; ++y)
+			{
+				for (size_t x = 0; x < c_width; ++x)
+				{
+					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
+
+					pBaselineCanvas->PutPixel(
+						static_cast<long>(x),
+						static_cast<long>(y),
+						iColor);
+
+					pOptimizedCanvas->PutPixel(
+						static_cast<long>(x),
+						static_cast<long>(y),
+						iColor);
+				}
+			}
+
+			pBaselineCanvas->FlipBuffers();
+			pOptimizedCanvas->FlipBuffers();
+
+			auto spTransitionTable =
+				CreateTransitionTable(c_width, c_height);
+
+			for (size_t frame = 0; frame < c_frames; ++frame)
+			{
+				pBaselineCanvas->PrepareForDoDelta();
+				(static_cast<BitCanvas8*>(pBaselineCanvas)
+					->*pfnBaseline)(
+						spTransitionTable.get());
+				pBaselineCanvas->FinalizeDoDelta();
+
+				pOptimizedCanvas->PrepareForDoDelta();
+				(static_cast<BitCanvas8*>(pOptimizedCanvas)
+					->*pfnOptimized)(
+						spTransitionTable.get());
+				pOptimizedCanvas->FinalizeDoDelta();
+
+				CompareCanvases8(
+					frame,
+					pszTestName,
+					pBaselineCanvas,
+					pOptimizedCanvas);
+
+				pBaselineCanvas->FlipBuffers();
+				pOptimizedCanvas->FlipBuffers();
+			}
+
+			delete pBaselineCanvas;
+			delete pOptimizedCanvas;
+		}
+
 		void VerifyEquivalence16(
 			const wchar_t* pszTestName,
 			PaletteInitializer pfnPalette,
@@ -980,7 +1138,7 @@ namespace GreenshiftUnitTest
 		{
 			constexpr size_t c_width = 32;
 			constexpr size_t c_height = 32;
-			constexpr size_t c_frames = 100;
+			constexpr size_t c_frames = 1000;
 
 			BitCanvas* pBaselineCanvas = nullptr;
 			BitCanvas* pOptimizedCanvas = nullptr;
@@ -1047,6 +1205,110 @@ namespace GreenshiftUnitTest
 			delete pBaselineCanvas;
 			delete pOptimizedCanvas;
 		}
+
+		void VerifyEquivalence32(
+			const wchar_t* pszTestName,
+			PaletteInitializer pfnPalette,
+			DoDeltaMethod32 pfnBaseline,
+			DoDeltaMethod32 pfnOptimized)
+		{
+			constexpr size_t c_width = 32;
+			constexpr size_t c_height = 32;
+			constexpr size_t c_frames = 1000;
+
+			BitCanvas* pBaselineCanvas = nullptr;
+			BitCanvas* pOptimizedCanvas = nullptr;
+
+			InitCanvas(&pBaselineCanvas, 32, c_width, c_height);
+			InitCanvas(&pOptimizedCanvas, 32, c_width, c_height);
+
+			pfnPalette(pBaselineCanvas);
+			pfnPalette(pOptimizedCanvas);
+
+			//
+			// Fill both canvases identically.
+			//
+			MTRand rng(12345);
+
+			for (size_t y = 0; y < c_height; ++y)
+			{
+				for (size_t x = 0; x < c_width; ++x)
+				{
+					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
+
+					pBaselineCanvas->PutPixel(
+						static_cast<long>(x),
+						static_cast<long>(y),
+						iColor);
+
+					pOptimizedCanvas->PutPixel(
+						static_cast<long>(x),
+						static_cast<long>(y),
+						iColor);
+				}
+			}
+
+			pBaselineCanvas->FlipBuffers();
+			pOptimizedCanvas->FlipBuffers();
+
+			auto spTransitionTable =
+				CreateTransitionTable(c_width, c_height);
+
+			for (size_t frame = 0; frame < c_frames; ++frame)
+			{
+				pBaselineCanvas->PrepareForDoDelta();
+				(static_cast<BitCanvas32*>(pBaselineCanvas)
+					->*pfnBaseline)(
+						spTransitionTable.get());
+				pBaselineCanvas->FinalizeDoDelta();
+
+				pOptimizedCanvas->PrepareForDoDelta();
+				(static_cast<BitCanvas32*>(pOptimizedCanvas)
+					->*pfnOptimized)(
+						spTransitionTable.get());
+				pOptimizedCanvas->FinalizeDoDelta();
+
+				CompareCanvases32(
+					frame,
+					pszTestName,
+					pBaselineCanvas,
+					pOptimizedCanvas);
+
+				pBaselineCanvas->FlipBuffers();
+				pOptimizedCanvas->FlipBuffers();
+			}
+
+			delete pBaselineCanvas;
+			delete pOptimizedCanvas;
+		}
+
+		/************************************
+		* VERIFY 8 BIT!
+		* Only need to test grayscale palettes, since we're only averaging intensity values, NOT the underlying colors in 8bit
+		*/
+		TEST_METHOD(TestBitCanvas8_Optimized_Grayscale)
+		{
+			VerifyEquivalence8(
+				L"Optimized Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_BASELINE, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED); // Decay 127
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Grayscale)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_BASELINE, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment1); // Decay 127
+		}
+
+
+
+		/************************************
+		 * VERIFY 16 BIT!
+		 */
+
 		TEST_METHOD(TestBitCanvas16_NoDecay_Grayscale)
 		{
 			VerifyEquivalence16(
@@ -1071,10 +1333,10 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
 		}
-		TEST_METHOD(TestBitCanvas16_NoDecay_BitBoundaryPalette)
+		TEST_METHOD(TestBitCanvas16_NoDecay_BitBoundary)
 		{
 			VerifyEquivalence16(
-				L"NoDecay BitBoundaryPalette",
+				L"NoDecay BitBoundary",
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY);
@@ -1105,14 +1367,15 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
 		}
-		TEST_METHOD(TestBitCanvas16_Decay63_BitBoundaryPalette)
+		TEST_METHOD(TestBitCanvas16_Decay63_BitBoundary)
 		{
 			VerifyEquivalence16(
-				L"Decay63 BitBoundaryPalette",
+				L"Decay63 BitBoundary",
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63);
 		}
+
 		TEST_METHOD(TestBitCanvas16_SSE2_Grayscale)
 		{
 			VerifyEquivalence16(
@@ -1120,6 +1383,76 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment1);
+		}
+
+		/************************************
+		* VERIFY 32 BIT!
+		*/
+
+		TEST_METHOD(TestBitCanvas32_MMX_Intrinsics_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"MMX_Intrinsics Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_MMX_Intrinsics); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_MMX_Intrinsics_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"MMX_Intrinsics DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_MMX_Intrinsics); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_MMX_Intrinsics_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"MMX_Intrinsics PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_MMX_Intrinsics); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_MMX_Intrinsics_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"MMX_Intrinsics BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_MMX_Intrinsics); // Decay 63
+		}
+
+		TEST_METHOD(TestBitCanvas32_SSE2_Intrinsics_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Intrinsics_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Intrinsics_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Intrinsics_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_Intrinsics_FIXED); // Decay 63
 		}
 	};
 
