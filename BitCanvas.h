@@ -846,6 +846,9 @@ public:
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;

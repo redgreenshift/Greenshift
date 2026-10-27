@@ -620,6 +620,53 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE2Exp4)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT4",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment4(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE2Exp5)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT5",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment5(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+
 		TEST_METHOD(TestBitCanvas16BenchmarkSSE2int)
 		{
 			MTRand rng(c_seed);
@@ -1810,6 +1857,75 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment2);
 		}
+
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp4_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment4);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp4_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment4);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp4_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment4);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp4_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment4);
+		}
+
+
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp5_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment5);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp5_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment5);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp5_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment5);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE2_Exp5_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE2_experiment5);
+		}
+
+
 		TEST_METHOD(TestBitCanvas16_SSE2_Int_Grayscale)
 		{
 			VerifyEquivalence16(

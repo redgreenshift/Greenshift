@@ -1963,22 +1963,25 @@ dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
 
 void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_BASELINE_WITH_DECAY_63(lpTransitionTable);
+	//DoDelta_cpp_BASELINE_WITH_DECAY_63(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
+	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
+	DoDelta_SSE2_experiment2(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
+	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
+	DoDelta_SSE2_experiment5(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_cpp_BASELINE_WITH_DECAY_31(lpTransitionTable);
+	DoDelta_SSE2_Intrinsics(lpTransitionTable);
 }
 
 
@@ -2151,9 +2154,9 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTa
 		{
 			m_pWriteBuffer16[pixelOffset] =
 				RGB16(
-					(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
-					(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
-					(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator))
+					byte_t(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
+					byte_t(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator)),
+					byte_t(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * decayNumerator) / (4 * decayDenominator))
 				);
 		}
 		else
@@ -2162,9 +2165,9 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTa
 			// NOTE: This behaves IDENTICALLY to decay 63/64, but may be faster
 			m_pWriteBuffer16[pixelOffset] =
 				RGB16(
-					(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) - 1) / (4)),
-					(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) - 1) / (4)),
-					(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) - 1) / (4))
+					byte_t(((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) - 1) / (4)),
+					byte_t(((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) - 1) / (4)),
+					byte_t(((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) - 1) / (4))
 				);
 
 		}
@@ -2394,6 +2397,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 *
 		 * 2) shift each packed red pixel 2 bits to the right
 		 *    effectively dividing by 4 for averaging the pixels
+		 *    NOTE: THIS IS IMPORTANT! Dividing first means we don't overflow when adding
 		 *
 		 * 3) sum the two packed pixels.
 		 *    this may be the most confusing part.
@@ -2441,13 +2445,16 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 
 
 		/* BLUE:
-		 * this next line does a lot.  And different from either red or green
+		 * this next line does a lot.  And different from red
 		 *
 		 * 1) mask the blue bits.
 		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
 		 *    clear the red and green bits in both pixels.
 		 *
 		 * 2) sum the two packed pixels.
+		 *
+		 * The math is asymmetric between RED and GREEN/BLUE channels because
+		 * dividing first would potentially TRUNCATE some blue bits.
 		 */
 		 // NOTE: Add BLUE first, so we don't drop bits by dividing early.
 		blueLow = ((srcPixel12 & 0x001F001F)) +
@@ -2456,7 +2463,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
 
 		/*
-		 * this next line does more than either red or green
+		 * this next line does more than red
 		 *
 		 * 1) sum the hi and low blue data
 		 *
@@ -2464,7 +2471,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTrans
 		 *
 		 * 3) mask it to the blue bits only
 		 *
-		 * 4) or the blue bits into the destination pixel
+		 * 4) `OR` the blue bits into the destination pixel
 		 */
 		destPixel |= (((blueLow + blueHi) * 63) >> 8) & 0x001F;
 
@@ -2799,7 +2806,7 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
 }
 
 
-// AI Created, baseline SSE2 implementation just to determine what we're working with.
+// AI Assisted, baseline SSE2 implementation just to determine what we're working with.
 void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
 	const dword_t bufferLength =
@@ -2986,7 +2993,7 @@ void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 	}
 }
 
-// AI created. Work in Progress. Attempting to improve upon Round1
+// AI Assisted. Work in Progress. Attempting to improve upon Round1
 // Remove temporary arrays
 // Doubled the speed by avoiding memory access. Same lesson I learned long ago in
 // DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
@@ -3181,6 +3188,556 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 }
 
 
+//Exp1 = temp arrays
+//Exp2 = direct vector construction(_mm_set_epi16)
+//Exp3 = skipped / superseded after disassembly review
+//Exp4 = 4 - pixel SSE2 variant
+//Exp5 = old DWORD pseudo - SIMD concept inside SSE2
+
+// AI Assisted. Work in Progress. Attempting to improve upon Round2
+// Reduce the number of gathers. -- Parallelize reads by using DWORDs instead of multiple WORDs
+// SKIPPED/ABANDONED this idea after further review. The optimizer already largely does what
+// we were going to try to optimize, so it doesn't really make sense to explicitly test this
+void BitCanvas16::DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment2(lpTransitionTable);
+}
+
+
+
+// Experiment4 Idea(more interesting)
+// Reduce SIMD width. -- Process only 4 output pixels per iteration.
+// This is mostly an experiment to see whether the gather overhead dominates enough that fewer lanes helps.
+// Honestly, I don't expect a huge win.
+//
+// NOTE: This turned out slightly slower than Experiment2, therefore,
+// the hypothesis: "Maybe register pressure is hurting us." is false.
+//
+// Experiment4 answered the question cleanly: processing 8 outputs at a time is the better choice.
+void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi16(_REDMASK16);
+
+	const __m128i greenMask =
+		_mm_set1_epi16(_GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(_BLUEMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+	dword_t pixelOffset = 0;
+
+	while (pixelOffset + 3 < bufferLength)
+	{
+		const dword_t p0 =
+			lpTransitionTable[pixelOffset + 0];
+
+		const dword_t p1 =
+			lpTransitionTable[pixelOffset + 1];
+
+		const dword_t p2 =
+			lpTransitionTable[pixelOffset + 2];
+
+		const dword_t p3 =
+			lpTransitionTable[pixelOffset + 3];
+
+		const dword_t q0 = p0 + m_dwBufferWidth;
+		const dword_t q1 = p1 + m_dwBufferWidth;
+		const dword_t q2 = p2 + m_dwBufferWidth;
+		const dword_t q3 = p3 + m_dwBufferWidth;
+
+		const __m128i a =
+			_mm_set_epi16(
+				0, 0, 0, 0,
+				m_pReadBuffer16[p3],
+				m_pReadBuffer16[p2],
+				m_pReadBuffer16[p1],
+				m_pReadBuffer16[p0]);
+
+		const __m128i b =
+			_mm_set_epi16(
+				0, 0, 0, 0,
+				m_pReadBuffer16[p3 + 1],
+				m_pReadBuffer16[p2 + 1],
+				m_pReadBuffer16[p1 + 1],
+				m_pReadBuffer16[p0 + 1]);
+
+		const __m128i c =
+			_mm_set_epi16(
+				0, 0, 0, 0,
+				m_pReadBuffer16[q3],
+				m_pReadBuffer16[q2],
+				m_pReadBuffer16[q1],
+				m_pReadBuffer16[q0]);
+
+		const __m128i d =
+			_mm_set_epi16(
+				0, 0, 0, 0,
+				m_pReadBuffer16[q3 + 1],
+				m_pReadBuffer16[q2 + 1],
+				m_pReadBuffer16[q1 + 1],
+				m_pReadBuffer16[q0 + 1]);
+
+		__m128i r =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(a, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(b, redMask),
+						REDSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(c, redMask),
+						REDSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(d, redMask),
+						REDSHIFT16)));
+
+		__m128i g =
+			_mm_add_epi16(
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(a, greenMask),
+						GREENSHIFT16),
+					_mm_srli_epi16(
+						_mm_and_si128(b, greenMask),
+						GREENSHIFT16)),
+				_mm_add_epi16(
+					_mm_srli_epi16(
+						_mm_and_si128(c, greenMask),
+						GREENSHIFT16),
+				_mm_srli_epi16(
+					_mm_and_si128(d, greenMask),
+					GREENSHIFT16)));
+
+					__m128i bl =
+						_mm_add_epi16(
+							_mm_add_epi16(
+								_mm_and_si128(a, blueMask),
+								_mm_and_si128(b, blueMask)),
+							_mm_add_epi16(
+								_mm_and_si128(c, blueMask),
+								_mm_and_si128(d, blueMask)));
+
+					r = _mm_srli_epi16(
+						_mm_mullo_epi16(r, decay63),
+						8);
+
+					g = _mm_srli_epi16(
+						_mm_mullo_epi16(g, decay63),
+						8);
+
+					bl = _mm_srli_epi16(
+						_mm_mullo_epi16(bl, decay63),
+						8);
+
+					r = _mm_slli_epi16(r, REDSHIFT16);
+					g = _mm_slli_epi16(g, GREENSHIFT16);
+
+					const __m128i result =
+						_mm_or_si128(
+							_mm_or_si128(r, g),
+							bl);
+
+					_mm_storel_epi64(
+						reinterpret_cast<__m128i*>(
+							&m_pWriteBuffer16[pixelOffset]),
+						result);
+
+					pixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (pixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[pixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[pixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++pixelOffset;
+	}
+}
+
+
+// Experiment5(the one I'm most curious about)
+// Use my old DWORD trick inside SSE2.
+// Take my existing winner: DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
+// the old DWORD - packed pseudo - SIMD implementation.
+//
+// Exp5 may end up looking very different from Exp1/Exp2/Exp4, because it may avoid a lot of the unpacking that those versions still perform.
+//
+// Packed-Domain Exp5 code
+//
+//Exp2:
+//    Gather WORD pixels
+//    Expand to RGB channels
+//    SIMD channel math
+//    Repack
+//
+//Exp5:
+//    Gather DWORD p1|p2
+//    Gather DWORD p3|p4
+//    Apply the existing packed-domain algorithm
+//    across multiple DWORD lanes at once
+//
+//
+//16-bit Benchmarks
+//-----------------
+//
+//CPP Baseline      12.2 sec
+//CPP Optimized      8.0 sec
+//
+//SSE2 Exp1          9.4 sec
+//SSE2 Exp2          4.5 sec
+//SSE2 Exp4          5.1 sec
+//SSE2 Exp5          4.5 sec
+//
+//Winner:
+//    Exp2 ~~ Exp5
+//
+//Observation:
+//    Arithmetic design matters less than gather cost.
+//
+// ---------------------------------------------------------------------
+// Exp5 keeps the original DWORD-packed arithmetic model and
+// performs SIMD operations on packed DWORD lanes.
+//
+// IMPORTANT:
+// This implementation requires 32-bit multiplication
+// (_mm_mullo_epi32). Attempting to use _mm_mullo_epi16
+// corrupts RED and GREEN channel calculations because the
+// packed-domain arithmetic depends on 32-bit lane semantics.
+//
+void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi32(0xF800F800);
+
+	const __m128i greenMask =
+		_mm_set1_epi32(0x07E007E0);
+
+	const __m128i blueMask =
+		_mm_set1_epi32(0x001F001F);
+
+	const __m128i decay63 =
+		_mm_set1_epi32(63);
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 3 < m_dwBufferLength)
+	{
+		dword_t s0 =
+			lpTransitionTable[destPixelOffset + 0];
+
+		dword_t s1 =
+			lpTransitionTable[destPixelOffset + 1];
+
+		dword_t s2 =
+			lpTransitionTable[destPixelOffset + 2];
+
+		dword_t s3 =
+			lpTransitionTable[destPixelOffset + 3];
+
+		dword_t s30 = s0 + m_dwBufferWidth;
+		dword_t s31 = s1 + m_dwBufferWidth;
+		dword_t s32 = s2 + m_dwBufferWidth;
+		dword_t s33 = s3 + m_dwBufferWidth;
+
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12 =
+			_mm_set_epi32(
+				*(dword_t*)&m_pReadBuffer16[s3],
+				*(dword_t*)&m_pReadBuffer16[s2],
+				*(dword_t*)&m_pReadBuffer16[s1],
+				*(dword_t*)&m_pReadBuffer16[s0]);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34 =
+			_mm_set_epi32(
+				*(dword_t*)&m_pReadBuffer16[s33],
+				*(dword_t*)&m_pReadBuffer16[s32],
+				*(dword_t*)&m_pReadBuffer16[s31],
+				*(dword_t*)&m_pReadBuffer16[s30]);
+
+		//
+		// RED
+		//
+		__m128i redLow =
+			_mm_add_epi32(
+				_mm_srli_epi32(
+					_mm_and_si128(src12, redMask),
+					2),
+				_mm_srli_epi32(
+					_mm_and_si128(src34, redMask),
+					2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
+
+
+		__m128i redHi =
+			_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
+
+		__m128i red =
+			_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+		red =
+			//_mm_mullo_epi16(red, decay63);     // likely needs work
+			//_mm_mul_epu32(red, decay63x32);
+			_mm_mullo_epi32(red, decay63);
+
+		red =
+			_mm_srli_epi32(red, 6);
+
+		red =
+			_mm_and_si128(
+				red,
+				_mm_set1_epi32(0x0000F800));
+
+		//
+		// GREEN
+		//
+		__m128i greenLow =
+			_mm_add_epi32(
+				_mm_and_si128(src12, greenMask),
+				_mm_and_si128(src34, greenMask));
+
+		__m128i greenHi =
+			_mm_srli_epi32(greenLow, 16);
+
+		__m128i green =
+			_mm_add_epi32(greenLow, greenHi);
+
+		green =
+			//_mm_mullo_epi16(green, decay63);   // likely needs work
+			//_mm_mul_epu32(green, decay63x32);
+			_mm_mullo_epi32(green, decay63);
+
+		green =
+			_mm_srli_epi32(green, 8);
+
+		green =
+			_mm_and_si128(
+				green,
+				_mm_set1_epi32(0x000007E0));
+
+		//
+		// BLUE
+		//
+		__m128i blueLow =
+			_mm_add_epi32(
+				_mm_and_si128(src12, blueMask),
+				_mm_and_si128(src34, blueMask));
+
+		__m128i blueHi =
+			_mm_srli_epi32(blueLow, 16);
+
+		__m128i blue =
+			_mm_add_epi32(blueLow, blueHi);
+
+		blue =
+			//_mm_mullo_epi16(blue, decay63);    // likely needs work
+			//_mm_mul_epu32(blue, decay63x32);
+			_mm_mullo_epi32(blue, decay63);
+
+		blue =
+			_mm_srli_epi32(blue, 8);
+
+		blue =
+			_mm_and_si128(
+				blue,
+				_mm_set1_epi32(0x0000001F));
+
+		//
+		// Pack final RGB565 values.
+		//
+		__m128i result =
+			_mm_or_si128(
+				_mm_or_si128(red, green),
+				blue);
+
+		alignas(16) dword_t temp[4];
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(temp),
+			result);
+
+		m_pWriteBuffer16[destPixelOffset + 0] =
+			static_cast<word_t>(temp[0]);
+
+		m_pWriteBuffer16[destPixelOffset + 1] =
+			static_cast<word_t>(temp[1]);
+
+		m_pWriteBuffer16[destPixelOffset + 2] =
+			static_cast<word_t>(temp[2]);
+
+		m_pWriteBuffer16[destPixelOffset + 3] =
+			static_cast<word_t>(temp[3]);
+
+		destPixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[destPixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[destPixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++destPixelOffset;
+	}
+}
+
+
+//Exp1
+//-----
+//9.0 sec
+//
+//Exp2
+//-----
+//4.4 sec
+//Current Champion
+//
+//Exp3
+//-----
+//Skipped after disassembly review.
+//Compiler already optimized much of the transition-table handling.
+//
+//Exp4
+//-----
+//5.0 sec
+//Valid
+//But slower than Exp2
+//
+//Conclusion:
+//Keep Exp2
+//
+//Exp5 -- Packed Domain
+//-----
+//4.5 sec
+//Valid
+//Roughly the same as Exp2...
+// ...
+// ...even though the algorithm is completely different:
+//Exp2: -- direct vector construction(_mm_set_epi16)
+//    Gather WORD pixels
+//    Expand to RGB channels
+//    SIMD channel math
+//    Repack
+//
+//Exp5: -- Packed-Domain, performing pseudo SIMD operations on two WORDs packed in a DWORD (the idea I used in ~2000/2001)
+//    Gather DWORD p1|p2
+//    Gather DWORD p3|p4
+//    Apply the existing packed-domain algorithm
+//    across multiple DWORD lanes at once
+//
+// RE RUNNING the benchmark, and measuring in milliseconds:
+//Exp2: 4522.120117
+//Exp5: 4539.915039
+//
+// That's a difference of 17ms, which is noise. That's fascinating that two completely different approaches are so similar in time.
+// They're basically eqivalent, right now. Even though Exp2 tends to be ever so slightly faster in benchmarks, I'm not willing to call it yet.
+//
+// The question is really, "which one do we think we can optimize more?" Or rather: "continue optimizing/experimenting with BOTH!!"
+
+
+//Exp2 and Exp5 arrive at almost identical performance using completely different mental models:
+//
+//Exp2
+//Unpack channels
+//SIMD channel math
+//Repack
+//Exp5
+//Preserve packed DWORD structure
+//SIMD packed-domain math
+//
+//Yet they converge to almost the same runtime.
+//
+// Which probably means the bottleneck is probably still gather construction, not arithmetic.
+// This packed-domain approach was used in DoDelta_cpp_OPTIMIZED_WITH_DECAY_63 to reduce the memory reads and writes.
+// It's interesting that it still works so well in SSE2 code.
+
+
 // Human created TBD. See if I can do better once I learn from what the AI tries.
 void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
 {
@@ -3199,124 +3756,128 @@ void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
 	const __m128i decay63 =
 		_mm_set1_epi16(63);
 
-	const __m128i zero =
-		_mm_setzero_si128();
-
 	dword_t pixelOffset = 0;
 
 	while (pixelOffset + 7 < bufferLength)
 	{
-		word_t src1[8];
-		word_t src2[8];
-		word_t src3[8];
-		word_t src4[8];
+		dword_t p[8];
+		dword_t p3[8];
 
-		//
-		// Scalar gather.
-		//
 		for (int i = 0; i < 8; ++i)
 		{
-			const dword_t pixel =
+			p[i] =
 				lpTransitionTable[pixelOffset + i];
 
-			const dword_t pixel3 =
-				pixel + m_dwBufferWidth;
-
-			src1[i] = m_pReadBuffer16[pixel];
-			src2[i] = m_pReadBuffer16[pixel + 1];
-			src3[i] = m_pReadBuffer16[pixel3];
-			src4[i] = m_pReadBuffer16[pixel3 + 1];
+			p3[i] =
+				p[i] + m_dwBufferWidth;
 		}
 
-		const __m128i p1 =
-			_mm_loadu_si128(
-				reinterpret_cast<const __m128i*>(src1));
+		const __m128i a =
+			_mm_set_epi16(
+				m_pReadBuffer16[p[7]],
+				m_pReadBuffer16[p[6]],
+				m_pReadBuffer16[p[5]],
+				m_pReadBuffer16[p[4]],
+				m_pReadBuffer16[p[3]],
+				m_pReadBuffer16[p[2]],
+				m_pReadBuffer16[p[1]],
+				m_pReadBuffer16[p[0]]);
 
-		const __m128i p2 =
-			_mm_loadu_si128(
-				reinterpret_cast<const __m128i*>(src2));
+		const __m128i b =
+			_mm_set_epi16(
+				m_pReadBuffer16[p[7] + 1],
+				m_pReadBuffer16[p[6] + 1],
+				m_pReadBuffer16[p[5] + 1],
+				m_pReadBuffer16[p[4] + 1],
+				m_pReadBuffer16[p[3] + 1],
+				m_pReadBuffer16[p[2] + 1],
+				m_pReadBuffer16[p[1] + 1],
+				m_pReadBuffer16[p[0] + 1]);
 
-		const __m128i p3 =
-			_mm_loadu_si128(
-				reinterpret_cast<const __m128i*>(src3));
+		const __m128i c =
+			_mm_set_epi16(
+				m_pReadBuffer16[p3[7]],
+				m_pReadBuffer16[p3[6]],
+				m_pReadBuffer16[p3[5]],
+				m_pReadBuffer16[p3[4]],
+				m_pReadBuffer16[p3[3]],
+				m_pReadBuffer16[p3[2]],
+				m_pReadBuffer16[p3[1]],
+				m_pReadBuffer16[p3[0]]);
 
-		const __m128i p4 =
-			_mm_loadu_si128(
-				reinterpret_cast<const __m128i*>(src4));
+		const __m128i d =
+			_mm_set_epi16(
+				m_pReadBuffer16[p3[7] + 1],
+				m_pReadBuffer16[p3[6] + 1],
+				m_pReadBuffer16[p3[5] + 1],
+				m_pReadBuffer16[p3[4] + 1],
+				m_pReadBuffer16[p3[3] + 1],
+				m_pReadBuffer16[p3[2] + 1],
+				m_pReadBuffer16[p3[1] + 1],
+				m_pReadBuffer16[p3[0] + 1]);
 
-		//
-		// Unpack R.
-		//
 		__m128i r =
 			_mm_add_epi16(
 				_mm_add_epi16(
 					_mm_srli_epi16(
-						_mm_and_si128(p1, redMask),
+						_mm_and_si128(a, redMask),
 						REDSHIFT16),
 					_mm_srli_epi16(
-						_mm_and_si128(p2, redMask),
+						_mm_and_si128(b, redMask),
 						REDSHIFT16)),
 				_mm_add_epi16(
 					_mm_srli_epi16(
-						_mm_and_si128(p3, redMask),
+						_mm_and_si128(c, redMask),
 						REDSHIFT16),
 					_mm_srli_epi16(
-						_mm_and_si128(p4, redMask),
+						_mm_and_si128(d, redMask),
 						REDSHIFT16)));
 
-		//
-		// Unpack G.
-		//
 		__m128i g =
 			_mm_add_epi16(
 				_mm_add_epi16(
 					_mm_srli_epi16(
-						_mm_and_si128(p1, greenMask),
+						_mm_and_si128(a, greenMask),
 						GREENSHIFT16),
 					_mm_srli_epi16(
-						_mm_and_si128(p2, greenMask),
+						_mm_and_si128(b, greenMask),
 						GREENSHIFT16)),
 				_mm_add_epi16(
 					_mm_srli_epi16(
-						_mm_and_si128(p3, greenMask),
+						_mm_and_si128(c, greenMask),
 						GREENSHIFT16),
 					_mm_srli_epi16(
-						_mm_and_si128(p4, greenMask),
+						_mm_and_si128(d, greenMask),
 						GREENSHIFT16)));
 
-		//
-		// Unpack B.
-		//
-		__m128i b =
+		__m128i bl =
 			_mm_add_epi16(
 				_mm_add_epi16(
-					_mm_and_si128(p1, blueMask),
-					_mm_and_si128(p2, blueMask)),
+					_mm_and_si128(a, blueMask),
+					_mm_and_si128(b, blueMask)),
 				_mm_add_epi16(
-					_mm_and_si128(p3, blueMask),
-					_mm_and_si128(p4, blueMask)));
+					_mm_and_si128(c, blueMask),
+					_mm_and_si128(d, blueMask)));
 
-		//
-		// (sum * 63) >> 8
-		//
-		r = _mm_mullo_epi16(r, decay63);
-		g = _mm_mullo_epi16(g, decay63);
-		b = _mm_mullo_epi16(b, decay63);
+		r = _mm_srli_epi16(
+			_mm_mullo_epi16(r, decay63),
+			8);
 
-		r = _mm_srli_epi16(r, 8);
-		g = _mm_srli_epi16(g, 8);
-		b = _mm_srli_epi16(b, 8);
+		g = _mm_srli_epi16(
+			_mm_mullo_epi16(g, decay63),
+			8);
 
-		//
-		// Repack RGB565.
-		//
+		bl = _mm_srli_epi16(
+			_mm_mullo_epi16(bl, decay63),
+			8);
+
 		r = _mm_slli_epi16(r, REDSHIFT16);
 		g = _mm_slli_epi16(g, GREENSHIFT16);
 
-		__m128i result =
+		const __m128i result =
 			_mm_or_si128(
 				_mm_or_si128(r, g),
-				b);
+				bl);
 
 		_mm_storeu_si128(
 			reinterpret_cast<__m128i*>(
@@ -3327,7 +3888,10 @@ void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
 	}
 
 	//
-	// Scalar tail.
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
 	//
 	while (pixelOffset < bufferLength)
 	{
