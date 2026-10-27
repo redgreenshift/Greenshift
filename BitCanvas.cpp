@@ -45,12 +45,14 @@
   //I don't think I should include math just for fabs()
 #include <cstdlib>
 #include <emmintrin.h> // SSE2 intrinsics
+#include <immintrin.h> // AVX/AVX2 intrinsics
 //#include <mm3dnow.h>
 //#include <emmintrin.h>
 //#include <xmmintrin.h>
 #ifdef USE_MMX_INTRINSICS
-#include <mmintrin.h>
+#include <mmintrin.h> // MMX intrinsics
 #endif
+#include <smmintrin.h> // SSE4.1 intrinsics
 //#include <dvec.h>
 //#include <fvec.h>
 //#include <ivec.h>
@@ -274,7 +276,7 @@ error_t    BitCanvas::New( //const dword_t dwWidth,
 
 }
 
-bool cpu_has_sse2()
+bool cpuid_has_sse2()
 {
 #if defined(_M_X64) || defined(_M_AMD64)
 	return true;  // SSE2 is guaranteed on x64
@@ -282,6 +284,54 @@ bool cpu_has_sse2()
 	int regs[4];
 	__cpuid(regs, 1);  // CPUID leaf 1
 	return (regs[3] & (1 << 26)) != 0;  // EDX bit 26 = SSE2
+#endif
+}
+
+bool cpuid_has_sse41() {
+	int regs[4];
+	__cpuid(regs, 1);
+	return (regs[2] & (1 << 19)) != 0; // ECX bit 19
+}
+
+bool has_sse2() {
+#if defined(__GNUC__) || defined(__clang__)
+	return __builtin_cpu_supports("sse2");
+#else
+	return cpuid_has_sse2(); // Use the MSVC CPUID check above, or another platform-specific check.
+#endif
+}
+
+bool has_sse41() {
+#if defined(__GNUC__) || defined(__clang__)
+	return __builtin_cpu_supports("sse4.1");
+#else
+	return cpuid_has_sse41(); // Use the MSVC CPUID version above, or another platform-specific check.
+#endif
+}
+
+// With MSVC, AVX2 requires both CPU support and operating-system support for saving AVX state. Check those before executing AVX2 instructions.
+bool cpuid_has_avx2() {
+	int regs[4];
+
+	__cpuid(regs, 1);
+	const bool osxsave = (regs[2] & (1 << 27)) != 0; // ECX bit 27
+	const bool avx = (regs[2] & (1 << 28)) != 0; // ECX bit 28
+	if (!osxsave || !avx)
+		return false;
+
+	// XCR0 bits 1 and 2 must be set for OS-enabled XMM and YMM state.
+	if ((_xgetbv(0) & 0x6) != 0x6)
+		return false;
+
+	__cpuidex(regs, 7, 0);
+	return (regs[1] & (1 << 5)) != 0; // EBX bit 5: AVX2
+}
+
+bool has_avx2() {
+#if defined(__GNUC__) || defined(__clang__)
+	return __builtin_cpu_supports("avx2");
+#else
+	return cpuid_has_avx2(); // Use the MSVC check above, or another platform-specific check.
 #endif
 }
 
@@ -340,20 +390,31 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 
 		/*
 		 * MMX is only *actually* used for 32 bit color.
-		 * So, the fastest C++ only routines for 8 and 16 are "x86"
+		 * OUTDATED: So, the fastest C++ only routines for 8 and 16 are "x86"
+		 *
+		 * UPDATE:
+		 * I'm exploring SSE2 implementations for 8 and 16bit, as SSE has superseded MMX.
+		 * 32bit color originally defaulted to "CPP" but can optionally use "MMX" if detected.
+		 * All the other versions have varying levels of optimized code.
 		 */
-	if (m_dwBitDepth == 32)
-		m_nDeltaOptimizationLevel = cpu_has_sse2() ? OL_SSE2 : (GetCPUCaps(HAS_MMX) ? OL_MMX : OL_CPP); // OL_x86 has MMX intrinsics
+	if (cpuid_has_avx2())
+		m_nDeltaOptimizationLevel = OL_AVX2;
+	else if (cpuid_has_sse41())
+		m_nDeltaOptimizationLevel = OL_SSE41;
+	else if (cpuid_has_sse2())
+		m_nDeltaOptimizationLevel = OL_SSE2;
+	else if (GetCPUCaps(HAS_MMX))
+		m_nDeltaOptimizationLevel = OL_MMX;
 	else
-		m_nDeltaOptimizationLevel = OL_x86;
+		m_nDeltaOptimizationLevel = OL_x86; // OL_CPP is unoptimized, but OL_x86 and OL_CPP only use instructions available on x86
 
 
 	SetDrawingAspect(0.0f, false);
 
 	m_visibleX.SetBounds(0.0f, (value_t)(BufferWidth() - 1));
 	m_visibleY.SetBounds(0.0f, (value_t)(BufferHeight() - 1));
-	//    m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
-	//    m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+	//m_visibleX.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
+	//m_visibleY.SetInterval( 0, min(m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight()) );
 
 		/*
 		 * why is this right again?  I need to verify its correctness.
@@ -916,7 +977,13 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 		this->DoDelta_MMX(lpTransitionTable);
 		break;
 	case OL_SSE2:
-		this->DoDelta_SSE(lpTransitionTable);
+		this->DoDelta_SSE2(lpTransitionTable);
+		break;
+	case OL_SSE41:
+		this->DoDelta_SSE41(lpTransitionTable);
+		break;
+	case OL_AVX2:
+		this->DoDelta_AVX2(lpTransitionTable);
 		break;
 	default:  /* what should default do? */
 		break;
@@ -949,12 +1016,32 @@ void BitCanvas::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 /****************************************************************************
  *
- * DoDelta_SSE - default, do MMX
+ * DoDelta_SSE2 - default, do MMX
  *
  ****************************************************************************/
-void BitCanvas::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+void BitCanvas::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_MMX(lpTransitionTable);
+}
+
+/****************************************************************************
+ *
+ * DoDelta_SSE41 - default, do SSE2
+ *
+ ****************************************************************************/
+void BitCanvas::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_SSE2(lpTransitionTable);
+}
+
+/****************************************************************************
+ *
+ * DoDelta_AVX2 - default, do SSE41
+ *
+ ****************************************************************************/
+void BitCanvas::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_SSE41(lpTransitionTable);
 }
 
 
@@ -1634,10 +1721,21 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 	DoDelta_cpp_experiment1(lpTransitionTable);
 }
 
-void BitCanvas8::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+void BitCanvas8::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_SSE2_experiment1(lpTransitionTable);
 }
+
+void BitCanvas8::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment1(lpTransitionTable);
+}
+
+void BitCanvas8::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment1(lpTransitionTable);
+}
+
 
 // IMPLEMENTATIONS:
 
@@ -1963,25 +2061,37 @@ dword_t BitCanvas16::GetPixel(const dword_t pixelOffset)
 
 void BitCanvas16::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 {
-	//DoDelta_cpp_BASELINE_WITH_DECAY_63(lpTransitionTable);
-	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
+	DoDelta_cpp_BASELINE_WITH_DECAY_63(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
-	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
-	DoDelta_SSE2_experiment2(lpTransitionTable);
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
-	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
-	DoDelta_SSE2_experiment5(lpTransitionTable);
+	// Since I will never implement an MMX routine for 16bit color, as SSE2 is a baseline
+	// requirement for Windows x64, I'll use this as a convenient place
+	// for greenshift correction version (for easy reference)
+	DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
 }
 
-void BitCanvas16::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_Intrinsics(lpTransitionTable);
+	DoDelta_SSE2_experiment2(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
+{
+	// Turns out I used an SSE4.1 instruction in experiment5,
+	// so it's time to expand the set of dispatch methods
+	DoDelta_SSE41_experiment5(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment5b(lpTransitionTable);
 }
 
 
@@ -3423,34 +3533,51 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 //    across multiple DWORD lanes at once
 //
 //
-//16-bit Benchmarks
+//16-bit Benchmarks (10,000 iterations)
 //-----------------
 //
 //CPP Baseline      12.2 sec
 //CPP Optimized      8.0 sec
 //
-//SSE2 Exp1          9.4 sec
-//SSE2 Exp2          4.5 sec
-//SSE2 Exp4          5.1 sec
-//SSE2 Exp5          4.5 sec
+//SSE2  Exp1          9.4 sec
+//SSE2  Exp2          4.5 sec
+//SSE2  Exp4          5.1 sec
+//SSE41_Exp5          4.5 sec
+//SSE2  Exp5b         5.5 sec
 //
 //Winner:
-//    Exp2 ~~ Exp5
+//    Exp2 ~equivalent~ Exp5
 //
 //Observation:
 //    Arithmetic design matters less than gather cost.
+//
+// UPDATE: running the tests more, SSE41_Exp5 appears to be slower than Exp2
+//SSE2  Exp2          4.4-4.7 sec (consistently in this range, 4.4, 4.5, 4.7, 4.6)
+//SSE41_Exp5          4.6-5.7 sec (appears to have more variability 4.5, 5.0, 5.7, 4.7, 4.6, even though it often performs similarly)
+//SSE2  Exp5b         4.8-5.9 sec (5.5, 5.9, 4.8 this was consistently slower, until one time it ran 1s faster)
+//
+// Updated Winner: Exp2 (probably) -- !!!BUT I really don't have enough data to call it conclusively!!!
+// Both approaches are competitive, so I could reasonably see optimizing either one a bit more.
+//
+// Sometimes SSE41_Exp5 runs FASTER than SSE2_Exp2
+//		TestBitCanvas16BenchmarkSSE2Exp2  4.7 sec
+//		TestBitCanvas16BenchmarkSSE41Exp5 4.5 sec
 //
 // ---------------------------------------------------------------------
 // Exp5 keeps the original DWORD-packed arithmetic model and
 // performs SIMD operations on packed DWORD lanes.
 //
 // IMPORTANT:
-// This implementation requires 32-bit multiplication
-// (_mm_mullo_epi32). Attempting to use _mm_mullo_epi16
-// corrupts RED and GREEN channel calculations because the
-// packed-domain arithmetic depends on 32-bit lane semantics.
+// This implementation requires 32-bit multiplication.
+// _mm_mullo_epi16() produces incorrect results.
+// Use _mm_mullo_epi32() (SSE4.1) or an equivalent
+// 32-bit multiplication sequence.
 //
-void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
+// Attempting to use _mm_mullo_epi16 corrupts RED and GREEN
+// channel calculations because the packed-domain arithmetic
+// depends on 32-bit lane semantics.
+//
+void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 {
 	const dword_t bufferLength =
 		m_dwBufferWidth * m_dwBufferHeight;
@@ -3529,8 +3656,8 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 
 		red =
 			//_mm_mullo_epi16(red, decay63);     // likely needs work
-			//_mm_mul_epu32(red, decay63x32);
-			_mm_mullo_epi32(red, decay63);
+			//_mm_mul_epu32(red, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+			_mm_mullo_epi32(red, decay63); // Requires SSE4.1
 
 		red =
 			_mm_srli_epi32(red, 6);
@@ -3556,8 +3683,8 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 
 		green =
 			//_mm_mullo_epi16(green, decay63);   // likely needs work
-			//_mm_mul_epu32(green, decay63x32);
-			_mm_mullo_epi32(green, decay63);
+			//_mm_mul_epu32(green, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+			_mm_mullo_epi32(green, decay63); // Requires SSE4.1
 
 		green =
 			_mm_srli_epi32(green, 8);
@@ -3583,8 +3710,8 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 
 		blue =
 			//_mm_mullo_epi16(blue, decay63);    // likely needs work
-			//_mm_mul_epu32(blue, decay63x32);
-			_mm_mullo_epi32(blue, decay63);
+			//_mm_mul_epu32(blue, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+			_mm_mullo_epi32(blue, decay63); // Requires SSE4.1
 
 		blue =
 			_mm_srli_epi32(blue, 8);
@@ -3668,6 +3795,263 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 	}
 }
 
+/****************************************************************************
+ * @brief Emulates _mm_mullo_epi32 using only SSE2 instructions.
+ *
+ * SSE2 provides _mm_mul_epu32(), but it only multiplies the even-numbered
+ * 32-bit lanes (0 and 2), producing 64-bit results.
+ *
+ * This routine performs two _mm_mul_epu32() operations to compute both
+ * the even and odd lane products, extracts the low 32 bits from each
+ * 64-bit result, and restores the original lane ordering.
+ *
+ * Equivalent to:
+ *
+ *     _mm_mullo_epi32(a, b)
+ *
+ * but does not require SSE4.1 support.
+ *
+ * Used by SSE2 variants of packed-DWORD SIMD experiments.
+ ****************************************************************************/
+static inline __m128i mullo_epi32_emulated_sse2(__m128i a, __m128i b)
+{
+	// Multiply lanes 0 and 2.
+	__m128i even = _mm_mul_epu32(a, b);
+
+	// Shift lanes 1 and 3 into positions 0 and 2, then multiply them.
+	__m128i odd = _mm_mul_epu32(_mm_srli_si128(a, 4),
+		_mm_srli_si128(b, 4));
+
+	// Keep the low 32 bits of each 64-bit product.
+	even = _mm_shuffle_epi32(even, _MM_SHUFFLE(2, 0, 2, 0));
+	odd = _mm_shuffle_epi32(odd, _MM_SHUFFLE(2, 0, 2, 0));
+
+	// Interleave to restore lane order: 0, 1, 2, 3.
+	return _mm_unpacklo_epi32(even, odd);
+}
+
+//
+// Experiment 5B
+//
+// Revisit Experiment 5 using only SSE2 instructions.
+//
+// The original packed-domain SIMD implementation ultimately
+// required _mm_mullo_epi32() (SSE4.1) for correct packed DWORD
+// arithmetic. This variant investigates whether equivalent
+// behavior can be achieved efficiently using SSE2-only
+// instruction sequences.
+//
+void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	const __m128i redMask =
+		_mm_set1_epi32(0xF800F800);
+
+	const __m128i greenMask =
+		_mm_set1_epi32(0x07E007E0);
+
+	const __m128i blueMask =
+		_mm_set1_epi32(0x001F001F);
+
+	const __m128i decay63 =
+		_mm_set1_epi32(63);
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 3 < m_dwBufferLength)
+	{
+		dword_t s0 =
+			lpTransitionTable[destPixelOffset + 0];
+
+		dword_t s1 =
+			lpTransitionTable[destPixelOffset + 1];
+
+		dword_t s2 =
+			lpTransitionTable[destPixelOffset + 2];
+
+		dword_t s3 =
+			lpTransitionTable[destPixelOffset + 3];
+
+		dword_t s30 = s0 + m_dwBufferWidth;
+		dword_t s31 = s1 + m_dwBufferWidth;
+		dword_t s32 = s2 + m_dwBufferWidth;
+		dword_t s33 = s3 + m_dwBufferWidth;
+
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12 =
+			_mm_set_epi32(
+				*(dword_t*)&m_pReadBuffer16[s3],
+				*(dword_t*)&m_pReadBuffer16[s2],
+				*(dword_t*)&m_pReadBuffer16[s1],
+				*(dword_t*)&m_pReadBuffer16[s0]);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34 =
+			_mm_set_epi32(
+				*(dword_t*)&m_pReadBuffer16[s33],
+				*(dword_t*)&m_pReadBuffer16[s32],
+				*(dword_t*)&m_pReadBuffer16[s31],
+				*(dword_t*)&m_pReadBuffer16[s30]);
+
+		//
+		// RED
+		//
+		__m128i redLow =
+			_mm_add_epi32(
+				_mm_srli_epi32(
+					_mm_and_si128(src12, redMask),
+					2),
+				_mm_srli_epi32(
+					_mm_and_si128(src34, redMask),
+					2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
+
+
+		__m128i redHi =
+			_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
+
+		__m128i red =
+			_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+		red =
+			mullo_epi32_emulated_sse2(red, decay63); // SSE2; _mm_mul_epu32 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+
+		red =
+			_mm_srli_epi32(red, 6);
+
+		red =
+			_mm_and_si128(
+				red,
+				_mm_set1_epi32(0x0000F800));
+
+		//
+		// GREEN
+		//
+		__m128i greenLow =
+			_mm_add_epi32(
+				_mm_and_si128(src12, greenMask),
+				_mm_and_si128(src34, greenMask));
+
+		__m128i greenHi =
+			_mm_srli_epi32(greenLow, 16);
+
+		__m128i green =
+			_mm_add_epi32(greenLow, greenHi);
+
+		green =
+			mullo_epi32_emulated_sse2(green, decay63); // SSE2; _mm_mul_epu32 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+
+		green =
+			_mm_srli_epi32(green, 8);
+
+		green =
+			_mm_and_si128(
+				green,
+				_mm_set1_epi32(0x000007E0));
+
+		//
+		// BLUE
+		//
+		__m128i blueLow =
+			_mm_add_epi32(
+				_mm_and_si128(src12, blueMask),
+				_mm_and_si128(src34, blueMask));
+
+		__m128i blueHi =
+			_mm_srli_epi32(blueLow, 16);
+
+		__m128i blue =
+			_mm_add_epi32(blueLow, blueHi);
+
+		blue =
+			mullo_epi32_emulated_sse2(blue, decay63); // SSE2; _mm_mul_epu32 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+
+		blue =
+			_mm_srli_epi32(blue, 8);
+
+		blue =
+			_mm_and_si128(
+				blue,
+				_mm_set1_epi32(0x0000001F));
+
+		//
+		// Pack final RGB565 values.
+		//
+		__m128i result =
+			_mm_or_si128(
+				_mm_or_si128(red, green),
+				blue);
+
+		alignas(16) dword_t temp[4];
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(temp),
+			result);
+
+		m_pWriteBuffer16[destPixelOffset + 0] =
+			static_cast<word_t>(temp[0]);
+
+		m_pWriteBuffer16[destPixelOffset + 1] =
+			static_cast<word_t>(temp[1]);
+
+		m_pWriteBuffer16[destPixelOffset + 2] =
+			static_cast<word_t>(temp[2]);
+
+		m_pWriteBuffer16[destPixelOffset + 3] =
+			static_cast<word_t>(temp[3]);
+
+		destPixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[destPixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[destPixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++destPixelOffset;
+	}
+}
 
 //Exp1
 //-----
@@ -3696,7 +4080,7 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 //-----
 //4.5 sec
 //Valid
-//Roughly the same as Exp2...
+//Roughly the same as Exp2... but additional tests make me unsure. Exp5 seems to have a lot more variability
 // ...
 // ...even though the algorithm is completely different:
 //Exp2: -- direct vector construction(_mm_set_epi16)
@@ -3741,195 +4125,7 @@ void BitCanvas16::DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable)
 // Human created TBD. See if I can do better once I learn from what the AI tries.
 void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
 {
-	const dword_t bufferLength =
-		m_dwBufferWidth * m_dwBufferHeight;
-
-	const __m128i redMask =
-		_mm_set1_epi16(_REDMASK16);
-
-	const __m128i greenMask =
-		_mm_set1_epi16(_GREENMASK16);
-
-	const __m128i blueMask =
-		_mm_set1_epi16(_BLUEMASK16);
-
-	const __m128i decay63 =
-		_mm_set1_epi16(63);
-
-	dword_t pixelOffset = 0;
-
-	while (pixelOffset + 7 < bufferLength)
-	{
-		dword_t p[8];
-		dword_t p3[8];
-
-		for (int i = 0; i < 8; ++i)
-		{
-			p[i] =
-				lpTransitionTable[pixelOffset + i];
-
-			p3[i] =
-				p[i] + m_dwBufferWidth;
-		}
-
-		const __m128i a =
-			_mm_set_epi16(
-				m_pReadBuffer16[p[7]],
-				m_pReadBuffer16[p[6]],
-				m_pReadBuffer16[p[5]],
-				m_pReadBuffer16[p[4]],
-				m_pReadBuffer16[p[3]],
-				m_pReadBuffer16[p[2]],
-				m_pReadBuffer16[p[1]],
-				m_pReadBuffer16[p[0]]);
-
-		const __m128i b =
-			_mm_set_epi16(
-				m_pReadBuffer16[p[7] + 1],
-				m_pReadBuffer16[p[6] + 1],
-				m_pReadBuffer16[p[5] + 1],
-				m_pReadBuffer16[p[4] + 1],
-				m_pReadBuffer16[p[3] + 1],
-				m_pReadBuffer16[p[2] + 1],
-				m_pReadBuffer16[p[1] + 1],
-				m_pReadBuffer16[p[0] + 1]);
-
-		const __m128i c =
-			_mm_set_epi16(
-				m_pReadBuffer16[p3[7]],
-				m_pReadBuffer16[p3[6]],
-				m_pReadBuffer16[p3[5]],
-				m_pReadBuffer16[p3[4]],
-				m_pReadBuffer16[p3[3]],
-				m_pReadBuffer16[p3[2]],
-				m_pReadBuffer16[p3[1]],
-				m_pReadBuffer16[p3[0]]);
-
-		const __m128i d =
-			_mm_set_epi16(
-				m_pReadBuffer16[p3[7] + 1],
-				m_pReadBuffer16[p3[6] + 1],
-				m_pReadBuffer16[p3[5] + 1],
-				m_pReadBuffer16[p3[4] + 1],
-				m_pReadBuffer16[p3[3] + 1],
-				m_pReadBuffer16[p3[2] + 1],
-				m_pReadBuffer16[p3[1] + 1],
-				m_pReadBuffer16[p3[0] + 1]);
-
-		__m128i r =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, redMask),
-						REDSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(d, redMask),
-						REDSHIFT16)));
-
-		__m128i g =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, greenMask),
-						GREENSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, greenMask),
-						GREENSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, greenMask),
-						GREENSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(d, greenMask),
-						GREENSHIFT16)));
-
-		__m128i bl =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_and_si128(a, blueMask),
-					_mm_and_si128(b, blueMask)),
-				_mm_add_epi16(
-					_mm_and_si128(c, blueMask),
-					_mm_and_si128(d, blueMask)));
-
-		r = _mm_srli_epi16(
-			_mm_mullo_epi16(r, decay63),
-			8);
-
-		g = _mm_srli_epi16(
-			_mm_mullo_epi16(g, decay63),
-			8);
-
-		bl = _mm_srli_epi16(
-			_mm_mullo_epi16(bl, decay63),
-			8);
-
-		r = _mm_slli_epi16(r, REDSHIFT16);
-		g = _mm_slli_epi16(g, GREENSHIFT16);
-
-		const __m128i result =
-			_mm_or_si128(
-				_mm_or_si128(r, g),
-				bl);
-
-		_mm_storeu_si128(
-			reinterpret_cast<__m128i*>(
-				&m_pWriteBuffer16[pixelOffset]),
-			result);
-
-		pixelOffset += 8;
-	}
-
-	//
-	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
-	//
-	while (pixelOffset < bufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[pixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[pixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++pixelOffset;
-	}
+	DoDelta_SSE2_experiment2(lpTransitionTable);
 }
 
 /****************************************************************************
@@ -4138,10 +4334,22 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 }
 #endif
 
-void BitCanvas32::DoDelta_SSE(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
+{
+	//DoDelta_SSE2_experiment1_FIXED(lpTransitionTable);
+	DoDelta_SSE2_Intrinsics_FIXED(lpTransitionTable);
+}
+
+void BitCanvas32::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_SSE2_Intrinsics_FIXED(lpTransitionTable);
 }
+
+void BitCanvas32::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_Intrinsics_FIXED(lpTransitionTable);
+}
+
 
 // IMPLEMENTATIONS:
 

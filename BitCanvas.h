@@ -33,9 +33,9 @@
 #include "ColorUtils.hpp"
 #include "DeltaField.h"
 #include "DeltaTween.h"
+#include "MyDictionary.h"
 #include "Expression.h"
 #include "Interval.h"
-#include "MyDictionary.h"
 #include "Palette.h"
 #include "TweenThread.h"
 
@@ -292,7 +292,52 @@ public:
 	/*
 	 * Optimization Level Type
 	 */
-	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2 } opt_level_t;
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE41, OL_AVX2 } opt_level_t;
+	// https://en.wikipedia.org/wiki/List_of_x86_SIMD_instructions
+	//
+	// 1996 MMX:
+	//	- Added 64-bit SIMD operations, mainly for packed integer data. It shares registers with the x87 floating-point unit.
+	//
+	// 1998 3DNow!
+	//	- instruction set also added single precision floating point math;
+	//
+	// 1999 SSE:
+	//	- Added 128-bit vector registers and packed single-precision floating-point operations, plus some integer and data-movement instructions
+	//	- primarily focused on floating point, single precision, so may have limited application to my code after all.
+	//
+	// 2001 SSE2:
+	//	- Extends SSE with integer operations.
+	//	- Can largely replace MMX for integer SIMD work.
+	//	- Required by x86-64. (VERY GOOD CANDIDATE FOR REQUIRED BASELINE FOR GREENSHIFT)
+	//
+	// 2004 SSE3:
+	//	- Added instructions for horizontal operations, complex-number arithmetic, and other improvements to SSE/SSE2
+	//
+	// 2006 SSSE3:
+	//	-Added 16 instructions, notably byte shuffles and integer operations useful for packed-data processing.
+	//
+	// SSE4 -- An umbrella name for SSE4.1 and SSE4.2.
+	//
+	// 2007 SSE4.1:
+	//	- added integer and floating-point operations such as dot products and blends
+	//
+	// 2008 SSE4.2:
+	//	- added string-comparison and CRC instructions
+	//
+	// in 2010 AMD announced its plan to drop support for the 3DNow! instruction set in
+	// future processors, with the exception of PREFETCH and PREFETCHW;
+	// Prefetch at least a 32-byte line into L1 data cache.
+	//
+	// 2011 AVX:
+	//	- Widened floating-point SIMD operations to 256 bits and introduced a new instruction encoding.
+	//
+	// 2013 AVX2:
+	//	- Extended 256-bit AVX with broad integer SIMD support, along with additional operations such as gathers.
+	//
+	// 2016-2017 AVX-512:
+	//	- A family of extensions supporting 512-bit vectors, masking, and other capabilities.
+	//	- It has multiple optional subsets, so support for AVX-512 does not imply every AVX-512 feature is present.
+	//
 
 
 	BitCanvas(const dword_t dwWidth,
@@ -586,14 +631,16 @@ protected:
 		const word_t pixel_width,
 		const byte_t color) = 0;
 
-	virtual void    DoDelta_cpp(const PIXELMAP* lpTransitionTable) = 0;
-	virtual void    DoDelta_x86(const PIXELMAP* lpTransitionTable);
-	virtual void    DoDelta_MMX(const PIXELMAP* lpTransitionTable);
-	virtual void    DoDelta_SSE(const PIXELMAP* lpTransitionTable);
-	virtual void    CopyTo8(void* lpSurface, const dword_t nDeadSpace) = 0;
-	virtual void    CopyTo16(void* lpSurface, const dword_t nDeadSpace) = 0;
-	virtual void    CopyTo24(void* lpSurface, const dword_t nDeadSpace) = 0;
-	virtual void    CopyTo32(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void	DoDelta_cpp(const PIXELMAP* lpTransitionTable) = 0;
+	virtual void	DoDelta_x86(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_MMX(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_SSE2(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_SSE41(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_AVX2(const PIXELMAP* lpTransitionTable);
+	virtual void	CopyTo8(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void	CopyTo16(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void	CopyTo24(void* lpSurface, const dword_t nDeadSpace) = 0;
+	virtual void	CopyTo32(void* lpSurface, const dword_t nDeadSpace) = 0;
 
 
 
@@ -793,7 +840,9 @@ protected:
 	virtual void			DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_SSE2( const PIXELMAP* lpTransitionTable ) override;
+	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
@@ -833,7 +882,9 @@ public:
 	virtual void			DoDelta_cpp(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
-	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_SSE2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
@@ -848,7 +899,8 @@ public:
 	void					DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_SSE2_experiment5(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
+	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
@@ -888,7 +940,10 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
-	virtual void			DoDelta_SSE( const PIXELMAP *lpTransitionTable ) override;
+	virtual void			DoDelta_SSE2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
+
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);

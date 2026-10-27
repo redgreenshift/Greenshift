@@ -1039,6 +1039,12 @@ void    Greenshift::UpdateDisplayText(void)
 		case BitCanvas::OL_SSE2:
 			optLevel = { "SSE2" };
 			break;
+		case BitCanvas::OL_SSE41:
+			optLevel = { "SSE4.1" };
+			break;
+		case BitCanvas::OL_AVX2:
+			optLevel = { "AVX2" };
+			break;
 		}
 
 		std::string engineStats = std::format("{1}x{2}, {0}-bit", m_pBitCanvas->BitDepth(), m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight());
