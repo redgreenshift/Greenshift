@@ -2916,6 +2916,154 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
 }
 
 
+// SIMD Experiment Lineage
+//
+// Exp1 = temporary gather arrays
+// Exp2 = direct vector construction (_mm_set_epi16)
+// Exp3 = skipped / superseded after disassembly review
+// Exp4 = 4-pixel SSE2 variant
+//
+// Exp5 = packed-DWORD SIMD
+//        (my original DWORD pseudo-SIMD algorithm from
+//         DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+//         but parallelized into 32-bit SIMD lanes)
+
+/****************************************************************************
+ *
+ * SIMD Experiments and Benchmark Notes
+ * ====================================
+ *
+ * Motivation
+ * ----------
+ *
+ * The goal of these experiments is to determine whether SIMD can
+ * outperform the existing scalar implementation:
+ *
+ *     DoDelta_cpp_OPTIMIZED_WITH_DECAY_63()
+ *
+ * while remaining bit-for-bit equivalent to the baseline algorithm.
+ *
+ *
+ * Benchmark Results
+ * -----------------
+ *
+ * 10,000 iteration benchmark:
+ *
+ * Scalar reference implementations:
+ *
+ *     CPP Baseline        ~11.8 sec
+ *     CPP Optimized       ~ 7.7 sec
+ *
+ * SIMD experiments:
+ *
+ *     SSE2  Exp1          ~ 9.4 sec
+ *     SSE2  Exp4          ~ 5.3 sec
+ *
+ *     SSE2  Exp2          ~ 4.4 - 4.8 sec
+ *     SSE2  Exp5b         ~ 4.3 - 4.4 sec
+ *     SSE41 Exp5          ~ 4.0 - 4.6 sec
+ *
+ *
+ * Experiment Summary
+ * ------------------
+ *
+ * Exp1:
+ *     Initial SSE2 implementation using temporary gather arrays.
+ *
+ * Exp2:
+ *     Conventional SIMD approach.
+ *
+ *         Gather WORD pixels
+ *         Expand RGB565 channels
+ *         SIMD channel math
+ *         Repack RGB565
+ *
+ * Exp3:
+ *     Skipped after disassembly review. The compiler had already
+ *     optimized much of the intended work.
+ *
+ * Exp4:
+ *     Reduced SIMD width from 8 output pixels to 4.
+ *
+ *     Result:
+ *         Slower than Exp2.
+ *
+ * Exp5:
+ *     Packed-Domain SIMD implementation.
+ *
+ *         Gather packed DWORD p1|p2
+ *         Gather packed DWORD p3|p4
+ *         Apply packed-domain arithmetic
+ *         Store packed RGB565 results
+ *
+ *     This preserves the arithmetic structure used by
+ *     DoDelta_cpp_OPTIMIZED_WITH_DECAY_63().
+ *
+ *     The packed-domain strategy originated around 2000-2001 as a
+ *     way to reduce memory access by performing pseudo-SIMD
+ *     operations on two WORDs packed inside a DWORD.
+ *
+ *
+ * Key Findings
+ * ------------
+ *
+ * - Exp2 and Exp5 achieve similar performance despite using
+ *   fundamentally different approaches.
+ *
+ * - Exp2 performs conventional channel expansion, arithmetic,
+ *   and repacking.
+ *
+ * - Exp5 preserves my original packed-DWORD arithmetic model
+ *   strategy used in DoDelta_cpp_OPTIMIZED_WITH_DECAY_63, and
+ *   applies it across SIMD lanes. 
+ *
+ * - My original packed-DWORD optimization strategy translates
+ *   surprisingly well to SIMD. My 25-year-old DWORD trick
+ *   to do Packed Domain math still helps!
+ *
+ * - Early Exp5 measurements were misleading because the first
+ *   implementation extracted and stored individual pixels.
+ *
+ * - Replacing the store path with:
+ *
+ *         _mm_packus_epi32()
+ *         _mm_storel_epi64()
+ *
+ *   reduced instruction count substantially and improved
+ *   performance.
+ *
+ * - The original packed-DWORD strategy remains competitive even
+ *   when compared against a more conventional SIMD approach.
+ *
+ *
+ * Current Assessment
+ * ------------------
+ *
+ * Exp2:
+ *     - Simpler and more conventional.
+ *     - Generated assembly appears highly optimized.
+ *     - Consistently performs well.
+ *
+ * Exp5:
+ *     - Slightly faster in some benchmark runs.
+ *     - Preserves the packed-domain arithmetic strategy.
+ *     - May have additional optimization headroom.
+ *
+ * Benchmark variance is currently large enough that no definitive
+ * winner should be declared between Exp2 and Exp5.
+ *
+ *
+ * Future Investigation
+ * --------------------
+ *
+ * - Aligned writes and wider SIMD batching.
+ * - Gather/construction bottlenecks.
+ * - Additional Exp2 vs Exp5 assembly analysis.
+ * - AVX2 implementations.
+  *
+  ****************************************************************************/
+
+
 // AI Assisted, baseline SSE2 implementation just to determine what we're working with.
 void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 {
@@ -3298,12 +3446,6 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 }
 
 
-//Exp1 = temp arrays
-//Exp2 = direct vector construction(_mm_set_epi16)
-//Exp3 = skipped / superseded after disassembly review
-//Exp4 = 4 - pixel SSE2 variant
-//Exp5 = old DWORD pseudo - SIMD concept inside SSE2
-
 // AI Assisted. Work in Progress. Attempting to improve upon Round2
 // Reduce the number of gathers. -- Parallelize reads by using DWORDs instead of multiple WORDs
 // SKIPPED/ABANDONED this idea after further review. The optimizer already largely does what
@@ -3520,63 +3662,42 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 //
 // Packed-Domain Exp5 code
 //
-//Exp2:
-//    Gather WORD pixels
-//    Expand to RGB channels
-//    SIMD channel math
-//    Repack
-//
-//Exp5:
-//    Gather DWORD p1|p2
-//    Gather DWORD p3|p4
-//    Apply the existing packed-domain algorithm
-//    across multiple DWORD lanes at once
-//
-//
-//16-bit Benchmarks (10,000 iterations)
-//-----------------
-//
-//CPP Baseline      12.2 sec
-//CPP Optimized      8.0 sec
-//
-//SSE2  Exp1          9.4 sec
-//SSE2  Exp2          4.5 sec
-//SSE2  Exp4          5.1 sec
-//SSE41_Exp5          4.5 sec
-//SSE2  Exp5b         5.5 sec
-//
-//Winner:
-//    Exp2 ~equivalent~ Exp5
-//
-//Observation:
-//    Arithmetic design matters less than gather cost.
-//
-// UPDATE: running the tests more, SSE41_Exp5 appears to be slower than Exp2
-//SSE2  Exp2          4.4-4.7 sec (consistently in this range, 4.4, 4.5, 4.7, 4.6)
-//SSE41_Exp5          4.6-5.7 sec (appears to have more variability 4.5, 5.0, 5.7, 4.7, 4.6, even though it often performs similarly)
-//SSE2  Exp5b         4.8-5.9 sec (5.5, 5.9, 4.8 this was consistently slower, until one time it ran 1s faster)
-//
-// Updated Winner: Exp2 (probably) -- !!!BUT I really don't have enough data to call it conclusively!!!
-// Both approaches are competitive, so I could reasonably see optimizing either one a bit more.
-//
-// Sometimes SSE41_Exp5 runs FASTER than SSE2_Exp2
-//		TestBitCanvas16BenchmarkSSE2Exp2  4.7 sec
-//		TestBitCanvas16BenchmarkSSE41Exp5 4.5 sec
-//
-// ---------------------------------------------------------------------
-// Exp5 keeps the original DWORD-packed arithmetic model and
-// performs SIMD operations on packed DWORD lanes.
-//
-// IMPORTANT:
-// This implementation requires 32-bit multiplication.
-// _mm_mullo_epi16() produces incorrect results.
-// Use _mm_mullo_epi32() (SSE4.1) or an equivalent
-// 32-bit multiplication sequence.
-//
-// Attempting to use _mm_mullo_epi16 corrupts RED and GREEN
-// channel calculations because the packed-domain arithmetic
-// depends on 32-bit lane semantics.
-//
+
+/****************************************************************************
+ * @brief SIMD implementation of my original packed-DWORD optimization.
+ *
+ * Experiment5 preserves the Packed-Domain arithmetic structure used by
+ * DoDelta_cpp_OPTIMIZED_WITH_DECAY_63 and applies it across SIMD lanes.
+ *
+ * Unlike Exp2, which expands RGB565 pixels into separate color channels,
+ * Exp5 keeps pixel pairs packed inside DWORDs and performs the original
+ * packed-domain arithmetic using SIMD operations.
+ *
+ * Comparison:
+ *
+ *     Exp2:
+ *         Gather WORD pixels
+ *         Expand RGB565 channels
+ *         SIMD channel math
+ *         Repack RGB565
+ *
+ *     Exp5:
+ *         Gather packed DWORD p1|p2
+ *         Gather packed DWORD p3|p4
+ *         Apply my old packed-domain algorithm across multiple DWORD lanes at once
+ *         Store packed RGB565 result
+ *
+ * IMPORTANT:
+ *
+ * Exp5 depends on 32-bit multiplication semantics.
+ *
+ * Using _mm_mullo_epi16() produces incorrect RED and GREEN channel
+ * calculations because the packed-domain arithmetic operates on
+ * DWORD lanes.
+ *
+ * This implementation therefore requires _mm_mullo_epi32()
+ * (SSE4.1) or an equivalent 32-bit SSE2 emulation sequence.
+ ****************************************************************************/
 void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 {
 	const dword_t bufferLength =
@@ -3729,23 +3850,12 @@ void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 				_mm_or_si128(red, green),
 				blue);
 
-		alignas(16) dword_t temp[4];
+		__m128i packed16Result =
+			_mm_packus_epi32(result, _mm_setzero_si128());
 
-		_mm_store_si128(
-			reinterpret_cast<__m128i*>(temp),
-			result);
-
-		m_pWriteBuffer16[destPixelOffset + 0] =
-			static_cast<word_t>(temp[0]);
-
-		m_pWriteBuffer16[destPixelOffset + 1] =
-			static_cast<word_t>(temp[1]);
-
-		m_pWriteBuffer16[destPixelOffset + 2] =
-			static_cast<word_t>(temp[2]);
-
-		m_pWriteBuffer16[destPixelOffset + 3] =
-			static_cast<word_t>(temp[3]);
+		_mm_storel_epi64(
+			(__m128i*)& m_pWriteBuffer16[destPixelOffset],
+			packed16Result);
 
 		destPixelOffset += 4;
 	}
@@ -3987,23 +4097,12 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 				_mm_or_si128(red, green),
 				blue);
 
-		alignas(16) dword_t temp[4];
+		__m128i packed16Result =
+			_mm_packus_epi32(result, _mm_setzero_si128());
 
-		_mm_store_si128(
-			reinterpret_cast<__m128i*>(temp),
-			result);
-
-		m_pWriteBuffer16[destPixelOffset + 0] =
-			static_cast<word_t>(temp[0]);
-
-		m_pWriteBuffer16[destPixelOffset + 1] =
-			static_cast<word_t>(temp[1]);
-
-		m_pWriteBuffer16[destPixelOffset + 2] =
-			static_cast<word_t>(temp[2]);
-
-		m_pWriteBuffer16[destPixelOffset + 3] =
-			static_cast<word_t>(temp[3]);
+		_mm_storel_epi64(
+			(__m128i*)& m_pWriteBuffer16[destPixelOffset],
+			packed16Result);
 
 		destPixelOffset += 4;
 	}
@@ -4053,73 +4152,6 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 	}
 }
 
-//Exp1
-//-----
-//9.0 sec
-//
-//Exp2
-//-----
-//4.4 sec
-//Current Champion
-//
-//Exp3
-//-----
-//Skipped after disassembly review.
-//Compiler already optimized much of the transition-table handling.
-//
-//Exp4
-//-----
-//5.0 sec
-//Valid
-//But slower than Exp2
-//
-//Conclusion:
-//Keep Exp2
-//
-//Exp5 -- Packed Domain
-//-----
-//4.5 sec
-//Valid
-//Roughly the same as Exp2... but additional tests make me unsure. Exp5 seems to have a lot more variability
-// ...
-// ...even though the algorithm is completely different:
-//Exp2: -- direct vector construction(_mm_set_epi16)
-//    Gather WORD pixels
-//    Expand to RGB channels
-//    SIMD channel math
-//    Repack
-//
-//Exp5: -- Packed-Domain, performing pseudo SIMD operations on two WORDs packed in a DWORD (the idea I used in ~2000/2001)
-//    Gather DWORD p1|p2
-//    Gather DWORD p3|p4
-//    Apply the existing packed-domain algorithm
-//    across multiple DWORD lanes at once
-//
-// RE RUNNING the benchmark, and measuring in milliseconds:
-//Exp2: 4522.120117
-//Exp5: 4539.915039
-//
-// That's a difference of 17ms, which is noise. That's fascinating that two completely different approaches are so similar in time.
-// They're basically eqivalent, right now. Even though Exp2 tends to be ever so slightly faster in benchmarks, I'm not willing to call it yet.
-//
-// The question is really, "which one do we think we can optimize more?" Or rather: "continue optimizing/experimenting with BOTH!!"
-
-
-//Exp2 and Exp5 arrive at almost identical performance using completely different mental models:
-//
-//Exp2
-//Unpack channels
-//SIMD channel math
-//Repack
-//Exp5
-//Preserve packed DWORD structure
-//SIMD packed-domain math
-//
-//Yet they converge to almost the same runtime.
-//
-// Which probably means the bottleneck is probably still gather construction, not arithmetic.
-// This packed-domain approach was used in DoDelta_cpp_OPTIMIZED_WITH_DECAY_63 to reduce the memory reads and writes.
-// It's interesting that it still works so well in SSE2 code.
 
 
 // Human created TBD. See if I can do better once I learn from what the AI tries.
