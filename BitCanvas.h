@@ -889,20 +889,18 @@ public:
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_BASELINE_WITH_DECAY(const PIXELMAP* lpTransitionTable, dword_t decayNumerator, dword_t decayDenominator);
-	void					DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
-	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
+	void					DoDelta_AVX2_experiment7(const PIXELMAP* lpTransitionTable);
 	inline __m128i ComputeExp5Result(
 		const PIXELMAP* lpTransitionTable,
 		dword_t destPixelOffset);

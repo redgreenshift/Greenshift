@@ -2091,7 +2091,7 @@ void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment5b(lpTransitionTable);
+	DoDelta_AVX2_experiment7(lpTransitionTable);
 }
 
 
@@ -2134,7 +2134,7 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
 		m_pWriteBuffer16[pixelOffset] =
 			RGB16(
 				((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) DECAY16),
-				((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) DECAY16),// & ~0x1, //16bit greenshift correction (probably bad/invalid idea)
+				((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) DECAY16),
 				((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) DECAY16)
 			);
 
@@ -2150,53 +2150,18 @@ void BitCanvas16::DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTabl
  *
  * pre: delta fields are precalculated
  *
- * Faster decay to black. Unsure if I like. NEED to numerically compare to
- * 8bit grayscale, and decide the ideal 16 (and 32bit) decay values
+ * Decay to black, same value as 32bit (which may take longer and therefore not look the same).
+ *
+ * Numerically compared to 8bit grayscale, with the idea that the "ideal" 16bit (and 32bit)
+ * decay values would produce the same rate. It turns out that's impossible in 16bit.
  *
  * NOTE: 8bit takes around 190 frames to decay to black (at 127/128 decay).
  * 16bit takes a MAXIMUM of 62 frames to decay to black.
  * There is no benefit to use a smaller decay like 1023/1024, as it decays
- * at the same rate as 63/64. Furthermore, the decay is identical to subtracting 1
- * before dividing by 4 for the average, which presents an optimization opportunity.
+ * at the same rate as 63/64, the slowest decay ratio possible given RGB565 bit precision.
+ * Furthermore, this decay is identical to subtracting 1 before dividing by
+ * 4 for the average, which presents an optimization opportunity.
  * If substraction produces the same result, then why multiply at all?
- *
- ****************************************************************************/
-void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_31(const PIXELMAP* lpTransitionTable)
-{
-	dword_t  pixelOffset = 0;
-	dword_t  pixel, pixel3;
-	word_t   p1, p2, p3, p4;
-	dword_t  bufferLength = m_dwBufferWidth * m_dwBufferHeight;
-
-	do
-	{
-		pixel = lpTransitionTable[pixelOffset];
-		pixel3 = pixel + m_dwBufferWidth;
-		p1 = m_pReadBuffer16[pixel];
-		p2 = m_pReadBuffer16[pixel + 1];
-		p3 = m_pReadBuffer16[pixel3];
-		p4 = m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[pixelOffset] =
-			RGB16(
-				((RFromRGB16(p1) + RFromRGB16(p2) + RFromRGB16(p3) + RFromRGB16(p4)) * 31 >> 7),
-				((GFromRGB16(p1) + GFromRGB16(p2) + GFromRGB16(p3) + GFromRGB16(p4)) * 31 >> 7),
-				((BFromRGB16(p1) + BFromRGB16(p2) + BFromRGB16(p3) + BFromRGB16(p4)) * 31 >> 7)
-			);
-
-		pixelOffset++;
-	} while (pixelOffset < bufferLength);
-}
-
-/****************************************************************************
- * @brief This is a baseline/REFERENCE implementation of the straightforward
- * algorithm for 16bit color.
- *
- * I expect to use one of the more optimized implementations.
- *
- * pre: delta fields are precalculated
- *
- * Decay to black, same value as 32bit (which may take longer and therefore not look the same).
  *
  * VERIFIED ACCURATE.
  ****************************************************************************/
@@ -2235,7 +2200,9 @@ void BitCanvas16::DoDelta_cpp_BASELINE_WITH_DECAY_63(const PIXELMAP* lpTransitio
  *
  * pre: delta fields are precalculated
  *
- * Decay to black, same as 32bit.
+ * 31/32 would decay faster to black. Unsure if I like. Want to more
+ * closely match the 8bit fade curve, which would be slower than 63/64,
+ * but that doesn't seem feasible.
  *
  * NOTE: Just for testing and experimentation, NOT for production use!
  *
@@ -2765,168 +2732,22 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 	} while (destPixelOffset < m_dwBufferLength);
 }
 
-/****************************************************************************
- *
- * @brief EXPERIMENTAL, place to explore potential 16bit optimizations;
- * NOT actually tied to MMX intrinsics/assembly;
- * do not use as default without testing/measuring.
- *
- * pre: delta fields are precalculated
- *
- * I think the intention was to remove the decay, but try to combat the "greenshift" effect
- * a different way, which could mean 16bit could run as fast as the BASELINE
- *
- ****************************************************************************/
-void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(const PIXELMAP* lpTransitionTable)
-{
-	dword_t  destPixelOffset = 0;  /* initialize destination pixel offset */
-	dword_t  srcPixelOffset, srcPixelOffset3;
-	dword_t  srcPixel12, srcPixel34;
-	dword_t  redHi, redLow;
-	dword_t  greenHi, greenLow;
-	dword_t  blueHi, blueLow;
-	dword_t  destPixel;
-
-	/*
-	 * the source pixel actually consists of 4 pixels, the RGB components of
-	 * which must be averaged to find the value for the destination pixel.
-	 *
-	 * the 4 pixels are numbered as follows:
-	 *     p1 | p2
-	 *     ---+---
-	 *     p3 | p4
-	 *
-	 *  p1 and p3 are considered the high pixels
-	 *  p2 and p4 are the low pixels, since they are stored in the high order
-	 *  bits and low order bits of a DWORD respectively.
-	 *
-	 * the below code may be a little confusing, because of the way I acquire
-	 * the pixel values, and then average them.
-	 *
-	 * Exploiting the fact memory reads access 32 bits of
-	 * information, and each pixel is 16 bits, the code is written to read in
-	 * two pixels using a single memory read.  Memory access is one of the
-	 * slowest operations, so any reduction in those operations can
-	 * potentially speed things up significantly.
-	 *
-	 * Another optimization was using "clever data structure" to use
-	 * 2 additions to perform the work of 3 additions
-	 */
-	do
-	{
-		srcPixelOffset = lpTransitionTable[destPixelOffset]; /* p1 offset */
-		srcPixelOffset3 = srcPixelOffset + m_dwBufferWidth;  /* p3 offset */
-
-		/* get the packed p1p2 and p3p4 values */
-		srcPixel12 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset]));
-		srcPixel34 = *(dword_t*)(&(m_pReadBuffer16[srcPixelOffset3]));
-
-		/* RED:
-		 * this next line does a lot.
-		 *
-		 * 1) mask the red bits.
-		 *    there are two pixels in each DWORD so 0xF800F800 is necessary to
-		 *    clear the green and blue bits in both pixels.
-		 *
-		 * 2) shift each packed red pixel 2 bits to the right
-		 *    effectively dividing by 4 for averaging the pixels
-		 *
-		 * 3) sum the two packed pixels.
-		 *    this may be the most confusing part.
-		 *    Since the pixel data is packed, a single addition can sum the
-		 *    two high pixels and the two low pixels in parallel
-		 */
-		redLow = ((srcPixel12 & 0xF800F800) >> 2) +
-			((srcPixel34 & 0xF800F800) >> 2);
-
-		/* the next step is to unpack the pixel data,
-		 * so get the high pixel data into the low bits
-		 */
-		redHi = redLow >> 16;
-
-		/*
-		 * sum the high order sum and low order sum, and mask to red bits only
-		 */
-		destPixel = (redLow + redHi) & 0xF800;
-
-
-		/* GREEN:
-		 * this next line does a lot.  And is slightly different from red
-		 *
-		 * 1) mask the green bits.
-		 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
-		 *    clear the red and blue bits in both pixels.
-		 *
-		 * 2) sum the two packed pixels.
-		 *
-		 * 3) shift the packed green sum pixel 2 bits to the right
-		 *    effectively dividing by 4 for averaging the pixels
-		 */
-		greenLow = (((srcPixel12 & 0x07F007E0)) +
-			((srcPixel34 & 0x07E007E0))) >> 2;
-
-		greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
-
-		/*
-		 * sum the hi and low green data,
-		 * mask it to the green bits only,
-		 * and then or the green bits with the red in the destination pixel
-		 */
-		destPixel |= ((greenLow + greenHi)) & 0x07E0;
-
-
-		/* BLUE:
-		 * this next line does a lot.  And different from either red or green
-		 *
-		 * 1) mask the blue bits.
-		 *    there are two pixels in each DWORD so 0x001F001F is necessary to
-		 *    clear the red and green bits in both pixels.
-		 *
-		 * 2) sum the two packed pixels.
-		 */
-		blueLow = ((srcPixel12 & 0x001F001F)) +
-			((srcPixel34 & 0x001F001F));
-
-		blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
-
-		/*
-		 * this next line does more than either red or green
-		 *
-		 * 1) sum the hi and low blue data
-		 *
-		 * 2) average the blue pixel data
-		 *
-		 * 3) mask it to the blue bits only
-		 *
-		 * 4) or the blue bits into the destination pixel
-		 */
-		destPixel |= ((blueLow + blueHi) >> 2) & 0x001F;
-
-
-
-		/*
-		 * write the destination pixel data to the destination pixel
-		 */
-		m_pWriteBuffer16[destPixelOffset] = (word_t)destPixel;
-
-
-		/* progress to the next pixel */
-		destPixelOffset++;
-	} while (destPixelOffset < m_dwBufferLength);
-}
 
 
 // SIMD Experiment Lineage
 //
-// Exp1 = temporary gather arrays
-// Exp2 = direct vector construction (_mm_set_epi16)
+// Exp1 = 8-pixel SSE2 using temporary gather arrays
+// Exp2 = 8-pixel SSE2 using direct vector construction (_mm_set_epi16)
 // Exp3 = skipped / superseded after disassembly review
 // Exp4 = 4-pixel SSE2 variant
 //
-// Exp5 = packed-DWORD SIMD
+// Exp5 = 4-pixel packed-DWORD SIMD
 //        (my original DWORD pseudo-SIMD algorithm from
 //         DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-//         but parallelized into 32-bit SIMD lanes)
+//         parallelized into 32-bit SIMD lanes)
+//
+// Exp6 - 8-pixel packed-DWORD SIMD
+//        (2 × Exp5 results combined into a single 128-bit write)
 
 /****************************************************************************
  *
@@ -3003,6 +2824,45 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
  *     way to reduce memory access by performing pseudo-SIMD
  *     operations on two WORDs packed inside a DWORD.
  *
+ * Exp6:
+ *     Batched-write variant of Exp5.
+ *
+ *     Exp5:
+ *         Compute 4 output pixels
+ *         Pack into RGB565
+ *         Store 64 bits
+ *
+ *     Exp6:
+ *         Compute 4 output pixels (result A)
+ *         Compute 4 output pixels (result B)
+ *         Combine with _mm_unpacklo_epi64()
+ *         Store 128 bits
+ *
+ *     Result:
+ *         ~3.9 - 4.1 sec
+ *
+ *     Findings:
+ *         - Correct and fully validated.
+ *         - Successfully combines two Exp5 results into a single
+ *           128-bit write.
+ *         - Assembly shows at least one XMM spill/reload pair,
+ *           suggesting register pressure limits the benefit of
+ *           the wider store.
+ *         - Despite the spill, Exp6 remains competitive with Exp5
+ *           and occasionally benchmarks slightly faster.
+ *
+ *     Current Assessment:
+ *         - The wider-store strategy is viable.
+ *         - Benefits are smaller than originally hoped because
+ *           some store savings appear to be offset by spilling.
+ *         - This experiment is currently on hold while AVX/AVX2
+ *           gather-related investigations are explored.
+ *         - If future AVX experiments fail to produce meaningful
+ *           gains, Exp6 may be worth revisiting to investigate
+ *           spill elimination.
+ *
+ *
+ *
  *
  * Key Findings
  * ------------
@@ -3015,7 +2875,7 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
  *
  * - Exp5 preserves my original packed-DWORD arithmetic model
  *   strategy used in DoDelta_cpp_OPTIMIZED_WITH_DECAY_63, and
- *   applies it across SIMD lanes. 
+ *   applies it across SIMD lanes.
  *
  * - My original packed-DWORD optimization strategy translates
  *   surprisingly well to SIMD. My 25-year-old DWORD trick
@@ -4217,6 +4077,14 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
  *
  * - Exp6 is retained as a work-in-progress and a reference point for
  *   future experimentation with spill elimination and wider SIMD paths.
+ *
+ * - A future 64-bit build would provide additional XMM registers
+ *   (16 instead of 8), making spill elimination significantly more
+ *   likely. This may allow the wider-store strategy to realize more
+ *   of its intended benefit.
+ *
+ * - If we're clever, we might still be able to avoid the spill
+ *   in the current 32-bit implementation. Paused while investigating AVX.
  ****************************************************************************/
 void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 {
@@ -4450,10 +4318,10 @@ inline __m128i BitCanvas16::ComputeExp5Result(
 
 
 
-// Human created TBD. See if I can do better once I learn from what the AI tries.
-void BitCanvas16::DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable)
+
+void BitCanvas16::DoDelta_AVX2_experiment7(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment2(lpTransitionTable);
+	DoDelta_SSE41_experiment5(lpTransitionTable);
 }
 
 /****************************************************************************
