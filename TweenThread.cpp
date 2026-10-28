@@ -97,7 +97,7 @@ error_t    TweenThread::Initialize(void* pObject1)
 {
 	error_t err;
 	void**  pPageTable;
-	dword_t dwBytesToAlign = 16;
+	MemoryAlignment dwBytesToAlign = MemoryAlignment::Bytes64;
 	dword_t dwPageSize = m_dwFrameSize;
 	dword_t dwNumPages = 2 + 2 * m_dwMaximumFrames;
 	/*    dword_t   dwNumPages     = 4 * m_dwMaximumFrames; /* one frameset for each of:

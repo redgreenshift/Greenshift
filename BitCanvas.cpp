@@ -631,7 +631,7 @@ void BitCanvas::SetOptimizationLevel(const opt_level_t enumOptLevel)
  ****************************************************************************/
 error_t BitCanvas::Initialize(void)
 {
-	const    dword_t        nBytes_to_Align = 16;
+	const    MemoryAlignment nBytes_to_Align = MemoryAlignment::Bytes64;
 	const    dword_t        nBytes_per_Pixel = BitDepth() / BITS_PER_BYTE;
 	const    dword_t        nBuffer_Length = BufferWidth() * BufferHeight();
 	const    dword_t        nCache_Size = m_dwCacheLength * sizeof(dword_t);
@@ -3060,8 +3060,8 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY_GreenCorrected_experiment1(cons
  * - Gather/construction bottlenecks.
  * - Additional Exp2 vs Exp5 assembly analysis.
  * - AVX2 implementations.
-  *
-  ****************************************************************************/
+ *
+ ****************************************************************************/
 
 
 // AI Assisted, baseline SSE2 implementation just to determine what we're working with.
@@ -3395,7 +3395,7 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 				_mm_or_si128(r, g),
 				bl);
 
-		_mm_storeu_si128(
+		_mm_store_si128(
 			reinterpret_cast<__m128i*>(
 				&m_pWriteBuffer16[pixelOffset]),
 			result);

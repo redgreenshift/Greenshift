@@ -21,6 +21,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <cstdarg>
+#include <memory>
+#include <utility>
+
  /****************************************************************************
   *
   * ContiguousAlignedMemory - allocates multiple chunks of memory contiguously and aligns to specified number of bytes
@@ -46,7 +50,43 @@
    *
    ****************************************************************************/
 
-#include <memory>
+//
+
+/****************************************************************************
+ * @brief Specifies alignment requirements for contiguous memory allocations.
+ *
+ * Alignment is primarily used to ensure that allocated memory can be
+ * accessed efficiently by SIMD instructions and cache-friendly algorithms.
+ *
+ * The enum values correspond to commonly used SIMD register widths:
+ *
+ *     Bytes8   - Typically sufficient for MMX-era code.
+ *     Bytes16  - Typically sufficient for SSE/SSE2/SSE3/SSE4.x.
+ *     Bytes32  - Typically sufficient for AVX/AVX2.
+ *     Bytes64  - Typically sufficient for AVX-512 and aligns to a
+ *                typical modern CPU cache line size.
+ *
+ * Notes:
+ *
+ * - Larger alignments generally increase allocation overhead slightly
+ *   but simplify future SIMD experimentation.
+ *
+ * - Alignment guarantees that the start of each allocated page is aligned
+ *   to the requested boundary.
+ *
+ * - Choosing a larger alignment than currently required is typically
+ *   safe and may avoid future allocator changes when experimenting with
+ *   wider SIMD instruction sets.
+ *
+ * - Alignment does not guarantee improved performance by itself; the
+ *   benefit depends on the access patterns and instructions used.
+ ****************************************************************************/
+enum class MemoryAlignment : std::size_t {
+	Bytes8 = 8,   // commonly sufficient for MMX
+	Bytes16 = 16, // commonly sufficient for SSE
+	Bytes32 = 32, // commonly sufficient for AVX
+	Bytes64 = 64  // commonly sufficient for AVX-512
+};
 
 /**
  * @class ContiguousAlignedMemory
@@ -74,14 +114,15 @@ public:
 	/// <param name="outPageTable">Pointer to a void** that receives the address of the page table (an array of void* entries) located inside the allocated block. Do not free the page table separately.</param>
 	/// <param name="nPages">Number of pages to allocate. Must be > 0.</param>
 	/// <param name="nPageSize">Requested page size in bytes. Must be > 0. Each page size is rounded up to the specified alignment.</param>
-	/// <param name="nBytesToAlign">Alignment in bytes for pages (default 8). Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
+	/// <param name="nBytesToAlign_Param">Alignment in bytes for pages (default 16). Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
 	/// <returns>An error_t status code: SUCCESS on success; ERR_NULL if an input pointer or size is invalid; ERR_MALLOC if memory allocation fails.</returns>
 	static error_t  Allocate(void** outMemory,
 		void*** outPageTable,
 		const dword_t nPages,
 		const dword_t nPageSize,
-		const dword_t nBytesToAlign = 8)
+		const MemoryAlignment nBytesToAlign_Param = MemoryAlignment::Bytes16)
 	{
+		dword_t   nBytesToAlign = std::to_underlying(nBytesToAlign_Param);
 		dword_t   nAlignment_Overhead = nBytesToAlign - 1;
 		dword_t   nAligned_Page_Size;
 		dword_t   nAligned_Memory_Size;
@@ -137,18 +178,21 @@ public:
 
 		pUnalignedBase = (void*)(&((byte_t*)(*outMemory))[sizeof(dword_t) + nPage_Table_Size]);
 
-		nAlignmentOffset = ((dword_t)pUnalignedBase) % nBytesToAlign;
+		nAlignmentOffset = ((uintptr_t)pUnalignedBase) % nBytesToAlign;
 
 		if (nAlignmentOffset != 0)
 			nAlignmentOffset = nBytesToAlign - nAlignmentOffset;
 
-		//        DumpToFile( "alignlog.txt", nAlignmentOffset, "\n" );
+		//DumpToFile( "alignlog.txt", nAlignmentOffset, "\n" );
 
 		pAlignedBase = ((byte_t*)pUnalignedBase) + nAlignmentOffset;
 
+		// Each page start is also aligned.
 		for (index = 0; index < nPages; index++)
+		{
 			((void**)(&((dword_t*)(*outMemory))[1]))[index] =
-			((byte_t*)pAlignedBase) + nAligned_Page_Size * index;
+				((byte_t*)pAlignedBase) + nAligned_Page_Size * index;
+		}
 
 		return SUCCESS;
 
