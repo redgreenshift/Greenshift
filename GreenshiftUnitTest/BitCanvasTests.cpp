@@ -329,7 +329,7 @@ namespace GreenshiftUnitTest
 			std::function<void()> fn)
 		{
 			timer.Start();
-			for (uint32_t i = 0; i < maxEndTest; ++i)
+			for (uint32_t i = 0; i < maxBenchmarkIterations; ++i)
 			{
 				fn();
 			}
@@ -384,7 +384,7 @@ namespace GreenshiftUnitTest
 		/*********************************************************
 		* THIRTY TWO BIT BENCHMARKS
 		*/
-		const size_t maxEndTest = 100;
+		const size_t maxBenchmarkIterations = 100;
 		const uint32_t c_seed = 12345;
 
 		TEST_METHOD(TestBitCanvas32BenchmarkCPP)
@@ -685,6 +685,29 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment5b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSE41Exp6)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE41_EXPERIMENT6",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment6(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1979,6 +2002,40 @@ namespace GreenshiftUnitTest
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_SSE2_experiment5b);
+		}
+
+
+		TEST_METHOD(TestBitCanvas16_SSE41_Exp6_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE41 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE41_experiment6);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE41_Exp6_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE41 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE41_experiment6);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE41_Exp6_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE41 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE41_experiment6);
+		}
+		TEST_METHOD(TestBitCanvas16_SSE41_Exp6_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE41 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSE41_experiment6);
 		}
 
 

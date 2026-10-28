@@ -4152,6 +4152,302 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 	}
 }
 
+/****************************************************************************
+ * @brief Exp5 with batched writes.
+ *
+ * Exp6 is a follow-on experiment to Exp5. The packed-DWORD arithmetic
+ * and SIMD math are identical; the only goal is to reduce store traffic.
+ *
+ * Exp5:
+ *
+ *     Compute 4 output pixels
+ *     _mm_packus_epi32()
+ *     _mm_storel_epi64()      // 8-byte store
+ *
+ * Exp6:
+ *
+ *     Compute 4 output pixels (result A)
+ *     Compute 4 output pixels (result B)
+ *     _mm_unpacklo_epi64()
+ *     _mm_store_si128()       // 16-byte store
+ *
+ * The intention is to batch two Exp5 results together and perform a
+ * single 128-bit write:
+ *
+ *     [p0 p1 p2 p3]
+ *     [p4 p5 p6 p7]
+ *
+ * becomes:
+ *
+ *     [p0 p1 p2 p3 p4 p5 p6 p7]
+ *
+ * and is stored with one SIMD write.
+ *
+ * Results:
+ *
+ *     Exp5: ~3.9 - 4.3 sec
+ *     Exp6: ~3.9 - 4.1 sec
+ *
+ * Observations:
+ *
+ * - Exp6 validates correctly.
+ *
+ * - Exp6 does not regress despite doubling the effective batch size.
+ *
+ * - Assembly inspection shows that the compiler introduces at least one
+ *   XMM spill/reload pair while attempting to keep intermediate results
+ *   alive across the second computation.
+ *
+ * - Benchmark improvements are therefore smaller than originally hoped.
+ *
+ * Current Assessment:
+ *
+ * - The wider write strategy appears viable.
+ *
+ * - Performance gains are currently modest because some of the savings
+ *   from eliminating a store are offset by additional register pressure.
+ *
+ * - Future work should investigate whether the spill can be eliminated
+ *   without increasing overall complexity.
+ *
+ * - This investigation is now on hold while I investigate AVX gather enhancements.
+ *
+ * - If future AVX/AVX2 experiments fail to produce meaningful gains,
+ *   this implementation may be worth revisiting.
+ *
+ * - Exp6 is retained as a work-in-progress and a reference point for
+ *   future experimentation with spill elimination and wider SIMD paths.
+ ****************************************************************************/
+void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		__m128i resultA =
+			ComputeExp5Result(
+				lpTransitionTable,
+				destPixelOffset);
+
+		__m128i resultB =
+			ComputeExp5Result(
+				lpTransitionTable,
+				destPixelOffset + 4);
+
+		__m128i combined =
+			_mm_unpacklo_epi64(
+				resultA,
+				resultB);
+
+		_mm_store_si128(
+			(__m128i*) & m_pWriteBuffer16[destPixelOffset],
+			combined);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < bufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[destPixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[destPixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++destPixelOffset;
+	}
+}
+// Copy paste of the Exp5 algorithm
+inline __m128i BitCanvas16::ComputeExp5Result(
+	const PIXELMAP* lpTransitionTable,
+	dword_t destPixelOffset)
+{
+	const __m128i redMask =
+		_mm_set1_epi32(0xF800F800);
+
+	const __m128i greenMask =
+		_mm_set1_epi32(0x07E007E0);
+
+	const __m128i blueMask =
+		_mm_set1_epi32(0x001F001F);
+
+	const __m128i decay63 =
+		_mm_set1_epi32(63);
+
+	dword_t s0 =
+		lpTransitionTable[destPixelOffset + 0];
+
+	dword_t s1 =
+		lpTransitionTable[destPixelOffset + 1];
+
+	dword_t s2 =
+		lpTransitionTable[destPixelOffset + 2];
+
+	dword_t s3 =
+		lpTransitionTable[destPixelOffset + 3];
+
+	dword_t s30 = s0 + m_dwBufferWidth;
+	dword_t s31 = s1 + m_dwBufferWidth;
+	dword_t s32 = s2 + m_dwBufferWidth;
+	dword_t s33 = s3 + m_dwBufferWidth;
+
+	//
+	// Gather packed p1|p2 DWORDs.
+	//
+	__m128i src12 =
+		_mm_set_epi32(
+			*(dword_t*)&m_pReadBuffer16[s3],
+			*(dword_t*)&m_pReadBuffer16[s2],
+			*(dword_t*)&m_pReadBuffer16[s1],
+			*(dword_t*)&m_pReadBuffer16[s0]);
+
+	//
+	// Gather packed p3|p4 DWORDs.
+	//
+	__m128i src34 =
+		_mm_set_epi32(
+			*(dword_t*)&m_pReadBuffer16[s33],
+			*(dword_t*)&m_pReadBuffer16[s32],
+			*(dword_t*)&m_pReadBuffer16[s31],
+			*(dword_t*)&m_pReadBuffer16[s30]);
+
+	//
+	// RED
+	//
+	__m128i redLow =
+		_mm_add_epi32(
+			_mm_srli_epi32(
+				_mm_and_si128(src12, redMask),
+				2),
+			_mm_srli_epi32(
+				_mm_and_si128(src34, redMask),
+				2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
+
+
+	__m128i redHi =
+		_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
+
+	__m128i red =
+		_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+	red =
+		//_mm_mullo_epi16(red, decay63);     // likely needs work
+		//_mm_mul_epu32(red, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(red, decay63); // Requires SSE4.1
+
+	red =
+		_mm_srli_epi32(red, 6);
+
+	red =
+		_mm_and_si128(
+			red,
+			_mm_set1_epi32(0x0000F800));
+
+	//
+	// GREEN
+	//
+	__m128i greenLow =
+		_mm_add_epi32(
+			_mm_and_si128(src12, greenMask),
+			_mm_and_si128(src34, greenMask));
+
+	__m128i greenHi =
+		_mm_srli_epi32(greenLow, 16);
+
+	__m128i green =
+		_mm_add_epi32(greenLow, greenHi);
+
+	green =
+		//_mm_mullo_epi16(green, decay63);   // likely needs work
+		//_mm_mul_epu32(green, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(green, decay63); // Requires SSE4.1
+
+	green =
+		_mm_srli_epi32(green, 8);
+
+	green =
+		_mm_and_si128(
+			green,
+			_mm_set1_epi32(0x000007E0));
+
+	//
+	// BLUE
+	//
+	__m128i blueLow =
+		_mm_add_epi32(
+			_mm_and_si128(src12, blueMask),
+			_mm_and_si128(src34, blueMask));
+
+	__m128i blueHi =
+		_mm_srli_epi32(blueLow, 16);
+
+	__m128i blue =
+		_mm_add_epi32(blueLow, blueHi);
+
+	blue =
+		//_mm_mullo_epi16(blue, decay63);    // likely needs work
+		//_mm_mul_epu32(blue, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(blue, decay63); // Requires SSE4.1
+
+	blue =
+		_mm_srli_epi32(blue, 8);
+
+	blue =
+		_mm_and_si128(
+			blue,
+			_mm_set1_epi32(0x0000001F));
+
+	//
+	// Pack final RGB565 values.
+	//
+	__m128i result =
+		_mm_or_si128(
+			_mm_or_si128(red, green),
+			blue);
+
+	__m128i packed16Result =
+		_mm_packus_epi32(result, _mm_setzero_si128());
+
+	return packed16Result;
+}
+
+
 
 
 // Human created TBD. See if I can do better once I learn from what the AI tries.

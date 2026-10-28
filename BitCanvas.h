@@ -901,7 +901,11 @@ public:
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
+	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_Intrinsics(const PIXELMAP* lpTransitionTable);
+	inline __m128i ComputeExp5Result(
+		const PIXELMAP* lpTransitionTable,
+		dword_t destPixelOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
