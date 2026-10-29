@@ -58,6 +58,8 @@
 #include <vector>
 #include <Windows.h>
 
+dword_t CalculateExpectedPackedDomainPixel(dword_t  srcPixel12, dword_t srcPixel34);
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace GreenshiftUnitTest
@@ -690,7 +692,7 @@ namespace GreenshiftUnitTest
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7)
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7a)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
@@ -701,14 +703,14 @@ namespace GreenshiftUnitTest
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"16bit AVX2_EXPERIMENT7",
+				L"16bit AVX2_EXPERIMENT7a",
 				[&]()
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7a(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2023,7 +2025,7 @@ namespace GreenshiftUnitTest
 				L"AVX2 Grayscale",
 				SetGrayscalePalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7);
+				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_DistinctChannels)
 		{
@@ -2031,7 +2033,7 @@ namespace GreenshiftUnitTest
 				L"AVX2 DistinctChannels",
 				SetDistinctChannelPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7);
+				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_PrimaryColorCycle)
 		{
@@ -2039,7 +2041,7 @@ namespace GreenshiftUnitTest
 				L"AVX2 PrimaryColorCycle",
 				SetPrimaryColorCyclePalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7);
+				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_BitBoundary)
 		{
@@ -2047,9 +2049,114 @@ namespace GreenshiftUnitTest
 				L"AVX2 BitBoundary",
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7);
+				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 
+
+		TEST_METHOD(MathTestAVXMath)
+		{
+			// White (THIS WORKS)
+			dword_t src12 = 0xFFFFFFFF;
+			dword_t src34 = 0xFFFFFFFF;
+			// Constant intensity within each channel, different intensity between channels WORKS!? (I tried several variations, but I should try the full range)
+			//word_t singlePixel = RGB16(11, 21, 0);
+			//src12 = (singlePixel << 16) | singlePixel;
+			//src34 = (singlePixel << 16) | singlePixel;
+
+			// Varying the intensity within the channels, THIS FAILS! :-(
+			src12 = (RGB16(0, 63, 31) << 16) | RGB16(31, 63, 0);
+			src34 = (RGB16(31, 0, 31) << 16) | RGB16(0, 63, 31);
+			const dword_t expectedDestPixel = CalculateExpectedPackedDomainPixel(src12, src34);
+			//__m256i red = _mm256_set1_epi32(0x7c007c00);
+			//__m256i green = _mm256_set1_epi32(0x0fc00fc0);
+			//__m256i blue = _mm256_set1_epi32(0x003e003e);
+
+			const __m256i redMask =
+				_mm256_set1_epi32(0xF800F800);
+
+			const __m256i greenMask =
+				_mm256_set1_epi32(0x07E007E0);
+
+			const __m256i blueMask =
+				_mm256_set1_epi32(0x001F001F);
+			__m256i decay63 = _mm256_set1_epi32(63);
+
+			__m256i srcA /*12_256*/ = _mm256_set1_epi32(src12);
+			__m256i srcB /*34_256*/ = _mm256_set1_epi32(src34);
+
+			//
+			// Exp5 packed-domain arithmetic.
+			//
+			__m256i red =
+				_mm256_and_si256(srcA, redMask);
+
+			red =
+				_mm256_srli_epi32(red, 2);
+
+			red =
+				_mm256_add_epi32(
+					red,
+					_mm256_srli_epi32(
+						_mm256_and_si256(srcB, redMask),
+						2));
+
+			//
+			// Green path.
+			//
+			__m256i green =
+				_mm256_add_epi32(
+					_mm256_and_si256(srcA, greenMask),
+					_mm256_and_si256(srcB, greenMask));
+
+			//
+			// Blue path.
+			//
+			__m256i blue =
+				_mm256_add_epi32(
+					_mm256_and_si256(srcA, blueMask),
+					_mm256_and_si256(srcB, blueMask));
+
+			//
+			// Apply decay.
+			//
+			const __m256i redDecayed =
+				_mm256_and_si256(
+					_mm256_srli_epi32(
+						_mm256_mullo_epi32(red, decay63),
+						5),
+					_mm256_set1_epi32(0x0000F800));
+
+			const __m256i greenDecayed =
+				_mm256_and_si256(
+					_mm256_srli_epi32(
+						_mm256_mullo_epi32(green, decay63),
+						7),
+					_mm256_set1_epi32(0x000007E0));
+
+			const __m256i blueDecayed =
+				_mm256_and_si256(
+					_mm256_srli_epi32(
+						_mm256_mullo_epi32(blue, decay63),
+						7),
+					_mm256_set1_epi32(0x0000001F));
+
+			__m256i result = _mm256_or_si256(
+				_mm256_or_si256(
+					redDecayed,
+					greenDecayed),
+				blueDecayed);
+
+
+			union {
+				__m128i pixel128;
+				dword_t pixel32 = 0;
+			};
+
+			__m128i finalPixels = _mm256_castsi256_si128(result);
+			_mm_store_si128(&pixel128, finalPixels);
+
+			Assert::AreEqual(expectedDestPixel, pixel32, L"should be equal");
+		}
 
 		/************************************
 		* VERIFY 32 BIT!

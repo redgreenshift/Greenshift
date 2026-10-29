@@ -1045,6 +1045,15 @@ void    Greenshift::UpdateDisplayText(void)
 		case BitCanvas::OL_AVX2:
 			optLevel = { "AVX2" };
 			break;
+		case BitCanvas::OL_PRESET7:
+			optLevel = { "OL_PRESET7" };
+			break;
+		case BitCanvas::OL_PRESET8:
+			optLevel = { "OL_PRESET8" };
+			break;
+		case BitCanvas::OL_PRESET9:
+			optLevel = { "OL_PRESET9" };
+			break;
 		}
 
 		std::string engineStats = std::format("{1}x{2}, {0}-bit", m_pBitCanvas->BitDepth(), m_pBitCanvas->BufferWidth(), m_pBitCanvas->BufferHeight());

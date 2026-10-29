@@ -292,7 +292,7 @@ public:
 	/*
 	 * Optimization Level Type
 	 */
-	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE41, OL_AVX2 } opt_level_t;
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE41, OL_AVX2, OL_PRESET7, OL_PRESET8, OL_PRESET9 } opt_level_t;
 	// https://en.wikipedia.org/wiki/List_of_x86_SIMD_instructions
 	//
 	// 1996 MMX:
@@ -637,6 +637,9 @@ protected:
 	virtual void	DoDelta_SSE2(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_SSE41(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_AVX2(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_Preset7(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_Preset8(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_Preset9(const PIXELMAP* lpTransitionTable);
 	virtual void	CopyTo8(void* lpSurface, const dword_t nDeadSpace) = 0;
 	virtual void	CopyTo16(void* lpSurface, const dword_t nDeadSpace) = 0;
 	virtual void	CopyTo24(void* lpSurface, const dword_t nDeadSpace) = 0;
@@ -885,6 +888,9 @@ public:
 	virtual void			DoDelta_SSE2(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_Preset7(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_Preset8(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_Preset9(const PIXELMAP* lpTransitionTable) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE_NO_DECAY(const PIXELMAP* lpTransitionTable);
@@ -900,7 +906,14 @@ public:
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
-	void					DoDelta_AVX2_experiment7(const PIXELMAP* lpTransitionTable);
+	__forceinline __m256i	BuildPackedDWORDVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow);
+	void					DoDelta_AVX2_experiment7a(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX2_experiment7b(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable);
+	__forceinline __m256i
+		Compare_BuildPackedDWORDVector256_andComputeExp5Result(
+			const PIXELMAP* lpTransitionTable,
+			const dword_t destPixelOffset);
 	inline __m128i ComputeExp5Result(
 		const PIXELMAP* lpTransitionTable,
 		dword_t destPixelOffset);

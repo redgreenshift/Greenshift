@@ -335,6 +335,42 @@ bool has_avx2() {
 #endif
 }
 
+
+bool SupportsAVX2()
+{
+	int cpuInfo[4];
+
+	__cpuid(cpuInfo, 1);
+
+	const bool osxsave =
+		(cpuInfo[2] & (1 << 27)) != 0;
+
+	const bool avx =
+		(cpuInfo[2] & (1 << 28)) != 0;
+
+	if (!osxsave || !avx)
+		return false;
+
+	const unsigned long long xcr0 =
+		_xgetbv(0);
+
+	const bool xmmEnabled =
+		(xcr0 & 0x2) != 0;
+
+	const bool ymmEnabled =
+		(xcr0 & 0x4) != 0;
+
+	if (!xmmEnabled || !ymmEnabled)
+		return false;
+
+	__cpuidex(cpuInfo, 7, 0);
+
+	const bool avx2 =
+		(cpuInfo[1] & (1 << 5)) != 0;
+
+	return avx2;
+}
+
 /****************************************************************************
  *
  * BitCanvas - constructor
@@ -397,7 +433,7 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 		 * 32bit color originally defaulted to "CPP" but can optionally use "MMX" if detected.
 		 * All the other versions have varying levels of optimized code.
 		 */
-	if (cpuid_has_avx2())
+	if (SupportsAVX2())
 		m_nDeltaOptimizationLevel = OL_AVX2;
 	else if (cpuid_has_sse41())
 		m_nDeltaOptimizationLevel = OL_SSE41;
@@ -985,6 +1021,15 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 	case OL_AVX2:
 		this->DoDelta_AVX2(lpTransitionTable);
 		break;
+	case OL_PRESET7:
+		this->DoDelta_Preset7(lpTransitionTable);
+		break;
+	case OL_PRESET8:
+		this->DoDelta_Preset8(lpTransitionTable);
+		break;
+	case OL_PRESET9:
+		this->DoDelta_Preset9(lpTransitionTable);
+		break;
 	default:  /* what should default do? */
 		break;
 	}
@@ -1044,6 +1089,18 @@ void BitCanvas::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 	this->DoDelta_SSE41(lpTransitionTable);
 }
 
+void BitCanvas::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_cpp(lpTransitionTable);
+}
+void BitCanvas::DoDelta_Preset8(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_cpp(lpTransitionTable);
+}
+void BitCanvas::DoDelta_Preset9(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_cpp(lpTransitionTable);
+}
 
 #ifdef UNDEFINED
 /****************************************************************************
@@ -2091,9 +2148,23 @@ void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment7(lpTransitionTable);
+	DoDelta_AVX2_experiment7a(lpTransitionTable);
+	//DoDelta_SSE2_Intrinsics(lpTransitionTable);
+	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
 }
 
+void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment2(lpTransitionTable);
+}
+void BitCanvas16::DoDelta_Preset8(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment2(lpTransitionTable);
+}
+void BitCanvas16::DoDelta_Preset9(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSE2_experiment2(lpTransitionTable);
+}
 
 // IMPLEMENTATIONS:
 
@@ -2409,6 +2480,130 @@ void BitCanvas16::DoDelta_cpp_OPTIMIZED_NO_DECAY(const PIXELMAP* lpTransitionTab
 		destPixelOffset++;
 	} while (destPixelOffset < m_dwBufferLength);
 }
+
+dword_t CalculateExpectedPackedDomainPixel(dword_t  srcPixel12, dword_t srcPixel34)
+{
+	dword_t  redHi, redLow;
+	dword_t  greenHi, greenLow;
+	dword_t  blueHi, blueLow;
+	dword_t  destPixel;
+
+	/*
+	 * the source pixel actually consists of 4 pixels, the RGB components of
+	 * which must be averaged to find the value for the destination pixel.
+	 *
+	 * the 4 pixels are numbered as follows:
+	 *     p1 | p2
+	 *     ---+---
+	 *     p3 | p4
+	 *
+	 *  p1 and p3 are considered the "high pixels"
+	 *  p2 and p4 are the low pixels, since they are stored in the high order
+	 *  bits and low order bits of a DWORD respectively.
+	 *
+	 * the below code may be a little confusing, because of the way I acquire
+	 * the pixel values, and then average them.
+	 *
+	 * Exploiting the fact memory reads access 32 bits of
+	 * information, and each pixel is 16 bits, the code is written to read in
+	 * two pixels using a single memory read.  Memory access is one of the
+	 * slowest operations, so any reduction in those operations can
+	 * potentially speed things up significantly.
+	 *
+	 * Another optimization was using "clever data structure" to use
+	 * 2 additions to perform the work of 3 additions
+	 */
+
+	 /* RED:
+	  * this next line does a lot.
+	  *
+	  * 1) mask the red bits.
+	  *    there are two pixels in each DWORD so 0xF800F800 is necessary to
+	  *    clear the green and blue bits in both pixels.
+	  *
+	  * 2) shift each packed red pixel 2 bits to the right
+	  *    effectively dividing by 4 for averaging the pixels
+	  *    NOTE: THIS IS IMPORTANT! Dividing first means we don't overflow when adding
+	  *
+	  * 3) sum the two packed pixels.
+	  *    this may be the most confusing part.
+	  *    Since the pixel data is packed, a single addition can sum the
+	  *    two high pixels and the two low pixels in parallel
+	  */
+	  // NOTE: Divide RED first, so we don't overflow when adding.
+	redLow = ((srcPixel12 & 0xF800F800) >> 2) +
+		((srcPixel34 & 0xF800F800) >> 2);
+
+	/* the next step is to unpack the pixel data,
+	 * so get the high pixel data into the low bits
+	 */
+	redHi = redLow >> 16;
+
+	/*
+	 * sum the high order sum and low order sum, and mask to red bits only
+	 */
+	destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+
+	/* GREEN:
+	 * this next line does a lot.  And is slightly different from red
+	 *
+	 * 1) mask the green bits.
+	 *    there are two pixels in each DWORD so 0x07E007E0 is necessary to
+	 *    clear the red and blue bits in both pixels.
+	 *
+	 * 2) sum the two packed pixels.
+	 *
+	 * 3) shift the packed green sum pixel 2 bits to the right
+	 *    effectively dividing by 4 for averaging the pixels
+	 */
+	 // NOTE: Green should add and divide to combine
+	greenLow = (((srcPixel12 & 0x07E007E0)) +
+		((srcPixel34 & 0x07E007E0)));
+	greenHi = greenLow >> 16;  /* unpack the high order green pixel data */
+
+	/*
+	 * sum the hi and low green data,
+	 * mask it to the green bits only,
+	 * and then or the green bits with the red in the destination pixel
+	 */
+	destPixel |= (((greenLow + greenHi) * 63) >> 8) & 0x07E0;
+
+
+	/* BLUE:
+	 * this next line does a lot.  And different from red
+	 *
+	 * 1) mask the blue bits.
+	 *    there are two pixels in each DWORD so 0x001F001F is necessary to
+	 *    clear the red and green bits in both pixels.
+	 *
+	 * 2) sum the two packed pixels.
+	 *
+	 * The math is asymmetric between RED and GREEN/BLUE channels because
+	 * dividing first would potentially TRUNCATE some blue bits.
+	 */
+	 // NOTE: Add BLUE first, so we don't drop bits by dividing early.
+	blueLow = ((srcPixel12 & 0x001F001F)) +
+		((srcPixel34 & 0x001F001F));
+
+	blueHi = blueLow >> 16;  /* unpack the high order blue pixel data */
+
+	/*
+	 * this next line does more than red
+	 *
+	 * 1) sum the hi and low blue data
+	 *
+	 * 2) average the blue pixel data
+	 *
+	 * 3) mask it to the blue bits only
+	 *
+	 * 4) `OR` the blue bits into the destination pixel
+	 */
+	destPixel |= (((blueLow + blueHi) * 63) >> 8) & 0x001F;
+
+	return destPixel;
+}
+
 
 /****************************************************************************
  * @brief This is the DEFAULT implementation used for 16bit color;
@@ -4317,11 +4512,339 @@ inline __m128i BitCanvas16::ComputeExp5Result(
 
 
 
+//Exp7 -> test gather / construction improvements
+// Exp7 = AVX2 packed-DWORD SIMD investigation
+//        (follow-up to Exp5/Exp6, focused on gather/construction
+//         costs rather than arithmetic or store throughput)
 
 
-void BitCanvas16::DoDelta_AVX2_experiment7(const PIXELMAP* lpTransitionTable)
+//Experiment order
+//
+//Exp7a
+//- AVX2
+//- 8 DWORD lanes
+//- manual construction
+//
+//Question : Does wider arithmetic help ?
+//
+//
+//Exp7b
+//If Exp7a wins : Try AVX2 gather instructions.
+//
+//Question : Can AVX2 reduce construction cost ?
+//
+//
+//Exp7c
+//
+//If gathers help :
+//Keep best arithmetic path
+//+
+//best gather path
+//+
+//best store path
+//
+//as the likely long - term AVX winner.
+
+
+__forceinline __m256i
+BitCanvas16::BuildPackedDWORDVector256(
+	const PIXELMAP* lpTransitionTable,
+	const dword_t destPixelOffset,
+	bool secondRow)
 {
-	DoDelta_SSE41_experiment5(lpTransitionTable);
+	const dword_t s0 =
+		lpTransitionTable[destPixelOffset + 0] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s1 =
+		lpTransitionTable[destPixelOffset + 1] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s2 =
+		lpTransitionTable[destPixelOffset + 2] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s3 =
+		lpTransitionTable[destPixelOffset + 3] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s4 =
+		lpTransitionTable[destPixelOffset + 4] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s5 =
+		lpTransitionTable[destPixelOffset + 5] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s6 =
+		lpTransitionTable[destPixelOffset + 6] + (secondRow ? m_dwBufferWidth : 0);
+
+	const dword_t s7 =
+		lpTransitionTable[destPixelOffset + 7] + (secondRow ? m_dwBufferWidth : 0);
+
+	const uint32_t p01 =
+		*((const uint32_t*)&m_pReadBuffer16[s0]);
+
+	const uint32_t p23 =
+		*((const uint32_t*)&m_pReadBuffer16[s1]);
+
+	const uint32_t p45 =
+		*((const uint32_t*)&m_pReadBuffer16[s2]);
+
+	const uint32_t p67 =
+		*((const uint32_t*)&m_pReadBuffer16[s3]);
+
+	const uint32_t p89 =
+		*((const uint32_t*)&m_pReadBuffer16[s4]);
+
+	const uint32_t pAB =
+		*((const uint32_t*)&m_pReadBuffer16[s5]);
+
+	const uint32_t pCD =
+		*((const uint32_t*)&m_pReadBuffer16[s6]);
+
+	const uint32_t pEF =
+		*((const uint32_t*)&m_pReadBuffer16[s7]);
+
+	return _mm256_set_epi32(
+		pEF,
+		pCD,
+		pAB,
+		p89,
+		p67,
+		p45,
+		p23,
+		p01);
+}
+
+__forceinline __m256i FinishPackedDomainMath256(
+	const __m256i red,
+	const __m256i green,
+	const __m256i blue,
+	const __m256i decay63)
+{
+	//
+	// Apply decay.
+	//
+	const __m256i redDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(red, decay63),
+				5), // ORIGINAL: 6, why doesn't that work???
+			_mm256_set1_epi32(0x0000F800));
+
+	const __m256i greenDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(green, decay63),
+				7), // ORIGINAL: 8, why doesn't that work???
+			_mm256_set1_epi32(0x000007E0));
+
+	const __m256i blueDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(blue, decay63),
+				7), // ORIGINAL: 8, why doesn't that work???
+			_mm256_set1_epi32(0x0000001F));
+
+	//
+	// Recombine RGB565.
+	//
+	return _mm256_or_si256(
+		_mm256_or_si256(
+			redDecayed,
+			greenDecayed),
+		blueDecayed);
+}
+
+/****************************************************************************
+ * Exp7a
+ *
+ * AVX2 packed-DWORD SIMD investigation.
+ *
+ * Strategy:
+ *
+ *     Keep the Exp5 packed-DWORD arithmetic.
+ *
+ *     Replace:
+ *
+ *         __m128i
+ *
+ *     with:
+ *
+ *         __m256i
+ *
+ *     and process 8 DWORD lanes at once instead of 4.
+ *
+ * Goals:
+ *
+ *     - Measure benefit of wider arithmetic.
+ *     - Preserve Exp5 arithmetic model.
+ *     - Delay gather-specific experimentation until later.
+ *
+ ****************************************************************************/
+// IMPLEMENTATION DOES NOT WORK, yet. TODO: Investigate relevant code copied to Unit Test MathTestAVXMath
+//Gather verified.
+//Packing mostly verified.
+//Failure occurs in packed - domain arithmetic when
+//channel values differ between source pixels.
+void BitCanvas16::DoDelta_AVX2_experiment7a(
+    const PIXELMAP* lpTransitionTable)
+{
+    dword_t destPixelOffset = 0;
+
+    const __m256i redMask =
+        _mm256_set1_epi32(0xF800F800);
+
+    const __m256i greenMask =
+        _mm256_set1_epi32(0x07E007E0);
+
+    const __m256i blueMask =
+        _mm256_set1_epi32(0x001F001F);
+
+    const __m256i decay63 =
+        _mm256_set1_epi32(63);
+
+    //
+    // Process 8 packed DWORD lanes
+    // (twice Exp5's width).
+    //
+    while (destPixelOffset + 7 < m_dwBufferLength)
+    {
+        //
+        // Build:
+        //
+        // [p0|p1]
+        // [p2|p3]
+        // [p4|p5]
+        // [p6|p7]
+        // [p8|p9]
+        // [p10|p11]
+        // [p12|p13]
+        // [p14|p15]
+        //
+        __m256i srcA =
+            BuildPackedDWORDVector256(
+                lpTransitionTable,
+                destPixelOffset, false);
+
+        //
+        // Build matching second source vector.
+        //
+        __m256i srcB =
+            BuildPackedDWORDVector256(
+                lpTransitionTable,
+                destPixelOffset, true);
+
+        //
+        // Exp5 packed-domain arithmetic.
+        //
+        __m256i red =
+            _mm256_and_si256(srcA, redMask);
+
+        red =
+            _mm256_srli_epi32(red, 2);
+
+        red =
+            _mm256_add_epi32(
+                red,
+                _mm256_srli_epi32(
+                    _mm256_and_si256(srcB, redMask),
+                    2));
+
+        //
+        // Green path.
+        //
+        __m256i green =
+            _mm256_add_epi32(
+                _mm256_and_si256(srcA, greenMask),
+                _mm256_and_si256(srcB, greenMask));
+
+        //
+        // Blue path.
+        //
+        __m256i blue =
+            _mm256_add_epi32(
+                _mm256_and_si256(srcA, blueMask),
+                _mm256_and_si256(srcB, blueMask));
+
+        //
+        // Finish Exp5 arithmetic.
+        // (Translate existing Exp5 logic directly.)
+        //
+        __m256i result =
+            FinishPackedDomainMath256(
+                red,
+                green,
+                blue,
+                decay63);
+
+        //
+        // Pack:
+        //
+        // 8 DWORD RGB565 values
+        // ->
+        // 8 WORD RGB565 values
+        //
+					//__m128i finalPixels =
+					//    _mm256_castsi256_si128(
+					//        _mm256_packus_epi32(
+					//            result,
+					//            _mm256_setzero_si256()));
+		__m256i packed = _mm256_packus_epi32(result, _mm256_setzero_si256());
+		packed = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
+
+		__m128i finalPixels = _mm256_castsi256_si128(packed);
+
+
+        _mm_store_si128(
+            (__m128i*)
+            &m_pWriteBuffer16[destPixelOffset],
+            finalPixels);
+
+        destPixelOffset += 8;
+    }
+
+    //
+    // Existing scalar tail loop.
+    //
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < m_dwBufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[destPixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[destPixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++destPixelOffset;
+	}
 }
 
 /****************************************************************************

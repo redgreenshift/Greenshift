@@ -811,6 +811,40 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 		PrintPrivate(-1, 0, "SSE2 assembly optimization");
 		break;
 
+	//case VK_F5:
+	case '5':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE41);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "SSE4.1 assembly optimization");
+		break;
+
+	//case VK_F6:
+	case '6':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_AVX2);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "AVX2 assembly optimization");
+		break;
+
+	//case VK_F7:
+	case '7':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_PRESET7);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "OL_PRESET7");
+		break;
+
+	//case VK_F8:
+	case '8':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_PRESET8);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "OL_PRESET8");
+		break;
+
+	//case VK_F9:
+	case '9':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_PRESET9);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "OL_PRESET9");
+		break;
 
 	default:    /* display character code */
 		/*//	DumpToFile( "error.txt", DXError(lpWindowDevice->ClearScreenAll()) , "\n");
