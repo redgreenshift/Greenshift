@@ -910,13 +910,7 @@ public:
 	void					DoDelta_AVX2_experiment7a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment7b(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable);
-	__forceinline __m256i
-		Compare_BuildPackedDWORDVector256_andComputeExp5Result(
-			const PIXELMAP* lpTransitionTable,
-			const dword_t destPixelOffset);
-	inline __m128i ComputeExp5Result(
-		const PIXELMAP* lpTransitionTable,
-		dword_t destPixelOffset);
+	__forceinline __m128i	ComputeExp5Result(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

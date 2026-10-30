@@ -2150,8 +2150,6 @@ void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_AVX2_experiment7a(lpTransitionTable);
-	//DoDelta_SSE2_Intrinsics(lpTransitionTable);
-	//DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
@@ -2929,6 +2927,15 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 }
 
 
+//Exp1 = SSE2 proof of concept
+//Exp2 = SSE2 conventional SIMD winner
+//Exp3 = rejected
+//Exp4 = SSE2 narrower SIMD experiment
+//Exp5 = SSE41 packed-domain SIMD winner
+//Exp5b = SSE2 packed-domain SIMD (simulate SSE41 instructions)
+//Exp6 = SSE41 wider-store follow-on experiment
+//Exp7a = AVX2 proof of concept (primitive)
+//Exp7b = AVX2 gather / construction improvements
 
 // SIMD Experiment Lineage
 //
@@ -2937,13 +2944,21 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 // Exp3 = skipped / superseded after disassembly review
 // Exp4 = 4-pixel SSE2 variant
 //
-// Exp5 = 4-pixel packed-DWORD SIMD
+// Exp5 = 4-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (my original DWORD pseudo-SIMD algorithm from
 //         DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 //         parallelized into 32-bit SIMD lanes)
 //
-// Exp6 - 8-pixel packed-DWORD SIMD
+// Exp5b = 4-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
+//        (simulate SSE41 instructions)
+//
+// Exp6 - 8-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (2 × Exp5 results combined into a single 128-bit write)
+//
+// Exp7 = 8-pixel AVX2 packed-DWORD SIMD variant
+//        Exp7a = establish AVX2 baseline
+//        Exp7b = gather/construction investigation
+//        Exp7c = store-throughput investigation (if warranted)
 
 /****************************************************************************
  *
@@ -2979,6 +2994,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     SSE2  Exp2          ~ 4.4 - 4.8 sec
  *     SSE2  Exp5b         ~ 4.3 - 4.4 sec
  *     SSE41 Exp5          ~ 4.0 - 4.6 sec
+ *     SSE41 Exp6          ~ 3.9 - 4.1 sec
+ *     AVX2  Exp7a         ~ 3.9 - 4.2 sec
  *
  *
  * Experiment Summary
@@ -3020,6 +3037,20 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     way to reduce memory access by performing pseudo-SIMD
  *     operations on two WORDs packed inside a DWORD.
  *
+ *     Result:
+ *         Comparable to Exp2.
+ *         Consistently competitive with Exp2 and often benchmarks slightly faster.
+ *
+ * Exp5b:
+ *     Revisit Experiment 5 (Packed-Domain SIMD implementation) using only SSE2 instructions.
+ *
+ *     Emulate the SSE41 instruction _mm_mullo_epi32() using an equivalent 32-bit SSE2 emulation sequence.
+ *
+ *     Result:
+ *         Comparable to Exp2.
+ *         Comparable to Exp5.
+ *         Packed-Domain Arithmetic appears competitive even when restricted to SSE2 instructions.
+ *
  * Exp6:
  *     Batched-write variant of Exp5.
  *
@@ -3035,29 +3066,24 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Store 128 bits
  *
  *     Result:
- *         ~3.9 - 4.1 sec
+ *         Comparable performance to Exp5
+ *         - Given the added complexity, and marginal if any benefit, it's not yet a viable contender.
+ *         - Aligned writes didn't help: writes were already aligned
+           - Batching didn't help due to register pressure spilling
+ *         - Revisit register pressure investigation if AVX doesn't pan out.
  *
- *     Findings:
- *         - Correct and fully validated.
- *         - Successfully combines two Exp5 results into a single
- *           128-bit write.
- *         - Assembly shows at least one XMM spill/reload pair,
- *           suggesting register pressure limits the benefit of
- *           the wider store.
- *         - Despite the spill, Exp6 remains competitive with Exp5
- *           and occasionally benchmarks slightly faster.
+ * Exp7a:
+ *     AVX2 packed-DWORD SIMD implementation.
  *
- *     Current Assessment:
- *         - The wider-store strategy is viable.
- *         - Benefits are smaller than originally hoped because
- *           some store savings appear to be offset by spilling.
- *         - This experiment is currently on hold while AVX/AVX2
- *           gather-related investigations are explored.
- *         - If future AVX experiments fail to produce meaningful
- *           gains, Exp6 may be worth revisiting to investigate
- *           spill elimination.
+ *     Preserves the Exp5 packed-domain arithmetic model while
+ *     expanding SIMD width from 128-bit SSE registers to
+ *     256-bit AVX2 registers.
  *
+ *     Process 8 packed DWORD lanes simultaneously.
  *
+ *     Result:
+ *         Comparable performance to Exp5
+ *         - Viable contender given we think we can reduce gather/construction costs.
  *
  *
  * Key Findings
@@ -3091,6 +3117,12 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * - The original packed-DWORD strategy remains competitive even
  *   when compared against a more conventional SIMD approach.
  *
+ * - AVX2 arithmetic is correct and performs comparably to the
+ *   existing SSE implementations.
+ *
+ * - Gather/construction overhead appears to remain a major
+ *   performance cost.
+ *
  *
  * Current Assessment
  * ------------------
@@ -3105,6 +3137,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     - Preserves the packed-domain arithmetic strategy.
  *     - May have additional optimization headroom.
  *
+ * Exp7a:
+ *     Serious contender.
+ *     Future work should focus on gather/construction costs.
+ *
  * Benchmark variance is currently large enough that no definitive
  * winner should be declared between Exp2 and Exp5.
  *
@@ -3112,10 +3148,9 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
- * - Aligned writes and wider SIMD batching.
  * - Gather/construction bottlenecks.
+ * - If gathers help, keep `best arithmetic path + best gather path + best store path` as the likely long-term AVX winner.
  * - Additional Exp2 vs Exp5 assembly analysis.
- * - AVX2 implementations.
  *
  ****************************************************************************/
 
@@ -4358,7 +4393,7 @@ void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 	}
 }
 // Copy paste of the Exp5 algorithm
-inline __m128i BitCanvas16::ComputeExp5Result(
+__forceinline __m128i BitCanvas16::ComputeExp5Result(
 	const PIXELMAP* lpTransitionTable,
 	dword_t destPixelOffset)
 {
@@ -4513,11 +4548,6 @@ inline __m128i BitCanvas16::ComputeExp5Result(
 
 
 
-//Exp7 -> test gather / construction improvements
-// Exp7 = AVX2 packed-DWORD SIMD investigation
-//        (follow-up to Exp5/Exp6, focused on gather/construction
-//         costs rather than arithmetic or store throughput)
-
 
 //Experiment order
 //
@@ -4526,25 +4556,25 @@ inline __m128i BitCanvas16::ComputeExp5Result(
 //- 8 DWORD lanes
 //- manual construction
 //
-//Question : Does wider arithmetic help ?
+//Question: Does wider arithmetic help?
 //
 //
 //Exp7b
-//If Exp7a wins : Try AVX2 gather instructions.
+//If Exp7a wins: Try AVX2 gather instructions.
 //
-//Question : Can AVX2 reduce construction cost ?
+//Question: Can AVX2 reduce construction cost?
 //
 //
 //Exp7c
 //
-//If gathers help :
+//If gathers help:
 //Keep best arithmetic path
 //+
 //best gather path
 //+
 //best store path
 //
-//as the likely long - term AVX winner.
+//as the likely long-term AVX winner.
 
 
 __forceinline __m256i
@@ -4612,199 +4642,201 @@ BitCanvas16::BuildPackedDWORDVector256(
 		p01);
 }
 
-__forceinline __m256i FinishPackedDomainMath256(
-	const __m256i redAverage,
-	const __m256i greenSum,
-	const __m256i blueSum,
-	const __m256i decay63)
-{
-	//
-	// Apply decay.
-	//
-	const __m256i redDecayed =
-		_mm256_and_si256(
-			_mm256_srli_epi32(
-				_mm256_mullo_epi32(redAverage, decay63),
-				6),
-			_mm256_set1_epi32(0x0000F800));
-
-	const __m256i greenDecayed =
-		_mm256_and_si256(
-			_mm256_srli_epi32(
-				_mm256_mullo_epi32(greenSum, decay63),
-				8),
-			_mm256_set1_epi32(0x000007E0));
-
-	const __m256i blueDecayed =
-		_mm256_and_si256(
-			_mm256_srli_epi32(
-				_mm256_mullo_epi32(blueSum, decay63),
-				8),
-			_mm256_set1_epi32(0x0000001F));
-
-	//
-	// Recombine RGB565.
-	//
-	return _mm256_or_si256(
-		_mm256_or_si256(
-			redDecayed,
-			greenDecayed),
-		blueDecayed);
-}
-
 /****************************************************************************
  * Exp7a
  *
- * AVX2 packed-DWORD SIMD investigation.
+ * AVX2 packed-DWORD SIMD implementation.
  *
- * Strategy:
+ * Approach:
  *
- *     Keep the Exp5 packed-DWORD arithmetic.
+ *     Preserves the Exp5 packed-DWORD arithmetic model while
+ *     expanding SIMD width from 128-bit SSE registers to
+ *     256-bit AVX2 registers.
  *
- *     Replace:
+ *     Processes 8 packed DWORD lanes simultaneously instead of 4.
  *
- *         __m128i
+ * Purpose:
  *
- *     with:
+ *     - Establish a correct AVX2 baseline.
+ *     - Measure the benefit of wider arithmetic.
+ *     - Provide a foundation for future AVX gather/construction
+ *       experiments.
  *
- *         __m256i
+ * NOTE: There are two different and unrelated concepts of "packing" in this algorithm.
+ * It is critical to not conflate the two.
  *
- *     and process 8 DWORD lanes at once instead of 4.
+ * Terminology:
  *
- * Goals:
+ *   "Packed-Domain":
+ *       Two RGB565 pixels packed into a DWORD and processed
+ *       using my original pseudo-SIMD algorithm.
  *
- *     - Measure benefit of wider arithmetic.
- *     - Preserve Exp5 arithmetic model.
- *     - Delay gather-specific experimentation until later.
+ *   "SIMD Lane Packing":
+ *       AVX/SSE conversions between 32-bit and 16-bit SIMD lanes.
+ *
+ *  Most of the algorithm performs Packed-Domain arithmetic inside unpacked SIMD lanes.
+ *  The final result is then packed into 16bit SIMD lanes before writing to memory.
  *
  ****************************************************************************/
 void BitCanvas16::DoDelta_AVX2_experiment7a(
-    const PIXELMAP* lpTransitionTable)
+	const PIXELMAP* lpTransitionTable)
 {
-    dword_t destPixelOffset = 0;
+	dword_t destPixelOffset = 0;
 
-    const __m256i redMask =
-        _mm256_set1_epi32(0xF800F800);
+	const __m256i redMask =
+		_mm256_set1_epi32(0xF800F800);
 
-    const __m256i greenMask =
-        _mm256_set1_epi32(0x07E007E0);
+	const __m256i greenMask =
+		_mm256_set1_epi32(0x07E007E0);
 
-    const __m256i blueMask =
-        _mm256_set1_epi32(0x001F001F);
+	const __m256i blueMask =
+		_mm256_set1_epi32(0x001F001F);
 
-    const __m256i decay63 =
-        _mm256_set1_epi32(63);
+	const __m256i decay63 =
+		_mm256_set1_epi32(63);
 
-    //
-    // Process 8 packed DWORD lanes
-    // (twice Exp5's width).
-    //
-    while (destPixelOffset + 7 < m_dwBufferLength)
-    {
-        //
-        // Build:
-        //
-        // [p0|p1]
-        // [p2|p3]
-        // [p4|p5]
-        // [p6|p7]
-        // [p8|p9]
-        // [p10|p11]
-        // [p12|p13]
-        // [p14|p15]
-        //
-        __m256i srcA =
-            BuildPackedDWORDVector256(
-                lpTransitionTable,
-                destPixelOffset, false);
+	//
+	// Process 8 packed DWORD lanes
+	// (twice Exp5's width).
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		//
+		// Build:
+		//
+		// [p0|p1]
+		// [p2|p3]
+		// [p4|p5]
+		// [p6|p7]
+		// [p8|p9]
+		// [p10|p11]
+		// [p12|p13]
+		// [p14|p15]
+		//
+		__m256i srcPixel12 =
+			BuildPackedDWORDVector256(
+				lpTransitionTable,
+				destPixelOffset, false);
 
-        //
-        // Build matching second source vector.
-        //
-        __m256i srcB =
-            BuildPackedDWORDVector256(
-                lpTransitionTable,
-                destPixelOffset, true);
+		//
+		// Build matching second source vector.
+		//
+		__m256i srcPixel34 =
+			BuildPackedDWORDVector256(
+				lpTransitionTable,
+				destPixelOffset, true);
 
-        //
-        // Exp5 packed-domain arithmetic.
-        //
-        __m256i redPackedAverage =
-            _mm256_and_si256(srcA, redMask);
+		//
+		// Packed-Domain Arithmetic
+		//
+		// Two RGB565 pixels are packed into each DWORD lane.
+		//
+		//     [Pixel1][Pixel2]
+		//
+		// The arithmetic below first operates on packed pixel pairs,
+		// then combines the high and low packed halves before applying
+		// decay.
+		//
+		// This is unrelated to the SIMD lane packing performed later
+		// by _mm256_packus_epi32().
+		//
 
-		redPackedAverage =
-            _mm256_srli_epi32(redPackedAverage, 2);
+		//
+		// Red path.
+		//
+		__m256i red12 = _mm256_and_si256(srcPixel12, redMask); // get packed red bits for source pixels 1 and 2
+		__m256i red12Div4 = _mm256_srli_epi32(red12, 2); // divide by 4, so the next sum operation doesn't overflow the 32bit lane
+		__m256i redPackedAverage =
+			_mm256_add_epi32(
+				red12Div4,
+				_mm256_srli_epi32(
+					_mm256_and_si256(srcPixel34, redMask), // get packed red bits for source pixels 3 and 4
+					2) // divide by 4, so the next sum operation doesn't overflow the 32bit lane
+			); // sum the src12 and src34 red values, that have already been divided by 4, to produce the packed average
 
-		redPackedAverage =
-            _mm256_add_epi32(
-				redPackedAverage,
-                _mm256_srli_epi32(
-                    _mm256_and_si256(srcB, redMask),
-                    2));
-
-        //
-        // Green path.
-        //
-        __m256i greenPackedSum =
-            _mm256_add_epi32(
-                _mm256_and_si256(srcA, greenMask),
-                _mm256_and_si256(srcB, greenMask));
-
-        //
-        // Blue path.
-        //
-        __m256i bluePackedSum =
-            _mm256_add_epi32(
-                _mm256_and_si256(srcA, blueMask),
-                _mm256_and_si256(srcB, blueMask));
-
+		// NOTE: The average will be in the low 16bits of redAverage. While the upper 16 bits has a value
+		// (equivalent to redHi), we are not going to use those bits again after this next line of code.
+		// This may cause confusion if you're debugging the code. The important thing to understand is that
+		// this is an optimization to NOT remove the superfluous high 16bits now. The upper bits will be stripped
+		// off as a part of the decay operation, therefore no need to waste cycles now to bitmask it away, only to bitmask *again* later.
 		__m256i redHi = _mm256_srli_epi32(redPackedAverage, 16);
-		__m256i redAverage = _mm256_add_epi32(redPackedAverage, redHi);
+		__m256i redAverage = _mm256_add_epi32(redPackedAverage, redHi); // NOTE: The average is in the low 16bits. The upper upper 16 bits in redAverage are ignored beyond this point.
+
+		const __m256i redDecayed =
+			_mm256_and_si256(
+				_mm256_srli_epi32(
+					_mm256_mullo_epi32(redAverage, decay63),
+					6),
+				_mm256_set1_epi32(0x0000F800));
+
+
+		//
+		// Green path.
+		//
+		__m256i greenPackedSum =
+			_mm256_add_epi32(
+				_mm256_and_si256(srcPixel12, greenMask),
+				_mm256_and_si256(srcPixel34, greenMask));
 		__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
-		__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi);
+		__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in greenSum are ignored beyond this point.
+		const __m256i greenDecayed =
+			_mm256_and_si256(
+				_mm256_srli_epi32(
+					_mm256_mullo_epi32(greenSum, decay63),
+					8),
+				_mm256_set1_epi32(0x000007E0));
+
+		//
+		// Blue path.
+		//
+		__m256i bluePackedSum =
+			_mm256_add_epi32(
+				_mm256_and_si256(srcPixel12, blueMask),
+				_mm256_and_si256(srcPixel34, blueMask));
 		__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
-		__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi);
+		__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in blueSum are ignored beyond this point.
+		const __m256i blueDecayed =
+			_mm256_and_si256(
+				_mm256_srli_epi32(
+					_mm256_mullo_epi32(blueSum, decay63),
+					8),
+				_mm256_set1_epi32(0x0000001F));
 
-        //
-        // Finish Exp5 arithmetic.
-        // (Translate existing Exp5 logic directly.)
-        //
-        __m256i result =
-            FinishPackedDomainMath256(
-				redAverage,
-				greenSum,
-				blueSum,
-                decay63);
-
-        //
-        // Pack:
-        //
-        // 8 DWORD RGB565 values
-        // ->
-        // 8 WORD RGB565 values
-        //
-					//__m128i finalPixels =
-					//    _mm256_castsi256_si128(
-					//        _mm256_packus_epi32(
-					//            result,
-					//            _mm256_setzero_si256()));
-		__m256i packed = _mm256_packus_epi32(result, _mm256_setzero_si256());
-		packed = _mm256_permute4x64_epi64(packed, _MM_SHUFFLE(3, 1, 2, 0));
-
-		__m128i finalPixels = _mm256_castsi256_si128(packed);
+		//
+		// Recombine RGB565.
+		//
+		__m256i unpackedResult = _mm256_or_si256(
+			_mm256_or_si256(
+				redDecayed,
+				greenDecayed),
+			blueDecayed);
 
 
-        _mm_store_si128(
-            (__m128i*)
-            &m_pWriteBuffer16[destPixelOffset],
-            finalPixels);
+		//
+		// SIMD lane packing
+		// (DWORD lanes -> WORD lanes)
+		//
+		// Pack:
+		//
+		// 8 DWORD RGB565 values
+		// ->
+		// 8 WORD RGB565 values
+		//
+		__m256i packedResult = _mm256_packus_epi32(unpackedResult, _mm256_setzero_si256());
+		packedResult = _mm256_permute4x64_epi64(packedResult, _MM_SHUFFLE(3, 1, 2, 0));
+		__m128i finalPixels = _mm256_castsi256_si128(packedResult);
 
-        destPixelOffset += 8;
-    }
+		_mm_store_si128(
+			(__m128i*)
+			& m_pWriteBuffer16[destPixelOffset],
+			finalPixels);
 
-    //
-    // Existing scalar tail loop.
-    //
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
 	//
 	// Existing scalar tail from Exp2.
 	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
