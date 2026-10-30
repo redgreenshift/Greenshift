@@ -2175,37 +2175,6 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(expectedDestPixel, pixel32, L"should be equal");
 		}
 
-			const __m256i greenDecayed =
-				_mm256_and_si256(
-					_mm256_srli_epi32(
-						_mm256_mullo_epi32(green, decay63),
-						7),
-					_mm256_set1_epi32(0x000007E0));
-
-			const __m256i blueDecayed =
-				_mm256_and_si256(
-					_mm256_srli_epi32(
-						_mm256_mullo_epi32(blue, decay63),
-						7),
-					_mm256_set1_epi32(0x0000001F));
-
-			__m256i result = _mm256_or_si256(
-				_mm256_or_si256(
-					redDecayed,
-					greenDecayed),
-				blueDecayed);
-
-
-			union {
-				__m128i pixel128;
-				dword_t pixel32 = 0;
-			};
-
-			__m128i finalPixels = _mm256_castsi256_si128(result);
-			_mm_store_si128(&pixel128, finalPixels);
-
-			Assert::AreEqual(expectedDestPixel, pixel32, L"should be equal");
-		}
 
 		/************************************
 		* VERIFY 32 BIT!
