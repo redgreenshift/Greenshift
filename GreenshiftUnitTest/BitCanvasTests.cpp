@@ -2088,22 +2088,23 @@ namespace GreenshiftUnitTest
 			// Exp5 packed-domain arithmetic.
 			//
 			__m256i red =
-				_mm256_and_si256(srcA, redMask);
+				_mm256_and_si256(srcA, redMask); // get packed red bits for pixels 1 and 2
 
 			red =
-				_mm256_srli_epi32(red, 2);
+				_mm256_srli_epi32(red, 2); // divide by 4, so the next operation(s) don't overflow
 
-			red =
+			__m256i redPackedSum =
 				_mm256_add_epi32(
 					red,
 					_mm256_srli_epi32(
-						_mm256_and_si256(srcB, redMask),
-						2));
+						_mm256_and_si256(srcB, redMask), // get packed red bits for pixels 3 and 4
+						2) // divide those by 4 so the next operations don't overflow
+				); // sum the src12 and src34 red values, that have already been divided by 4, to produce the packed average
 
 			//
 			// Green path.
 			//
-			__m256i green =
+			__m256i greenPackedSum =
 				_mm256_add_epi32(
 					_mm256_and_si256(srcA, greenMask),
 					_mm256_and_si256(srcB, greenMask));
@@ -2111,10 +2112,26 @@ namespace GreenshiftUnitTest
 			//
 			// Blue path.
 			//
-			__m256i blue =
+			__m256i bluePackedSum =
 				_mm256_add_epi32(
 					_mm256_and_si256(srcA, blueMask),
 					_mm256_and_si256(srcB, blueMask));
+
+
+	/*
+	 * sum the high order sum and low order sum, and mask to red bits only
+	 */
+	//destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+			__m256i redHi = _mm256_srli_epi32(redPackedSum, 16);
+			__m256i redAverage = _mm256_add_epi32(redPackedSum, redHi);
+			//__m256i redDecayedIntermediate1 = _mm256_mullo_epi32(redAverage, decay63);
+			//__m256i redDecayedIntermediate2 = _mm256_srli_epi32(redDecayedIntermediate1, 6);
+
+			__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
+			__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi);
+			__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
+			__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi);
 
 			//
 			// Apply decay.
@@ -2122,9 +2139,41 @@ namespace GreenshiftUnitTest
 			const __m256i redDecayed =
 				_mm256_and_si256(
 					_mm256_srli_epi32(
-						_mm256_mullo_epi32(red, decay63),
-						5),
+						_mm256_mullo_epi32(redAverage, decay63),
+						6),
 					_mm256_set1_epi32(0x0000F800));
+
+			const __m256i greenDecayed =
+				_mm256_and_si256(
+					_mm256_srli_epi32(
+						_mm256_mullo_epi32(greenSum, decay63),
+						8),
+					_mm256_set1_epi32(0x000007E0));
+
+			const __m256i blueDecayed =
+				_mm256_and_si256(
+					_mm256_srli_epi32(
+						_mm256_mullo_epi32(blueSum, decay63),
+						8),
+					_mm256_set1_epi32(0x0000001F));
+
+			__m256i result = _mm256_or_si256(
+				_mm256_or_si256(
+					redDecayed,
+					greenDecayed),
+				blueDecayed);
+
+
+			union {
+				__m128i pixel128;
+				dword_t pixel32 = 0;
+			};
+
+			__m128i finalPixels = _mm256_castsi256_si128(result);
+			_mm_store_si128(&pixel128, finalPixels);
+
+			Assert::AreEqual(expectedDestPixel, pixel32, L"should be equal");
+		}
 
 			const __m256i greenDecayed =
 				_mm256_and_si256(

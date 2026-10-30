@@ -46,6 +46,7 @@
 #include <cstdlib>
 #include <emmintrin.h> // SSE2 intrinsics
 #include <immintrin.h> // AVX/AVX2 intrinsics
+#include <intrin.h>
 //#include <mm3dnow.h>
 //#include <emmintrin.h>
 //#include <xmmintrin.h>
@@ -4612,9 +4613,9 @@ BitCanvas16::BuildPackedDWORDVector256(
 }
 
 __forceinline __m256i FinishPackedDomainMath256(
-	const __m256i red,
-	const __m256i green,
-	const __m256i blue,
+	const __m256i redAverage,
+	const __m256i greenSum,
+	const __m256i blueSum,
 	const __m256i decay63)
 {
 	//
@@ -4623,22 +4624,22 @@ __forceinline __m256i FinishPackedDomainMath256(
 	const __m256i redDecayed =
 		_mm256_and_si256(
 			_mm256_srli_epi32(
-				_mm256_mullo_epi32(red, decay63),
-				5), // ORIGINAL: 6, why doesn't that work???
+				_mm256_mullo_epi32(redAverage, decay63),
+				6),
 			_mm256_set1_epi32(0x0000F800));
 
 	const __m256i greenDecayed =
 		_mm256_and_si256(
 			_mm256_srli_epi32(
-				_mm256_mullo_epi32(green, decay63),
-				7), // ORIGINAL: 8, why doesn't that work???
+				_mm256_mullo_epi32(greenSum, decay63),
+				8),
 			_mm256_set1_epi32(0x000007E0));
 
 	const __m256i blueDecayed =
 		_mm256_and_si256(
 			_mm256_srli_epi32(
-				_mm256_mullo_epi32(blue, decay63),
-				7), // ORIGINAL: 8, why doesn't that work???
+				_mm256_mullo_epi32(blueSum, decay63),
+				8),
 			_mm256_set1_epi32(0x0000001F));
 
 	//
@@ -4677,11 +4678,6 @@ __forceinline __m256i FinishPackedDomainMath256(
  *     - Delay gather-specific experimentation until later.
  *
  ****************************************************************************/
-// IMPLEMENTATION DOES NOT WORK, yet. TODO: Investigate relevant code copied to Unit Test MathTestAVXMath
-//Gather verified.
-//Packing mostly verified.
-//Failure occurs in packed - domain arithmetic when
-//channel values differ between source pixels.
 void BitCanvas16::DoDelta_AVX2_experiment7a(
     const PIXELMAP* lpTransitionTable)
 {
@@ -4733,15 +4729,15 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
         //
         // Exp5 packed-domain arithmetic.
         //
-        __m256i red =
+        __m256i redPackedAverage =
             _mm256_and_si256(srcA, redMask);
 
-        red =
-            _mm256_srli_epi32(red, 2);
+		redPackedAverage =
+            _mm256_srli_epi32(redPackedAverage, 2);
 
-        red =
+		redPackedAverage =
             _mm256_add_epi32(
-                red,
+				redPackedAverage,
                 _mm256_srli_epi32(
                     _mm256_and_si256(srcB, redMask),
                     2));
@@ -4749,7 +4745,7 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
         //
         // Green path.
         //
-        __m256i green =
+        __m256i greenPackedSum =
             _mm256_add_epi32(
                 _mm256_and_si256(srcA, greenMask),
                 _mm256_and_si256(srcB, greenMask));
@@ -4757,10 +4753,17 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
         //
         // Blue path.
         //
-        __m256i blue =
+        __m256i bluePackedSum =
             _mm256_add_epi32(
                 _mm256_and_si256(srcA, blueMask),
                 _mm256_and_si256(srcB, blueMask));
+
+		__m256i redHi = _mm256_srli_epi32(redPackedAverage, 16);
+		__m256i redAverage = _mm256_add_epi32(redPackedAverage, redHi);
+		__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
+		__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi);
+		__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
+		__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi);
 
         //
         // Finish Exp5 arithmetic.
@@ -4768,9 +4771,9 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
         //
         __m256i result =
             FinishPackedDomainMath256(
-                red,
-                green,
-                blue,
+				redAverage,
+				greenSum,
+				blueSum,
                 decay63);
 
         //
