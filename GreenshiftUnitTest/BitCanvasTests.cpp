@@ -715,7 +715,7 @@ namespace GreenshiftUnitTest
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7b)
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7bA)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
@@ -726,18 +726,63 @@ namespace GreenshiftUnitTest
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
 			BenchmarkDoDelta(
-				L"16bit AVX2_EXPERIMENT7b",
+				L"16bit AVX2_EXPERIMENT7bA",
 				[&]()
 				{
 					DrawRandomPixels(pBitCanvas, rng);
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7b(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bA(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7bB1)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7bB1",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB1(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7bB2)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7bB2",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB2(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
 
 		/*************************************************************************
 		* EIGHT BIT BENCHMARKS
@@ -2075,21 +2120,54 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_Grayscale)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bA_Grayscale)
 		{
 			VerifyEquivalence16(
 				L"AVX2 Grayscale",
 				SetGrayscalePalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7b);
+				&BitCanvas16::DoDelta_AVX2_experiment7bA);
 		}
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_DistinctChannels)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bA_DistinctChannels)
 		{
 			VerifyEquivalence16(
 				L"AVX2 DistinctChannels",
 				SetDistinctChannelPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7b);
+				&BitCanvas16::DoDelta_AVX2_experiment7bA);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bA_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bA);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bA_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bA);
+		}
+
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB1_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB1);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB1_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB1);
 		}
 		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_PrimaryColorCycle)
 		{
@@ -2097,7 +2175,7 @@ namespace GreenshiftUnitTest
 				L"AVX2 PrimaryColorCycle",
 				SetPrimaryColorCyclePalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7b);
+				&BitCanvas16::DoDelta_AVX2_experiment7bB1);
 		}
 		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_BitBoundary)
 		{
@@ -2105,8 +2183,42 @@ namespace GreenshiftUnitTest
 				L"AVX2 BitBoundary",
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
-				&BitCanvas16::DoDelta_AVX2_experiment7b);
+				&BitCanvas16::DoDelta_AVX2_experiment7bB1);
 		}
+
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB2_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB2);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB2_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB2);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB2_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB2);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7bB2_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7bB2);
+		}
+
 
 		TEST_METHOD(MathTestAVXMath)
 		{

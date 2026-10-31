@@ -907,9 +907,13 @@ public:
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
 	__forceinline __m256i	Exp7a_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // manual gather/construction
-	__forceinline __m256i	Exp7b_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // AVX gather/construction
+	__forceinline __m256i	Exp7b_A_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // Temp array gather/construction
+	__forceinline __m256i	Exp7b_B1_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // AVX gather/construction
+	__forceinline __m256i	Exp7b_B2_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // AVX gather/construction
 	void					DoDelta_AVX2_experiment7a(const PIXELMAP* lpTransitionTable); // AVX2 baseline, proof of concept
-	void					DoDelta_AVX2_experiment7b(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
+	void					DoDelta_AVX2_experiment7bA(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
+	void					DoDelta_AVX2_experiment7bB1(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
+	void					DoDelta_AVX2_experiment7bB2(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable);
 	__forceinline __m128i	ComputeExp5Result(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
