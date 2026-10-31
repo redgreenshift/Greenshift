@@ -2154,7 +2154,7 @@ void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment2(lpTransitionTable);
+	DoDelta_AVX2_experiment7a(lpTransitionTable);
 }
 void BitCanvas16::DoDelta_Preset8(const PIXELMAP* lpTransitionTable)
 {
@@ -4576,70 +4576,256 @@ __forceinline __m128i BitCanvas16::ComputeExp5Result(
 //
 //as the likely long-term AVX winner.
 
-
+/****************************************************************************
+ * Exp7a Packed-Domain Manual Gather/Construction
+ *
+ * Constructs the Packed-Domain source vectors consumed by
+ * Exp7a_PackedDomainMathKernel().
+ *
+ * Terminology:
+ *
+ *     Pixel12 = source pixels 1 and 2
+ *     Pixel34 = source pixels 3 and 4
+ *
+ * These names originate from the original Packed-Domain algorithm,
+ * where four source pixels are combined to produce a single
+ * destination pixel.
+ *
+ * The AVX2 implementation processes eight destination pixels
+ * simultaneously, so each returned vector contains eight SIMD
+ * lanes worth of Pixel12 or Pixel34 values.
+ *
+ * Each 32-bit SIMD lane contains two RGB565 pixels:
+ *
+ *     [Pixel1][Pixel2] or [Pixel3][Pixel4]
+ *
+ * Example of Packed-Domain Lanes:
+ *
+ *     Lane0 = p0A|p0B
+ *     Lane1 = p1A|p1B
+ *     Lane2 = p2A|p2B
+ *     Lane3 = p3A|p3B
+ *     Lane4 = p4A|p4B
+ *     Lane5 = p5A|p5B
+ *     Lane6 = p6A|p6B
+ *     Lane7 = p7A|p7B
+ *
+ * Relationship to the original algorithm:
+ *
+ *     packedDomainPixel12Lanes:
+ *         lane0 = source pixels 1|2 (for destination pixel 0)
+ *         lane1 = source pixels 1|2 (for destination pixel 1)
+ *         ...
+ *
+ *     packedDomainPixel34Lanes:
+ *         lane0 = source pixels 3|4 (for destination pixel 0)
+ *         lane1 = source pixels 3|4 (for destination pixel 1)
+ *         ...
+ *
+ * When gatherBottomRow == false:
+ *
+ *     Builds Packed-Domain Pixel12 lanes.
+ *
+ * When gatherBottomRow == true:
+ *
+ *     Builds Packed-Domain Pixel34 lanes by applying
+ *     m_dwBufferWidth to the transition-table lookup result
+ *     before loading pixels.
+ *
+ * NOTE:
+ *
+ *     This function performs gather/construction only.
+ *
+ *     It does not perform Packed-Domain arithmetic.
+ *
+ ****************************************************************************/
 __forceinline __m256i
-BitCanvas16::BuildPackedDWORDVector256(
+BitCanvas16::Exp7a_BuildPackedDomainVector256(
 	const PIXELMAP* lpTransitionTable,
 	const dword_t destPixelOffset,
-	bool secondRow)
+	bool gatherBottomRow)
 {
-	const dword_t s0 =
-		lpTransitionTable[destPixelOffset + 0] + (secondRow ? m_dwBufferWidth : 0);
+	const dword_t rowOffset = gatherBottomRow ? m_dwBufferWidth : 0;
 
-	const dword_t s1 =
-		lpTransitionTable[destPixelOffset + 1] + (secondRow ? m_dwBufferWidth : 0);
+	const dword_t s0 = lpTransitionTable[destPixelOffset + 0] + rowOffset;
+	const dword_t s1 = lpTransitionTable[destPixelOffset + 1] + rowOffset;
+	const dword_t s2 = lpTransitionTable[destPixelOffset + 2] + rowOffset;
+	const dword_t s3 = lpTransitionTable[destPixelOffset + 3] + rowOffset;
+	const dword_t s4 = lpTransitionTable[destPixelOffset + 4] + rowOffset;
+	const dword_t s5 = lpTransitionTable[destPixelOffset + 5] + rowOffset;
+	const dword_t s6 = lpTransitionTable[destPixelOffset + 6] + rowOffset;
+	const dword_t s7 = lpTransitionTable[destPixelOffset + 7] + rowOffset;
 
-	const dword_t s2 =
-		lpTransitionTable[destPixelOffset + 2] + (secondRow ? m_dwBufferWidth : 0);
-
-	const dword_t s3 =
-		lpTransitionTable[destPixelOffset + 3] + (secondRow ? m_dwBufferWidth : 0);
-
-	const dword_t s4 =
-		lpTransitionTable[destPixelOffset + 4] + (secondRow ? m_dwBufferWidth : 0);
-
-	const dword_t s5 =
-		lpTransitionTable[destPixelOffset + 5] + (secondRow ? m_dwBufferWidth : 0);
-
-	const dword_t s6 =
-		lpTransitionTable[destPixelOffset + 6] + (secondRow ? m_dwBufferWidth : 0);
-
-	const dword_t s7 =
-		lpTransitionTable[destPixelOffset + 7] + (secondRow ? m_dwBufferWidth : 0);
-
-	const uint32_t p01 =
-		*((const uint32_t*)&m_pReadBuffer16[s0]);
-
-	const uint32_t p23 =
-		*((const uint32_t*)&m_pReadBuffer16[s1]);
-
-	const uint32_t p45 =
-		*((const uint32_t*)&m_pReadBuffer16[s2]);
-
-	const uint32_t p67 =
-		*((const uint32_t*)&m_pReadBuffer16[s3]);
-
-	const uint32_t p89 =
-		*((const uint32_t*)&m_pReadBuffer16[s4]);
-
-	const uint32_t pAB =
-		*((const uint32_t*)&m_pReadBuffer16[s5]);
-
-	const uint32_t pCD =
-		*((const uint32_t*)&m_pReadBuffer16[s6]);
-
-	const uint32_t pEF =
-		*((const uint32_t*)&m_pReadBuffer16[s7]);
+	const uint32_t packedDomain0 = *((const uint32_t*)&m_pReadBuffer16[s0]);
+	const uint32_t packedDomain1 = *((const uint32_t*)&m_pReadBuffer16[s1]);
+	const uint32_t packedDomain2 = *((const uint32_t*)&m_pReadBuffer16[s2]);
+	const uint32_t packedDomain3 = *((const uint32_t*)&m_pReadBuffer16[s3]);
+	const uint32_t packedDomain4 = *((const uint32_t*)&m_pReadBuffer16[s4]);
+	const uint32_t packedDomain5 = *((const uint32_t*)&m_pReadBuffer16[s5]);
+	const uint32_t packedDomain6 = *((const uint32_t*)&m_pReadBuffer16[s6]);
+	const uint32_t packedDomain7 = *((const uint32_t*)&m_pReadBuffer16[s7]);
 
 	return _mm256_set_epi32(
-		pEF,
-		pCD,
-		pAB,
-		p89,
-		p67,
-		p45,
-		p23,
-		p01);
+		packedDomain7,
+		packedDomain6,
+		packedDomain5,
+		packedDomain4,
+		packedDomain3,
+		packedDomain2,
+		packedDomain1,
+		packedDomain0);
+}
+
+/****************************************************************************
+ * Exp7a Packed-Domain Math Kernel
+ *
+ * Performs:
+ *   - Packed-Domain arithmetic
+ *   - RGB565 reconstruction
+ *   - Final SIMD lane packing
+ *
+ * Inputs:
+ *   srcPixel12
+ *   srcPixel34
+ *
+ * Returns:
+ *   Eight RGB565 pixels packed into a 128-bit SIMD register,
+ *   ready for storage.
+ *
+ *
+ * IMPORTANT NOTE:
+ *
+ * There are two different and unrelated concepts of "packing"
+ * in this algorithm. It is critical not to conflate them.
+ *
+ * Terminology:
+ *
+ *   "Packed-Domain"
+ *       Two RGB565 pixels packed into a DWORD and processed
+ *       using my original pseudo-SIMD algorithm.
+ *
+ *   "SIMD Lane Packing"
+ *       AVX/SSE conversions between 32-bit and 16-bit SIMD lanes.
+ *
+ * Most of this function performs Packed-Domain arithmetic inside
+ * unpacked SIMD lanes.
+ *
+ * The final stage performs SIMD lane packing:
+ *
+ *     DWORD lanes -> WORD lanes
+ *
+ * prior to returning the final RGB565 results.
+ *
+ ****************************************************************************/
+__forceinline __m128i Exp7a_PackedDomainMathKernel(__m256i srcPixel12, __m256i srcPixel34)
+{
+	const __m256i redMask = _mm256_set1_epi32(0xF800F800);
+	const __m256i greenMask = _mm256_set1_epi32(0x07E007E0);
+	const __m256i blueMask = _mm256_set1_epi32(0x001F001F);
+
+	const __m256i decay63 = _mm256_set1_epi32(63);
+
+	//
+	// Packed-Domain Arithmetic
+	//
+	// Two RGB565 pixels are packed into each DWORD lane.
+	//
+	//     [Pixel1][Pixel2]
+	//
+	// The arithmetic below first operates on packed pixel pairs,
+	// then combines the high and low packed halves before applying
+	// decay.
+	//
+	// This is unrelated to the SIMD lane packing performed later
+	// by _mm256_packus_epi32().
+	//
+
+	//
+	// Red path.
+	//
+	__m256i red12 = _mm256_and_si256(srcPixel12, redMask); // get packed red bits for source pixels 1 and 2
+	__m256i red12Div4 = _mm256_srli_epi32(red12, 2); // divide by 4, so the next sum operation doesn't overflow the 32bit lane
+	__m256i redPackedAverage =
+		_mm256_add_epi32(
+			red12Div4,
+			_mm256_srli_epi32(
+				_mm256_and_si256(srcPixel34, redMask), // get packed red bits for source pixels 3 and 4
+				2) // divide by 4, so the next sum operation doesn't overflow the 32bit lane
+		); // sum the src12 and src34 red values, that have already been divided by 4, to produce the packed average
+
+	// NOTE: The average will be in the low 16bits of redAverage. While the upper 16 bits has a value
+	// (equivalent to redHi), we are not going to use those bits again after this next line of code.
+	// This may cause confusion if you're debugging the code. The important thing to understand is that
+	// this is an optimization to NOT remove the superfluous high 16bits now. The upper bits will be stripped
+	// off as a part of the decay operation, therefore no need to waste cycles now to bitmask it away, only to bitmask *again* later.
+	__m256i redHi = _mm256_srli_epi32(redPackedAverage, 16);
+	__m256i redAverage = _mm256_add_epi32(redPackedAverage, redHi); // NOTE: The average is in the low 16bits. The upper upper 16 bits in redAverage are ignored beyond this point.
+
+	const __m256i redDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(redAverage, decay63),
+				6),
+			_mm256_set1_epi32(0x0000F800));
+
+
+	//
+	// Green path.
+	//
+	__m256i greenPackedSum =
+		_mm256_add_epi32(
+			_mm256_and_si256(srcPixel12, greenMask),
+			_mm256_and_si256(srcPixel34, greenMask));
+	__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
+	__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in greenSum are ignored beyond this point.
+	const __m256i greenDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(greenSum, decay63),
+				8),
+			_mm256_set1_epi32(0x000007E0));
+
+	//
+	// Blue path.
+	//
+	__m256i bluePackedSum =
+		_mm256_add_epi32(
+			_mm256_and_si256(srcPixel12, blueMask),
+			_mm256_and_si256(srcPixel34, blueMask));
+	__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
+	__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in blueSum are ignored beyond this point.
+	const __m256i blueDecayed =
+		_mm256_and_si256(
+			_mm256_srli_epi32(
+				_mm256_mullo_epi32(blueSum, decay63),
+				8),
+			_mm256_set1_epi32(0x0000001F));
+
+	//
+	// Recombine RGB565.
+	//
+	__m256i unpackedResult = _mm256_or_si256(
+		_mm256_or_si256(
+			redDecayed,
+			greenDecayed),
+		blueDecayed);
+
+
+	//
+	// SIMD lane packing
+	// (DWORD lanes -> WORD lanes)
+	//
+	// Pack:
+	//
+	// 8 DWORD RGB565 values
+	// ->
+	// 8 WORD RGB565 values
+	//
+	__m256i packedResult = _mm256_packus_epi32(unpackedResult, _mm256_setzero_si256());
+	packedResult = _mm256_permute4x64_epi64(packedResult, _MM_SHUFFLE(3, 1, 2, 0));
+	__m128i finalPixels = _mm256_castsi256_si128(packedResult);
+
+	return finalPixels;
 }
 
 /****************************************************************************
@@ -4662,38 +4848,11 @@ BitCanvas16::BuildPackedDWORDVector256(
  *     - Provide a foundation for future AVX gather/construction
  *       experiments.
  *
- * NOTE: There are two different and unrelated concepts of "packing" in this algorithm.
- * It is critical to not conflate the two.
- *
- * Terminology:
- *
- *   "Packed-Domain":
- *       Two RGB565 pixels packed into a DWORD and processed
- *       using my original pseudo-SIMD algorithm.
- *
- *   "SIMD Lane Packing":
- *       AVX/SSE conversions between 32-bit and 16-bit SIMD lanes.
- *
- *  Most of the algorithm performs Packed-Domain arithmetic inside unpacked SIMD lanes.
- *  The final result is then packed into 16bit SIMD lanes before writing to memory.
- *
  ****************************************************************************/
 void BitCanvas16::DoDelta_AVX2_experiment7a(
 	const PIXELMAP* lpTransitionTable)
 {
 	dword_t destPixelOffset = 0;
-
-	const __m256i redMask =
-		_mm256_set1_epi32(0xF800F800);
-
-	const __m256i greenMask =
-		_mm256_set1_epi32(0x07E007E0);
-
-	const __m256i blueMask =
-		_mm256_set1_epi32(0x001F001F);
-
-	const __m256i decay63 =
-		_mm256_set1_epi32(63);
 
 	//
 	// Process 8 packed DWORD lanes
@@ -4702,129 +4861,28 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
 		//
-		// Build:
+		// Gather the Packed-Domain source vectors.
 		//
-		// [p0|p1]
-		// [p2|p3]
-		// [p4|p5]
-		// [p6|p7]
-		// [p8|p9]
-		// [p10|p11]
-		// [p12|p13]
-		// [p14|p15]
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
 		//
-		__m256i srcPixel12 =
-			BuildPackedDWORDVector256(
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7a_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m256i packedDomainPixel12Lanes =
+			Exp7a_BuildPackedDomainVector256(
 				lpTransitionTable,
-				destPixelOffset, false);
+				destPixelOffset, false /*gatherBottomRow*/);
 
-		//
-		// Build matching second source vector.
-		//
-		__m256i srcPixel34 =
-			BuildPackedDWORDVector256(
+		__m256i packedDomainPixel34Lanes =
+			Exp7a_BuildPackedDomainVector256(
 				lpTransitionTable,
-				destPixelOffset, true);
+				destPixelOffset, true /*gatherBottomRow*/);
 
-		//
-		// Packed-Domain Arithmetic
-		//
-		// Two RGB565 pixels are packed into each DWORD lane.
-		//
-		//     [Pixel1][Pixel2]
-		//
-		// The arithmetic below first operates on packed pixel pairs,
-		// then combines the high and low packed halves before applying
-		// decay.
-		//
-		// This is unrelated to the SIMD lane packing performed later
-		// by _mm256_packus_epi32().
-		//
-
-		//
-		// Red path.
-		//
-		__m256i red12 = _mm256_and_si256(srcPixel12, redMask); // get packed red bits for source pixels 1 and 2
-		__m256i red12Div4 = _mm256_srli_epi32(red12, 2); // divide by 4, so the next sum operation doesn't overflow the 32bit lane
-		__m256i redPackedAverage =
-			_mm256_add_epi32(
-				red12Div4,
-				_mm256_srli_epi32(
-					_mm256_and_si256(srcPixel34, redMask), // get packed red bits for source pixels 3 and 4
-					2) // divide by 4, so the next sum operation doesn't overflow the 32bit lane
-			); // sum the src12 and src34 red values, that have already been divided by 4, to produce the packed average
-
-		// NOTE: The average will be in the low 16bits of redAverage. While the upper 16 bits has a value
-		// (equivalent to redHi), we are not going to use those bits again after this next line of code.
-		// This may cause confusion if you're debugging the code. The important thing to understand is that
-		// this is an optimization to NOT remove the superfluous high 16bits now. The upper bits will be stripped
-		// off as a part of the decay operation, therefore no need to waste cycles now to bitmask it away, only to bitmask *again* later.
-		__m256i redHi = _mm256_srli_epi32(redPackedAverage, 16);
-		__m256i redAverage = _mm256_add_epi32(redPackedAverage, redHi); // NOTE: The average is in the low 16bits. The upper upper 16 bits in redAverage are ignored beyond this point.
-
-		const __m256i redDecayed =
-			_mm256_and_si256(
-				_mm256_srli_epi32(
-					_mm256_mullo_epi32(redAverage, decay63),
-					6),
-				_mm256_set1_epi32(0x0000F800));
-
-
-		//
-		// Green path.
-		//
-		__m256i greenPackedSum =
-			_mm256_add_epi32(
-				_mm256_and_si256(srcPixel12, greenMask),
-				_mm256_and_si256(srcPixel34, greenMask));
-		__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
-		__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in greenSum are ignored beyond this point.
-		const __m256i greenDecayed =
-			_mm256_and_si256(
-				_mm256_srli_epi32(
-					_mm256_mullo_epi32(greenSum, decay63),
-					8),
-				_mm256_set1_epi32(0x000007E0));
-
-		//
-		// Blue path.
-		//
-		__m256i bluePackedSum =
-			_mm256_add_epi32(
-				_mm256_and_si256(srcPixel12, blueMask),
-				_mm256_and_si256(srcPixel34, blueMask));
-		__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
-		__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi); // NOTE: The sum is in the low 16bits. The upper upper 16 bits in blueSum are ignored beyond this point.
-		const __m256i blueDecayed =
-			_mm256_and_si256(
-				_mm256_srli_epi32(
-					_mm256_mullo_epi32(blueSum, decay63),
-					8),
-				_mm256_set1_epi32(0x0000001F));
-
-		//
-		// Recombine RGB565.
-		//
-		__m256i unpackedResult = _mm256_or_si256(
-			_mm256_or_si256(
-				redDecayed,
-				greenDecayed),
-			blueDecayed);
-
-
-		//
-		// SIMD lane packing
-		// (DWORD lanes -> WORD lanes)
-		//
-		// Pack:
-		//
-		// 8 DWORD RGB565 values
-		// ->
-		// 8 WORD RGB565 values
-		//
-		__m256i packedResult = _mm256_packus_epi32(unpackedResult, _mm256_setzero_si256());
-		packedResult = _mm256_permute4x64_epi64(packedResult, _MM_SHUFFLE(3, 1, 2, 0));
-		__m128i finalPixels = _mm256_castsi256_si128(packedResult);
+		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_store_si128(
 			(__m128i*)
@@ -4881,6 +4939,8 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
 		++destPixelOffset;
 	}
 }
+
+
 
 /****************************************************************************
  *
