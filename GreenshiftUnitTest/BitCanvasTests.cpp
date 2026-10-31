@@ -715,6 +715,29 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7b",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 
 		/*************************************************************************
 		* EIGHT BIT BENCHMARKS
@@ -814,7 +837,7 @@ namespace GreenshiftUnitTest
 
 		/// <summary>
 		/// Performs a drift analysis by simulating the lifetime of 5-bit and 6-bit values under repeated averaging, then logs the average lifetimes and their ratio.
-		/// 
+		///
 		///     5-bit average lifetime = 4.161290
 		///     6 - bit average lifetime = 5.095238
 		///     Ratio = 1.224437
@@ -874,7 +897,7 @@ namespace GreenshiftUnitTest
 
 		/// <summary>
 		/// Unit test method that computes and logs the 'lifetime' of two values using a custom ComputeLifetime lambda function.
-		/// 
+		///
 		///     Red lifetime = 5
 		///     Green lifetime = 6
 		///     Ratio = 1.200000
@@ -2019,7 +2042,7 @@ namespace GreenshiftUnitTest
 		}
 
 
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_Grayscale)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7a_Grayscale)
 		{
 			VerifyEquivalence16(
 				L"AVX2 Grayscale",
@@ -2027,7 +2050,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_DistinctChannels)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7a_DistinctChannels)
 		{
 			VerifyEquivalence16(
 				L"AVX2 DistinctChannels",
@@ -2035,7 +2058,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_PrimaryColorCycle)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7a_PrimaryColorCycle)
 		{
 			VerifyEquivalence16(
 				L"AVX2 PrimaryColorCycle",
@@ -2043,7 +2066,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
-		TEST_METHOD(TestBitCanvas16_AVX2_Exp7_BitBoundary)
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7a_BitBoundary)
 		{
 			VerifyEquivalence16(
 				L"AVX2 BitBoundary",
@@ -2052,6 +2075,38 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_AVX2_experiment7a);
 		}
 
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7b);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7b);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7b);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7b_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7b);
+		}
 
 		TEST_METHOD(MathTestAVXMath)
 		{

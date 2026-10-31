@@ -907,6 +907,7 @@ public:
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
 	__forceinline __m256i	Exp7a_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // manual gather/construction
+	__forceinline __m256i	Exp7b_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool secondRow); // AVX gather/construction
 	void					DoDelta_AVX2_experiment7a(const PIXELMAP* lpTransitionTable); // AVX2 baseline, proof of concept
 	void					DoDelta_AVX2_experiment7b(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable);

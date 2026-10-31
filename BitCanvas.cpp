@@ -376,7 +376,7 @@ bool SupportsAVX2()
  *
  * BitCanvas - constructor
 	 *
-	 * ok, I admit that m_nCacheLength equation needs some explaining
+	 * ok, I admit that m_dwCacheLength equation needs some explaining
 	 *
 	 * since the variable is a constant, I have to put everything on one line
 	 * but I'll break it down in this comment so it's easier to understand
@@ -411,7 +411,7 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 	m_hTransitionTable(tween_description),
 	m_dwBufferByteLength(dwWidth* dwHeight* dwBitDepth / BITS_PER_BYTE),
 	m_dwBufferLength(dwWidth* dwHeight),
-	m_dwCacheLength(((dwWidth + 1)* dwBitDepth / BITS_PER_BYTE - 1) / sizeof(dword_t) + 1),
+	m_dwCacheLength(((dwWidth + 1) * dwBitDepth / BITS_PER_BYTE - 1) / sizeof(dword_t) + 1),
 	m_nLineWidthFactor(dwWidth / 640.0f)
 {
 	/*
@@ -2149,7 +2149,7 @@ void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment7a(lpTransitionTable);
+	DoDelta_AVX2_experiment7b(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
@@ -2935,7 +2935,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //Exp5b = SSE2 packed-domain SIMD (simulate SSE41 instructions)
 //Exp6 = SSE41 wider-store follow-on experiment
 //Exp7a = AVX2 proof of concept (primitive)
-//Exp7b = AVX2 gather / construction improvements
+//Exp7b-A = Temporary array construction (REJECTED)
+//Exp7b-B = actual AVX2 gather / construction investigation
 
 // SIMD Experiment Lineage
 //
@@ -2958,6 +2959,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 // Exp7 = 8-pixel AVX2 packed-DWORD SIMD variant
 //        Exp7a = establish AVX2 baseline
 //        Exp7b = gather/construction investigation
+//              Exp7b-A: Temporary array + _mm256_load_si256(): Rejected after benchmarking.
 //        Exp7c = store-throughput investigation (if warranted)
 
 /****************************************************************************
@@ -2989,6 +2991,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * SIMD experiments:
  *
  *     SSE2  Exp1          ~ 9.4 sec
+ *     AVX2  Exp7b-A       ~ 6.2 sec
  *     SSE2  Exp4          ~ 5.3 sec
  *
  *     SSE2  Exp2          ~ 4.4 - 4.8 sec
@@ -3069,11 +3072,14 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Comparable performance to Exp5
  *         - Given the added complexity, and marginal if any benefit, it's not yet a viable contender.
  *         - Aligned writes didn't help: writes were already aligned
-           - Batching didn't help due to register pressure spilling
+ *         - Batching didn't help due to register pressure spilling
  *         - Revisit register pressure investigation if AVX doesn't pan out.
  *
+ *
  * Exp7a:
- *     AVX2 packed-DWORD SIMD implementation.
+ *     AVX2 packed-DWORD SIMD implementation, using manual gather/construction,
+ *     and AVX2 packed-domain arithmetic. Proof of concept to establish a
+ *     baseline for the AVX2 investigations.
  *
  *     Preserves the Exp5 packed-domain arithmetic model while
  *     expanding SIMD width from 128-bit SSE registers to
@@ -3082,8 +3088,21 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     Process 8 packed DWORD lanes simultaneously.
  *
  *     Result:
- *         Comparable performance to Exp5
+ *         Comparable performance to Exp2/Exp5/Exp5b/Exp6.
  *         - Viable contender given we think we can reduce gather/construction costs.
+ *
+ * Exp7b-A:
+ *     Temporary array construction via _mm256_load_si256()
+ *
+ *     Intended to determine whether a simple memory-backed
+ *     vector construction strategy could outperform the
+ *     compiler-generated register construction sequence.
+ *     (i.e. is the simple approach viable?)
+ *
+ *     Result:
+ *         Catastrophically slower than Exp7a; Rejected after benchmarking.
+ *         Additional memory traffic from temporary array construction
+ *         substantially outweighed any benefit.
  *
  *
  * Key Findings
@@ -3123,6 +3142,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * - Gather/construction overhead appears to remain a major
  *   performance cost.
  *
+ * - Instrumentation of Exp7a suggests gather/construction
+ *   consumes more time than the arithmetic kernel, supporting
+ *   further investigation into gather optimization.
+ *
  *
  * Current Assessment
  * ------------------
@@ -3148,8 +3171,11 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
- * - Gather/construction bottlenecks.
- * - If gathers help, keep `best arithmetic path + best gather path + best store path` as the likely long-term AVX winner.
+ * - AVX2 gather via _mm256_i32gather_epi32().
+ * - Additional gather/construction experiments.
+ * - If gather improvements prove beneficial, combine the
+ *   best arithmetic, gather, and store paths into a final
+ *   AVX implementation.
  * - Additional Exp2 vs Exp5 assembly analysis.
  *
  ****************************************************************************/
@@ -4676,6 +4702,70 @@ BitCanvas16::Exp7a_BuildPackedDomainVector256(
 		packedDomain0);
 }
 
+// Exp7b-A: Temporary array + _mm256_load_si256(): Rejected after benchmarking. 3.8s -> 6.2s
+__forceinline __m256i
+BitCanvas16::Exp7b_BuildPackedDomainVector256(
+	const PIXELMAP* lpTransitionTable,
+	const dword_t destPixelOffset,
+	bool gatherBottomRow)
+{
+	const dword_t rowOffset =
+		gatherBottomRow ? m_dwBufferWidth : 0;
+
+	alignas(32) uint32_t packedDomain[8];
+
+	packedDomain[0] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 0]
+					+ rowOffset]);
+
+	packedDomain[1] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 1]
+					+ rowOffset]);
+
+	packedDomain[2] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 2]
+					+ rowOffset]);
+
+	packedDomain[3] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 3]
+					+ rowOffset]);
+
+	packedDomain[4] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 4]
+					+ rowOffset]);
+
+	packedDomain[5] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 5]
+					+ rowOffset]);
+
+	packedDomain[6] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 6]
+					+ rowOffset]);
+
+	packedDomain[7] =
+		*((const uint32_t*)
+			&m_pReadBuffer16[
+				lpTransitionTable[destPixelOffset + 7]
+					+ rowOffset]);
+
+	return _mm256_load_si256(
+		(const __m256i*)packedDomain);
+}
+
 /****************************************************************************
  * Exp7a Packed-Domain Math Kernel
  *
@@ -4940,6 +5030,99 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
 	}
 }
 
+
+
+// Exp7b-A: Temporary array + _mm256_load_si256(): Rejected after benchmarking. 3.8s -> 6.2s
+void BitCanvas16::DoDelta_AVX2_experiment7b(
+	const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 packed DWORD lanes
+	// (twice Exp5's width).
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		//
+		// Gather the Packed-Domain source vectors.
+		//
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
+		//
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7b_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m256i packedDomainPixel12Lanes =
+			Exp7b_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset, false /*gatherBottomRow*/);
+
+		__m256i packedDomainPixel34Lanes =
+			Exp7b_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+
+		_mm_store_si128(
+			(__m128i*)
+			& m_pWriteBuffer16[destPixelOffset],
+			finalPixels);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < m_dwBufferLength)
+	{
+		const dword_t pixel =
+			lpTransitionTable[destPixelOffset];
+
+		const dword_t pixel3 =
+			pixel + m_dwBufferWidth;
+
+		const word_t p1 =
+			m_pReadBuffer16[pixel];
+
+		const word_t p2 =
+			m_pReadBuffer16[pixel + 1];
+
+		const word_t p3 =
+			m_pReadBuffer16[pixel3];
+
+		const word_t p4 =
+			m_pReadBuffer16[pixel3 + 1];
+
+		m_pWriteBuffer16[destPixelOffset] =
+			RGB16(
+				(((RFromRGB16(p1) +
+					RFromRGB16(p2) +
+					RFromRGB16(p3) +
+					RFromRGB16(p4)) * 63) >> 8),
+				(((GFromRGB16(p1) +
+					GFromRGB16(p2) +
+					GFromRGB16(p3) +
+					GFromRGB16(p4)) * 63) >> 8),
+				(((BFromRGB16(p1) +
+					BFromRGB16(p2) +
+					BFromRGB16(p3) +
+					BFromRGB16(p4)) * 63) >> 8));
+
+		++destPixelOffset;
+	}
+}
 
 
 /****************************************************************************
