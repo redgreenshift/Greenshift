@@ -140,7 +140,7 @@
     <ClInclude Include="CollectionsAbstract.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ContiguousAlignedMemoryAllocator.h">
+    <ClInclude Include="ContiguousAlignedMemory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeltaField.h">

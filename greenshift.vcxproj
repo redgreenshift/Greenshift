@@ -697,7 +697,7 @@
     <ClInclude Include="BitCanvas.h" />
     <ClInclude Include="CollectionsAbstract.h" />
     <ClInclude Include="ColorUtils.hpp" />
-    <ClInclude Include="ContiguousAlignedMemoryAllocator.h" />
+    <ClInclude Include="ContiguousAlignedMemory.hpp" />
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
     <ClInclude Include="Diagnostics.hpp" />

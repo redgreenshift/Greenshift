@@ -31,6 +31,7 @@
 #define USE_MMX_ASSEMBLY    1
 
 #include "ColorUtils.hpp"
+#include "ContiguousAlignedMemory.hpp"
 #include "DeltaField.h"
 #include "DeltaTween.h"
 #include "MyDictionary.h"
@@ -751,7 +752,7 @@ private:
 	DeltaField*		m_pDelta;
 	DeltaTween		m_hTransitionTable;
 
-	void* m_pUnalignedDoubleBuffer;
+	ContiguousAlignedMemory m_doubleBufferStorage;
 	void ReleaseBuffers(void);    /* free allocated memory */
 
 protected:

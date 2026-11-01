@@ -27,6 +27,7 @@
   *
   ****************************************************************************/
 
+#include "ContiguousAlignedMemory.hpp"
 #include "ThreadedEntity.h"
 
 
@@ -140,23 +141,21 @@ private:
 	} m_state = TweenState::Serving_NoPendingWork;
 
 	dword_t           m_dwCurrentFrame;
-	dword_t           m_dwPlainRepetition;
 	dword_t           m_dwTweenRepetition;
+	dword_t           m_dwPlainRepetition;
 
-	dword_t           m_dwNumPlainFrames;
 	dword_t           m_dwNumTweenFrames;
+	dword_t           m_dwNumPlainFrames;
 	dword_t           m_dwNumTweenFramesThreadside;
 	dword_t           m_dwNumPlainFramesThreadside;
 
-	void** m_pPlainFrames;
-	void** m_pTweenFrames;
-	void** m_pTweenFramesThreadside;
-	void** m_pPlainFramesThreadside;
+	ContiguousAlignedMemory m_transitionTableStorage;
+	void** m_pTweenFrames = nullptr;
+	void** m_pPlainFrames = nullptr;
+	void** m_pTweenFramesThreadside = nullptr;
+	void** m_pPlainFramesThreadside = nullptr;
 
-	void* m_pObject1;    /* this is the object to tween from */
-	void* m_pObject2;    /* this is the object to tween to */
-
-
-	void* m_pUnalignedBuffer;    /* the pointer to the allocated chunk of memory */
+	void* m_pObject1 = nullptr;    /* this is the object to tween from */
+	void* m_pObject2 = nullptr;    /* this is the object to tween to */
 };
 

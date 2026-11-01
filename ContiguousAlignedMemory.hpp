@@ -22,6 +22,7 @@
  */
 
 #include <cstdarg>
+#include <cstddef>
 #include <memory>
 #include <utility>
 
@@ -82,31 +83,140 @@
  *   benefit depends on the access patterns and instructions used.
  ****************************************************************************/
 enum class MemoryAlignment : std::size_t {
+	Standard = alignof(std::max_align_t), // Alignment for ordinary C++ types with fundamental alignment requirements
+	None = 1,     // No alignment beyond what new[] naturally provides.
 	Bytes8 = 8,   // commonly sufficient for MMX
 	Bytes16 = 16, // commonly sufficient for SSE
 	Bytes32 = 32, // commonly sufficient for AVX
-	Bytes64 = 64  // commonly sufficient for AVX-512
+	Bytes64 = 64, // commonly sufficient for AVX-512
 };
+
 
 /**
  * @class ContiguousAlignedMemory
- * @brief A static utility class for allocating a single, contiguous block of memory for multiple pages.
  *
- * This class provides a mechanism to allocate one large, contiguous block that contains:
- * 1. A header (storing the number of pages).
- * 2. A page table (an array of pointers to the start of each page).
- * 3. The requested pages of memory, with each page start being aligned to the specified byte boundary.
+ * @brief Owns multiple aligned memory pages stored inside a
+ *        single contiguous allocation.
  *
- * This is a specialized allocator designed for scenarios where a single large allocation is preferred
- * to reduce memory fragmentation and cache misses, such as when processing large, fixed-size data buffers.
+ * This class is intended for large, long-lived, fixed-size data
+ * structures where predictable memory layout, cache locality,
+ * reduced heap fragmentation, and SIMD-friendly alignment are
+ * desired.
  *
- * @note This is not intended as a general-purpose allocator. Because it uses a single block, the
- *       lifetime of the memory must be managed by the caller (e.g., by deleting the pointer
- *       returned in 'outMemory').
+ * Every page is individually aligned to the requested byte
+ * boundary, allowing the storage to be used safely with SIMD
+ * instructions that require aligned access.
+ *
+ * The page table provides random access to each page while the
+ * underlying storage remains contained within a single
+ * allocation.
+ *
+ * This is not intended as a general-purpose allocator.
  */
 class ContiguousAlignedMemory
 {
 public:
+	ContiguousAlignedMemory() = default;
+	~ContiguousAlignedMemory() = default;
+
+	ContiguousAlignedMemory(ContiguousAlignedMemory&&) noexcept = default;
+	ContiguousAlignedMemory& operator=(ContiguousAlignedMemory&&) noexcept = default;
+
+	ContiguousAlignedMemory(const ContiguousAlignedMemory&) = delete;
+	ContiguousAlignedMemory& operator=(const ContiguousAlignedMemory&) = delete;
+
+	/// <summary>
+	/// Allocates a single contiguous block that contains a page table and aligned page buffers, initializes the page table, and returns pointers to the block and page table.
+	/// </summary>
+	/// <param name="nPages">Number of pages to allocate. Must be > 0.</param>
+	/// <param name="nPageSize">Requested page size in bytes. Must be > 0. Each page size is rounded up to the specified alignment.</param>
+	/// <param name="alignment">Alignment in bytes for pages (default "Ordinary C++ type alignment"). Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
+	/// <returns>An error_t status code: SUCCESS on success; ERR_NULL if an input pointer or size is invalid; ERR_MALLOC if memory allocation fails.</returns>
+	[[nodiscard]]
+	error_t Allocate(
+		dword_t nPages,
+		dword_t nPageSize,
+		MemoryAlignment alignment = MemoryAlignment::Standard)
+	{
+		void* outMemory = nullptr;
+
+		Reset();
+		error_t err = Allocate(
+			&outMemory,
+			&m_pageTable,
+			nPages,
+			nPageSize,
+			alignment);
+
+		if (err != SUCCESS)
+			return err;
+
+		m_upAllocation.reset(static_cast<byte_t*>(outMemory));
+		m_pAligned = reinterpret_cast<byte_t*>(m_pageTable);
+		m_pageCount = nPages;
+
+		return err;
+	}
+
+	// Returns true if storage is currently allocated.
+	bool IsAllocated() const
+	{
+		return m_upAllocation != nullptr;
+	}
+
+	explicit operator bool() const
+	{
+		return IsAllocated();
+	}
+
+	// Returns the aligned start of the contiguous storage.
+	byte_t* data()
+	{
+		return m_pAligned;
+	}
+
+	// Returns the page table contained within the allocation.
+	void** PageTable()
+	{
+		return m_pageTable;
+	}
+
+	// Returns the specified page from the page table.
+	const void* Page(size_t index) const
+	{
+		return m_pageTable[index];
+	}
+
+	// Returns the specified page from the page table.
+	void* Page(size_t index)
+	{
+		return m_pageTable[index];
+	}
+
+	size_t PageCount() const
+	{
+		return m_pageCount;
+	}
+
+	// Releases the allocation and returns the object
+	// to its default-constructed state.
+	void Reset()
+	{
+		// Invalidate all externally visible state.
+		m_pAligned = nullptr;
+		m_pageTable = nullptr;
+		m_pageCount = 0;
+
+		// Release the backing allocation.
+		m_upAllocation.reset();
+	}
+
+private:
+	std::unique_ptr<byte_t[]> m_upAllocation;
+	byte_t* m_pAligned = nullptr;
+	void** m_pageTable = nullptr;
+	dword_t m_pageCount = 0;
+
 	/// <summary>
 	/// Allocates a single contiguous block that contains a page table and aligned page buffers, initializes the page table, and returns pointers to the block and page table.
 	/// </summary>
@@ -114,15 +224,15 @@ public:
 	/// <param name="outPageTable">Pointer to a void** that receives the address of the page table (an array of void* entries) located inside the allocated block. Do not free the page table separately.</param>
 	/// <param name="nPages">Number of pages to allocate. Must be > 0.</param>
 	/// <param name="nPageSize">Requested page size in bytes. Must be > 0. Each page size is rounded up to the specified alignment.</param>
-	/// <param name="nBytesToAlign_Param">Alignment in bytes for pages (default 16). Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
+	/// <param name="alignment">Alignment in bytes for pages. Must be > 0. Pages are rounded up to a multiple of this value and the returned page buffers are aligned accordingly.</param>
 	/// <returns>An error_t status code: SUCCESS on success; ERR_NULL if an input pointer or size is invalid; ERR_MALLOC if memory allocation fails.</returns>
 	static error_t  Allocate(void** outMemory,
 		void*** outPageTable,
 		const dword_t nPages,
 		const dword_t nPageSize,
-		const MemoryAlignment nBytesToAlign_Param = MemoryAlignment::Bytes16)
+		const MemoryAlignment alignment)
 	{
-		dword_t   nBytesToAlign = std::to_underlying(nBytesToAlign_Param);
+		dword_t   nBytesToAlign = std::to_underlying(alignment);
 		dword_t   nAlignment_Overhead = nBytesToAlign - 1;
 		dword_t   nAligned_Page_Size;
 		dword_t   nAligned_Memory_Size;
@@ -136,8 +246,8 @@ public:
 		/*
 		 *
 		 */
-		if (outMemory == NULL
-			|| outPageTable == NULL
+		if (outMemory == nullptr
+			|| outPageTable == nullptr
 			|| nBytesToAlign == 0
 			|| nPages == 0
 			|| nPageSize == 0)
@@ -162,7 +272,7 @@ public:
 		 * create the block of memory
 		 */
 		(*outMemory) = new byte_t[nTotal_Allocation_Size];
-		if (*outMemory == NULL)
+		if (*outMemory == nullptr)
 			return ERR_MALLOC;
 
 		/*
@@ -199,4 +309,7 @@ public:
 	};
 
 };
+
+// If I ever want a new name:
+using ContiguousStorage = ContiguousAlignedMemory;
 

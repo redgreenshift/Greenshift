@@ -28,7 +28,7 @@
 
 #include "TweenThread.h"
 
-#include "ContiguousAlignedMemoryAllocator.h"
+#include "ContiguousAlignedMemory.hpp"
 #include "ThreadedEntity.h"
 #include "MathUtils.hpp"
 #include "MemoryUtils.hpp"
@@ -55,8 +55,6 @@ TweenThread::TweenThread(const TWEENDESCRIPTION& tween_description) :
 	m_pObject1 = NULL;
 	m_pObject2 = NULL;
 
-	m_pUnalignedBuffer = NULL;
-
 	m_state = TweenState::Serving_NoPendingWork;
 	m_dwCurrentFrame = 0;
 	m_dwPlainRepetition = 0;
@@ -82,7 +80,6 @@ TweenThread::TweenThread(const TWEENDESCRIPTION& tween_description) :
  ****************************************************************************/
 TweenThread::~TweenThread()
 {
-	SAFE_DELETE_ARRAY(m_pUnalignedBuffer);
 }
 
 
@@ -96,7 +93,6 @@ TweenThread::~TweenThread()
 error_t    TweenThread::Initialize(void* pObject1)
 {
 	error_t err;
-	void**  pPageTable;
 	MemoryAlignment dwBytesToAlign = MemoryAlignment::Bytes64;
 	dword_t dwPageSize = m_dwFrameSize;
 	dword_t dwNumPages = 2 + 2 * m_dwMaximumFrames;
@@ -113,8 +109,7 @@ error_t    TweenThread::Initialize(void* pObject1)
 	* what if I just go ahead and allocate all the buffers? as one chunk?
 	*/
 
-	err = ContiguousAlignedMemory::Allocate(&m_pUnalignedBuffer,
-		&pPageTable,
+	err = m_transitionTableStorage.Allocate(
 		dwNumPages,
 		dwPageSize,
 		dwBytesToAlign);
@@ -126,13 +121,42 @@ error_t    TweenThread::Initialize(void* pObject1)
 	if (err != SUCCESS)
 		return err;
 
+	//
+	// The TweenFrame pointers reference the beginning of
+	// contiguous sequences of intermediate frames used to
+	// transition (beTWEEN) between the two PlainFrames.
+	//
+	// Page-table layout:
+	//
+	// [0 .. m_dwMaximumFrames - 1]
+	//     Tween Frames
+	//     m_dwMaximumFrames pages
+	//
+	// [m_dwMaximumFrames]
+	//     Plain Frame
+	//     1 page
+	//
+	// [m_dwMaximumFrames + 1 .. (m_dwMaximumFrames * 2)]
+	//     Tween Frames (thread side)
+	//     m_dwMaximumFrames pages
+	//
+	// [m_dwMaximumFrames * 2]
+	//     Plain Frame (thread side)
+	//     1 page
+	//
+	// Tween frame pointers reference the start of a contiguous
+	// range of pages.
+	//
+	// Plain frame pointers currently address a single page.
+	//
+	void** pPageTable = m_transitionTableStorage.PageTable();
 	/*
-		m_pPlainFrames           = &pPageTable[m_dwMaximumFrames*0];
-		m_pTweenFrames           = &pPageTable[m_dwMaximumFrames*1];
-		m_pTweenFramesThreadside = &pPageTable[m_dwMaximumFrames*2];
-		m_pPlainFramesThreadside = &pPageTable[m_dwMaximumFrames*3];/**/
-	m_pTweenFrames = &pPageTable[0];
-	m_pPlainFrames = &pPageTable[m_dwMaximumFrames];
+	m_pTweenFrames           = &pPageTable[m_dwMaximumFrames*0];
+	m_pPlainFrames           = &pPageTable[m_dwMaximumFrames*1];
+	m_pTweenFramesThreadside = &pPageTable[m_dwMaximumFrames*2];
+	m_pPlainFramesThreadside = &pPageTable[m_dwMaximumFrames*3];/**/
+	m_pTweenFrames           = &pPageTable[0];
+	m_pPlainFrames           = &pPageTable[m_dwMaximumFrames];
 	m_pTweenFramesThreadside = &pPageTable[m_dwMaximumFrames + 1];
 	m_pPlainFramesThreadside = &pPageTable[m_dwMaximumFrames * 2];
 

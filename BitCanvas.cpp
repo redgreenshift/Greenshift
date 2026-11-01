@@ -32,7 +32,7 @@
 
 #include "adetect.h"
 #include "ColorUtils.hpp"
-#include "ContiguousAlignedMemoryAllocator.h"
+#include "ContiguousAlignedMemory.hpp"
 #include "DeltaField.h"
 #include "DeltaTween.h"
 #include "MyDictionary.h"
@@ -418,7 +418,6 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 	 * initialize all members
 	 */
 	m_pDelta = NULL;
-	m_pUnalignedDoubleBuffer = NULL;
 
 	m_pReadOnlyBuffer = NULL; /* aligned buffer */
 	m_pWriteOnlyBuffer = NULL; /* aligned buffer */
@@ -645,7 +644,7 @@ void BitCanvas::ReleaseBuffers(void)
 	}
 #endif // Double Bitmap
 #else
-	SAFE_DELETE_ARRAY(m_pUnalignedDoubleBuffer);
+	m_doubleBufferStorage.Reset();
 #endif
 }
 
@@ -701,18 +700,16 @@ error_t BitCanvas::Initialize(void)
 #else  // Use Bitmap
 
 	error_t err;
-	void** pPageTable;
 
-	err = ContiguousAlignedMemory::Allocate(&m_pUnalignedDoubleBuffer,
-		&pPageTable,
+	err = m_doubleBufferStorage.Allocate(
 		2,
 		nBuffer_Size,
 		nBytes_to_Align);
 	if (err != SUCCESS)
 		return err;
 
-	m_pReadOnlyBuffer = pPageTable[0];
-	m_pWriteOnlyBuffer = pPageTable[1];
+	m_pReadOnlyBuffer = m_doubleBufferStorage.Page(0);
+	m_pWriteOnlyBuffer = m_doubleBufferStorage.Page(1);
 
 	// Be sure to initialize the extra line, the cache past the end that contains a COPY of the first line of pixels!
 	memset(m_pReadOnlyBuffer, 0, nBuffer_Size);
