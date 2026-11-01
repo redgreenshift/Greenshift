@@ -2989,7 +2989,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Scalar reference implementations:
  *
  *     CPP Baseline        ~11.8 sec
- *     CPP Optimized       ~ 7.7 sec
+ *     CPP Optimized       ~ 7.7 sec (pseudo-SIMD, Packed-Domain implementation from ~2000)
  *
  * SIMD experiments:
  *
@@ -3008,6 +3008,99 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *
  * Experiment Summary
  * ------------------
+ *
+ * [HISTORICAL EXPERIMENTS]
+ *
+ * HistExp2000_BASELINE:
+ *
+ *     Intentionally, naively reading/writing 16bit pixel values
+ *     to provide a baseline to measure experiments against.
+ *
+ * HistExp2000_A -- Wider pixel format:
+ *
+ *     Store RGB565 pixels using wider storage where each
+ *     color channel occupied a full byte.
+ *
+ *     Motivation:
+ *         Eliminate masking and shifting when accessing color channels.
+ *
+ *     Result:
+ *         Significantly slower than BASELINE.
+ *         Rejected after benchmarking.
+ *
+ *     Observation:
+ *         Reduced arithmetic complexity did not offset the
+ *         increased memory bandwidth requirements.
+ *
+ *     Lesson:
+ *         Memory traffic was more expensive than the
+ *         additional arithmetic.
+ *
+ * HistExp2000_B -- Separate Color Channel Buffers:
+ *
+ *     Store red, green, and blue channels in separate buffers.
+ *
+ *     Motivation:
+ *         Eliminate channel extraction and simplify arithmetic.
+ *
+ *     Result
+ *         Significantly slower than BASELINE.
+ *         Rejected after benchmarking.
+ *
+ *     Observation:
+ *         Each pixel required accessing multiple widely
+ *         separated memory locations, degrading cache locality.
+ *
+ *     Lesson:
+ *         Spatial locality is more important than simpler arithmetic.
+ *
+ * HistExp2000_C -- Packed-Domain DWORD Arithmetic ("pseudo-SIMD"):
+ *
+ *     Pack two RGB565 pixels into a DWORD and perform
+ *     arithmetic on both simultaneously using carefully
+ *     selected masks and shifts.
+ *
+ *     Motivation:
+ *         Reduce memory access and improve throughput on
+ *         non-SIMD hardware.
+ *
+ *     Result
+ *         HUGE performance benefit.
+ *         Approximately 35% faster than BASELINE.
+ *         Became the basis for DoDelta_cpp_OPTIMIZED_WITH_DECAY_63();
+ *         Achieved a larger improvement than any other
+ *         16-bit experiment investigated around 2000.
+ *
+ *     Observation:
+ *         Additional arithmetic was substantially cheaper
+ *         than additional memory access.
+ *
+ *     Lesson:
+ *         Recomputing values was often faster than loading
+ *         pre-expanded data structures from memory.
+ *
+ *         This principle later translated surprisingly well
+ *         to modern SIMD implementations (Exp5, Exp5b,
+ *         Exp6, Exp7a, Exp7b-A, Exp7b-B1, and Exp7b-B2).
+ *
+ * Historical Theme:
+ *
+ *     Multiple investigations conducted over roughly
+ *     25 years reached the same conclusion:
+ *
+ *         Memory movement is expensive.
+ *         Arithmetic is cheap.
+ *
+ *     This theme repeatedly appeared despite major
+ *     changes in processor architecture, SIMD
+ *     capabilities, and implementation strategy.
+ *
+ *     Many successful Greenshift optimizations increase
+ *     arithmetic work in order to reduce memory access,
+ *     cache pressure, or memory bandwidth requirements.
+ *
+ *
+ * [MODERN EXPERIMENTS]
  *
  * Exp1:
  *     Initial SSE2 implementation using temporary gather arrays.
