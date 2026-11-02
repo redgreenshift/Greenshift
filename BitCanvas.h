@@ -902,6 +902,7 @@ public:
 	void					DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable);
+	__forceinline void		Exp2_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t& destPixelOffset);
 	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
@@ -915,7 +916,7 @@ public:
 	void					DoDelta_AVX2_experiment7bA(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7bB1(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7bB2(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
-	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable); // AVX2 wide store
 	__forceinline __m128i	ComputeExp5Result(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;

@@ -20,36 +20,37 @@
  */
 #include "pch.h"
 #define UNIT_TEST 1 // Conditionally change BitCanvas so we can call private/protected methods
-#include "..\Project Greenshift.h"
+#include "../Project Greenshift.h"
 #include "CppUnitTest.h"
 #include <cstdint>
 #include <format>
 #include <functional>
-#include "..\MyDictionary.h"
-#include "..\Expression.h"
+#include "../MyDictionary.h"
+#include "../Expression.h"
 #include "../ColorUtils.hpp"
 #include "../HighResolutionTimer.h"
 #include "../MTRand.hpp"
-#include "..\GForceFunctions.cpp"
-#include "..\Greenshift.cpp"
-#include "..\FilingClerk.cpp"
-#include "..\BitCanvas.h"
-#include "..\MetaConfig.cpp"
-#include "..\DeltaField.cpp"
-#include "..\MetaDeltaField.cpp"
-#include "..\VectorGraphic.cpp"
-#include "..\MetaWaveShape.cpp"
-#include "..\Particle.cpp"
-#include "..\MetaParticle.cpp"
-#include "..\ThreadedEntity.cpp"
-#include "..\TweenThread.cpp"
-#include "..\DeltaTween.cpp"
-#include "..\Palette.h"
-#include "..\Palette.cpp"
-#include "..\MetaPalette.cpp"
-#include "..\WindowDevice.cpp"
-#include "..\WindowDeviceDX.cpp"
-#include "..\BitCanvas.cpp"
+#include "../GForceFunctions.cpp"
+#include "../Greenshift.cpp"
+#include "../FilingClerk.cpp"
+#include "../BitCanvas.h"
+#include "../MetaConfig.cpp"
+#include "../DeltaField.cpp"
+#include "../MetaDeltaField.cpp"
+#include "../VectorGraphic.cpp"
+#include "../MetaWaveShape.cpp"
+#include "../Particle.cpp"
+#include "../MetaParticle.cpp"
+#include "../ThreadedEntity.cpp"
+#include "../TweenThread.cpp"
+#include "../DeltaTween.cpp"
+#include "../Palette.h"
+#include "../Palette.cpp"
+#include "../MetaPalette.cpp"
+#include "../WindowDevice.cpp"
+#include "../WindowDeviceDX.cpp"
+#include "../BitCanvas.cpp"
+#include "../CpuFeatures.cpp"
 #include "../detect.c"
 
 #include <memory>
@@ -780,6 +781,29 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB2(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7c)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7c",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7c(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2219,6 +2243,39 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_AVX2_experiment7bB2);
 		}
 
+
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7c_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7c);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7c_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7c);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7c_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7c);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7c_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7c);
+		}
 
 		TEST_METHOD(MathTestAVXMath)
 		{

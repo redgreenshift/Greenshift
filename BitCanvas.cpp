@@ -33,20 +33,19 @@
 #include "adetect.h"
 #include "ColorUtils.hpp"
 #include "ContiguousAlignedMemory.hpp"
+#include "CpuFeatures.hpp"
 #include "DeltaField.h"
 #include "DeltaTween.h"
 #include "MyDictionary.h"
 #include "Expression.h"
 #include "MathUtils.hpp"
-#include "MemoryUtils.hpp"
 #include "Palette.h"
 #include "TweenThread.h"
 
-  //I don't think I should include math just for fabs()
+#include <cstdint>
 #include <cstdlib>
 #include <emmintrin.h> // SSE2 intrinsics
 #include <immintrin.h> // AVX/AVX2 intrinsics
-#include <intrin.h>
 //#include <mm3dnow.h>
 //#include <emmintrin.h>
 //#include <xmmintrin.h>
@@ -54,6 +53,7 @@
 #include <mmintrin.h> // MMX intrinsics
 #endif
 #include <smmintrin.h> // SSE4.1 intrinsics
+#include <string.h>
 //#include <dvec.h>
 //#include <fvec.h>
 //#include <ivec.h>
@@ -277,100 +277,8 @@ error_t    BitCanvas::New( //const dword_t dwWidth,
 
 }
 
-bool cpuid_has_sse2()
-{
-#if defined(_M_X64) || defined(_M_AMD64)
-	return true;  // SSE2 is guaranteed on x64
-#else
-	int regs[4];
-	__cpuid(regs, 1);  // CPUID leaf 1
-	return (regs[3] & (1 << 26)) != 0;  // EDX bit 26 = SSE2
-#endif
-}
-
-bool cpuid_has_sse41() {
-	int regs[4];
-	__cpuid(regs, 1);
-	return (regs[2] & (1 << 19)) != 0; // ECX bit 19
-}
-
-bool has_sse2() {
-#if defined(__GNUC__) || defined(__clang__)
-	return __builtin_cpu_supports("sse2");
-#else
-	return cpuid_has_sse2(); // Use the MSVC CPUID check above, or another platform-specific check.
-#endif
-}
-
-bool has_sse41() {
-#if defined(__GNUC__) || defined(__clang__)
-	return __builtin_cpu_supports("sse4.1");
-#else
-	return cpuid_has_sse41(); // Use the MSVC CPUID version above, or another platform-specific check.
-#endif
-}
-
-// With MSVC, AVX2 requires both CPU support and operating-system support for saving AVX state. Check those before executing AVX2 instructions.
-bool cpuid_has_avx2() {
-	int regs[4];
-
-	__cpuid(regs, 1);
-	const bool osxsave = (regs[2] & (1 << 27)) != 0; // ECX bit 27
-	const bool avx = (regs[2] & (1 << 28)) != 0; // ECX bit 28
-	if (!osxsave || !avx)
-		return false;
-
-	// XCR0 bits 1 and 2 must be set for OS-enabled XMM and YMM state.
-	if ((_xgetbv(0) & 0x6) != 0x6)
-		return false;
-
-	__cpuidex(regs, 7, 0);
-	return (regs[1] & (1 << 5)) != 0; // EBX bit 5: AVX2
-}
-
-bool has_avx2() {
-#if defined(__GNUC__) || defined(__clang__)
-	return __builtin_cpu_supports("avx2");
-#else
-	return cpuid_has_avx2(); // Use the MSVC check above, or another platform-specific check.
-#endif
-}
 
 
-bool SupportsAVX2()
-{
-	int cpuInfo[4];
-
-	__cpuid(cpuInfo, 1);
-
-	const bool osxsave =
-		(cpuInfo[2] & (1 << 27)) != 0;
-
-	const bool avx =
-		(cpuInfo[2] & (1 << 28)) != 0;
-
-	if (!osxsave || !avx)
-		return false;
-
-	const unsigned long long xcr0 =
-		_xgetbv(0);
-
-	const bool xmmEnabled =
-		(xcr0 & 0x2) != 0;
-
-	const bool ymmEnabled =
-		(xcr0 & 0x4) != 0;
-
-	if (!xmmEnabled || !ymmEnabled)
-		return false;
-
-	__cpuidex(cpuInfo, 7, 0);
-
-	const bool avx2 =
-		(cpuInfo[1] & (1 << 5)) != 0;
-
-	return avx2;
-}
 
 /****************************************************************************
  *
@@ -2926,21 +2834,22 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 
 //Exp1 = SSE2 proof of concept
 //Exp2 = SSE2 conventional SIMD winner
-//Exp3 = rejected
+//Exp3 = Reduce the number of gathers (REJECTED)
 //Exp4 = SSE2 narrower SIMD experiment
 //Exp5 = SSE41 packed-domain SIMD winner
 //Exp5b = SSE2 packed-domain SIMD (simulate SSE41 instructions)
 //Exp6 = SSE41 wider-store follow-on experiment
 //Exp7a = AVX2 proof of concept (primitive)
-//Exp7b-A = Temporary array construction (REJECTED)
-//Exp7b-B1 = actual AVX2 gather + scalar load (REJECTED)
-//Exp7b-B2 = actual AVX2 gather + vector load
+//Exp7b-A = AVX2 Temporary array construction (REJECTED)
+//Exp7b-B1 = AVX2 actual AVX2 gather + scalar load (REJECTED)
+//Exp7b-B2 = AVX2 actual AVX2 gather + vector load
+//Exp7c = AVX2 store-throughput investigation
 
 // SIMD Experiment Lineage
 //
 // Exp1 = 8-pixel SSE2 using temporary gather arrays
 // Exp2 = 8-pixel SSE2 using direct vector construction (_mm_set_epi16)
-// Exp3 = skipped / superseded after disassembly review
+// Exp3 = (SKIPPED / superseded after disassembly review): Parallelize reads by using DWORDs instead of multiple WORDs
 // Exp4 = 4-pixel SSE2 variant
 //
 // Exp5 = 4-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
@@ -2960,7 +2869,9 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //              Exp7b-A: Temporary array + _mm256_load_si256(): Rejected after benchmarking.
 //              Exp7b-B1: AVX2 gather via _mm256_i32gather_epi32(): Rejected after benchmarking.
 //              Exp7b-B2: AVX2 gather + vector load: MASSIVE IMPROVEMENT.
-//        Exp7c = store-throughput investigation (if warranted)
+//        Exp7c = 16-pixel batched-write/store-throughput variant
+//
+// NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
 /****************************************************************************
  *
@@ -2986,7 +2897,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Scalar reference implementations:
  *
  *     CPP Baseline        ~11.8 sec
- *     CPP Optimized       ~ 7.7 sec (pseudo-SIMD, Packed-Domain implementation from ~2000)
+ *     CPP Optimized       ~ 7.7 sec (pseudo-SIMD, Packed-Domain implementation from ~2001)
  *
  * SIMD experiments:
  *
@@ -3000,7 +2911,34 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     SSE41 Exp5          ~ 4.0 - 4.6 sec
  *     SSE41 Exp6          ~ 3.9 - 4.1 sec
  *     AVX2  Exp7a         ~ 3.9 - 4.2 sec
+ *
+ * SIMD + Gatherer Experiments:
  *     AVX2  Exp7b-B2      ~ 2.4 sec
+ *
+ * 20,000 iteration benchmark:
+ *
+ * Scalar reference implementations:
+ *
+ *     CPP Baseline        ~23.6 - 25.4 sec
+ *     CPP Green Corrected ~15.1 - 16.3 sec
+ *     CPP Optimized       ~14.9 - 16.3 sec (pseudo-SIMD, Packed-Domain implementation from ~2001)
+ *
+ * SIMD experiments:
+ *
+ *     AVX2  Exp7b-B1      ~19.3 - 21.3 sec
+ *     SSE2  Exp1          ~18.1 - 19.0 sec
+ *     AVX2  Exp7b-A       ~12.2 - 13.3 sec
+ *     SSE2  Exp4          ~ 9.4 -  9.8 sec
+ *
+ *     SSE2  Exp2          ~ 8.3 - 8.8 sec
+ *     SSE2  Exp5b         ~ 8.3 - 8.8 sec
+ *     SSE41 Exp6          ~ 7.6 - 8.4 sec
+ *     SSE41 Exp5          ~ 7.5 - 8.0 sec
+ *     AVX2  Exp7a         ~ 7.4 - 8.1 sec
+ *
+ * SIMD + Gatherer Experiments:
+ *     AVX2  Exp7b-B2      ~ 4.7 - 5.3 sec
+ *     AVX2  Exp7c         ~ 4.8 - 5.2 sec
  *
  *
  * Experiment Summary
@@ -3066,7 +3004,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Approximately 35% faster than BASELINE.
  *         Became the basis for DoDelta_cpp_OPTIMIZED_WITH_DECAY_63();
  *         Achieved a larger improvement than any other
- *         16-bit experiment investigated around 2000.
+ *         16-bit experiment investigated around 2001.
  *
  *     Observation:
  *         Additional arithmetic was substantially cheaper
@@ -3114,6 +3052,24 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     Skipped after disassembly review. The compiler had already
  *     optimized much of the intended work.
  *
+ *     Observation:
+ *         Exp7b-B2 demonstrated that memory acquisition
+ *         deserved further investigation.
+ *
+ *         Although Exp3 would not have tested the same
+ *         gather strategy ultimately used in Exp7b-B2,
+ *         it likely would have pushed the investigation
+ *         toward read minimization much earlier.
+ *
+ *     Lesson:
+ *         Compiler-generated code quality should not be
+ *         confused with algorithmic optimality.
+ *
+ *         A compiler may produce excellent code for the
+ *         algorithm provided, while a different memory
+ *         access strategy still produces substantially
+ *         better overall performance.
+ *
  * Exp4:
  *     Reduced SIMD width from 8 output pixels to 4.
  *
@@ -3131,7 +3087,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     This preserves the arithmetic structure used by
  *     DoDelta_cpp_OPTIMIZED_WITH_DECAY_63().
  *
- *     The packed-domain strategy originated around 2000-2001 as a
+ *     The packed-domain strategy originated around 2001 as a
  *     way to reduce memory access by performing pseudo-SIMD
  *     operations on two WORDs packed inside a DWORD.
  *
@@ -3167,7 +3123,11 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Comparable performance to Exp5
  *         - Given the added complexity, and marginal if any benefit, it's not yet a viable contender.
  *         - Aligned writes didn't help: writes were already aligned
- *         - Batching didn't help due to register pressure spilling
+ *         - Batching did not provide a clear benefit.
+ *         - Register pressure and spilling appeared to
+ *           offset any potential gain.
+ *         - Exp7c later revisited the same batching concept
+ *           under AVX2 and produced more promising results.
  *         - Revisit register pressure investigation if AVX doesn't pan out.
  *
  *
@@ -3228,6 +3188,20 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         first experiment to clearly separate itself
  *         from the traditional Exp2/Exp5 performance tier.
  *
+ * Exp7c
+ *     Batched-write variant of Exp7b-B2.
+ *
+ *     Result:
+ *         Preliminary measurements suggest a small but repeatable
+ *         improvement over Exp7b-B2.
+ *
+ *         Assembly review showed no obvious vector register
+ *         spilling despite the wider batched-write strategy.
+ *
+ *         Additional benchmarking is required to determine
+ *         whether the observed benefit is statistically
+ *         significant.
+ *
  *
  * Key Findings
  * ------------
@@ -3275,6 +3249,14 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *       traffic for gather indices provided a substantially
  *       larger benefit than expected.
  *     o The approach may be applicable to previous experiments.
+ *
+ * - AVX2 batched-write experiments (Exp7c) produced
+ *   a small but potentially repeatable improvement
+ *   over Exp7b-B2 without introducing obvious
+ *   register spills.
+ *
+ *   Further benchmarking is required to determine
+ *   whether the gain is significant.
  *
  *
  * Current Assessment
@@ -3661,10 +3643,21 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 	//
 	// Scalar tail.
 	//
-	while (pixelOffset < bufferLength)
+	Exp2_ScalarTail(lpTransitionTable, pixelOffset);
+}
+
+__forceinline void BitCanvas16::Exp2_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t& destPixelOffset)
+{
+	//
+	// Existing scalar tail from Exp2.
+	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
+	// **OR** do I want to add a requirement/restriction enforcing even widths?
+	// That is probably better, to enforce some constraints in the name of performance.
+	//
+	while (destPixelOffset < m_dwBufferLength)
 	{
 		const dword_t pixel =
-			lpTransitionTable[pixelOffset];
+			lpTransitionTable[destPixelOffset];
 
 		const dword_t pixel3 =
 			pixel + m_dwBufferWidth;
@@ -3681,7 +3674,7 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 		const word_t p4 =
 			m_pReadBuffer16[pixel3 + 1];
 
-		m_pWriteBuffer16[pixelOffset] =
+		m_pWriteBuffer16[destPixelOffset] =
 			RGB16(
 				(((RFromRGB16(p1) +
 					RFromRGB16(p2) +
@@ -3696,7 +3689,7 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 					BFromRGB16(p3) +
 					BFromRGB16(p4)) * 63) >> 8));
 
-		++pixelOffset;
+		++destPixelOffset;
 	}
 }
 
@@ -3864,47 +3857,8 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 
 	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (pixelOffset < bufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[pixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[pixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++pixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, pixelOffset);
 }
 
 
@@ -3955,9 +3909,6 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 {
-	const dword_t bufferLength =
-		m_dwBufferWidth * m_dwBufferHeight;
-
 	const __m128i redMask =
 		_mm_set1_epi32(0xF800F800);
 
@@ -4117,47 +4068,8 @@ void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 
 	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < bufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
@@ -4208,9 +4120,6 @@ static inline __m128i mullo_epi32_emulated_sse2(__m128i a, __m128i b)
 //
 void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 {
-	const dword_t bufferLength =
-		m_dwBufferWidth * m_dwBufferHeight;
-
 	const __m128i redMask =
 		_mm_set1_epi32(0xF800F800);
 
@@ -4364,47 +4273,8 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 
 	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < bufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
@@ -4514,47 +4384,8 @@ void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 
 	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < bufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 // Copy paste of the Exp5 algorithm
 __forceinline __m128i BitCanvas16::ComputeExp5Result(
@@ -4744,7 +4575,7 @@ __forceinline __m128i BitCanvas16::ComputeExp5Result(
  * Exp7a Packed-Domain Manual Gather/Construction
  *
  * Constructs the Packed-Domain source vectors consumed by
- * Exp7a_PackedDomainMathKernel().
+ * Exp7a_AVX2_PackedDomainMathKernel().
  *
  * Terminology:
  *
@@ -5074,7 +4905,7 @@ BitCanvas16::Exp7b_B2_BuildPackedDomainVector256(
  * prior to returning the final RGB565 results.
  *
  ****************************************************************************/
-__forceinline __m128i Exp7a_PackedDomainMathKernel(__m256i srcPixel12, __m256i srcPixel34)
+__forceinline __m128i Exp7a_AVX2_PackedDomainMathKernel(__m256i srcPixel12, __m256i srcPixel34)
 {
 	const __m256i redMask = _mm256_set1_epi32(0xF800F800);
 	const __m256i greenMask = _mm256_set1_epi32(0x07E007E0);
@@ -5239,7 +5070,7 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
 				lpTransitionTable,
 				destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+		__m128i finalPixels = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_store_si128(
 			(__m128i*)
@@ -5250,51 +5081,9 @@ void BitCanvas16::DoDelta_AVX2_experiment7a(
 	}
 
 	//
-	// Existing scalar tail loop.
-	//
-	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < m_dwBufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
@@ -5346,7 +5135,7 @@ void BitCanvas16::DoDelta_AVX2_experiment7bA(
 				lpTransitionTable,
 				destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+		__m128i finalPixels = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_store_si128(
 			(__m128i*)
@@ -5357,51 +5146,9 @@ void BitCanvas16::DoDelta_AVX2_experiment7bA(
 	}
 
 	//
-	// Existing scalar tail loop.
-	//
-	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < m_dwBufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
@@ -5454,7 +5201,7 @@ void BitCanvas16::DoDelta_AVX2_experiment7bB1(
 				lpTransitionTable,
 				destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+		__m128i finalPixels = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_store_si128(
 			(__m128i*)
@@ -5465,51 +5212,9 @@ void BitCanvas16::DoDelta_AVX2_experiment7bB1(
 	}
 
 	//
-	// Existing scalar tail loop.
-	//
-	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < m_dwBufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
@@ -5564,7 +5269,7 @@ void BitCanvas16::DoDelta_AVX2_experiment7bB2(
 				lpTransitionTable,
 				destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i finalPixels = Exp7a_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+		__m128i finalPixels = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_store_si128(
 			(__m128i*)
@@ -5577,49 +5282,102 @@ void BitCanvas16::DoDelta_AVX2_experiment7bB2(
 	//
 	// Existing scalar tail loop.
 	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+
+__forceinline __m256i combine_sse_to_avx(__m128i resultA, __m128i resultB) {
+	// 1. Promote the first 128-bit variable to a 256-bit register.
+	// This places resultA in the lower 128 bits and zeros the upper 128 bits.
+	__m256i combined = _mm256_castsi128_si256(resultA);
+
+	// 2. Insert the second 128-bit variable into the upper half (index 1).
+	// The '1' specifies the high 128-bit lane.
+	combined = _mm256_inserti128_si256(combined, resultB, 1);
+
+	return combined;
+}
+
+/****************************************************************************
+ * Exp7b-B2
+ *
+ * Refines Exp7b-B2 by replacing widening write
+ * to a direct 256-bit vector store:
+ *
+ *     _mm256_store_si256()
+ *
+ * after combining two results.
+ *
+ * Purpose:
+ *     Reduce the number of writes attempting to increase throughput.
+ *
+ * Result:
+ *     Maybe 4% improvement over Exp7b-B2.
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_AVX2_experiment7c(
+	const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 16 packed DWORD lanes
+	// (twice Exp7b-B2's width).
+	//
+	while (destPixelOffset + 15 < m_dwBufferLength)
+	{
+		//
+		// Gather the Packed-Domain source vectors.
+		//
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
+		//
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7b_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m256i packedDomainPixel12Lanes =
+			Exp7b_B2_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset, false /*gatherBottomRow*/);
+
+		__m256i packedDomainPixel34Lanes =
+			Exp7b_B2_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i resultA = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+
+		__m256i packedDomainPixel12LanesB =
+			Exp7b_B2_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset + 8, false /*gatherBottomRow*/);
+
+		__m256i packedDomainPixel34LanesB =
+			Exp7b_B2_BuildPackedDomainVector256(
+				lpTransitionTable,
+				destPixelOffset + 8, true /*gatherBottomRow*/);
+
+		__m128i resultB = Exp7a_AVX2_PackedDomainMathKernel(packedDomainPixel12LanesB, packedDomainPixel34LanesB);
+
+		__m256i combined =
+			combine_sse_to_avx(
+				resultA,
+				resultB);
+
+		_mm256_store_si256(
+			(__m256i*) & m_pWriteBuffer16[destPixelOffset],
+			combined);
+
+		destPixelOffset += 16;
+	}
+
 	//
 	// Existing scalar tail from Exp2.
-	// NOTE: Probably need to add scalar tail handling for odd widths, simply because arbitrary widths are allowed
-	// **OR** do I want to add a requirement/restriction enforcing even widths?
-	// That is probably better, to enforce some constraints in the name of performance.
 	//
-	while (destPixelOffset < m_dwBufferLength)
-	{
-		const dword_t pixel =
-			lpTransitionTable[destPixelOffset];
-
-		const dword_t pixel3 =
-			pixel + m_dwBufferWidth;
-
-		const word_t p1 =
-			m_pReadBuffer16[pixel];
-
-		const word_t p2 =
-			m_pReadBuffer16[pixel + 1];
-
-		const word_t p3 =
-			m_pReadBuffer16[pixel3];
-
-		const word_t p4 =
-			m_pReadBuffer16[pixel3 + 1];
-
-		m_pWriteBuffer16[destPixelOffset] =
-			RGB16(
-				(((RFromRGB16(p1) +
-					RFromRGB16(p2) +
-					RFromRGB16(p3) +
-					RFromRGB16(p4)) * 63) >> 8),
-				(((GFromRGB16(p1) +
-					GFromRGB16(p2) +
-					GFromRGB16(p3) +
-					GFromRGB16(p4)) * 63) >> 8),
-				(((BFromRGB16(p1) +
-					BFromRGB16(p2) +
-					BFromRGB16(p3) +
-					BFromRGB16(p4)) * 63) >> 8));
-
-		++destPixelOffset;
-	}
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
