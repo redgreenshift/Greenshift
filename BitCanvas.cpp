@@ -30,7 +30,6 @@
 
 #include "BitCanvas.h"
 
-#include "adetect.h"
 #include "ColorUtils.hpp"
 #include "ContiguousAlignedMemory.hpp"
 #include "CpuFeatures.hpp"
@@ -343,11 +342,11 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 		 */
 	if (SupportsAVX2())
 		m_nDeltaOptimizationLevel = OL_AVX2;
-	else if (cpuid_has_sse41())
+	else if (SupportsSSE41())
 		m_nDeltaOptimizationLevel = OL_SSE41;
-	else if (cpuid_has_sse2())
+	else if (SupportsSSE2())
 		m_nDeltaOptimizationLevel = OL_SSE2;
-	else if (GetCPUCaps(HAS_MMX))
+	else if (SupportsMMX())
 		m_nDeltaOptimizationLevel = OL_MMX;
 	else
 		m_nDeltaOptimizationLevel = OL_x86; // OL_CPP is unoptimized, but OL_x86 and OL_CPP only use instructions available on x86
