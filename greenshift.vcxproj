@@ -501,6 +501,7 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows|Win32'">
       </AdditionalOptions>
     </ClCompile>
+    <ClCompile Include="CpuFeatures.cpp" />
     <ClCompile Include="Diagnostics.cpp" />
     <ClCompile Include="Expression.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release Windows with Debug Info|Win32'">
@@ -698,6 +699,7 @@
     <ClInclude Include="CollectionsAbstract.h" />
     <ClInclude Include="ColorUtils.hpp" />
     <ClInclude Include="ContiguousAlignedMemory.hpp" />
+    <ClInclude Include="CpuFeatures.hpp" />
     <ClInclude Include="DeltaField.h" />
     <ClInclude Include="DeltaTween.h" />
     <ClInclude Include="Diagnostics.hpp" />

@@ -126,6 +126,9 @@
     <ClCompile Include="SFMT\SFMT.c">
       <Filter>Source Files\SFMT</Filter>
     </ClCompile>
+    <ClCompile Include="CpuFeatures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="adetect.h">
@@ -319,6 +322,9 @@
     </ClInclude>
     <ClInclude Include="SFMT\SFMT-sse2-msc.h">
       <Filter>Header Files\SFMT</Filter>
+    </ClInclude>
+    <ClInclude Include="CpuFeatures.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
