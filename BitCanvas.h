@@ -906,6 +906,7 @@ public:
 	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original
+	__forceinline __m128i	Exp5a_GatherPackedDomainScalar128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow);
 	__forceinline __m128i	ComputeExp5_PackedDomainResult(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
