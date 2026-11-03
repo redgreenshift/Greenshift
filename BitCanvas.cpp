@@ -2833,21 +2833,28 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 
 //Exp1 = SSE2 proof of concept
 //Exp2 = SSE2 conventional SIMD winner
+//Exp2b = SSE2 vector load (a.k.a. Backport the idea of Exp7b-B2) (SKIPPED)
+//Exp2c = Source-vector construction investigation (future)
 //Exp3 = Reduce the number of gathers (REJECTED)
 //Exp4 = SSE2 narrower SIMD experiment
 //Exp5 = SSE41 packed-domain SIMD winner
 //Exp5b = SSE2 packed-domain SIMD (simulate SSE41 instructions)
+//Exp5c = SSE41 vector load (a.k.a. Backport the idea of Exp7b-B2) (REJECTED)
+//Exp5d = SSE41 hybrid approach, PackedDomain load, but use simpler instructions instead of the PackedDomain math (future)
 //Exp6 = SSE41 wider-store follow-on experiment
 //Exp7a = AVX2 proof of concept (primitive)
 //Exp7b-A = AVX2 Temporary array construction (REJECTED)
 //Exp7b-B1 = AVX2 actual AVX2 gather + scalar load (REJECTED)
 //Exp7b-B2 = AVX2 actual AVX2 gather + vector load
 //Exp7c = AVX2 store-throughput investigation
+//Exp8 = AVX-512 packed-domain SIMD investigation (future)
 
 // SIMD Experiment Lineage
 //
 // Exp1 = 8-pixel SSE2 using temporary gather arrays
 // Exp2 = 8-pixel SSE2 using direct vector construction (_mm_set_epi16)
+// Exp2b = SKIPPED for the same reason we skipped Exp3, the compiler already vectorizes loading 4 DWORD offsets at once and stores to p[])
+// Exp2c = Can we reduce the cost of building a/b/c/d? (future)
 // Exp3 = (SKIPPED / superseded after disassembly review): Parallelize reads by using DWORDs instead of multiple WORDs
 // Exp4 = 4-pixel SSE2 variant
 //
@@ -2858,6 +2865,12 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //
 // Exp5b = 4-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (simulate SSE41 instructions)
+//
+// Exp5c = 4-pixel packed-DWORD SIMD, Direct SIMD transition-table load investigation
+//        (a.k.a. Backport the idea of Exp7b-B2, a vectorized load).
+//
+// Exp5d = 4-pixel packed-DWORD SIMD, SSE41 hybrid approach,
+//        PackedDomain load, but use simpler instructions instead of the PackedDomain math.
 //
 // Exp6 - 8-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (2 × Exp5 results combined into a single 128-bit write)
@@ -2928,6 +2941,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     SSE2  Exp1          ~18.1 - 19.0 sec
  *     AVX2  Exp7b-A       ~12.2 - 13.3 sec
  *     SSE2  Exp4          ~ 9.4 -  9.8 sec
+ *     SSE41 Exp5c         ~ 9.4 - 10.2 sec
  *
  *     SSE2  Exp2          ~ 8.3 - 8.8 sec
  *     SSE2  Exp5b         ~ 8.3 - 8.8 sec
@@ -3047,6 +3061,37 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         SIMD channel math
  *         Repack RGB565
  *
+ * Exp2b:
+ *     Direct SIMD transition-table load investigation (SKIPPED).
+ *
+ *    Motivation:
+ *        Determine whether the Exp7b-B2 vectorized
+ *        transition-table loading strategy could be
+ *        backported to Exp2.
+ *
+ *    Observation:
+ *        Assembly review revealed that the compiler
+ *        already performs SIMD loading and SIMD
+ *        arithmetic when constructing the p[] and p3[]
+ *        offset arrays.
+ *
+ *        The remaining gather cost is dominated by the
+ *        repeated movd/pinsrw sequences required to
+ *        construct the a/b/c/d source vectors.
+ *
+ *    Result:
+ *        Skipped.
+ *
+ *    Lesson:
+ *        Unlike Exp7a/Exp7b-B1, transition-table
+ *        construction does not appear to be the primary
+ *        bottleneck in Exp2.
+ *
+ *        Any future improvement would likely need to
+ *        reduce the cost of source-pixel gather
+ *        construction rather than transition-table
+ *        acquisition.
+ *
  * Exp3:
  *     Skipped after disassembly review. The compiler had already
  *     optimized much of the intended work.
@@ -3059,6 +3104,14 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         gather strategy ultimately used in Exp7b-B2,
  *         it likely would have pushed the investigation
  *         toward read minimization much earlier.
+ *
+ *         Upon further review, the originally proposed
+ *         Exp3 approach appears unlikely to have produced
+ *         the same improvement later observed in Exp7b-B2.
+ *
+ *         However, completing the experiment would have
+ *         provided useful data and may have accelerated
+ *         subsequent gather investigations.
  *
  *     Lesson:
  *         Compiler-generated code quality should not be
@@ -3103,6 +3156,41 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Comparable to Exp2.
  *         Comparable to Exp5.
  *         Packed-Domain Arithmetic appears competitive even when restricted to SSE2 instructions.
+ *
+ * Exp5c:
+ *     Direct SIMD transition-table load investigation (vectorized load).
+ *
+ *     Replace the scalar transition-table construction
+ *     used by Exp5 with a direct SIMD load, inspired by
+ *     the Exp7b-B2 gather strategy.
+ *
+ *     Motivation:
+ *         Determine whether the dramatic improvement
+ *         observed in Exp7b-B2 was primarily caused by
+ *         direct SIMD loading of transition-table data.
+ *
+ *     Result:
+ *         Significantly slower than Exp5.
+ *         Vectorizing transition-table loads alone did not help Exp5.
+ *
+ *     Observation:
+ *         Unlike Exp7b-B2, Exp5 lacks a hardware gather
+ *         instruction. The SIMD-loaded transition-table
+ *         values ultimately had to be extracted back into
+ *         scalar registers before performing the existing
+ *         source-pixel gather.
+ *
+ *         As a result, the direct SIMD load increased
+ *         overhead rather than reducing it.
+ *
+ *     Lesson:
+ *         The Exp7b-B2 improvement does not appear to
+ *         transfer directly to SSE packed-domain gathers.
+ *
+ *         Further evidence suggests that the benefit may
+ *         depend on AVX2 gather support, rather than
+ *         arising solely from vectorized transition-table
+ *         loading.
  *
  * Exp6:
  *     Batched-write variant of Exp5.
@@ -3178,7 +3266,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     Build on Exp7a with AVX2 gather + vector transition-table load
  *     (and eliminate the 8 scalar loads, 8 scalar stores, 1 reload)
  *
- *     Directly load 8 transition-table DWORDs into a YMM register with a single instruction.
+ *     Directly load 8 transition-table DWORDs into a YMM register
+ *     with a single instruction.
  *
  *     Result:
  *         ~2.4 sec -- Shockingly good.
@@ -3186,6 +3275,16 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Approximately 40% faster than Exp7a and the
  *         first experiment to clearly separate itself
  *         from the traditional Exp2/Exp5 performance tier.
+ *
+ *    Observation:
+ *        Subsequent investigation (Exp5c and Exp2b)
+ *        suggests that vectorized transition-table
+ *        loading alone is insufficient to explain the
+ *        observed performance improvement.
+ *
+ *        The combination of vectorized transition-table
+ *        loading and AVX2 gather support appears to be
+ *        a more likely explanation.
  *
  * Exp7c
  *     Batched-write variant of Exp7b-B2.
@@ -3257,6 +3356,25 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *   Further benchmarking is required to determine
  *   whether the gain is significant.
  *
+ * - Evidence suggests that Exp7b-B2's performance gain
+ *   depends on the combination of direct SIMD
+ *   transition-table loading and AVX2 gather support.
+ *
+ *   Neither technique alone reproduced the observed
+ *   improvement.
+ *
+ * - Arithmetic-only benchmark:
+ *
+ *   Exp2 arithmetic was significantly cheaper per
+ *   output pixel than Exp5 packed-domain arithmetic
+ *   when benchmarked in isolation.
+ *
+ *   Normalizing for output throughput suggests that
+ *   the competitiveness of Exp5 is not primarily
+ *   driven by arithmetic efficiency, but is instead
+ *   likely attributable to reduced gather and
+ *   memory-access costs.
+ *
  *
  * Current Assessment
  * ------------------
@@ -3287,15 +3405,12 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
- * - Apply direct SIMD transition-table loading to earlier
- *   experiments (Exp2, Exp5, Exp6) and measure whether the
- *   gains are AVX-specific or primarily due to reduced
- *   transition-table construction overhead.
+ * - Investigate Exp5d hybrid arithmetic approach.
+ * - Investigate AVX-512 implementation (Exp8).
  * - Additional Exp2 vs Exp5 assembly analysis.
  * - Consider revisiting Exp6 and register pressure investigation.
- * - Determine whether Exp7b-B2's improvement is primarily
- *   due to AVX gather usage or direct SIMD loading of
- *   transition-table indices.
+ * - Continue investigating source-pixel gather
+ *   construction costs in earlier experiments.
  *
  ****************************************************************************/
 
@@ -3807,6 +3922,7 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 }
 
 
+// Output is 64 bits
 __forceinline __m128i Exp5a_SSE41_MathKernel(__m128i srcPixel12, __m128i srcPixel34)
 {
 	const __m128i redMask =
@@ -4097,6 +4213,55 @@ void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
+// vectorized transition-table load
+void BitCanvas16::DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 packed DWORD lanes
+	// (twice Exp5's width).
+	//
+	while (destPixelOffset + 3 < m_dwBufferLength)
+	{
+		//
+		// Gather the Packed-Domain source vectors.
+		//
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
+		//
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7b_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m128i packedDomainPixel12Lanes =
+			Exp5c_GatherPackedDomainVector128(
+				lpTransitionTable,
+				destPixelOffset, false /*gatherBottomRow*/);
+
+		__m128i packedDomainPixel34Lanes =
+			Exp5c_GatherPackedDomainVector128(
+				lpTransitionTable,
+				destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i finalPixels = Exp5a_SSE41_MathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+
+		_mm_storel_epi64(
+			(__m128i*)
+			& m_pWriteBuffer16[destPixelOffset],
+			finalPixels);
+
+		destPixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
 // Exp5 algorithm with Gather + Algorithm combined
 // TODO: Refactor the Gather and Algorithm separately
 __forceinline __m128i BitCanvas16::ComputeExp5_PackedDomainResult(
@@ -4137,6 +4302,60 @@ __forceinline __m128i BitCanvas16::Exp5a_GatherPackedDomainScalar128(const PIXEL
 			*(dword_t*)&m_pReadBuffer16[s0]);
 
 	return src;
+}
+
+__forceinline __m128i BitCanvas16::Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow)
+{
+	//
+	// First stage:
+	// Load 4 transition-table DWORDs directly into an XMM register.
+	//
+	__m128i pixelOffsets =
+		_mm_load_si128(
+			reinterpret_cast<const __m128i*>(
+				&lpTransitionTable[destPixelOffset]));
+
+	//
+	// Optional second row adjustment.
+	//
+	if (gatherBottomRow)
+	{
+		pixelOffsets =
+			_mm_add_epi32(
+				pixelOffsets,
+				_mm_set1_epi32(m_dwBufferWidth));
+	}
+
+	//
+	// Extract lanes for existing scalar gather.
+	//
+	const dword_t s0 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(pixelOffsets));
+
+	const dword_t s1 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 4)));
+
+	const dword_t s2 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 8)));
+
+	const dword_t s3 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 12)));
+
+	//
+	// Existing packed-domain gather.
+	//
+	return _mm_set_epi32(
+		*(const dword_t*)&m_pReadBuffer16[s3],
+		*(const dword_t*)&m_pReadBuffer16[s2],
+		*(const dword_t*)&m_pReadBuffer16[s1],
+		*(const dword_t*)&m_pReadBuffer16[s0]);
 }
 
 /****************************************************************************
@@ -4578,6 +4797,7 @@ BitCanvas16::Exp7b_B1_BuildPackedDomainVector256(
 			reinterpret_cast<const __m256i*>(
 				transitionOffsets));
 
+	// Multiply by 2. RGB565 Pixels are 2 bytes wide.
 	byteOffsets =
 		_mm256_slli_epi32(
 			byteOffsets,
@@ -4620,7 +4840,7 @@ BitCanvas16::Exp7b_B2_BuildPackedDomainVector256(
 	// Gather transition-table entries using vector code.
 	//
 	__m256i byteOffsets =
-		_mm256_loadu_si256(
+		_mm256_load_si256(
 			reinterpret_cast<const __m256i*>(
 				&lpTransitionTable[destPixelOffset]));
 
@@ -4631,6 +4851,7 @@ BitCanvas16::Exp7b_B2_BuildPackedDomainVector256(
 		byteOffsets = _mm256_add_epi32(byteOffsets, rowOffsetLanes);
 	}
 
+	// Multiply by 2. RGB565 Pixels are 2 bytes wide.
 	byteOffsets =
 		_mm256_slli_epi32(
 			byteOffsets,
