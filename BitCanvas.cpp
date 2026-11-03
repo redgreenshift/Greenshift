@@ -3487,15 +3487,8 @@ void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 	}
 }
 
-// AI Assisted. Work in Progress. Attempting to improve upon Round1
-// Remove temporary arrays
-// Doubled the speed by avoiding memory access. Same lesson I learned long ago in
-// DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
-void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
+__forceinline __m128i Exp2a_MathKernel(const __m128i a, const __m128i b, const __m128i c, const __m128i d)
 {
-	const dword_t bufferLength =
-		m_dwBufferWidth * m_dwBufferHeight;
-
 	const __m128i redMask =
 		_mm_set1_epi16(_REDMASK16);
 
@@ -3507,6 +3500,81 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 
 	const __m128i decay63 =
 		_mm_set1_epi16(63);
+
+	__m128i r =
+		_mm_add_epi16(
+			_mm_add_epi16(
+				_mm_srli_epi16(
+					_mm_and_si128(a, redMask),
+					REDSHIFT16),
+				_mm_srli_epi16(
+					_mm_and_si128(b, redMask),
+					REDSHIFT16)),
+			_mm_add_epi16(
+				_mm_srli_epi16(
+					_mm_and_si128(c, redMask),
+					REDSHIFT16),
+				_mm_srli_epi16(
+					_mm_and_si128(d, redMask),
+					REDSHIFT16)));
+
+	__m128i g =
+		_mm_add_epi16(
+			_mm_add_epi16(
+				_mm_srli_epi16(
+					_mm_and_si128(a, greenMask),
+					GREENSHIFT16),
+				_mm_srli_epi16(
+					_mm_and_si128(b, greenMask),
+					GREENSHIFT16)),
+			_mm_add_epi16(
+				_mm_srli_epi16(
+					_mm_and_si128(c, greenMask),
+					GREENSHIFT16),
+				_mm_srli_epi16(
+					_mm_and_si128(d, greenMask),
+					GREENSHIFT16)));
+
+	__m128i bl =
+		_mm_add_epi16(
+			_mm_add_epi16(
+				_mm_and_si128(a, blueMask),
+				_mm_and_si128(b, blueMask)),
+			_mm_add_epi16(
+				_mm_and_si128(c, blueMask),
+				_mm_and_si128(d, blueMask)));
+
+	r = _mm_srli_epi16(
+		_mm_mullo_epi16(r, decay63),
+		8);
+
+	g = _mm_srli_epi16(
+		_mm_mullo_epi16(g, decay63),
+		8);
+
+	bl = _mm_srli_epi16(
+		_mm_mullo_epi16(bl, decay63),
+		8);
+
+	r = _mm_slli_epi16(r, REDSHIFT16);
+	g = _mm_slli_epi16(g, GREENSHIFT16);
+
+	const __m128i result =
+		_mm_or_si128(
+			_mm_or_si128(r, g),
+			bl);
+
+	return result;
+}
+
+// AI Assisted. Work in Progress. Attempting to improve upon Round1
+// Remove temporary arrays
+// Doubled the speed by avoiding memory access. Same lesson I learned long ago in
+// DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
+void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
 
 	dword_t pixelOffset = 0;
 
@@ -3568,68 +3636,7 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 				m_pReadBuffer16[p3[1] + 1],
 				m_pReadBuffer16[p3[0] + 1]);
 
-		__m128i r =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, redMask),
-						REDSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(d, redMask),
-						REDSHIFT16)));
-
-		__m128i g =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, greenMask),
-						GREENSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, greenMask),
-						GREENSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, greenMask),
-						GREENSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(d, greenMask),
-						GREENSHIFT16)));
-
-		__m128i bl =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_and_si128(a, blueMask),
-					_mm_and_si128(b, blueMask)),
-				_mm_add_epi16(
-					_mm_and_si128(c, blueMask),
-					_mm_and_si128(d, blueMask)));
-
-		r = _mm_srli_epi16(
-			_mm_mullo_epi16(r, decay63),
-			8);
-
-		g = _mm_srli_epi16(
-			_mm_mullo_epi16(g, decay63),
-			8);
-
-		bl = _mm_srli_epi16(
-			_mm_mullo_epi16(bl, decay63),
-			8);
-
-		r = _mm_slli_epi16(r, REDSHIFT16);
-		g = _mm_slli_epi16(g, GREENSHIFT16);
-
-		const __m128i result =
-			_mm_or_si128(
-				_mm_or_si128(r, g),
-				bl);
+		const __m128i result = Exp2a_MathKernel(a, b, c, d);
 
 		_mm_store_si128(
 			reinterpret_cast<__m128i*>(
@@ -3783,75 +3790,14 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 				m_pReadBuffer16[q1 + 1],
 				m_pReadBuffer16[q0 + 1]);
 
-		__m128i r =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, redMask),
-						REDSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, redMask),
-						REDSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(d, redMask),
-						REDSHIFT16)));
+		const __m128i result = Exp2a_MathKernel(a, b, c, d);
 
-		__m128i g =
-			_mm_add_epi16(
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(a, greenMask),
-						GREENSHIFT16),
-					_mm_srli_epi16(
-						_mm_and_si128(b, greenMask),
-						GREENSHIFT16)),
-				_mm_add_epi16(
-					_mm_srli_epi16(
-						_mm_and_si128(c, greenMask),
-						GREENSHIFT16),
-				_mm_srli_epi16(
-					_mm_and_si128(d, greenMask),
-					GREENSHIFT16)));
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer16[pixelOffset]),
+			result);
 
-					__m128i bl =
-						_mm_add_epi16(
-							_mm_add_epi16(
-								_mm_and_si128(a, blueMask),
-								_mm_and_si128(b, blueMask)),
-							_mm_add_epi16(
-								_mm_and_si128(c, blueMask),
-								_mm_and_si128(d, blueMask)));
-
-					r = _mm_srli_epi16(
-						_mm_mullo_epi16(r, decay63),
-						8);
-
-					g = _mm_srli_epi16(
-						_mm_mullo_epi16(g, decay63),
-						8);
-
-					bl = _mm_srli_epi16(
-						_mm_mullo_epi16(bl, decay63),
-						8);
-
-					r = _mm_slli_epi16(r, REDSHIFT16);
-					g = _mm_slli_epi16(g, GREENSHIFT16);
-
-					const __m128i result =
-						_mm_or_si128(
-							_mm_or_si128(r, g),
-							bl);
-
-					_mm_storel_epi64(
-						reinterpret_cast<__m128i*>(
-							&m_pWriteBuffer16[pixelOffset]),
-						result);
-
-					pixelOffset += 4;
+		pixelOffset += 4;
 	}
 
 	//
@@ -3924,139 +3870,7 @@ void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 
 	while (destPixelOffset + 3 < m_dwBufferLength)
 	{
-		dword_t s0 =
-			lpTransitionTable[destPixelOffset + 0];
-
-		dword_t s1 =
-			lpTransitionTable[destPixelOffset + 1];
-
-		dword_t s2 =
-			lpTransitionTable[destPixelOffset + 2];
-
-		dword_t s3 =
-			lpTransitionTable[destPixelOffset + 3];
-
-		dword_t s30 = s0 + m_dwBufferWidth;
-		dword_t s31 = s1 + m_dwBufferWidth;
-		dword_t s32 = s2 + m_dwBufferWidth;
-		dword_t s33 = s3 + m_dwBufferWidth;
-
-		//
-		// Gather packed p1|p2 DWORDs.
-		//
-		__m128i src12 =
-			_mm_set_epi32(
-				*(dword_t*)&m_pReadBuffer16[s3],
-				*(dword_t*)&m_pReadBuffer16[s2],
-				*(dword_t*)&m_pReadBuffer16[s1],
-				*(dword_t*)&m_pReadBuffer16[s0]);
-
-		//
-		// Gather packed p3|p4 DWORDs.
-		//
-		__m128i src34 =
-			_mm_set_epi32(
-				*(dword_t*)&m_pReadBuffer16[s33],
-				*(dword_t*)&m_pReadBuffer16[s32],
-				*(dword_t*)&m_pReadBuffer16[s31],
-				*(dword_t*)&m_pReadBuffer16[s30]);
-
-		//
-		// RED
-		//
-		__m128i redLow =
-			_mm_add_epi32(
-				_mm_srli_epi32(
-					_mm_and_si128(src12, redMask),
-					2),
-				_mm_srli_epi32(
-					_mm_and_si128(src34, redMask),
-					2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
-
-
-		__m128i redHi =
-			_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
-
-		__m128i red =
-			_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
-
-		red =
-			//_mm_mullo_epi16(red, decay63);     // likely needs work
-			//_mm_mul_epu32(red, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-			_mm_mullo_epi32(red, decay63); // Requires SSE4.1
-
-		red =
-			_mm_srli_epi32(red, 6);
-
-		red =
-			_mm_and_si128(
-				red,
-				_mm_set1_epi32(0x0000F800));
-
-		//
-		// GREEN
-		//
-		__m128i greenLow =
-			_mm_add_epi32(
-				_mm_and_si128(src12, greenMask),
-				_mm_and_si128(src34, greenMask));
-
-		__m128i greenHi =
-			_mm_srli_epi32(greenLow, 16);
-
-		__m128i green =
-			_mm_add_epi32(greenLow, greenHi);
-
-		green =
-			//_mm_mullo_epi16(green, decay63);   // likely needs work
-			//_mm_mul_epu32(green, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-			_mm_mullo_epi32(green, decay63); // Requires SSE4.1
-
-		green =
-			_mm_srli_epi32(green, 8);
-
-		green =
-			_mm_and_si128(
-				green,
-				_mm_set1_epi32(0x000007E0));
-
-		//
-		// BLUE
-		//
-		__m128i blueLow =
-			_mm_add_epi32(
-				_mm_and_si128(src12, blueMask),
-				_mm_and_si128(src34, blueMask));
-
-		__m128i blueHi =
-			_mm_srli_epi32(blueLow, 16);
-
-		__m128i blue =
-			_mm_add_epi32(blueLow, blueHi);
-
-		blue =
-			//_mm_mullo_epi16(blue, decay63);    // likely needs work
-			//_mm_mul_epu32(blue, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-			_mm_mullo_epi32(blue, decay63); // Requires SSE4.1
-
-		blue =
-			_mm_srli_epi32(blue, 8);
-
-		blue =
-			_mm_and_si128(
-				blue,
-				_mm_set1_epi32(0x0000001F));
-
-		//
-		// Pack final RGB565 values.
-		//
-		__m128i result =
-			_mm_or_si128(
-				_mm_or_si128(red, green),
-				blue);
-
-		__m128i packed16Result =
-			_mm_packus_epi32(result, _mm_setzero_si128());
+		__m128i packed16Result = ComputeExp5_PackedDomainResult(lpTransitionTable, destPixelOffset);
 
 		_mm_storel_epi64(
 			(__m128i*)& m_pWriteBuffer16[destPixelOffset],
@@ -4069,6 +3883,161 @@ void BitCanvas16::DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable)
 	// Existing scalar tail from Exp2.
 	//
 	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Exp5 algorithm with Gather + Algorithm combined
+// TODO: Refactor the Gather and Algorithm separately
+__forceinline __m128i BitCanvas16::ComputeExp5_PackedDomainResult(
+	const PIXELMAP* lpTransitionTable,
+	dword_t destPixelOffset)
+{
+	const __m128i redMask =
+		_mm_set1_epi32(0xF800F800);
+
+	const __m128i greenMask =
+		_mm_set1_epi32(0x07E007E0);
+
+	const __m128i blueMask =
+		_mm_set1_epi32(0x001F001F);
+
+	const __m128i decay63 =
+		_mm_set1_epi32(63);
+
+	dword_t s0 =
+		lpTransitionTable[destPixelOffset + 0];
+
+	dword_t s1 =
+		lpTransitionTable[destPixelOffset + 1];
+
+	dword_t s2 =
+		lpTransitionTable[destPixelOffset + 2];
+
+	dword_t s3 =
+		lpTransitionTable[destPixelOffset + 3];
+
+	dword_t s30 = s0 + m_dwBufferWidth;
+	dword_t s31 = s1 + m_dwBufferWidth;
+	dword_t s32 = s2 + m_dwBufferWidth;
+	dword_t s33 = s3 + m_dwBufferWidth;
+
+	//
+	// Gather packed p1|p2 DWORDs.
+	//
+	__m128i src12 =
+		_mm_set_epi32(
+			*(dword_t*)&m_pReadBuffer16[s3],
+			*(dword_t*)&m_pReadBuffer16[s2],
+			*(dword_t*)&m_pReadBuffer16[s1],
+			*(dword_t*)&m_pReadBuffer16[s0]);
+
+	//
+	// Gather packed p3|p4 DWORDs.
+	//
+	__m128i src34 =
+		_mm_set_epi32(
+			*(dword_t*)&m_pReadBuffer16[s33],
+			*(dword_t*)&m_pReadBuffer16[s32],
+			*(dword_t*)&m_pReadBuffer16[s31],
+			*(dword_t*)&m_pReadBuffer16[s30]);
+
+	//
+	// RED
+	//
+	__m128i redLow =
+		_mm_add_epi32(
+			_mm_srli_epi32(
+				_mm_and_si128(src12, redMask),
+				2),
+			_mm_srli_epi32(
+				_mm_and_si128(src34, redMask),
+				2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
+
+
+	__m128i redHi =
+		_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
+
+	__m128i red =
+		_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+
+	red =
+		//_mm_mullo_epi16(red, decay63);     // likely needs work
+		//_mm_mul_epu32(red, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(red, decay63); // Requires SSE4.1
+
+	red =
+		_mm_srli_epi32(red, 6);
+
+	red =
+		_mm_and_si128(
+			red,
+			_mm_set1_epi32(0x0000F800));
+
+	//
+	// GREEN
+	//
+	__m128i greenLow =
+		_mm_add_epi32(
+			_mm_and_si128(src12, greenMask),
+			_mm_and_si128(src34, greenMask));
+
+	__m128i greenHi =
+		_mm_srli_epi32(greenLow, 16);
+
+	__m128i green =
+		_mm_add_epi32(greenLow, greenHi);
+
+	green =
+		//_mm_mullo_epi16(green, decay63);   // likely needs work
+		//_mm_mul_epu32(green, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(green, decay63); // Requires SSE4.1
+
+	green =
+		_mm_srli_epi32(green, 8);
+
+	green =
+		_mm_and_si128(
+			green,
+			_mm_set1_epi32(0x000007E0));
+
+	//
+	// BLUE
+	//
+	__m128i blueLow =
+		_mm_add_epi32(
+			_mm_and_si128(src12, blueMask),
+			_mm_and_si128(src34, blueMask));
+
+	__m128i blueHi =
+		_mm_srli_epi32(blueLow, 16);
+
+	__m128i blue =
+		_mm_add_epi32(blueLow, blueHi);
+
+	blue =
+		//_mm_mullo_epi16(blue, decay63);    // likely needs work
+		//_mm_mul_epu32(blue, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
+		_mm_mullo_epi32(blue, decay63); // Requires SSE4.1
+
+	blue =
+		_mm_srli_epi32(blue, 8);
+
+	blue =
+		_mm_and_si128(
+			blue,
+			_mm_set1_epi32(0x0000001F));
+
+	//
+	// Pack final RGB565 values.
+	//
+	__m128i result =
+		_mm_or_si128(
+			_mm_or_si128(red, green),
+			blue);
+
+	__m128i packed16Result =
+		_mm_packus_epi32(result, _mm_setzero_si128());
+
+	return packed16Result;
 }
 
 /****************************************************************************
@@ -4352,20 +4321,17 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
  ****************************************************************************/
 void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 {
-	const dword_t bufferLength =
-		m_dwBufferWidth * m_dwBufferHeight;
-
 	dword_t destPixelOffset = 0;
 
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
 		__m128i resultA =
-			ComputeExp5Result(
+			ComputeExp5_PackedDomainResult(
 				lpTransitionTable,
 				destPixelOffset);
 
 		__m128i resultB =
-			ComputeExp5Result(
+			ComputeExp5_PackedDomainResult(
 				lpTransitionTable,
 				destPixelOffset + 4);
 
@@ -4385,159 +4351,6 @@ void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 	// Existing scalar tail from Exp2.
 	//
 	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
-}
-// Copy paste of the Exp5 algorithm
-__forceinline __m128i BitCanvas16::ComputeExp5Result(
-	const PIXELMAP* lpTransitionTable,
-	dword_t destPixelOffset)
-{
-	const __m128i redMask =
-		_mm_set1_epi32(0xF800F800);
-
-	const __m128i greenMask =
-		_mm_set1_epi32(0x07E007E0);
-
-	const __m128i blueMask =
-		_mm_set1_epi32(0x001F001F);
-
-	const __m128i decay63 =
-		_mm_set1_epi32(63);
-
-	dword_t s0 =
-		lpTransitionTable[destPixelOffset + 0];
-
-	dword_t s1 =
-		lpTransitionTable[destPixelOffset + 1];
-
-	dword_t s2 =
-		lpTransitionTable[destPixelOffset + 2];
-
-	dword_t s3 =
-		lpTransitionTable[destPixelOffset + 3];
-
-	dword_t s30 = s0 + m_dwBufferWidth;
-	dword_t s31 = s1 + m_dwBufferWidth;
-	dword_t s32 = s2 + m_dwBufferWidth;
-	dword_t s33 = s3 + m_dwBufferWidth;
-
-	//
-	// Gather packed p1|p2 DWORDs.
-	//
-	__m128i src12 =
-		_mm_set_epi32(
-			*(dword_t*)&m_pReadBuffer16[s3],
-			*(dword_t*)&m_pReadBuffer16[s2],
-			*(dword_t*)&m_pReadBuffer16[s1],
-			*(dword_t*)&m_pReadBuffer16[s0]);
-
-	//
-	// Gather packed p3|p4 DWORDs.
-	//
-	__m128i src34 =
-		_mm_set_epi32(
-			*(dword_t*)&m_pReadBuffer16[s33],
-			*(dword_t*)&m_pReadBuffer16[s32],
-			*(dword_t*)&m_pReadBuffer16[s31],
-			*(dword_t*)&m_pReadBuffer16[s30]);
-
-	//
-	// RED
-	//
-	__m128i redLow =
-		_mm_add_epi32(
-			_mm_srli_epi32(
-				_mm_and_si128(src12, redMask),
-				2),
-			_mm_srli_epi32(
-				_mm_and_si128(src34, redMask),
-				2)); // 		redLow = ((srcPixel12 & 0xF800F800) >> 2) + ((srcPixel34 & 0xF800F800) >> 2);
-
-
-	__m128i redHi =
-		_mm_srli_epi32(redLow, 16); // redHi = redLow >> 16;
-
-	__m128i red =
-		_mm_add_epi32(redLow, redHi); // destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
-
-	red =
-		//_mm_mullo_epi16(red, decay63);     // likely needs work
-		//_mm_mul_epu32(red, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-		_mm_mullo_epi32(red, decay63); // Requires SSE4.1
-
-	red =
-		_mm_srli_epi32(red, 6);
-
-	red =
-		_mm_and_si128(
-			red,
-			_mm_set1_epi32(0x0000F800));
-
-	//
-	// GREEN
-	//
-	__m128i greenLow =
-		_mm_add_epi32(
-			_mm_and_si128(src12, greenMask),
-			_mm_and_si128(src34, greenMask));
-
-	__m128i greenHi =
-		_mm_srli_epi32(greenLow, 16);
-
-	__m128i green =
-		_mm_add_epi32(greenLow, greenHi);
-
-	green =
-		//_mm_mullo_epi16(green, decay63);   // likely needs work
-		//_mm_mul_epu32(green, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-		_mm_mullo_epi32(green, decay63); // Requires SSE4.1
-
-	green =
-		_mm_srli_epi32(green, 8);
-
-	green =
-		_mm_and_si128(
-			green,
-			_mm_set1_epi32(0x000007E0));
-
-	//
-	// BLUE
-	//
-	__m128i blueLow =
-		_mm_add_epi32(
-			_mm_and_si128(src12, blueMask),
-			_mm_and_si128(src34, blueMask));
-
-	__m128i blueHi =
-		_mm_srli_epi32(blueLow, 16);
-
-	__m128i blue =
-		_mm_add_epi32(blueLow, blueHi);
-
-	blue =
-		//_mm_mullo_epi16(blue, decay63);    // likely needs work
-		//_mm_mul_epu32(blue, decay63); // SSE2 and a few other operations could emulate _mm_mullo_epi32 without requiring SSE4.1
-		_mm_mullo_epi32(blue, decay63); // Requires SSE4.1
-
-	blue =
-		_mm_srli_epi32(blue, 8);
-
-	blue =
-		_mm_and_si128(
-			blue,
-			_mm_set1_epi32(0x0000001F));
-
-	//
-	// Pack final RGB565 values.
-	//
-	__m128i result =
-		_mm_or_si128(
-			_mm_or_si128(red, green),
-			blue);
-
-	__m128i packed16Result =
-		_mm_packus_epi32(result, _mm_setzero_si128());
-
-	return packed16Result;
 }
 
 
