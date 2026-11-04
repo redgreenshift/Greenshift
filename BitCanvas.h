@@ -920,8 +920,8 @@ public:
 	void					DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSE41_PackedDomainMathKernel64
 	__forceinline __m128i	Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // vectorized transition-table load
 
-	void					DoDelta_SSSE3_experiment5d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Shift variant)
-	void					DoDelta_SSSE3_experiment5d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Mask variant)
+	void					DoDelta_SSSE3_experiment5d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5d_SSSE3_AdaptedPackedDomainMathKernel64 (Mask variant)
+	void					DoDelta_SSSE3_experiment5d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5d_SSSE3_AdaptedPackedDomainMathKernel64 (Shift variant)
 
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
 	void					DoDelta_SSSE3_experiment6b_Mask(const PIXELMAP* lpTransitionTable); // Exp5d with batched writes
@@ -936,6 +936,9 @@ public:
 	void					DoDelta_AVX2_experiment7bB1(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7bB2(const PIXELMAP* lpTransitionTable); // AVX2 gather/construction
 	void					DoDelta_AVX2_experiment7c(const PIXELMAP* lpTransitionTable); // AVX2 wide store
+
+	void					DoDelta_AVX2_experiment7d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp7d_AVX2_AdaptedPackedDomainMathKernel128 (Mask variant)
+	void					DoDelta_AVX2_experiment7d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp7d_AVX2_AdaptedPackedDomainMathKernel128 (Shift variant)
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

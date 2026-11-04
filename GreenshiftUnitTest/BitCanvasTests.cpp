@@ -923,6 +923,52 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7d_Mask)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7dMask",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Mask(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkAVX2Exp7d_Shift)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit AVX2_EXPERIMENT7dShift",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Shift(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 		/*************************************************************************
 		* EIGHT BIT BENCHMARKS
 		*/
@@ -2532,6 +2578,92 @@ namespace GreenshiftUnitTest
 				SetBitBoundaryPalette,
 				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
 				&BitCanvas16::DoDelta_AVX2_experiment7c);
+		}
+
+
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Mask_White)
+		{
+			VerifyEquivalence16(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Mask,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Mask_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Mask_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Mask_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Mask_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Mask);
+		}
+
+
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Shift_White)
+		{
+			VerifyEquivalence16(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Shift,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Shift_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"AVX2 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Shift_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"AVX2 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Shift_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"AVX2 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_AVX2_Exp7d_Shift_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"AVX2 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_AVX2_experiment7d_Shift);
 		}
 
 		TEST_METHOD(KernelMathBenchmark)
