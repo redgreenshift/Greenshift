@@ -769,6 +769,8 @@ error_t    WindowDevice::PrintPrivate(const int x, const int y, const char* stri
  ****************************************************************************/
 bool    WindowDevice::KeyPress(const DWORD dwKey)
 {
+	// Interactive site to determine Windows Virtual Key Codes:
+	// https://indiegamedev.net/2020/02/08/windows-virtual-key-codes-and-how-to-use-them/
 	switch (dwKey)
 	{
 	case 'D':
@@ -783,46 +785,58 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 	//case 'C':
 	//	ClearScreenAll();
 	//	break;
-	//case VK_F1:
-	case '1':
+	case '0':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_CPP);
 		ClearScreenAll();
-		PrintPrivate(-1, 0, "default optimization");
+		PrintPrivate(-1, 0, "Baseline, no optimization");
 		break;
 
-	//case VK_F2:
-	case '2':
+	case VK_OEM_3: // Backtick '`'
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_x86);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "x86 assembly optimization");
 		break;
 
-	//case VK_F3:
-	case '3':
+	//case VK_F1:
+	case '1':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_MMX);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "MMX assembly optimization");
 		break;
 
-	//case VK_F4:
-	case '4':
+	//case VK_F2:
+	case '2':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE2);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "SSE2 assembly optimization");
 		break;
 
-	//case VK_F5:
-	case '5':
+	//case VK_F3:
+	case '3':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSSE3);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "SSSE3 assembly optimization");
+		break;
+
+	//case VK_F4:
+	case '4':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_SSE41);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "SSE4.1 assembly optimization");
 		break;
 
-	//case VK_F6:
-	case '6':
+	//case VK_F5:
+	case '5':
 		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_AVX2);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "AVX2 assembly optimization");
+		break;
+
+	//case VK_F6:
+	case '6':
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_AVX512_Foundation);
+		ClearScreenAll();
+		PrintPrivate(-1, 0, "AVX512 assembly optimization");
 		break;
 
 	//case VK_F7:

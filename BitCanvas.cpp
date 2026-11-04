@@ -52,6 +52,7 @@
 #include <mmintrin.h> // MMX intrinsics
 #endif
 #include <smmintrin.h> // SSE4.1 intrinsics
+#include <tmmintrin.h> // SSSE3 intrinsics
 #include <string.h>
 //#include <dvec.h>
 //#include <fvec.h>
@@ -64,6 +65,14 @@
 //#include <complex>
 //_INFCODE
 //_NANCODE
+
+__forceinline __m128i Exp5a_SSE41_PackedDomainMathKernel64(__m128i srcPixel12, __m128i srcPixel34);
+__forceinline __m128i Exp5b_SSE2_MathKernel64(__m128i srcPixel12, __m128i srcPixel34);
+__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(__m128i srcPixel12, __m128i srcPixel34);
+__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(__m128i srcPixel12, __m128i srcPixel34);
+static __forceinline __m128i mullo_epi32_emulated_sse2(__m128i a, __m128i b);
+__forceinline __m256i combine_sse_to_avx(__m128i resultA, __m128i resultB);
+
 
 /*
  * extra size should be multiple of DWORD so generic copy last line
@@ -340,10 +349,14 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 		 * 32bit color originally defaulted to "CPP" but can optionally use "MMX" if detected.
 		 * All the other versions have varying levels of optimized code.
 		 */
-	if (SupportsAVX2())
+	if (SupportsAVX512())
+		m_nDeltaOptimizationLevel = OL_AVX512_Foundation;
+	else if (SupportsAVX2())
 		m_nDeltaOptimizationLevel = OL_AVX2;
 	else if (SupportsSSE41())
 		m_nDeltaOptimizationLevel = OL_SSE41;
+	else if (SupportsSSSE3())
+		m_nDeltaOptimizationLevel = OL_SSSE3;
 	else if (SupportsSSE2())
 		m_nDeltaOptimizationLevel = OL_SSE2;
 	else if (SupportsMMX())
@@ -899,7 +912,7 @@ error_t    BitCanvas::SetDelta(DeltaField* pDelta)
 
 /****************************************************************************
  *
- * DoDelta - delta field optimization router
+ * DoDelta - delta field optimization dispatch router
  *
  ****************************************************************************/
 void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
@@ -920,11 +933,20 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 	case OL_SSE2:
 		this->DoDelta_SSE2(lpTransitionTable);
 		break;
+	case OL_SSE3:
+		this->DoDelta_SSE3(lpTransitionTable);
+		break;
+	case OL_SSSE3:
+		this->DoDelta_SSSE3(lpTransitionTable);
+		break;
 	case OL_SSE41:
 		this->DoDelta_SSE41(lpTransitionTable);
 		break;
 	case OL_AVX2:
 		this->DoDelta_AVX2(lpTransitionTable);
+		break;
+	case OL_AVX512_Foundation:
+		this->DoDelta_AVX512_Foundation(lpTransitionTable);
 		break;
 	case OL_PRESET7:
 		this->DoDelta_Preset7(lpTransitionTable);
@@ -944,56 +966,43 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 
 /****************************************************************************
  *
- * DoDelta_x86 - default, do CPP
+ * For each optimization level, default to the next lower optimization,
+ * so derived classes only need to define supported implementations
+ * and the best one will automatically run.
  *
  ****************************************************************************/
 void BitCanvas::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_cpp(lpTransitionTable);
 }
-
-
-/****************************************************************************
- *
- * DoDelta_MMX - default, do x86
- *
- ****************************************************************************/
 void BitCanvas::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_x86(lpTransitionTable);
 }
-
-
-/****************************************************************************
- *
- * DoDelta_SSE2 - default, do MMX
- *
- ****************************************************************************/
 void BitCanvas::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_MMX(lpTransitionTable);
 }
-
-/****************************************************************************
- *
- * DoDelta_SSE41 - default, do SSE2
- *
- ****************************************************************************/
-void BitCanvas::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
+void BitCanvas::DoDelta_SSE3(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_SSE2(lpTransitionTable);
 }
-
-/****************************************************************************
- *
- * DoDelta_AVX2 - default, do SSE41
- *
- ****************************************************************************/
+void BitCanvas::DoDelta_SSSE3(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_SSE3(lpTransitionTable);
+}
+void BitCanvas::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_SSSE3(lpTransitionTable);
+}
 void BitCanvas::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_SSE41(lpTransitionTable);
 }
-
+void BitCanvas::DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable)
+{
+	this->DoDelta_AVX2(lpTransitionTable);
+}
 void BitCanvas::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_cpp(lpTransitionTable);
@@ -2044,16 +2053,24 @@ void BitCanvas16::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 	DoDelta_SSE2_experiment2(lpTransitionTable);
 }
 
+void BitCanvas16::DoDelta_SSSE3(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_SSSE3_experiment5d_Mask(lpTransitionTable);
+}
+
 void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 {
-	// Turns out I used an SSE4.1 instruction in experiment5,
-	// so it's time to expand the set of dispatch methods
-	DoDelta_SSE41_experiment5(lpTransitionTable);
+	DoDelta_SSSE3_experiment5d_Shift(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_AVX2_experiment7bB2(lpTransitionTable);
+}
+
+void BitCanvas16::DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_AVX2_experiment7c(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
@@ -2840,7 +2857,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //Exp5 = SSE41 packed-domain SIMD winner
 //Exp5b = SSE2 packed-domain SIMD (simulate SSE41 instructions)
 //Exp5c = SSE41 vector load (a.k.a. Backport the idea of Exp7b-B2) (REJECTED)
-//Exp5d = SSE41 hybrid approach, PackedDomain load, but use simpler instructions instead of the PackedDomain math (future)
+//Exp5d = SSSE3 Adapt pseudo-SIMD to native SIMD
 //Exp6 = SSE41 wider-store follow-on experiment
 //Exp7a = AVX2 proof of concept (primitive)
 //Exp7b-A = AVX2 Temporary array construction (REJECTED)
@@ -2869,8 +2886,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 // Exp5c = 4-pixel packed-DWORD SIMD, Direct SIMD transition-table load investigation
 //        (a.k.a. Backport the idea of Exp7b-B2, a vectorized load).
 //
-// Exp5d = 4-pixel packed-DWORD SIMD, SSE41 hybrid approach,
-//        PackedDomain load, but use simpler instructions instead of the PackedDomain math.
+// Exp5d = 4-pixel packed-DWORD SIMD, Adapt pseudo-SIMD to native SIMD,
+//        PackedDomain load, with simpler full native SIMD SSSE3 instructions.
+//        Adapt the pseudo-SIMD (scalar operations simulating SIMD within 32bit lanes)
+//          directly to full native SIMD for all operations.
 //
 // Exp6 - 8-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (2 × Exp5 results combined into a single 128-bit write)
@@ -2941,13 +2960,15 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     SSE2  Exp1          ~18.1 - 19.0 sec
  *     AVX2  Exp7b-A       ~12.2 - 13.3 sec
  *     SSE2  Exp4          ~ 9.4 -  9.8 sec
- *     SSE41 Exp5c         ~ 9.4 - 10.2 sec
+ *     SSE41 Exp5c         ~ 9.2 - 10.2 sec
  *
  *     SSE2  Exp2          ~ 8.3 - 8.8 sec
  *     SSE2  Exp5b         ~ 8.3 - 8.8 sec
  *     SSE41 Exp6          ~ 7.6 - 8.4 sec
- *     SSE41 Exp5          ~ 7.5 - 8.0 sec
+ *     SSE41 Exp5          ~ 7.5 - 8.1 sec
  *     AVX2  Exp7a         ~ 7.4 - 8.1 sec
+ *     SSSE3 Exp5d_Mask    ~ 7.2 - 7.5 sec
+ *     SSSE3 Exp5d_Shift   ~ 7.1 - 7.4 sec
  *
  * SIMD + Gatherer Experiments:
  *     AVX2  Exp7b-B2      ~ 4.7 - 5.3 sec
@@ -3192,6 +3213,32 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         arising solely from vectorized transition-table
  *         loading.
  *
+ * Exp5d:
+ *     Adapt pseudo-SIMD to native SIMD.
+ *
+ *         This adapted approach retains the original packed-domain
+ *         algorithmic model while upgrading the scalar pseudo-SIMD
+ *         sequences to simpler native SIMD operations via SSSE3.
+ *
+ *     Motivation:
+ *         Arithmetic-only benchmarking suggested that
+ *         Exp5 arithmetic was more expensive per output
+ *         pixel than Exp2 arithmetic.
+ *
+ *     Result:
+ *         Significantly faster than Exp5.
+ *         Two variants, too close to call: Exp5d_Mask and Exp5d_Shift
+ *
+ *         Both Mask and Shift variants produced
+ *         comparable results. No consistent winner
+ *         was established.
+ *
+ *     Observation:
+ *         The memory-access benefits of the packed-domain
+ *         gather strategy can be retained while
+ *         substantially simplifying the arithmetic stage.
+ *
+ *
  * Exp6:
  *     Batched-write variant of Exp5.
  *
@@ -3380,37 +3427,43 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * ------------------
  *
  * Exp2:
+ *     - Best pure-SSE2 implementation.
  *     - Simpler and more conventional.
  *     - Generated assembly appears highly optimized.
  *     - Consistently performs well.
- *     - Best SSE2 implementation so far.
  *
- * Exp5:
- *     - Slightly faster in some benchmark runs.
- *     - Preserves the packed-domain arithmetic strategy.
- *     - May have additional optimization headroom.
- *     - Best SSE41 implementation.
+ * Exp5d_Mask / Exp5d_Shift:
+ *     - Best SSSE3 implementation.
+ *     - Current SSE-family front-runner.
+ *     - More complex, but fully upgrades the simulated
+ *       pseudo-SIMD operations to native SIMD instructions.
+ *     - First SSE-family experiment to clearly separate
+ *       itself from the Exp2 / Exp5 performance tier.
+ *     - Still trails the AVX2 performance tier.
  *
  * Exp7b-B2:
- *     - New front-runner across all instruction sets.
- *     - Best AVX2 implementation.
+ *     - Best overall implementation across all instruction sets.
+ *     - Current AVX2 front-runner.
  *     - First SIMD experiment to achieve a substantial
  *       improvement beyond the Exp2/Exp5 performance tier.
  *
  * Benchmark variance is currently large enough that no definitive
- * winner should be declared between Exp2 and Exp5, and the load gains
- * discovered in Exp7b-B2 may be able to apply to earlier experiments.
+ * winner should be declared between Exp5d_Mask / Exp5d_Shift.
  *
  *
  * Future Investigation
  * --------------------
  *
- * - Investigate Exp5d hybrid arithmetic approach.
- * - Investigate AVX-512 implementation (Exp8).
+ * - Investigate Exp6b_Mask / Exp6b_Shift and register pressure.
+ * - Investigate AVX2 Adapted arithmetic approach.
+ * - Investigate AVX2 implementation of Exp2 (AVX Gather with traditional Algorithm),
+ *   the hypothesis being that Exp2 Gather is expensive, but Exp2 Arithmetic is much cheaper.
+ * - Compare AVX to AVX, Traditional to Adapted to PackedDomain.
+ * - Investigate AVX-512 implementation (Exp8), basically repeat the above in AVX512.
  * - Additional Exp2 vs Exp5 assembly analysis.
- * - Consider revisiting Exp6 and register pressure investigation.
  * - Continue investigating source-pixel gather
  *   construction costs in earlier experiments.
+ * - Run a long-duration benchmark to resolve any remaining close races.
  *
  ****************************************************************************/
 
@@ -3602,7 +3655,10 @@ void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 	}
 }
 
-__forceinline __m128i Exp2a_SSE2_MathKernel(const __m128i a, const __m128i b, const __m128i c, const __m128i d)
+
+// Traditional algorithm, faster than Exp5a_MathKernel (but Exp2 Gather is slower than Exp5a_Gather)
+// Output is 128bits
+__forceinline __m128i Exp2a_SSE2_TraditionalMathKernel128(const __m128i a, const __m128i b, const __m128i c, const __m128i d)
 {
 	const __m128i redMask =
 		_mm_set1_epi16(_REDMASK16);
@@ -3751,7 +3807,7 @@ void BitCanvas16::DoDelta_SSE2_experiment2(const PIXELMAP* lpTransitionTable)
 				m_pReadBuffer16[p3[1] + 1],
 				m_pReadBuffer16[p3[0] + 1]);
 
-		const __m128i result = Exp2a_SSE2_MathKernel(a, b, c, d);
+		const __m128i result = Exp2a_SSE2_TraditionalMathKernel128(a, b, c, d);
 
 		_mm_store_si128(
 			reinterpret_cast<__m128i*>(
@@ -3905,8 +3961,15 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 				m_pReadBuffer16[q1 + 1],
 				m_pReadBuffer16[q0 + 1]);
 
-		const __m128i result = Exp2a_SSE2_MathKernel(a, b, c, d);
+		const __m128i result = Exp2a_SSE2_TraditionalMathKernel128(a, b, c, d);
 
+		// NOTE: Yes, we're only using 64bits of the result,
+		// that's because we know the other bits are zero.
+		// The test was to see if gathering less helped?
+		// This wouldn't test register pressure, and could only
+		// be worse than Exp2 since we use the full MathKernel
+		// to perform half the work. I'm not sure why I did this
+		// experiment. Maybe thought the optimizer could be smart?
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(
 				&m_pWriteBuffer16[pixelOffset]),
@@ -3923,7 +3986,7 @@ void BitCanvas16::DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable)
 
 
 // Output is 64 bits
-__forceinline __m128i Exp5a_SSE41_MathKernel(__m128i srcPixel12, __m128i srcPixel34)
+__forceinline __m128i Exp5a_SSE41_PackedDomainMathKernel64(__m128i srcPixel12, __m128i srcPixel34)
 {
 	const __m128i redMask =
 		_mm_set1_epi32(0xF800F800);
@@ -4037,9 +4100,8 @@ __forceinline __m128i Exp5a_SSE41_MathKernel(__m128i srcPixel12, __m128i srcPixe
 	return packed16Result;
 }
 
-static __forceinline __m128i mullo_epi32_emulated_sse2(__m128i a, __m128i b);
-
-__forceinline __m128i Exp5b_SSE2_MathKernel(__m128i srcPixel12, __m128i srcPixel34)
+// Output is 64bits
+__forceinline __m128i Exp5b_SSE2_MathKernel64(__m128i srcPixel12, __m128i srcPixel34)
 {
 	const __m128i redMask =
 		_mm_set1_epi32(0xF800F800);
@@ -4147,6 +4209,200 @@ __forceinline __m128i Exp5b_SSE2_MathKernel(__m128i srcPixel12, __m128i srcPixel
 	return packed16Result;
 }
 
+// Output is 64 bits
+__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(__m128i srcPixel12, __m128i srcPixel34)
+{
+	const __m128i greenMask =
+		_mm_set1_epi16(GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(BLUEMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+
+
+	// RED
+	// Shift by REDSHIFT16
+	///////////// Mask by REDMASK16 (not necessary)
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by REDSHIFT16 (or:)
+	// Shift L by REDSHIFT16-8
+	// Mask by _REDMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// GREEN
+	// Shift by GREENSHIFT16
+	// Mask by GREENMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by GREENSHIFT16 (or:)
+	// Shift L by GREENSHIFT16-8
+	// Mask by _GREENMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// BLUE
+	////////// Shift by BLUESHIFT16 (not necessary)
+	// Mask by BLUEMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	// Shift R by 6+2 (divide by 4 and 64)
+	/////////// Mask by _BLUEMASK16 (not necessary)
+
+	//
+	// RED
+	//
+	__m128i red12 = _mm_srli_epi16(srcPixel12, REDSHIFT16);
+	__m128i red34 = _mm_srli_epi16(srcPixel34, REDSHIFT16);
+	__m128i red13_24 = _mm_add_epi16(red12, red34);
+	__m128i red1234 = _mm_hadd_epi16(red13_24, red13_24); // Requires SSSE3
+	__m128i red = _mm_mullo_epi16(red1234, decay63); // Requires SSE2
+	//red = _mm_slli_epi16(red, REDSHIFT16 - 8);
+	//red = _mm_and_si128(red, _redMask);
+	red = _mm_srli_epi16(red, 8);
+	red = _mm_slli_epi16(red, REDSHIFT16);
+
+	//
+	// GREEN
+	//
+	__m128i green12 = _mm_srli_epi16(srcPixel12, GREENSHIFT16);
+	green12 = _mm_and_si128(green12, greenMask);
+	__m128i green34 = _mm_srli_epi16(srcPixel34, GREENSHIFT16);
+	green34 = _mm_and_si128(green34, greenMask);
+	__m128i green13_24 = _mm_add_epi16(green12, green34);
+	__m128i green1234 = _mm_hadd_epi16(green13_24, green13_24); // Requires SSSE3
+	__m128i green = _mm_mullo_epi16(green1234, decay63); // Requires SSE2
+	//green = _mm_srli_epi16(green, 8 - GREENSHIFT16);
+	//green = _mm_and_si128(green, _greenMask);
+	green = _mm_srli_epi16(green, 8);
+	green = _mm_slli_epi16(green, GREENSHIFT16);
+
+	//
+	// BLUE
+	//
+	__m128i blue12 = _mm_and_si128(srcPixel12, blueMask);
+	__m128i blue34 = _mm_and_si128(srcPixel34, blueMask);
+	__m128i blue13_24 = _mm_add_epi16(blue12, blue34);
+	__m128i blue1234 = _mm_hadd_epi16(blue13_24, blue13_24); // Requires SSSE3
+	__m128i blue = _mm_mullo_epi16(blue1234, decay63); // Requires SSE2
+	blue = _mm_srli_epi16(blue, 8);
+
+	//
+	// Pack final RGB565 values.
+	//
+	__m128i result =
+		_mm_or_si128(
+			_mm_or_si128(red, green),
+			blue);
+
+	return result;
+}
+
+// Using the standard mask
+__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(__m128i srcPixel12, __m128i srcPixel34)
+{
+	const __m128i greenMask =
+		_mm_set1_epi16(GREENMASK16);
+
+	const __m128i blueMask =
+		_mm_set1_epi16(BLUEMASK16);
+
+	const __m128i _redMask =
+		_mm_set1_epi16(_REDMASK16);
+
+	const __m128i _greenMask =
+		_mm_set1_epi16(_GREENMASK16);
+
+	const __m128i decay63 =
+		_mm_set1_epi16(63);
+
+
+
+	// RED
+	// Shift by REDSHIFT16
+	///////////// Mask by REDMASK16 (not necessary)
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by REDSHIFT16 (or:)
+	// Shift L by REDSHIFT16-8
+	// Mask by _REDMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// GREEN
+	// Shift by GREENSHIFT16
+	// Mask by GREENMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by GREENSHIFT16 (or:)
+	// Shift R by 8-GREENSHIFT16
+	// Mask by _GREENMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// BLUE
+	////////// Shift by BLUESHIFT16 (not necessary)
+	// Mask by BLUEMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	// Shift R by 6+2 (divide by 4 and 64)
+	/////////// Mask by _BLUEMASK16 (not necessary)
+
+	//
+	// RED
+	//
+	__m128i red12 = _mm_srli_epi16(srcPixel12, REDSHIFT16);
+	__m128i red34 = _mm_srli_epi16(srcPixel34, REDSHIFT16);
+	__m128i red13_24 = _mm_add_epi16(red12, red34);
+	__m128i red1234 = _mm_hadd_epi16(red13_24, red13_24); // Requires SSSE3
+	__m128i red = _mm_mullo_epi16(red1234, decay63); // Requires SSE2
+	red = _mm_slli_epi16(red, REDSHIFT16 - 8);
+	red = _mm_and_si128(red, _redMask);
+	//red = _mm_srli_epi16(red, 8);
+	//red = _mm_slli_epi16(red, REDSHIFT16);
+
+	//
+	// GREEN
+	//
+	__m128i green12 = _mm_srli_epi16(srcPixel12, GREENSHIFT16);
+	green12 = _mm_and_si128(green12, greenMask);
+	__m128i green34 = _mm_srli_epi16(srcPixel34, GREENSHIFT16);
+	green34 = _mm_and_si128(green34, greenMask);
+	__m128i green13_24 = _mm_add_epi16(green12, green34);
+	__m128i green1234 = _mm_hadd_epi16(green13_24, green13_24); // Requires SSSE3
+	__m128i green = _mm_mullo_epi16(green1234, decay63); // Requires SSE2
+	green = _mm_srli_epi16(green, 8 - GREENSHIFT16);
+	green = _mm_and_si128(green, _greenMask);
+	//green = _mm_srli_epi16(green, 8);
+	//green = _mm_slli_epi16(green, GREENSHIFT16);
+
+	//
+	// BLUE
+	//
+	__m128i blue12 = _mm_and_si128(srcPixel12, blueMask);
+	__m128i blue34 = _mm_and_si128(srcPixel34, blueMask);
+	__m128i blue13_24 = _mm_add_epi16(blue12, blue34);
+	__m128i blue1234 = _mm_hadd_epi16(blue13_24, blue13_24); // Requires SSSE3
+	__m128i blue = _mm_mullo_epi16(blue1234, decay63); // Requires SSE2
+	blue = _mm_srli_epi16(blue, 8);
+
+	//
+	// Pack final RGB565 values.
+	//
+	__m128i result =
+		_mm_or_si128(
+			_mm_or_si128(red, green),
+			blue);
+
+	return result;
+}
+
 // Experiment5(the one I'm most curious about)
 // Use my old DWORD trick inside SSE2.
 // Take my existing winner: DoDelta_cpp_OPTIMIZED_WITH_DECAY_63
@@ -4219,8 +4475,7 @@ void BitCanvas16::DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable)
 	dword_t destPixelOffset = 0;
 
 	//
-	// Process 8 packed DWORD lanes
-	// (twice Exp5's width).
+	// Process 4 packed DWORD lanes
 	//
 	while (destPixelOffset + 3 < m_dwBufferLength)
 	{
@@ -4246,7 +4501,7 @@ void BitCanvas16::DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable)
 				lpTransitionTable,
 				destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i finalPixels = Exp5a_SSE41_MathKernel(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+		__m128i finalPixels = Exp5a_SSE41_PackedDomainMathKernel64(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
 
 		_mm_storel_epi64(
 			(__m128i*)
@@ -4263,7 +4518,6 @@ void BitCanvas16::DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable)
 }
 
 // Exp5 algorithm with Gather + Algorithm combined
-// TODO: Refactor the Gather and Algorithm separately
 __forceinline __m128i BitCanvas16::ComputeExp5_PackedDomainResult(
 	const PIXELMAP* lpTransitionTable,
 	dword_t destPixelOffset)
@@ -4278,11 +4532,12 @@ __forceinline __m128i BitCanvas16::ComputeExp5_PackedDomainResult(
 	//
 	__m128i src34 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, true /*gatherBottomRow*/);
 
-	__m128i packed16Result = Exp5a_SSE41_MathKernel(src12, src34);
+	__m128i packed16Result = Exp5a_SSE41_PackedDomainMathKernel64(src12, src34);
 
 	return packed16Result;
 }
 
+// Scalar transition-table load: Faster than Exp5c vectorized
 __forceinline __m128i BitCanvas16::Exp5a_GatherPackedDomainScalar128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow)
 {
 	const dword_t rowOffset = gatherBottomRow ? m_dwBufferWidth : 0;
@@ -4302,60 +4557,6 @@ __forceinline __m128i BitCanvas16::Exp5a_GatherPackedDomainScalar128(const PIXEL
 			*(dword_t*)&m_pReadBuffer16[s0]);
 
 	return src;
-}
-
-__forceinline __m128i BitCanvas16::Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow)
-{
-	//
-	// First stage:
-	// Load 4 transition-table DWORDs directly into an XMM register.
-	//
-	__m128i pixelOffsets =
-		_mm_load_si128(
-			reinterpret_cast<const __m128i*>(
-				&lpTransitionTable[destPixelOffset]));
-
-	//
-	// Optional second row adjustment.
-	//
-	if (gatherBottomRow)
-	{
-		pixelOffsets =
-			_mm_add_epi32(
-				pixelOffsets,
-				_mm_set1_epi32(m_dwBufferWidth));
-	}
-
-	//
-	// Extract lanes for existing scalar gather.
-	//
-	const dword_t s0 =
-		static_cast<dword_t>(
-			_mm_cvtsi128_si32(pixelOffsets));
-
-	const dword_t s1 =
-		static_cast<dword_t>(
-			_mm_cvtsi128_si32(
-				_mm_srli_si128(pixelOffsets, 4)));
-
-	const dword_t s2 =
-		static_cast<dword_t>(
-			_mm_cvtsi128_si32(
-				_mm_srli_si128(pixelOffsets, 8)));
-
-	const dword_t s3 =
-		static_cast<dword_t>(
-			_mm_cvtsi128_si32(
-				_mm_srli_si128(pixelOffsets, 12)));
-
-	//
-	// Existing packed-domain gather.
-	//
-	return _mm_set_epi32(
-		*(const dword_t*)&m_pReadBuffer16[s3],
-		*(const dword_t*)&m_pReadBuffer16[s2],
-		*(const dword_t*)&m_pReadBuffer16[s1],
-		*(const dword_t*)&m_pReadBuffer16[s0]);
 }
 
 /****************************************************************************
@@ -4420,10 +4621,10 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 		//
 		__m128i src34 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, true /*gatherBottomRow*/);
 
-		__m128i packed16Result = Exp5b_SSE2_MathKernel(src12, src34);
+		__m128i packed16Result = Exp5b_SSE2_MathKernel64(src12, src34);
 
 		_mm_storel_epi64(
-			(__m128i*)& m_pWriteBuffer16[destPixelOffset],
+			(__m128i*) & m_pWriteBuffer16[destPixelOffset],
 			packed16Result);
 
 		destPixelOffset += 4;
@@ -4434,6 +4635,189 @@ void BitCanvas16::DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable)
 	//
 	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }
+
+// Vectorized transition-table load: Slower than Exp5a_GatherPackedDomainScalar128
+__forceinline __m128i BitCanvas16::Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow)
+{
+	//
+	// First stage:
+	// Load 4 transition-table DWORDs directly into an XMM register.
+	//
+	__m128i pixelOffsets =
+		_mm_load_si128(
+			reinterpret_cast<const __m128i*>(
+				&lpTransitionTable[destPixelOffset]));
+
+	//
+	// Optional second row adjustment.
+	//
+	if (gatherBottomRow)
+	{
+		pixelOffsets =
+			_mm_add_epi32(
+				pixelOffsets,
+				_mm_set1_epi32(m_dwBufferWidth));
+	}
+
+	//
+	// Extract lanes for existing scalar gather.
+	//
+	const dword_t s0 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(pixelOffsets));
+
+	const dword_t s1 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 4)));
+
+	const dword_t s2 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 8)));
+
+	const dword_t s3 =
+		static_cast<dword_t>(
+			_mm_cvtsi128_si32(
+				_mm_srli_si128(pixelOffsets, 12)));
+
+	//
+	// Existing packed-domain gather.
+	//
+	return _mm_set_epi32(
+		*(const dword_t*)&m_pReadBuffer16[s3],
+		*(const dword_t*)&m_pReadBuffer16[s2],
+		*(const dword_t*)&m_pReadBuffer16[s1],
+		*(const dword_t*)&m_pReadBuffer16[s0]);
+}
+
+/****************************************************************************
+ * @brief SIMD implementation of my original packed-DWORD optimization.
+ *
+ * Experiment5d updates the Packed-Domain arithmetic structure used by
+ * DoDelta_cpp_OPTIMIZED_WITH_DECAY_63 and applies it across SIMD lanes.
+ *
+ * Unlike Exp2, which expands RGB565 pixels into separate color channels,
+ * Exp5 keeps pixel pairs packed inside DWORDs and performs the original
+ * packed-domain arithmetic using SIMD operations.
+ *
+ * Comparison:
+ *
+ *     Exp2:
+ *         Gather WORD pixels
+ *         Expand RGB565 channels
+ *         SIMD channel math
+ *         Repack RGB565
+ *
+ *     Exp5b:
+ *         Gather packed DWORD p1|p2
+ *         Gather packed DWORD p3|p4
+ *         Apply a modified version of my packed-domain algorithm,
+ *           updated to make use of SSSE3 instructions.
+ *         Store packed RGB565 result
+ *
+ * IMPORTANT:
+ *
+ * This implementation requires SSSE3 for horizontal add: _mm_hadd_epi16()
+ *
+ ****************************************************************************/
+void BitCanvas16::DoDelta_SSSE3_experiment5d_Shift(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 4 packed DWORD lanes
+	//
+	while (destPixelOffset + 3 < m_dwBufferLength)
+	{
+		//
+		// Gather the Packed-Domain source vectors.
+		//
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
+		//
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7b_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m128i packedDomainPixel12Lanes =
+			Exp5a_GatherPackedDomainScalar128(
+				lpTransitionTable,
+				destPixelOffset, false /*gatherBottomRow*/);
+
+		__m128i packedDomainPixel34Lanes =
+			Exp5a_GatherPackedDomainScalar128(
+				lpTransitionTable,
+				destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i finalPixels = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+
+		_mm_storel_epi64(
+			(__m128i*)
+			& m_pWriteBuffer16[destPixelOffset],
+			finalPixels);
+
+		destPixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Variation of the DoDelta_SSSE3_experiment5d algorithm, using more straightforward bitmasks
+// Performs slightly more work, seems marginally slower, but could be noise.
+// On par with DoDelta_SSSE3_experiment5d_Shift for performance, as both outperform DoDelta_SSE41_experiment5
+void BitCanvas16::DoDelta_SSSE3_experiment5d_Mask(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 4 packed DWORD lanes
+	//
+	while (destPixelOffset + 3 < m_dwBufferLength)
+	{
+		//
+		// Gather the Packed-Domain source vectors.
+		//
+		// packedDomainPixel12Lanes
+		//     Source pixels 1 and 2.
+		//
+		// packedDomainPixel34Lanes
+		//     Source pixels 3 and 4.
+		//
+		// See Exp7b_BuildPackedDomainVector256() for lane layout
+		// details.
+		//
+		__m128i packedDomainPixel12Lanes =
+			Exp5a_GatherPackedDomainScalar128(
+				lpTransitionTable,
+				destPixelOffset, false /*gatherBottomRow*/);
+
+		__m128i packedDomainPixel34Lanes =
+			Exp5a_GatherPackedDomainScalar128(
+				lpTransitionTable,
+				destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i finalPixels = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(packedDomainPixel12Lanes, packedDomainPixel34Lanes);
+
+		_mm_storel_epi64(
+			(__m128i*)
+			& m_pWriteBuffer16[destPixelOffset],
+			finalPixels);
+
+		destPixelOffset += 4;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
 
 /****************************************************************************
  * @brief Exp5 with batched writes.
@@ -4544,34 +4928,6 @@ void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 }
 
 
-
-
-//Experiment order
-//
-//Exp7a
-//- AVX2
-//- 8 DWORD lanes
-//- manual construction
-//
-//Question: Does wider arithmetic help?
-//
-//
-//Exp7b
-//If Exp7a wins: Try AVX2 gather instructions.
-//
-//Question: Can AVX2 reduce construction cost?
-//
-//
-//Exp7c
-//
-//If gathers help:
-//Keep best arithmetic path
-//+
-//best gather path
-//+
-//best store path
-//
-//as the likely long-term AVX winner.
 
 /****************************************************************************
  * Exp7a Packed-Domain Manual Gather/Construction

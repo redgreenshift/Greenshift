@@ -1039,11 +1039,20 @@ void    Greenshift::UpdateDisplayText(void)
 		case BitCanvas::OL_SSE2:
 			optLevel = { "SSE2" };
 			break;
+		case BitCanvas::OL_SSE3:
+			optLevel = { "SSE3" };
+			break;
+		case BitCanvas::OL_SSSE3:
+			optLevel = { "SSSE3" };
+			break;
 		case BitCanvas::OL_SSE41:
 			optLevel = { "SSE4.1" };
 			break;
 		case BitCanvas::OL_AVX2:
 			optLevel = { "AVX2" };
+			break;
+		case BitCanvas::OL_AVX512_Foundation:
+			optLevel = { "AVX-512 Foundation" };
 			break;
 		case BitCanvas::OL_PRESET7:
 			optLevel = { "OL_PRESET7" };
@@ -1066,6 +1075,15 @@ void    Greenshift::UpdateDisplayText(void)
 }
 
 
+//	FPS 0 <stats>		3 <none>
+//	1 CurrentDF			4 CurrentPalette
+//	2 NextDF			5 NextPalette
+// ...................................
+// ........ the visualization ........
+// ...................................
+//	8 CurrentWaveShape	11 Particle1
+//	9 NextWaveShape		12 Particle2
+//	10 Particle0		13 Particle3
 
 
 

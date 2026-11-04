@@ -693,6 +693,52 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas16BenchmarkSSSE3Exp5d_Shift)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT5d",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Shift(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas16BenchmarkSSSE3Exp5d_Mask)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas16;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"16bit SSE2_EXPERIMENT5d",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Mask(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 		TEST_METHOD(TestBitCanvas16BenchmarkSSE41Exp6)
 		{
 			MTRand rng(c_seed);
@@ -1690,7 +1736,8 @@ namespace GreenshiftUnitTest
 			const wchar_t* pszTestName,
 			PaletteInitializer pfnPalette,
 			DoDeltaMethod16 pfnBaseline,
-			DoDeltaMethod16 pfnOptimized)
+			DoDeltaMethod16 pfnOptimized,
+			bool solidWhite = false)
 		{
 			constexpr size_t c_width = 32;
 			constexpr size_t c_height = 32;
@@ -1714,7 +1761,7 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
+					byte_t iColor = solidWhite ? 255 : static_cast<byte_t>(rng.randInt(255));
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
@@ -2135,6 +2182,92 @@ namespace GreenshiftUnitTest
 		}
 
 
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Shift_White)
+		{
+			VerifyEquivalence16(
+				L"SSE41 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Shift,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Shift_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE41 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Shift_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE41 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Shift_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE41 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Shift);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Shift_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE41 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Shift);
+		}
+
+
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Mask_White)
+		{
+			VerifyEquivalence16(
+				L"SSE41 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Mask,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Mask_Grayscale)
+		{
+			VerifyEquivalence16(
+				L"SSE41 Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Mask_DistinctChannels)
+		{
+			VerifyEquivalence16(
+				L"SSE41 DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Mask_PrimaryColorCycle)
+		{
+			VerifyEquivalence16(
+				L"SSE41 PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Mask);
+		}
+		TEST_METHOD(TestBitCanvas16_SSSE3_Exp5d_Mask_BitBoundary)
+		{
+			VerifyEquivalence16(
+				L"SSE41 BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63,
+				&BitCanvas16::DoDelta_SSSE3_experiment5d_Mask);
+		}
+
+
 		TEST_METHOD(TestBitCanvas16_SSE41_Exp6_Grayscale)
 		{
 			VerifyEquivalence16(
@@ -2335,126 +2468,179 @@ namespace GreenshiftUnitTest
 				&BitCanvas16::DoDelta_AVX2_experiment7c);
 		}
 
-		TEST_METHOD(MathTestAVXMath)
+		TEST_METHOD(KernelMathBenchmark)
 		{
-			// White (THIS WORKS)
-			dword_t src12 = 0xFFFFFFFF;
-			dword_t src34 = 0xFFFFFFFF;
-			// Constant intensity within each channel, different intensity between channels WORKS!? (I tried several variations, but I should try the full range)
-			//word_t singlePixel = RGB16(11, 21, 0);
-			//src12 = (singlePixel << 16) | singlePixel;
-			//src34 = (singlePixel << 16) | singlePixel;
+			constexpr size_t kInputCount = 4096;
+			constexpr size_t kIterations = 4000000000ULL;
 
-			// Varying the intensity within the channels, THIS FAILS! :-(
-			src12 = (RGB16(0, 63, 31) << 16) | RGB16(31, 63, 0);
-			src34 = (RGB16(31, 0, 31) << 16) | RGB16(0, 63, 31);
-			const dword_t expectedDestPixel = CalculateExpectedPackedDomainPixel(src12, src34);
-			//__m256i red = _mm256_set1_epi32(0x7c007c00);
-			//__m256i green = _mm256_set1_epi32(0x0fc00fc0);
-			//__m256i blue = _mm256_set1_epi32(0x003e003e);
+			alignas(16) __m128i exp2A[kInputCount];
+			alignas(16) __m128i exp2B[kInputCount];
+			alignas(16) __m128i exp2C[kInputCount];
+			alignas(16) __m128i exp2D[kInputCount];
 
-			const __m256i redMask =
-				_mm256_set1_epi32(0xF800F800);
-
-			const __m256i greenMask =
-				_mm256_set1_epi32(0x07E007E0);
-
-			const __m256i blueMask =
-				_mm256_set1_epi32(0x001F001F);
-			__m256i decay63 = _mm256_set1_epi32(63);
-
-			__m256i srcA /*12_256*/ = _mm256_set1_epi32(src12);
-			__m256i srcB /*34_256*/ = _mm256_set1_epi32(src34);
+			alignas(16) __m128i exp5Src12[kInputCount];
+			alignas(16) __m128i exp5Src34[kInputCount];
 
 			//
-			// Exp5 packed-domain arithmetic.
+			// Generate benchmark inputs outside the timed region.
 			//
-			__m256i red =
-				_mm256_and_si256(srcA, redMask); // get packed red bits for pixels 1 and 2
+			MTRand rng(12345);
 
-			red =
-				_mm256_srli_epi32(red, 2); // divide by 4, so the next operation(s) don't overflow
+			for (size_t i = 0; i < kInputCount; ++i)
+			{
+				exp2A[i] = _mm_set1_epi32(rng.randInt());
+				exp2B[i] = _mm_set1_epi32(rng.randInt());
+				exp2C[i] = _mm_set1_epi32(rng.randInt());
+				exp2D[i] = _mm_set1_epi32(rng.randInt());
 
-			__m256i redPackedSum =
-				_mm256_add_epi32(
-					red,
-					_mm256_srli_epi32(
-						_mm256_and_si256(srcB, redMask), // get packed red bits for pixels 3 and 4
-						2) // divide those by 4 so the next operations don't overflow
-				); // sum the src12 and src34 red values, that have already been divided by 4, to produce the packed average
+				exp5Src12[i] = _mm_set1_epi32(rng.randInt());
+				exp5Src34[i] = _mm_set1_epi32(rng.randInt());
+			}
+
+			__m128i accumulator = _mm_setzero_si128();
+
+			value_t exp2Time = 0;
+			value_t exp5Time = 0;
+			value_t exp5dShiftTime = 0;
+			value_t exp5dMaskTime = 0;
+
+#if 0
+			//
+			// Exp2 arithmetic benchmark.
+			//
+			timer.Start();
+
+			for (size_t i = 0; i < kIterations; ++i)
+			{
+				const size_t index =
+					i & (kInputCount - 1);
+
+				const __m128i result =
+					Exp2a_SSE2_TraditionalMathKernel128(
+						exp2A[index],
+						exp2B[index],
+						exp2C[index],
+						exp2D[index]);
+
+				accumulator =
+					_mm_add_epi16(accumulator, result);
+			}
+
+			timer.Stop();
+
+			exp2Time = timer.StoppedMilliseconds();
 
 			//
-			// Green path.
+			// Exp5 arithmetic benchmark.
 			//
-			__m256i greenPackedSum =
-				_mm256_add_epi32(
-					_mm256_and_si256(srcA, greenMask),
-					_mm256_and_si256(srcB, greenMask));
+			timer.Start();
 
-			//
-			// Blue path.
-			//
-			__m256i bluePackedSum =
-				_mm256_add_epi32(
-					_mm256_and_si256(srcA, blueMask),
-					_mm256_and_si256(srcB, blueMask));
+			for (size_t i = 0; i < kIterations; ++i)
+			{
+				const size_t index =
+					i & (kInputCount - 1);
 
+				const __m128i result =
+					Exp5a_SSE41_PackedDomainMathKernel64(
+						exp5Src12[index],
+						exp5Src34[index]);
 
-	/*
-	 * sum the high order sum and low order sum, and mask to red bits only
-	 */
-	//destPixel = (((redLow + redHi) * 63) >> 6) & 0xF800;
+				accumulator =
+					_mm_add_epi16(accumulator, result);
+			}
 
-			__m256i redHi = _mm256_srli_epi32(redPackedSum, 16);
-			__m256i redAverage = _mm256_add_epi32(redPackedSum, redHi);
-			//__m256i redDecayedIntermediate1 = _mm256_mullo_epi32(redAverage, decay63);
-			//__m256i redDecayedIntermediate2 = _mm256_srli_epi32(redDecayedIntermediate1, 6);
+			timer.Stop();
 
-			__m256i greenHi = _mm256_srli_epi32(greenPackedSum, 16);
-			__m256i greenSum = _mm256_add_epi32(greenPackedSum, greenHi);
-			__m256i blueHi = _mm256_srli_epi32(bluePackedSum, 16);
-			__m256i blueSum = _mm256_add_epi32(bluePackedSum, blueHi);
+			exp5Time = timer.StoppedMilliseconds();
 
-			//
-			// Apply decay.
-			//
-			const __m256i redDecayed =
-				_mm256_and_si256(
-					_mm256_srli_epi32(
-						_mm256_mullo_epi32(redAverage, decay63),
-						6),
-					_mm256_set1_epi32(0x0000F800));
-
-			const __m256i greenDecayed =
-				_mm256_and_si256(
-					_mm256_srli_epi32(
-						_mm256_mullo_epi32(greenSum, decay63),
-						8),
-					_mm256_set1_epi32(0x000007E0));
-
-			const __m256i blueDecayed =
-				_mm256_and_si256(
-					_mm256_srli_epi32(
-						_mm256_mullo_epi32(blueSum, decay63),
-						8),
-					_mm256_set1_epi32(0x0000001F));
-
-			__m256i result = _mm256_or_si256(
-				_mm256_or_si256(
-					redDecayed,
-					greenDecayed),
-				blueDecayed);
-
-
-			union {
+			union
+			{
 				__m128i pixel128;
-				dword_t pixel32 = 0;
-			};
+				dword_t pixel32;
+			} sink;
 
-			__m128i finalPixels = _mm256_castsi256_si128(result);
-			_mm_store_si128(&pixel128, finalPixels);
+			_mm_store_si128(&sink.pixel128, accumulator);
 
-			Assert::AreEqual(expectedDestPixel, pixel32, L"should be equal");
+			std::string message =
+				std::format(
+					"Exp2: {} ms, Exp5: {} ms",
+					exp2Time,
+					exp5Time);
+
+#else // Other benchmark;
+
+			//
+			// Exp5d_Shift arithmetic benchmark.
+			//
+			timer.Start();
+
+			for (size_t i = 0; i < kIterations; ++i)
+			{
+				const size_t index =
+					i & (kInputCount - 1);
+
+				const __m128i result =
+					Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(
+						exp5Src12[index],
+						exp5Src34[index]);
+
+				accumulator =
+					_mm_add_epi16(accumulator, result);
+			}
+
+			timer.Stop();
+
+			exp5dShiftTime = timer.StoppedMilliseconds();
+
+
+			//
+			// Exp5d_Mask arithmetic benchmark.
+			//
+			timer.Start();
+
+			for (size_t i = 0; i < kIterations; ++i)
+			{
+				const size_t index =
+					i & (kInputCount - 1);
+
+				const __m128i result =
+					Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(
+						exp5Src12[index],
+						exp5Src34[index]);
+
+				accumulator =
+					_mm_add_epi16(accumulator, result);
+			}
+
+			timer.Stop();
+
+			exp5dMaskTime = timer.StoppedMilliseconds();
+
+			union
+			{
+				__m128i pixel128;
+				dword_t pixel32;
+			} sink;
+
+			_mm_store_si128(&sink.pixel128, accumulator);
+
+			std::string message =
+				std::format(
+					"Exp5d_Shift: {} ms, Exp5d_Mask: {} ms",
+					exp5dShiftTime,
+					exp5dMaskTime);
+
+#endif // Other Benchmark
+
+			DumpToFile(
+				"C:\\temp\\MathBenchmark.txt",
+				message.c_str(),
+				"\n");
+
+			Assert::AreNotEqual(
+				0u,
+				sink.pixel32,
+				L"Prevent optimization");
 		}
 
 

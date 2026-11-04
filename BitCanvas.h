@@ -293,7 +293,7 @@ public:
 	/*
 	 * Optimization Level Type
 	 */
-	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE41, OL_AVX2, OL_PRESET7, OL_PRESET8, OL_PRESET9 } opt_level_t;
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE3, OL_SSSE3, OL_SSE41, OL_AVX2, OL_AVX512_Foundation, OL_PRESET7, OL_PRESET8, OL_PRESET9 } opt_level_t;
 	// https://en.wikipedia.org/wiki/List_of_x86_SIMD_instructions
 	//
 	// 1996 MMX:
@@ -636,8 +636,11 @@ protected:
 	virtual void	DoDelta_x86(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_MMX(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_SSE2(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_SSE3(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_SSSE3(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_SSE41(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_AVX2(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset7(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset8(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset9(const PIXELMAP* lpTransitionTable);
@@ -887,8 +890,10 @@ public:
 	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_SSE2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_SSSE3(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset7(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset8(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset9(const PIXELMAP* lpTransitionTable) override;
@@ -908,9 +913,11 @@ public:
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original Packed-Domain SIMD implementation
 	__forceinline __m128i	Exp5a_GatherPackedDomainScalar128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow);
 
-	void					DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_PackedDomainMathKernel
+	void					DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSE41_PackedDomainMathKernel64
 	__forceinline __m128i	Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // vectorized transition-table load
 
+	void					DoDelta_SSSE3_experiment5d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Shift variant)
+	void					DoDelta_SSSE3_experiment5d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Mask variant)
 	__forceinline __m128i	ComputeExp5_PackedDomainResult(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
