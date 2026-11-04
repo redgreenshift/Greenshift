@@ -2859,6 +2859,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //Exp5c = SSE41 vector load (a.k.a. Backport the idea of Exp7b-B2) (REJECTED)
 //Exp5d = SSSE3 Adapt pseudo-SIMD to native SIMD
 //Exp6 = SSE41 wider-store follow-on experiment
+//Exp6b = SSSE3 Batched-write variant of Exp5d.
 //Exp7a = AVX2 proof of concept (primitive)
 //Exp7b-A = AVX2 Temporary array construction (REJECTED)
 //Exp7b-B1 = AVX2 actual AVX2 gather + scalar load (REJECTED)
@@ -2893,6 +2894,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //
 // Exp6 - 8-pixel packed-DWORD SIMD (Packed-Domain Arithmetic)
 //        (2 × Exp5 results combined into a single 128-bit write)
+//
+// Exp6b - 8-pixel packed-DWORD native SIMD
+//        Batched-write variant of Exp5d (full native SIMD).
+//        Does this relieve the register pressure? Yes. Is it faster? Maybe. Is it a clear win? No.
 //
 // Exp7 = 8-pixel AVX2 packed-DWORD SIMD variant
 //        Exp7a = establish AVX2 baseline
@@ -3262,7 +3267,33 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *           offset any potential gain.
  *         - Exp7c later revisited the same batching concept
  *           under AVX2 and produced more promising results.
- *         - Revisit register pressure investigation if AVX doesn't pan out.
+ *         - Exp6b later revisited the register-pressure investigation
+ *           using the simplified Exp5d arithmetic, with indeterminate results.
+ *
+ *
+ * Exp6b:
+ *     Batched-write variant of Exp5d.
+ *
+ *     Revisited the widened-store strategy using the
+ *     simplified Exp5d arithmetic.
+ *
+ *     Result:
+ *         Comparable performance to Exp5d.
+ *         Successful experiment; Indeterminate results:
+ *         - No clear winner was established between
+ *           Exp5d and Exp6b.
+ *         - No clear winner was established between
+ *           Exp6b_Mask and Exp6b_Shift.
+ *         - The arithmetic became lightweight enough that
+ *           holding two results simultaneously no longer
+ *           appears particularly stressful for the register
+ *           allocator. Compared to Exp6:
+ *             + Exp6b arithmetic is simpler.
+ *             + Exp6b assembly is cleaner.
+ *             + Exp6b keeps the first result resident in
+ *               a SIMD register until the final combine/store.
+ *             + Yet, reduced register pressure did not produce
+ *               a clear performance gain over Exp5d.
  *
  *
  * Exp7a:
@@ -3454,11 +3485,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
- * - Investigate Exp6b_Mask / Exp6b_Shift and register pressure.
- * - Investigate AVX2 Adapted arithmetic approach.
+ * - Investigate AVX2 Adapted(Exp5d) arithmetic approach.
  * - Investigate AVX2 implementation of Exp2 (AVX Gather with traditional Algorithm),
  *   the hypothesis being that Exp2 Gather is expensive, but Exp2 Arithmetic is much cheaper.
- * - Compare AVX to AVX, Traditional to Adapted to PackedDomain.
+ * - Compare AVX to AVX, Traditional to Adapted(Exp5d) to PackedDomain.
  * - Investigate AVX-512 implementation (Exp8), basically repeat the above in AVX512.
  * - Additional Exp2 vs Exp5 assembly analysis.
  * - Continue investigating source-pixel gather
@@ -4209,117 +4239,27 @@ __forceinline __m128i Exp5b_SSE2_MathKernel64(__m128i srcPixel12, __m128i srcPix
 	return packed16Result;
 }
 
-// Output is 64 bits
-__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(__m128i srcPixel12, __m128i srcPixel34)
-{
-	const __m128i greenMask =
-		_mm_set1_epi16(GREENMASK16);
 
-	const __m128i blueMask =
-		_mm_set1_epi16(BLUEMASK16);
-
-	const __m128i decay63 =
-		_mm_set1_epi16(63);
-
-
-
-	// RED
-	// Shift by REDSHIFT16
-	///////////// Mask by REDMASK16 (not necessary)
-	// Sum the srcPixel12 and srcPixel34
-	// SSSE3 horizontal sum the adjacent pixels.
-	// Multiply by 63 (Apply decay)
-	//// Shift R by 6+2 (divide by 4 and 64)
-	//// Shift L by REDSHIFT16 (or:)
-	// Shift L by REDSHIFT16-8
-	// Mask by _REDMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
-
-	// GREEN
-	// Shift by GREENSHIFT16
-	// Mask by GREENMASK16
-	// Sum the srcPixel12 and srcPixel34
-	// SSSE3 horizontal sum the adjacent pixels.
-	// Multiply by 63 (Apply decay)
-	//// Shift R by 6+2 (divide by 4 and 64)
-	//// Shift L by GREENSHIFT16 (or:)
-	// Shift L by GREENSHIFT16-8
-	// Mask by _GREENMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
-
-	// BLUE
-	////////// Shift by BLUESHIFT16 (not necessary)
-	// Mask by BLUEMASK16
-	// Sum the srcPixel12 and srcPixel34
-	// SSSE3 horizontal sum the adjacent pixels.
-	// Multiply by 63 (Apply decay)
-	// Shift R by 6+2 (divide by 4 and 64)
-	/////////// Mask by _BLUEMASK16 (not necessary)
-
-	//
-	// RED
-	//
-	__m128i red12 = _mm_srli_epi16(srcPixel12, REDSHIFT16);
-	__m128i red34 = _mm_srli_epi16(srcPixel34, REDSHIFT16);
-	__m128i red13_24 = _mm_add_epi16(red12, red34);
-	__m128i red1234 = _mm_hadd_epi16(red13_24, red13_24); // Requires SSSE3
-	__m128i red = _mm_mullo_epi16(red1234, decay63); // Requires SSE2
-	//red = _mm_slli_epi16(red, REDSHIFT16 - 8);
-	//red = _mm_and_si128(red, _redMask);
-	red = _mm_srli_epi16(red, 8);
-	red = _mm_slli_epi16(red, REDSHIFT16);
-
-	//
-	// GREEN
-	//
-	__m128i green12 = _mm_srli_epi16(srcPixel12, GREENSHIFT16);
-	green12 = _mm_and_si128(green12, greenMask);
-	__m128i green34 = _mm_srli_epi16(srcPixel34, GREENSHIFT16);
-	green34 = _mm_and_si128(green34, greenMask);
-	__m128i green13_24 = _mm_add_epi16(green12, green34);
-	__m128i green1234 = _mm_hadd_epi16(green13_24, green13_24); // Requires SSSE3
-	__m128i green = _mm_mullo_epi16(green1234, decay63); // Requires SSE2
-	//green = _mm_srli_epi16(green, 8 - GREENSHIFT16);
-	//green = _mm_and_si128(green, _greenMask);
-	green = _mm_srli_epi16(green, 8);
-	green = _mm_slli_epi16(green, GREENSHIFT16);
-
-	//
-	// BLUE
-	//
-	__m128i blue12 = _mm_and_si128(srcPixel12, blueMask);
-	__m128i blue34 = _mm_and_si128(srcPixel34, blueMask);
-	__m128i blue13_24 = _mm_add_epi16(blue12, blue34);
-	__m128i blue1234 = _mm_hadd_epi16(blue13_24, blue13_24); // Requires SSSE3
-	__m128i blue = _mm_mullo_epi16(blue1234, decay63); // Requires SSE2
-	blue = _mm_srli_epi16(blue, 8);
-
-	//
-	// Pack final RGB565 values.
-	//
-	__m128i result =
-		_mm_or_si128(
-			_mm_or_si128(red, green),
-			blue);
-
-	return result;
-}
-
-// Using the standard mask
+/*********************************************************************
+* @brief Adapt pseudo-SIMD to native SIMD, using simpler full native SIMD SSSE3 instructions.
+*
+* Adapt the pseudo-SIMD (scalar operations simulating SIMD within 32bit lanes) directly to full native SIMD for all operations.
+*
+* At the end of the arithmetic for each color, we need to ensure to remove any extraneous bits. This can be accomplished through a _bitmask_, or one extra _shift_ operation.
+*
+* This variant uses a standard Mask operation to clear bits after the arithmetic operations.
+*
+* @returns Output is 64 bits
+**/
 __forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(__m128i srcPixel12, __m128i srcPixel34)
 {
-	const __m128i greenMask =
-		_mm_set1_epi16(GREENMASK16);
+	const __m128i greenMask = _mm_set1_epi16(GREENMASK16);
+	const __m128i blueMask = _mm_set1_epi16(BLUEMASK16);
 
-	const __m128i blueMask =
-		_mm_set1_epi16(BLUEMASK16);
+	const __m128i _redMask = _mm_set1_epi16(_REDMASK16);
+	const __m128i _greenMask = _mm_set1_epi16(_GREENMASK16);
 
-	const __m128i _redMask =
-		_mm_set1_epi16(_REDMASK16);
-
-	const __m128i _greenMask =
-		_mm_set1_epi16(_GREENMASK16);
-
-	const __m128i decay63 =
-		_mm_set1_epi16(63);
+	const __m128i decay63 = _mm_set1_epi16(63);
 
 
 
@@ -4381,6 +4321,108 @@ __forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(__m128i s
 	green = _mm_and_si128(green, _greenMask);
 	//green = _mm_srli_epi16(green, 8);
 	//green = _mm_slli_epi16(green, GREENSHIFT16);
+
+	//
+	// BLUE
+	//
+	__m128i blue12 = _mm_and_si128(srcPixel12, blueMask);
+	__m128i blue34 = _mm_and_si128(srcPixel34, blueMask);
+	__m128i blue13_24 = _mm_add_epi16(blue12, blue34);
+	__m128i blue1234 = _mm_hadd_epi16(blue13_24, blue13_24); // Requires SSSE3
+	__m128i blue = _mm_mullo_epi16(blue1234, decay63); // Requires SSE2
+	blue = _mm_srli_epi16(blue, 8);
+
+	//
+	// Pack final RGB565 values.
+	//
+	__m128i result =
+		_mm_or_si128(
+			_mm_or_si128(red, green),
+			blue);
+
+	return result;
+}
+
+
+/*********************************************************************
+* @brief Adapt pseudo-SIMD to native SIMD, using simpler full native SIMD SSSE3 instructions.
+*
+* Adapt the pseudo-SIMD (scalar operations simulating SIMD within 32bit lanes) directly to full native SIMD for all operations.
+*
+* At the end of the arithmetic for each color, we need to ensure to remove any extraneous bits. This can be accomplished through a _bitmask_, or one extra _shift_ operation.
+*
+* This variant Shifts 1 extra time instead of masking to clear bits after the arithmetic operations.
+*
+* This appears to do less work than the Mask variant, but performance is so similar, it's unclear if either variant has an advantage.
+*
+* @returns Output is 64 bits
+**/
+__forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(__m128i srcPixel12, __m128i srcPixel34)
+{
+	const __m128i greenMask = _mm_set1_epi16(GREENMASK16);
+	const __m128i blueMask = _mm_set1_epi16(BLUEMASK16);
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+
+
+	// RED
+	// Shift by REDSHIFT16
+	///////////// Mask by REDMASK16 (not necessary)
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by REDSHIFT16 (or:)
+	// Shift L by REDSHIFT16-8
+	// Mask by _REDMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// GREEN
+	// Shift by GREENSHIFT16
+	// Mask by GREENMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	//// Shift R by 6+2 (divide by 4 and 64)
+	//// Shift L by GREENSHIFT16 (or:)
+	// Shift L by GREENSHIFT16-8
+	// Mask by _GREENMASK16 (or use the ShiftR to truncate the bits. I have a feeling Shifts are faster than masks, or will involve fewer registers)
+
+	// BLUE
+	////////// Shift by BLUESHIFT16 (not necessary)
+	// Mask by BLUEMASK16
+	// Sum the srcPixel12 and srcPixel34
+	// SSSE3 horizontal sum the adjacent pixels.
+	// Multiply by 63 (Apply decay)
+	// Shift R by 6+2 (divide by 4 and 64)
+	/////////// Mask by _BLUEMASK16 (not necessary)
+
+	//
+	// RED
+	//
+	__m128i red12 = _mm_srli_epi16(srcPixel12, REDSHIFT16);
+	__m128i red34 = _mm_srli_epi16(srcPixel34, REDSHIFT16);
+	__m128i red13_24 = _mm_add_epi16(red12, red34);
+	__m128i red1234 = _mm_hadd_epi16(red13_24, red13_24); // Requires SSSE3
+	__m128i red = _mm_mullo_epi16(red1234, decay63); // Requires SSE2
+	//red = _mm_slli_epi16(red, REDSHIFT16 - 8);
+	//red = _mm_and_si128(red, _redMask);
+	red = _mm_srli_epi16(red, 8);
+	red = _mm_slli_epi16(red, REDSHIFT16);
+
+	//
+	// GREEN
+	//
+	__m128i green12 = _mm_srli_epi16(srcPixel12, GREENSHIFT16);
+	green12 = _mm_and_si128(green12, greenMask);
+	__m128i green34 = _mm_srli_epi16(srcPixel34, GREENSHIFT16);
+	green34 = _mm_and_si128(green34, greenMask);
+	__m128i green13_24 = _mm_add_epi16(green12, green34);
+	__m128i green1234 = _mm_hadd_epi16(green13_24, green13_24); // Requires SSSE3
+	__m128i green = _mm_mullo_epi16(green1234, decay63); // Requires SSE2
+	//green = _mm_srli_epi16(green, 8 - GREENSHIFT16);
+	//green = _mm_and_si128(green, _greenMask);
+	green = _mm_srli_epi16(green, 8);
+	green = _mm_slli_epi16(green, GREENSHIFT16);
 
 	//
 	// BLUE
@@ -4908,6 +4950,190 @@ void BitCanvas16::DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable)
 			ComputeExp5_PackedDomainResult(
 				lpTransitionTable,
 				destPixelOffset + 4);
+
+		__m128i combined =
+			_mm_unpacklo_epi64(
+				resultA,
+				resultB);
+
+		_mm_store_si128(
+			(__m128i*) & m_pWriteBuffer16[destPixelOffset],
+			combined);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+
+/****************************************************************************
+ * @brief Exp5d_Mask with batched writes.
+ *
+ * Exp6b revisits the original Exp6 widened-store investigation using the
+ * simplified Exp5d arithmetic model.
+ *
+ * Exp5d:
+ *
+ *     Compute 4 output pixels
+ *     Pack RGB565 result
+ *     _mm_storel_epi64()      // 8-byte store
+ *
+ * Exp6b:
+ *
+ *     Compute 4 output pixels (result A)
+ *     Compute 4 output pixels (result B)
+ *     _mm_unpacklo_epi64()
+ *     _mm_store_si128()       // 16-byte store
+ *
+ * The goal remains identical to Exp6:
+ *
+ *     [p0 p1 p2 p3]
+ *     [p4 p5 p6 p7]
+ *
+ * becomes:
+ *
+ *     [p0 p1 p2 p3 p4 p5 p6 p7]
+ *
+ * and is stored with a single SIMD write.
+ *
+ * Unlike Exp6, however, the arithmetic is based on Exp5d which
+ * replaces several historical pseudo-SIMD sequences with native
+ * SSSE3 operations. The intention is to reduce arithmetic
+ * complexity and register pressure while preserving the existing
+ * packed-domain gather strategy.
+ *
+ * Results:
+ *
+ *     Exp5d:  ~7.2 - 7.4 sec
+ *     Exp6b:  ~7.1 sec (preliminary)
+ *
+ * Observations:
+ *
+ * - Exp6b validates correctly.
+ *
+ * - Preliminary benchmarking shows performance comparable
+ *   to Exp5d, with a possible slight advantage.
+ *
+ * - Assembly inspection shows that the first packed result
+ *   remains resident in SIMD registers until the final
+ *   combine/store stage.
+ *
+ * - The arithmetic is substantially simpler than the
+ *   original Exp6 implementation.
+ *
+ * - Holding two intermediate results simultaneously no
+ *   longer appears particularly stressful for the register
+ *   allocator.
+ *
+ * Current Assessment:
+ *
+ * - Exp6b demonstrates that the widened-store strategy
+ *   remains viable when combined with the simplified
+ *   Exp5d arithmetic model.
+ *
+ * - The implementation appears cleaner than the original
+ *   Exp6 investigation and shows reduced apparent register
+ *   pressure.
+ *
+ * - Any improvement over Exp5d currently appears modest.
+ *
+ * - Further investigation is deferred while higher-value
+ *   AVX and gather-related investigations continue.
+ *
+ * - Long-duration benchmarking may be performed in the
+ *   future to determine whether the observed advantage
+ *   is statistically significant.
+ ****************************************************************************/
+void BitCanvas16::DoDelta_SSSE3_experiment6b_Mask(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, false /*gatherBottomRow*/);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i resultA = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(src12, src34);
+
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12_B = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset + 4, false /*gatherBottomRow*/);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34_B = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset + 4, true /*gatherBottomRow*/);
+
+		__m128i resultB = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(src12_B, src34_B);
+
+		__m128i combined =
+			_mm_unpacklo_epi64(
+				resultA,
+				resultB);
+
+		_mm_store_si128(
+			(__m128i*) & m_pWriteBuffer16[destPixelOffset],
+			combined);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail from Exp2.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+/****************************************************************************
+ * @brief Exp5d_Shift with batched writes.
+ *
+ * Exp6b revisits the original Exp6 widened-store investigation using the
+ * simplified Exp5d arithmetic model.
+ *
+ * The "Shift" variant uses potentially cheaper instructions to effectively
+ * strip out the extraneous bits after the arithmetic
+ ****************************************************************************/
+void BitCanvas16::DoDelta_SSSE3_experiment6b_Shift(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, false /*gatherBottomRow*/);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34 = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset, true /*gatherBottomRow*/);
+
+		__m128i resultA = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(src12, src34);
+
+		//
+		// Gather packed p1|p2 DWORDs.
+		//
+		__m128i src12_B = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset + 4, false /*gatherBottomRow*/);
+
+		//
+		// Gather packed p3|p4 DWORDs.
+		//
+		__m128i src34_B = Exp5a_GatherPackedDomainScalar128(lpTransitionTable, destPixelOffset + 4, true /*gatherBottomRow*/);
+
+		__m128i resultB = Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(src12_B, src34_B);
 
 		__m128i combined =
 			_mm_unpacklo_epi64(

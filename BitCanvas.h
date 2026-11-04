@@ -910,17 +910,23 @@ public:
 	__forceinline void		Exp2_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t& destPixelOffset);
 	void					DoDelta_SSE2_experiment3(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment4(const PIXELMAP* lpTransitionTable);
+
 	void					DoDelta_SSE41_experiment5(const PIXELMAP* lpTransitionTable); // the original Packed-Domain SIMD implementation
 	__forceinline __m128i	Exp5a_GatherPackedDomainScalar128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow);
+
+	__forceinline __m128i	ComputeExp5_PackedDomainResult(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
+	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
 
 	void					DoDelta_SSE41_experiment5c(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSE41_PackedDomainMathKernel64
 	__forceinline __m128i	Exp5c_GatherPackedDomainVector128(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // vectorized transition-table load
 
 	void					DoDelta_SSSE3_experiment5d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Shift variant)
 	void					DoDelta_SSSE3_experiment5d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp5a_SSEE3_AdaptedPackedDomainMathKernel (Mask variant)
-	__forceinline __m128i	ComputeExp5_PackedDomainResult(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
-	void					DoDelta_SSE2_experiment5b(const PIXELMAP* lpTransitionTable); // revisiting to see how emulating _mm_mullo_epi32 performs
+
 	void					DoDelta_SSE41_experiment6(const PIXELMAP* lpTransitionTable); // Exp5 with batched writes
+	void					DoDelta_SSSE3_experiment6b_Mask(const PIXELMAP* lpTransitionTable); // Exp5d with batched writes
+	void					DoDelta_SSSE3_experiment6b_Shift(const PIXELMAP* lpTransitionTable); // Exp5d with batched writes
+
 	__forceinline __m256i	Exp7a_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // manual gather/construction
 	__forceinline __m256i	Exp7b_A_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // Temp array gather/construction
 	__forceinline __m256i	Exp7b_B1_BuildPackedDomainVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // AVX gather/construction
