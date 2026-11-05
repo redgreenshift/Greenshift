@@ -72,8 +72,10 @@ __forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(__m128i s
 __forceinline __m128i Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(__m128i srcPixel12, __m128i srcPixel34);
 static __forceinline __m128i mullo_epi32_emulated_sse2(__m128i a, __m128i b);
 __forceinline __m256i combine_sse_to_avx(__m128i resultA, __m128i resultB);
-__forceinline __m128i Exp7d_AVX2_AdaptedPackedDomainMathKernel128_Mask(__m128i srcPixel12, __m128i srcPixel34);
-__forceinline __m128i Exp7d_AVX2_AdaptedPackedDomainMathKernel128_Shift(__m128i srcPixel12, __m128i srcPixel34);
+__forceinline __m128i Exp7d_AVX2_AdaptedPackedDomainMathKernel128_Mask(__m256i srcPixel12, __m256i srcPixel34);
+__forceinline __m128i Exp7d_AVX2_AdaptedPackedDomainMathKernel128_Shift(__m256i srcPixel12, __m256i srcPixel34);
+__forceinline __m256i Exp8a_AVX2_TraditionalMathKernel256(const __m256i a, const __m256i b, const __m256i c, const __m256i d);
+__forceinline __m256i Exp8c_AVX2_TraditionalMathKernel256(const __m256i a, const __m256i b, const __m256i c, const __m256i d);
 
 
 /*
@@ -2067,7 +2069,7 @@ void BitCanvas16::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment7d_Shift(lpTransitionTable);
+	DoDelta_AVX2_experiment8c(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable)
@@ -2868,7 +2870,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //Exp7b-B2 = AVX2 actual AVX2 gather + vector load
 //Exp7c = AVX2 store-throughput investigation
 //Exp7d = AVX2 Adapt pseudo-SIMD to native SIMD (a.k.a. Exp5d to AVX)
-//Exp9 = UNUSED, for a potential future AVX2 experiment
+//Exp8a = AVX2 Scalar Gather with traditional Arithmetic (reference)
+//Exp8b = AVX2 Gather + Vector Load + traditional Arithmetic
+//Exp8c = AVX2 investigate improvements Exp8b by reducing register pressure
+//Exp9 = RESERVED, for a potential future AVX2 experiment
 //Exp10 = AVX-512 packed-domain SIMD investigation (future)
 
 // SIMD Experiment Lineage
@@ -2911,7 +2916,10 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 //              Exp7b-B2: AVX2 gather + vector load: MASSIVE IMPROVEMENT.
 //        Exp7c = 16-pixel batched-write/store-throughput variant
 //
-// Exp7d = AVX2 Adapt pseudo-SIMD to native SIMD (a.k.a. Exp5d to AVX)
+// Exp7d = 8-pixel AVX2 Adapt pseudo-SIMD to native SIMD (a.k.a. Exp5d to AVX)
+// Exp8a = 16-pixel AVX2 Scalar Gather + Traditional Arithmetic (reference)
+// Exp8b = 16-pixel AVX2 Gather + Vector Load + Traditional Arithmetic
+// Exp8c = 16-pixel AVX2 Micro-optimization to Exp8b: remove an unnecessary redMask operation
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -2972,6 +2980,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     AVX2  Exp7b-A       ~12.2 - 13.3 sec
  *     SSE2  Exp4          ~ 9.4 -  9.8 sec
  *     SSE41 Exp5c         ~ 9.2 - 10.2 sec
+ *     AVX2  Exp8a         ~ 9.2 -  9.6 sec (reference)
  *
  *     SSE2  Exp2          ~ 8.3 - 8.8 sec
  *     SSE2  Exp5b         ~ 8.3 - 8.8 sec
@@ -2986,6 +2995,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     AVX2  Exp7c         ~ 4.8 - 5.2 sec
  *     AVX2  Exp7d_Mask    ~ 4.3 - 4.6 sec
  *     AVX2  Exp7d_Shift   ~ 4.3 - 4.5 sec
+ *     AVX2  Exp8b         ~ 4.1 - 4.4 sec
+ *     AVX2  Exp8c         ~ 4.0 - 4.1 sec
  *
  *
  * Experiment Summary
@@ -3402,6 +3413,31 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         - No clear winner was established between
  *           Exp7d_Mask and Exp7d_Shift.
  *
+ * Exp8a:
+ *     AVX2 Scalar Gather with Traditional Arithmetic. (reference)
+ *
+ *     Result:
+ *         Extremely slow compared to AVX gather variants.
+ *
+ * Exp8b:
+ *     AVX2 Gather and Vector Load, with Traditional Arithmetic
+ *
+ *     Result:
+ *         Consistently faster than Exp7d.
+ *
+ *     Conclusion:
+ *         AVX2 gather can be successfully combined
+ *         with the traditional arithmetic model.
+ *
+ *         This currently appears to be the fastest
+ *         implementation investigated so far.
+ *
+ * Exp8c:
+ *     Micro-optimization of Exp8b: remove unnecessary redMask operation
+ *
+ *     Result:
+ *         Slightly faster than Exp8b.
+ *
  *
  * Key Findings
  * ------------
@@ -3496,8 +3532,12 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *       itself from the Exp2 / Exp5 performance tier.
  *     - Still trails the AVX2 performance tier.
  *
- * Exp7d_Mask / Exp7d_Shift:
+ * Exp7b-B2:
+ *     - Best AVX Gather.
+ *
+ * Exp8c:
  *     - Best overall implementation across all instruction sets.
+ *     - Best AVX Arithmetic.
  *     - Current AVX2 front-runner.
  *
  * Benchmark variance is currently large enough that no definitive
@@ -3508,9 +3548,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
- * - Investigate (Exp8a) AVX2 implementation of Exp2 (AVX Gather with Traditional Arithmetic),
- *   the hypothesis being that Exp2 Gather is expensive, but Exp2 Arithmetic is much cheaper.
- * - Compare AVX to AVX, Traditional(Exp2->Exp8a) to Adapted(Exp5d->Exp7d) to PackedDomain(Exp7b-B2).
  * - Investigate AVX-512 implementation (Exp10), basically repeat the above in AVX512.
  * - Additional Exp2 vs Exp5 assembly analysis.
  * - Continue investigating source-pixel gather
@@ -3710,7 +3747,7 @@ void BitCanvas16::DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable)
 
 // Traditional algorithm, faster than Exp5a_MathKernel (but Exp2 Gather is slower than Exp5a_Gather)
 // Output is 128bits
-__forceinline __m128i Exp2a_SSE2_TraditionalMathKernel128(const __m128i a, const __m128i b, const __m128i c, const __m128i d)
+static __forceinline __m128i Exp2a_SSE2_TraditionalMathKernel128(const __m128i a, const __m128i b, const __m128i c, const __m128i d)
 {
 	const __m128i redMask =
 		_mm_set1_epi16(_REDMASK16);
@@ -5513,7 +5550,7 @@ BitCanvas16::Exp7b_B2_BuildPackedDomainVector256(
  * prior to returning the final RGB565 results.
  *
  ****************************************************************************/
-__forceinline __m128i Exp7a_AVX2_PackedDomainMathKernel128(__m256i srcPixel12, __m256i srcPixel34)
+static __forceinline __m128i Exp7a_AVX2_PackedDomainMathKernel128(__m256i srcPixel12, __m256i srcPixel34)
 {
 	const __m256i redMask = _mm256_set1_epi32(0xF800F800);
 	const __m256i greenMask = _mm256_set1_epi32(0x07E007E0);
@@ -6299,6 +6336,424 @@ void BitCanvas16::DoDelta_AVX2_experiment7d_Shift(const PIXELMAP* lpTransitionTa
 
 	//
 	// Existing scalar tail loop.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+
+// Traditional algorithm, probably faster than Exp7d_MathKernel (but Exp2 Gather is slower than Exp7d_Gather)
+// Output is 256bits
+__forceinline __m256i Exp8a_AVX2_TraditionalMathKernel256(const __m256i a, const __m256i b, const __m256i c, const __m256i d)
+{
+	const __m256i redMask =
+		_mm256_set1_epi16(_REDMASK16);
+
+	const __m256i greenMask =
+		_mm256_set1_epi16(_GREENMASK16);
+
+	const __m256i blueMask =
+		_mm256_set1_epi16(_BLUEMASK16);
+
+	const __m256i decay63 =
+		_mm256_set1_epi16(63);
+
+	__m256i r =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(a, redMask),
+					REDSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(b, redMask),
+					REDSHIFT16)),
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(c, redMask),
+					REDSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(d, redMask),
+					REDSHIFT16)));
+
+	__m256i g =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(a, greenMask),
+					GREENSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(b, greenMask),
+					GREENSHIFT16)),
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(c, greenMask),
+					GREENSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(d, greenMask),
+					GREENSHIFT16)));
+
+	__m256i bl =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_and_si256(a, blueMask),
+				_mm256_and_si256(b, blueMask)),
+			_mm256_add_epi16(
+				_mm256_and_si256(c, blueMask),
+				_mm256_and_si256(d, blueMask)));
+
+	r = _mm256_srli_epi16(
+		_mm256_mullo_epi16(r, decay63),
+		8);
+
+	g = _mm256_srli_epi16(
+		_mm256_mullo_epi16(g, decay63),
+		8);
+
+	bl = _mm256_srli_epi16(
+		_mm256_mullo_epi16(bl, decay63),
+		8);
+
+	r = _mm256_slli_epi16(r, REDSHIFT16);
+	g = _mm256_slli_epi16(g, GREENSHIFT16);
+
+	const __m256i result =
+		_mm256_or_si256(
+			_mm256_or_si256(r, g),
+			bl);
+
+	return result;
+}
+
+// Traditional algorithm, probably faster than Exp7d_MathKernel (but Exp2 Gather is slower than Exp7d_Gather)
+// try to relieve register pressure in Exp8a_AVX2_TraditionalMathKernel256
+// Micro-optimization: Remove unnecessary redMask
+// Output is 256bits
+__forceinline __m256i Exp8c_AVX2_TraditionalMathKernel256(const __m256i a, const __m256i b, const __m256i c, const __m256i d)
+{
+	const __m256i greenMask =
+		_mm256_set1_epi16(_GREENMASK16);
+
+	const __m256i blueMask =
+		_mm256_set1_epi16(_BLUEMASK16);
+
+	const __m256i decay63 =
+		_mm256_set1_epi16(63);
+
+	__m256i r =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					a,
+					REDSHIFT16),
+				_mm256_srli_epi16(
+					b,
+					REDSHIFT16)),
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					c,
+					REDSHIFT16),
+				_mm256_srli_epi16(
+					d,
+					REDSHIFT16)));
+
+	r = _mm256_srli_epi16(
+		_mm256_mullo_epi16(r, decay63),
+		8);
+	r = _mm256_slli_epi16(r, REDSHIFT16);
+
+	__m256i g =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(a, greenMask),
+					GREENSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(b, greenMask),
+					GREENSHIFT16)),
+			_mm256_add_epi16(
+				_mm256_srli_epi16(
+					_mm256_and_si256(c, greenMask),
+					GREENSHIFT16),
+				_mm256_srli_epi16(
+					_mm256_and_si256(d, greenMask),
+					GREENSHIFT16)));
+
+	g = _mm256_srli_epi16(
+		_mm256_mullo_epi16(g, decay63),
+		8);
+	g = _mm256_slli_epi16(g, GREENSHIFT16);
+
+	__m256i bl =
+		_mm256_add_epi16(
+			_mm256_add_epi16(
+				_mm256_and_si256(a, blueMask),
+				_mm256_and_si256(b, blueMask)),
+			_mm256_add_epi16(
+				_mm256_and_si256(c, blueMask),
+				_mm256_and_si256(d, blueMask)));
+
+	bl = _mm256_srli_epi16(
+		_mm256_mullo_epi16(bl, decay63),
+		8);
+
+	const __m256i result =
+		_mm256_or_si256(
+			_mm256_or_si256(r, g),
+			bl);
+
+	return result;
+}
+
+
+void BitCanvas16::DoDelta_AVX2_experiment8a(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength =
+		m_dwBufferWidth * m_dwBufferHeight;
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 15 < bufferLength)
+	{
+		dword_t p[16];
+		dword_t p3[16];
+
+		for (int i = 0; i < _countof(p); ++i)
+		{
+			p[i] =
+				lpTransitionTable[destPixelOffset + i];
+
+			p3[i] =
+				p[i] + m_dwBufferWidth;
+		}
+
+		const __m256i a =
+			_mm256_set_epi16(
+				m_pReadBuffer16[p[15]],
+				m_pReadBuffer16[p[14]],
+				m_pReadBuffer16[p[13]],
+				m_pReadBuffer16[p[12]],
+				m_pReadBuffer16[p[11]],
+				m_pReadBuffer16[p[10]],
+				m_pReadBuffer16[p[9]],
+				m_pReadBuffer16[p[8]],
+				m_pReadBuffer16[p[7]],
+				m_pReadBuffer16[p[6]],
+				m_pReadBuffer16[p[5]],
+				m_pReadBuffer16[p[4]],
+				m_pReadBuffer16[p[3]],
+				m_pReadBuffer16[p[2]],
+				m_pReadBuffer16[p[1]],
+				m_pReadBuffer16[p[0]]);
+
+		const __m256i b =
+			_mm256_set_epi16(
+				m_pReadBuffer16[p[15] + 1],
+				m_pReadBuffer16[p[14] + 1],
+				m_pReadBuffer16[p[13] + 1],
+				m_pReadBuffer16[p[12] + 1],
+				m_pReadBuffer16[p[11] + 1],
+				m_pReadBuffer16[p[10] + 1],
+				m_pReadBuffer16[p[9] + 1],
+				m_pReadBuffer16[p[8] + 1],
+				m_pReadBuffer16[p[7] + 1],
+				m_pReadBuffer16[p[6] + 1],
+				m_pReadBuffer16[p[5] + 1],
+				m_pReadBuffer16[p[4] + 1],
+				m_pReadBuffer16[p[3] + 1],
+				m_pReadBuffer16[p[2] + 1],
+				m_pReadBuffer16[p[1] + 1],
+				m_pReadBuffer16[p[0] + 1]);
+
+		const __m256i c =
+			_mm256_set_epi16(
+				m_pReadBuffer16[p3[15]],
+				m_pReadBuffer16[p3[14]],
+				m_pReadBuffer16[p3[13]],
+				m_pReadBuffer16[p3[12]],
+				m_pReadBuffer16[p3[11]],
+				m_pReadBuffer16[p3[10]],
+				m_pReadBuffer16[p3[9]],
+				m_pReadBuffer16[p3[8]],
+				m_pReadBuffer16[p3[7]],
+				m_pReadBuffer16[p3[6]],
+				m_pReadBuffer16[p3[5]],
+				m_pReadBuffer16[p3[4]],
+				m_pReadBuffer16[p3[3]],
+				m_pReadBuffer16[p3[2]],
+				m_pReadBuffer16[p3[1]],
+				m_pReadBuffer16[p3[0]]);
+
+		const __m256i d =
+			_mm256_set_epi16(
+				m_pReadBuffer16[p3[15] + 1],
+				m_pReadBuffer16[p3[14] + 1],
+				m_pReadBuffer16[p3[13] + 1],
+				m_pReadBuffer16[p3[12] + 1],
+				m_pReadBuffer16[p3[11] + 1],
+				m_pReadBuffer16[p3[10] + 1],
+				m_pReadBuffer16[p3[9] + 1],
+				m_pReadBuffer16[p3[8] + 1],
+				m_pReadBuffer16[p3[7] + 1],
+				m_pReadBuffer16[p3[6] + 1],
+				m_pReadBuffer16[p3[5] + 1],
+				m_pReadBuffer16[p3[4] + 1],
+				m_pReadBuffer16[p3[3] + 1],
+				m_pReadBuffer16[p3[2] + 1],
+				m_pReadBuffer16[p3[1] + 1],
+				m_pReadBuffer16[p3[0] + 1]);
+
+		const __m256i result = Exp8a_AVX2_TraditionalMathKernel256(a, b, c, d);
+
+		_mm256_store_si256(
+			reinterpret_cast<__m256i*>(
+				&m_pWriteBuffer16[destPixelOffset]),
+			result);
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Scalar tail.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+
+__forceinline __m256i
+BitCanvas16::Exp8b_BuildTraditionalVector256(
+	const PIXELMAP* lpTransitionTable,
+	const dword_t destPixelOffset,
+	dword_t rowOffset)
+{
+	__m256i offsets =
+		_mm256_load_si256(
+			reinterpret_cast<const __m256i*>(
+				&lpTransitionTable[destPixelOffset]));
+
+	if (rowOffset)
+	{
+		offsets =
+			_mm256_add_epi32(
+				offsets,
+				_mm256_set1_epi32(rowOffset));
+	}
+
+	// RGB565 pixels are 16-bit.
+	// Gather DWORDs containing:
+	//
+	//     pixel[n]
+	//     pixel[n + 1]
+	//
+	offsets =
+		_mm256_slli_epi32(
+			offsets,
+			1);
+
+	return _mm256_i32gather_epi32(
+		reinterpret_cast<const int*>(
+			m_pReadBuffer16),
+		offsets,
+		1);
+}
+
+void BitCanvas16::DoDelta_AVX2_experiment8b(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	const __m256i lowMask = _mm256_set1_epi32(0x0000FFFF);
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 15 < bufferLength)
+	{
+		const __m256i topA = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i topB = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset + 8, 0);
+		const __m256i bottomA = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i bottomB = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset + 8, m_dwBufferWidth);
+
+		//------------------------------------------------------------------
+		// Extract p1/p2 from gathered DWORDs.
+		//------------------------------------------------------------------
+
+		const __m256i aLo = _mm256_and_si256(topA, lowMask);
+		const __m256i aHi = _mm256_and_si256(topB, lowMask);
+		const __m256i bLo = _mm256_srli_epi32(topA, 16);
+		const __m256i bHi = _mm256_srli_epi32(topB, 16);
+		const __m256i cLo = _mm256_and_si256(bottomA, lowMask);
+		const __m256i cHi = _mm256_and_si256(bottomB, lowMask);
+		const __m256i dLo = _mm256_srli_epi32(bottomA, 16);
+		const __m256i dHi = _mm256_srli_epi32(bottomB, 16);
+
+		//------------------------------------------------------------------
+		// Convert 16 DWORD lanes -> 16 WORD lanes.
+		//------------------------------------------------------------------
+
+		const __m256i a = _mm256_permute4x64_epi64(_mm256_packus_epi32(aLo, aHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i b = _mm256_permute4x64_epi64(_mm256_packus_epi32(bLo, bHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i c = _mm256_permute4x64_epi64(_mm256_packus_epi32(cLo, cHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i d = _mm256_permute4x64_epi64(_mm256_packus_epi32(dLo, dHi), _MM_SHUFFLE(3, 1, 2, 0));
+
+		const __m256i result = Exp8a_AVX2_TraditionalMathKernel256(a, b, c, d);
+
+		_mm256_store_si256(
+			reinterpret_cast<__m256i*>(
+				&m_pWriteBuffer16[destPixelOffset]),
+			result);
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Scalar tail.
+	//
+	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Remove unnecessary redMask
+void BitCanvas16::DoDelta_AVX2_experiment8c(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	const __m256i lowMask = _mm256_set1_epi32(0x0000FFFF);
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 15 < bufferLength)
+	{
+		const __m256i topA = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i topB =Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset + 8, 0);
+		const __m256i bottomA = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i bottomB = Exp8b_BuildTraditionalVector256(lpTransitionTable, destPixelOffset + 8, m_dwBufferWidth);
+
+		//------------------------------------------------------------------
+		// Extract p1/p2 from gathered DWORDs.
+		//------------------------------------------------------------------
+
+		const __m256i aLo = _mm256_and_si256(topA, lowMask);
+		const __m256i aHi = _mm256_and_si256(topB, lowMask);
+		const __m256i bLo = _mm256_srli_epi32(topA, 16);
+		const __m256i bHi = _mm256_srli_epi32(topB, 16);
+		const __m256i cLo = _mm256_and_si256(bottomA, lowMask);
+		const __m256i cHi = _mm256_and_si256(bottomB, lowMask);
+		const __m256i dLo = _mm256_srli_epi32(bottomA, 16);
+		const __m256i dHi = _mm256_srli_epi32(bottomB, 16);
+
+		//------------------------------------------------------------------
+		// Convert 16 DWORD lanes -> 16 WORD lanes.
+		//------------------------------------------------------------------
+
+		const __m256i a = _mm256_permute4x64_epi64(_mm256_packus_epi32(aLo, aHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i b = _mm256_permute4x64_epi64(_mm256_packus_epi32(bLo, bHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i c = _mm256_permute4x64_epi64(_mm256_packus_epi32(cLo, cHi), _MM_SHUFFLE(3, 1, 2, 0));
+		const __m256i d = _mm256_permute4x64_epi64(_mm256_packus_epi32(dLo, dHi), _MM_SHUFFLE(3, 1, 2, 0));
+
+		const __m256i result = Exp8c_AVX2_TraditionalMathKernel256(a, b, c, d);
+
+		_mm256_store_si256(
+			reinterpret_cast<__m256i*>(
+				&m_pWriteBuffer16[destPixelOffset]),
+			result);
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Scalar tail.
 	//
 	Exp2_ScalarTail(lpTransitionTable, destPixelOffset);
 }

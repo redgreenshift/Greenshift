@@ -940,6 +940,10 @@ public:
 	void					DoDelta_AVX2_experiment7d_Mask(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp7d_AVX2_AdaptedPackedDomainMathKernel128 (Mask variant)
 	void					DoDelta_AVX2_experiment7d_Shift(const PIXELMAP* lpTransitionTable); // vectorized transition-table load + Exp7d_AVX2_AdaptedPackedDomainMathKernel128 (Shift variant)
 
+	void					DoDelta_AVX2_experiment8a(const PIXELMAP* lpTransitionTable); // Traditional Gather with Traditional Arithmetic (reference)
+	void					DoDelta_AVX2_experiment8b(const PIXELMAP* lpTransitionTable); // AVX2 Gather with Traditional Arithmetic (combine the best parts of Exp2 and Exp7b-B2)
+	void					DoDelta_AVX2_experiment8c(const PIXELMAP* lpTransitionTable); // AVX2 Gather with Traditional Arithmetic (extend Exp8b, try to relieve register pressure)
+	__forceinline __m256i	Exp8b_BuildTraditionalVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, dword_t rowOffset);
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
