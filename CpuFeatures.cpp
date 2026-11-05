@@ -192,6 +192,31 @@ namespace // CPUID Helpers
 		return false; // Not an x86/x64 target.
 #endif
 	}
+
+	// @brief Returns true if AVX-512 Byte and Word instructions are available,
+	// and the OS has enabled the required AVX-512 state. Requires AVX512F.
+	//
+	// AVX512BW adds SIMD operations on packed 8-bit and 16-bit integers,
+	// including arithmetic, comparisons, and bitwise operations.
+	//
+	// AVX512F alone does not provide the full 8/16-bit vector instruction set.
+	bool cpuid_has_avx512bw()
+	{
+		if (!cpuid_has_avx512_foundation())
+			return false;
+
+#if defined(_MSC_VER)
+		int regs[4];
+		__cpuidex(regs, 7, 0);
+		const unsigned int ebx = static_cast<unsigned int>(regs[1]);
+#else
+		unsigned int eax, ebx, ecx, edx;
+		__cpuid_count(7, 0, eax, ebx, ecx, edx);
+#endif
+
+		constexpr unsigned int AVX512BW = 1u << 30; // Leaf 7, subleaf 0, EBX bit 30
+		return (ebx & AVX512BW) != 0;
+	}
 }
 
 bool SupportsMMX()
@@ -239,6 +264,6 @@ bool SupportsAVX2() {
 // implementation evolves.
 bool SupportsAVX512()
 {
-	return cpuid_has_avx512_foundation();
+	return cpuid_has_avx512bw();
 }
 

@@ -358,7 +358,7 @@ BitCanvas::BitCanvas(const dword_t dwWidth,
 		 * All the other versions have varying levels of optimized code.
 		 */
 	if (SupportsAVX512())
-		m_nDeltaOptimizationLevel = OL_AVX512_Foundation;
+		m_nDeltaOptimizationLevel = OL_AVX512BW;
 	else if (SupportsAVX2())
 		m_nDeltaOptimizationLevel = OL_AVX2;
 	else if (SupportsSSE41())
@@ -953,8 +953,9 @@ void BitCanvas::DoDelta(const PIXELMAP* lpTransitionTable)
 	case OL_AVX2:
 		this->DoDelta_AVX2(lpTransitionTable);
 		break;
-	case OL_AVX512_Foundation:
-		this->DoDelta_AVX512_Foundation(lpTransitionTable);
+	//case OL_AVX512_Foundation:
+	case OL_AVX512BW:
+		this->DoDelta_AVX512(lpTransitionTable);
 		break;
 	case OL_PRESET7:
 		this->DoDelta_Preset7(lpTransitionTable);
@@ -1007,7 +1008,7 @@ void BitCanvas::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_SSE41(lpTransitionTable);
 }
-void BitCanvas::DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable)
+void BitCanvas::DoDelta_AVX512(const PIXELMAP* lpTransitionTable)
 {
 	this->DoDelta_AVX2(lpTransitionTable);
 }
@@ -2076,22 +2077,22 @@ void BitCanvas16::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 	DoDelta_AVX2_experiment8c(lpTransitionTable);
 }
 
-void BitCanvas16::DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable)
+void BitCanvas16::DoDelta_AVX512(const PIXELMAP* lpTransitionTable)
 {
 	DoDelta_AVX512_experiment11a_Shift(lpTransitionTable);
 }
 
 void BitCanvas16::DoDelta_Preset7(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment7a(lpTransitionTable);
+	DoDelta_AVX512_experiment11a_Mask(lpTransitionTable);
 }
 void BitCanvas16::DoDelta_Preset8(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment2(lpTransitionTable);
+	DoDelta_AVX512_experiment10a(lpTransitionTable);
 }
 void BitCanvas16::DoDelta_Preset9(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment2(lpTransitionTable);
+	DoDelta_SSSE3_experiment6b_Shift(lpTransitionTable);
 }
 
 // IMPLEMENTATIONS:
@@ -2997,7 +2998,6 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     AVX2   Exp7a         ~ 7.4 - 8.1 sec
  *     SSSE3  Exp5d_Mask    ~ 7.2 - 7.5 sec
  *     SSSE3  Exp5d_Shift   ~ 7.1 - 7.4 sec
- *     AVX512 Exp11a_Mask   ~ 5.8 - 6.3 sec
  *
  * SIMD + Gatherer Experiments:
  *     AVX2   Exp7b-B2      ~ 4.7 - 5.3 sec
@@ -3007,7 +3007,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *     AVX2   Exp8b         ~ 4.1 - 4.4 sec
  *     AVX2   Exp8c         ~ 4.0 - 4.1 sec
  *     AVX512 Exp10a        ~ 4.0 - 4.2 sec
- *     AVX512 Exp11a_Shift  ~ 3.6 - 3.8 sec
+ *     AVX512 Exp11a_Mask   ~ 3.6 - 4.2 sec
+ *     AVX512 Exp11a_Shift  ~ 3.6 - 4.1 sec
  *
  *
  * Experiment Summary
@@ -3456,22 +3457,35 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *         Comparable to Exp8c.
  *         AVX-512 alone did not produce a clear gain.
  *
- * Exp11a_Mask:
- *     AVX512 Adapted PackedDomain SIMD Math Kernel
+ *     Observation:
+ *         - AVX-512 doubled the working set of live vectors.
+ *         - Assembly review showed a similar temporary
+ *           register spill/reload sequence to Exp8c.
  *
- *     Result:
- *         Significant regression.
- *         Significantly slower than Exp7d_Mask.
- *         AVX-512 code generation appears highly sensitive
- *         to arithmetic implementation details.
- *
- * Exp11a_Shift:
+ * Exp11a:
  *     AVX512 Adapted PackedDomain SIMD Math Kernel
  *
  *     Result:
  *         Significant improvement over Exp10a, Exp8c,
  *         and Exp7d.
  *         We have a new front-runner.
+ *         - No clear winner was established between
+ *           Exp11a_Mask and Exp11a_Shift.
+ *
+ *     Observation:
+ *         - The entire hot loop stays in registers.
+ *         - The assembly is dramatically more direct than Exp10a.
+ *         - Exp11a operates directly on the packed-domain
+ *           representation and avoids construction of
+ *           intermediate a/b/c/d vectors.
+ *         - AVX512 appears to favor this approach more
+ *           than AVX2.
+ *         - Hypothesis: Adapted Arithmetic may scale better
+ *           than Traditional Arithmetic as number of
+ *           pixels increases with SIMD width.
+ *           o Traditional arithmetic may scale linearly.
+ *           o Adapted arithmetic may amortize setup costs
+ *             better as SIMD width increases.
  *
  *
  * Key Findings
@@ -3536,6 +3550,12 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *   Neither technique alone reproduced the observed
  *   improvement.
  *
+ * - The arithmetic model favored by the benchmark may
+ *   change as SIMD width increases.
+ *   AVX2 favored the Traditional Arithmetic model,
+ *   while AVX512 currently favors the Adapted
+ *   PackedDomain approach.
+ *
  * - Arithmetic-only benchmark:
  *
  *   Exp2 arithmetic was significantly cheaper per
@@ -3572,26 +3592,30 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  *
  * Exp8c:
  *     - Current AVX2 front-runner.
- *     - Best AVX Arithmetic.
+ *     - Best AVX2 Arithmetic implementation.
  *
- * Exp11a_Shift:
+ * Exp11a_Mask / Exp11a_Shift:
  *     - Best overall implementation across all instruction sets.
  *     - Current AVX-512 front-runner.
- *     - Exp11a_Mask wasn't even close.
+ *
  *
  * Benchmark variance is currently large enough that no definitive
- * winner should be declared between Exp5d_Mask / Exp5d_Shift, or
- * Exp7d_Mask / Exp7d_Shift.
+ * winner should be declared between:
+ *     - Exp5d_Mask / Exp5d_Shift, or
+ *     - Exp7d_Mask / Exp7d_Shift, or
+ *     - Exp11a_Mask / Exp11a_Shift.
  *
  *
  * Future Investigation
  * --------------------
  *
- * - Assembly analysis Exp11a_Mask vs Exp11a_Shift (and maybe Exp10a),
- *   why is Exp11a_Mask is so much slower than Exp11a_Shift, is it a bug?
- * - Additional Exp2 vs Exp5 assembly analysis.
- * - Continue investigating source-pixel gather
- *   construction costs in earlier experiments.
+ * - Additional AVX512 gather investigations.
+ * - Additional AVX512 store-throughput experiments.
+ * - BitCanvas8 SIMD investigation.
+ * - BitCanvas32 SIMD investigation.
+ * - Consider investigating source-pixel gather
+ *   construction costs in earlier experiments
+ *   (esp Exp2, Can we reduce the cost of building a/b/c/d?).
  * - Run a long-duration benchmark to resolve any remaining close races.
  *
  ****************************************************************************/
@@ -6963,6 +6987,7 @@ __forceinline __m512i BitCanvas16::Exp10a_BuildTraditionalVector512(const PIXELM
 }
 
 // There is no _mm512_hadd_epi16
+// Luckily, the replacement is so compact that the lack of a native horizontal-add instruction is almost irrelevant for this workload.
 __forceinline __m512i simulate_avx512_hadd_epi16(__m512i a)
 {
 	// 1. Shift the register by 2 bytes (one 16-bit word)
@@ -6974,6 +6999,22 @@ __forceinline __m512i simulate_avx512_hadd_epi16(__m512i a)
 	__m512i summed = _mm512_add_epi16(a, shifted);
 
 	return summed;
+
+	// This part was unnecessary for our application,
+	// it may be necessary for other applications:
+
+#if 0
+	// 3. Mask out the "overlapping" sums
+	// We only want the sums at indices 0, 2, 4, 6...
+	// This mask has 1s at even positions and 0s at odd positions
+	__m512i mask = _mm512_set_epi16(
+		0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1,
+		0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1, 0, -1
+	);
+
+	// Use the mask to keep only the desired sums
+	return _mm512_and_si512(summed, mask);
+#endif
 }
 
 /*********************************************************************
@@ -7076,10 +7117,6 @@ __forceinline __m256i Exp11a_AVX512_AdaptedPackedDomainMathKernel256_Mask(__m512
 			_mm512_or_si512(red, green),
 			blue);
 
-	// result = {A, B, C, D, A, B, C, D, E, F, G, H, E, F, G, H}
-	//
-	// permute to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H}
-	// NOTE: _mm512_permutexvar_epi64 is different from _mm512_permute4x64_epi64
 	__m512i indices = _mm512_set_epi16(
 		31, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1, // Odds
 		30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0  // Evens
@@ -7188,10 +7225,6 @@ __forceinline __m256i Exp11a_AVX512_AdaptedPackedDomainMathKernel256_Shift(__m51
 			_mm512_or_si512(red, green),
 			blue);
 
-	// result = {A, B, C, D, A, B, C, D, E, F, G, H, E, F, G, H}
-	//
-	// permute to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H}
-	// NOTE: _mm512_permutexvar_epi64 is different from _mm512_permute4x64_epi64
 	__m512i indices = _mm512_set_epi16(
 		31, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1, // Odds
 		30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0  // Evens
@@ -7277,7 +7310,7 @@ void BitCanvas16::DoDelta_AVX512_experiment11a_Mask(const PIXELMAP* lpTransition
 			& m_pWriteBuffer16[destPixelOffset],
 			finalPixels);
 
-		destPixelOffset += 8;
+		destPixelOffset += 16;
 	}
 
 	//

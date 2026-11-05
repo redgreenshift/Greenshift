@@ -834,7 +834,7 @@ bool    WindowDevice::KeyPress(const DWORD dwKey)
 
 	//case VK_F6:
 	case '6':
-		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_AVX512_Foundation);
+		GetBitCanvas()->SetOptimizationLevel(BitCanvas::OL_AVX512BW);
 		ClearScreenAll();
 		PrintPrivate(-1, 0, "AVX512 assembly optimization");
 		break;

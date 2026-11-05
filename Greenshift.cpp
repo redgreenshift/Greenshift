@@ -1051,8 +1051,9 @@ void    Greenshift::UpdateDisplayText(void)
 		case BitCanvas::OL_AVX2:
 			optLevel = { "AVX2" };
 			break;
-		case BitCanvas::OL_AVX512_Foundation:
-			optLevel = { "AVX-512 Foundation" };
+		//case BitCanvas::OL_AVX512_Foundation:
+		case BitCanvas::OL_AVX512BW:
+			optLevel = { "AVX-512" };
 			break;
 		case BitCanvas::OL_PRESET7:
 			optLevel = { "OL_PRESET7" };

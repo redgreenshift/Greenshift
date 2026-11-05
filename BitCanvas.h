@@ -293,7 +293,7 @@ public:
 	/*
 	 * Optimization Level Type
 	 */
-	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE3, OL_SSSE3, OL_SSE41, OL_AVX2, OL_AVX512_Foundation, OL_PRESET7, OL_PRESET8, OL_PRESET9 } opt_level_t;
+	typedef enum { OL_CPP, OL_x86, OL_MMX, OL_SSE2, OL_SSE3, OL_SSSE3, OL_SSE41, OL_AVX2, /*OL_AVX512_Foundation,*/ OL_AVX512BW, OL_PRESET7, OL_PRESET8, OL_PRESET9 } opt_level_t;
 	// https://en.wikipedia.org/wiki/List_of_x86_SIMD_instructions
 	//
 	// 1996 MMX:
@@ -640,7 +640,7 @@ protected:
 	virtual void	DoDelta_SSSE3(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_SSE41(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_AVX2(const PIXELMAP* lpTransitionTable);
-	virtual void	DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable);
+	virtual void	DoDelta_AVX512(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset7(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset8(const PIXELMAP* lpTransitionTable);
 	virtual void	DoDelta_Preset9(const PIXELMAP* lpTransitionTable);
@@ -893,7 +893,7 @@ public:
 	virtual void			DoDelta_SSSE3(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
-	virtual void			DoDelta_AVX512_Foundation(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX512(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset7(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset8(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_Preset9(const PIXELMAP* lpTransitionTable) override;

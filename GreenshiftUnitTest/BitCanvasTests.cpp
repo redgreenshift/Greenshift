@@ -53,6 +53,7 @@
 #include "../CpuFeatures.cpp"
 #include "../detect.c"
 
+#include <emmintrin.h> // SSE2 intrinsics
 #include <memory>
 #include <string>
 #include <string.h>
