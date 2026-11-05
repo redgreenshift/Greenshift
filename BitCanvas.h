@@ -944,6 +944,14 @@ public:
 	void					DoDelta_AVX2_experiment8b(const PIXELMAP* lpTransitionTable); // AVX2 Gather with Traditional Arithmetic (combine the best parts of Exp2 and Exp7b-B2)
 	void					DoDelta_AVX2_experiment8c(const PIXELMAP* lpTransitionTable); // AVX2 Gather with Traditional Arithmetic (extend Exp8b, try to relieve register pressure)
 	__forceinline __m256i	Exp8b_BuildTraditionalVector256(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, dword_t rowOffset);
+
+	void					DoDelta_AVX512_experiment10a(const PIXELMAP* lpTransitionTable); // AVX512 proof of concept, Traditional Arithmetic investigation (port Exp8c)
+	__forceinline __m512i	Exp10a_BuildTraditionalVector512(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, dword_t rowOffset);
+
+	__forceinline __m512i	Exp11a_BuildPackedDomainVector512(const PIXELMAP* lpTransitionTable, const dword_t destPixelOffset, bool gatherBottomRow); // AVX gather/construction
+	void					DoDelta_AVX512_experiment11a_Mask(const PIXELMAP* lpTransitionTable); // AVX512 Adapt pseudo-SIMD to native SIMD
+	void					DoDelta_AVX512_experiment11a_Shift(const PIXELMAP* lpTransitionTable); // AVX512 Adapt pseudo-SIMD to native SIMD
+
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;
