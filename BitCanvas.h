@@ -852,10 +852,18 @@ protected:
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
 
 	// IMPLEMENTATIONS:
-	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable); // Reference
 	void					DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_cpp_experiment1(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_SSE2_experiment1(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_cpp_historicalExperiment(const PIXELMAP* lpTransitionTable);
+
+	void					DoDelta_SSE2_experiment100_BASELINE(const PIXELMAP* lpTransitionTable); // Reference
+	void					DoDelta_SSE2_experiment100a(const PIXELMAP* lpTransitionTable); // Approximate
+	void					DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable); // Exact
+	__forceinline __m128i	Exp100_SSE2_BuildSourceVector(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
+	__forceinline void		Exp100_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
+
+	void					DoDelta_SSE2_experiment101a(const PIXELMAP* lpTransitionTable);
+	__forceinline __m128i	Exp101a_SSE2_Gather(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
@@ -1002,7 +1010,7 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
 #endif
-	void					DoDelta_SSE2_experiment1_FIXED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0_FIXED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;

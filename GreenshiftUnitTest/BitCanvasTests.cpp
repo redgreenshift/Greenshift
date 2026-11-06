@@ -490,6 +490,7 @@ namespace GreenshiftUnitTest
 		/************************************************************************
 		* SIXTEEN BIT BENCHMARKS
 		*/
+
 		TEST_METHOD(TestBitCanvas16BenchmarkCPP)
 		{
 			MTRand rng(c_seed);
@@ -1118,7 +1119,7 @@ namespace GreenshiftUnitTest
 		* EIGHT BIT BENCHMARKS
 		*/
 
-		TEST_METHOD(TestBitCanvas8BenchmarkCPP)
+		TEST_METHOD(TestBitCanvas8BenchmarkCPP_BASELINE)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
@@ -1164,7 +1165,7 @@ namespace GreenshiftUnitTest
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas8BenchmarkCPPExperiment1)
+		TEST_METHOD(TestBitCanvas8BenchmarkCPPHistoricalExperiment1)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
@@ -1182,12 +1183,12 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_experiment1(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_historicalExperiment(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
 
-		TEST_METHOD(TestBitCanvas8BenchmarkSSE2int)
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100_BASELINE)
 		{
 			MTRand rng(c_seed);
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
@@ -1205,7 +1206,76 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment1(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100_BASELINE(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100a_NoCorrection)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100a(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100b_WithCorrection)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp101a)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment101a(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1897,7 +1967,8 @@ namespace GreenshiftUnitTest
 			const wchar_t* pszTestName,
 			PaletteInitializer pfnPalette,
 			DoDeltaMethod8 pfnBaseline,
-			DoDeltaMethod8 pfnOptimized)
+			DoDeltaMethod8 pfnOptimized,
+			bool solidWhite = false)
 		{
 			constexpr size_t c_width = 32;
 			constexpr size_t c_height = 32;
@@ -1921,7 +1992,7 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
+					byte_t iColor = solidWhite ? 255 : static_cast<byte_t>(rng.randInt(255));
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
@@ -2050,7 +2121,8 @@ namespace GreenshiftUnitTest
 			const wchar_t* pszTestName,
 			PaletteInitializer pfnPalette,
 			DoDeltaMethod32 pfnBaseline,
-			DoDeltaMethod32 pfnOptimized)
+			DoDeltaMethod32 pfnOptimized,
+			bool solidWhite = false)
 		{
 			constexpr size_t c_width = 32;
 			constexpr size_t c_height = 32;
@@ -2074,7 +2146,7 @@ namespace GreenshiftUnitTest
 			{
 				for (size_t x = 0; x < c_width; ++x)
 				{
-					byte_t iColor = static_cast<byte_t>(rng.randInt(255));
+					byte_t iColor = solidWhite ? 255 : static_cast<byte_t>(rng.randInt(255));
 
 					pBaselineCanvas->PutPixel(
 						static_cast<long>(x),
@@ -2126,7 +2198,7 @@ namespace GreenshiftUnitTest
 		* VERIFY 8 BIT!
 		* Only need to test grayscale palettes, since we're only averaging intensity values, NOT the underlying colors in 8bit
 		*/
-		TEST_METHOD(TestBitCanvas8_Optimized_Grayscale)
+		TEST_METHOD(TestBitCanvas8_cpp_Optimized_Grayscale)
 		{
 			VerifyEquivalence8(
 				L"Optimized Grayscale",
@@ -2134,16 +2206,78 @@ namespace GreenshiftUnitTest
 				&BitCanvas8::DoDelta_cpp_BASELINE, // Decay 127
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED); // Decay 127
 		}
-		TEST_METHOD(TestBitCanvas8_SSE2_Grayscale)
+
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100_White)
 		{
 			VerifyEquivalence8(
-				L"SSE2 Grayscale",
+				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_BASELINE, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment1); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE); // Decay 127
 		}
 
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100a_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100a, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100a_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100a); // Decay 127
+		}
 
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100b_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100b, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100b_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100b); // Decay 127
+		}
+
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp101a_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment101a, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp101a_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment101a); // Decay 127
+		}
 
 		/************************************
 		 * VERIFY 16 BIT!
@@ -3226,13 +3360,14 @@ namespace GreenshiftUnitTest
 
 			std::string message =
 				std::format(
-					"Exp5d_Shift: {} ms, Exp5d_Mask: {} ms",
+					"Exp5d_Shift: {} ms, Exp5d_Mask: {} ms\n",
 					exp5dShiftTime,
 					exp5dMaskTime);
 
 #endif // Other Benchmark
 
 			//DumpToFile("C:\\temp\\MathBenchmark.txt", message.c_str(), "\n");
+			Logger::WriteMessage(message.c_str());
 
 			Assert::AreNotEqual(
 				0u,
