@@ -2225,23 +2225,7 @@ namespace GreenshiftUnitTest
 				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE); // Decay 127
 		}
 
-		TEST_METHOD(TestBitCanvas8_SSE2_Exp100a_White)
-		{
-			VerifyEquivalence8(
-				L"SSE2 White",
-				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100a, // Decay 127
-				true /*white*/);
-		}
-		TEST_METHOD(TestBitCanvas8_SSE2_Exp100a_Varied)
-		{
-			VerifyEquivalence8(
-				L"SSE2 Varied",
-				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100a); // Decay 127
-		}
+		// No validation tests for DoDelta_SSE2_experiment100a, as it intentionally uses an Approximation: Exp100a_SSE2_MathKernel_NoCorrection16
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100b_White)
 		{

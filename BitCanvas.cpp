@@ -1859,6 +1859,290 @@ void BitCanvas8::DoDelta_cpp_historicalExperiment(const PIXELMAP* lpTransitionTa
 }
 
 
+/******************************************************************************
+
+BitCanvas SIMD Taxonomy / Glossary
+==================================
+
+This taxonomy defines the terminology used throughout the BitCanvas
+SIMD experiment notebooks.
+
+The purpose is to establish a consistent vocabulary for discussing
+algorithm structure, dataflow organization strategies, throughput,
+arithmetic strategies, performance characteristics, and experiment lineage.
+
+
+Pipeline Concepts
+-----------------
+
+GAST
+
+	Every BitCanvas SIMD implementation can be viewed as four
+	pipeline stages:
+
+		Gather
+		Arithmetic
+		Store
+		Tail
+
+	Ideally each stage is encapsulated within its own function
+	or method so the stages can be validated, benchmarked, and
+	mixed independently for experimentation.
+
+
+Gather
+
+	Reads source pixels from memory and arranges them into
+	source vectors suitable for the Arithmetic stage.
+
+	Gather cost is often one of the largest contributors to
+	total execution time.
+
+
+Arithmetic
+
+	Transforms source pixels into destination pixels.
+
+	Arithmetic is typically implemented by a MathKernel.
+
+
+MathKernel
+
+	The core arithmetic operation of an algorithm.
+
+	A MathKernel accepts one or more source vectors and
+	produces one destination vector.
+
+	In DoDelta-style algorithms the MathKernel typically:
+
+		- Averages 4 source pixels.
+		- Applies decay.
+		- Produces destination pixels.
+
+
+Store
+
+	Writes destination pixels back to memory.
+
+
+Tail
+
+	Processes any remaining pixels that do not fit within
+	the SIMD processing width.
+
+	The Tail implementation should produce identical results
+	to the baseline SIMD path.
+
+
+Performance Concepts
+--------------------
+
+
+Pixel Throughput
+
+	The number of destination pixels produced per iteration
+	of an algorithm.
+
+	Pixel Throughput is a convenient way to discuss and
+	compare algorithm structures.
+
+	Example:
+
+		Produces 4 pixels per iteration.
+		Produces 8 pixels per iteration.
+
+	Higher Pixel Throughput does not necessarily imply
+	better performance.
+
+
+Algorithm Families
+------------------
+
+
+FourVector Algorithms
+---------------------
+
+	Algorithms which gather source pixels into four
+	independent source vectors:
+
+		p1
+		p2
+		p3
+		p4
+
+	FourVector Algorithms typically operate on each source
+	pixel independently.
+
+	FourVector Algorithms generally require three vector
+	additions to produce the source-pixel sum.
+
+
+Traditional Arithmetic
+
+	A simple and straightforward FourVector approach.
+
+	Each source pixel is gathered independently and
+	processed independently.
+
+	Traditional Arithmetic is commonly used as a baseline
+	when evaluating alternative arithmetic strategies.
+
+	Traditional Arithmetic is generally the simplest and
+	easiest SIMD approach to understand, validate, and
+	benchmark.
+
+	Examples:
+
+		BitCanvas16 Exp2 lineage.
+		BitCanvas8 Exp100 lineage.
+		BitCanvas32 Exp200 lineage.
+
+
+
+TwoVector Algorithms
+--------------------
+
+PackedPair Algorithms
+
+	Algorithms which reduce the four source vectors:
+
+		p1
+		p2
+		p3
+		p4
+
+	into two source vectors:
+
+		p1|p2
+		p3|p4
+
+	Adjacent source pixels are gathered as pairs during the
+	Gather stage.
+
+	Benefits typically include:
+
+		- Fewer memory read operations.
+		- Fewer source vectors.
+		- Reduced Gather complexity.
+		- Different Arithmetic opportunities.
+
+
+PackedPair Gather
+
+	Gather adjacent pixel pairs using a single memory read operation.
+
+	Example:
+
+		Read p1|p2 together.
+		Read p3|p4 together.
+
+	This reduces the source-vector count from four vectors
+	to two vectors.
+
+
+PackedPair Arithmetic
+
+	Arithmetic which operates on source vectors organized by
+	the PackedPair Gather strategy.
+
+	Since adjacent source pixels already occupy neighboring
+	lanes, some vector additions may be replaced by
+	horizontal-add style operations.
+
+	Example organization:
+
+		p1|p2
+		p3|p4
+
+	BitCanvas8 Exp101 lineage currently uses this style of
+	Arithmetic.
+
+
+
+Specialized PackedPair Algorithms
+---------------------------------
+
+
+pseudo-SIMD Arithmetic
+
+	My original scalar optimization used by:
+
+		BitCanvas16::DoDelta_cpp_OPTIMIZED()
+		BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63()
+
+	Two 16-bit RGB565 pixels are packed into a single
+	32-bit DWORD.
+
+	Clever arithmetic and masking allow portions of
+	two 16bit pixels to be manipulated simultaneously
+	within a single 32bit scalar operation.
+
+	Pseudo-SIMD arithmetic predates the use of SIMD
+	instructions in BitCanvas16, but was inspired by
+	learnings from MMX in BitCanvas32, and inspired
+	the later PackedDomain algorithms.
+
+
+PackedDomain Arithmetic
+
+	Parallelized form of pseudo-SIMD.
+
+	A specialization of PackedPair Arithmetic.
+
+	Direct SIMD adaptation of my original
+	pseudo-SIMD RGB565 DWORD algorithm.
+
+	Preserves the original pseudo-SIMD
+	arithmetic model while executing
+	multiple copies simultaneously in
+	32-bit SIMD lanes.
+
+	Two RGB565 pixels are processed
+	simultaneously inside each 32-bit lane
+	using the same arithmetic approach as
+	the original scalar DWORD implementation.
+
+	Color channels are processed separately, but arithmetic
+	is performed for two pixels simultaneously.
+
+
+Adapted PackedDomain Arithmetic
+
+	SIMD-native evolution of PackedDomain Arithmetic.
+
+	A specialization of PackedPair Arithmetic.
+
+	Retains the original PackedDomain
+	algorithmic model while upgrading
+	the scalar pseudo-SIMD sequences
+	to simpler native SIMD operations.
+
+	The underlying algorithm remains the same,
+	but the arithmetic is promoted to full
+	native SIMD operations, making the code
+	simpler and easier to reason about.
+
+	Example:
+
+		BitCanvas16 Exp5d implementation.
+		BitCanvas16 Exp7d implementation.
+		BitCanvas16 Exp11 lineage.
+
+
+Relationship Summary
+--------------------
+
+	FourVector Algorithms
+		Traditional Arithmetic
+
+	TwoVector Algorithms
+		PackedPair Algorithms
+			PackedPair Arithmetic
+			PackedDomain Arithmetic
+			Adapted PackedDomain Arithmetic
+
+******************************************************************************/
+
 // SIMD Experiment Lineage
 //
 // Exp100 = 8-pixel SSE2 Traditional Arithmetic investigation (widened 32-bit reference)
@@ -2006,6 +2290,24 @@ void BitCanvas8::DoDelta_cpp_historicalExperiment(const PIXELMAP* lpTransitionTa
  * - The original packed-domain optimization
  *   translates extremely well to SSE2.
  *
+ * - Arithmetic-only benchmarking indicates that
+ *   the Exp101a Packed-Domain arithmetic kernel
+ *   is substantially faster than the Exp100
+ *  Traditional Arithmetic kernel.
+ *
+ *   Therefore, Exp101a's performance advantage
+ *   cannot be attributed solely to gather
+ *   construction improvements.
+ *
+ * - Arithmetic-only benchmarking shows that
+ *   Packed-Domain Arithmetic is faster than
+ *   Traditional Arithmetic.
+ *
+ * - The full-algorithm performance difference
+ *   is larger than the arithmetic-only difference,
+ *   suggesting gather construction also contributes
+ *   significantly to overall performance.
+ *
  *
  * Current Assessment
  * ------------------
@@ -2018,9 +2320,50 @@ void BitCanvas8::DoDelta_cpp_historicalExperiment(const PIXELMAP* lpTransitionTa
  * --------------------
  *
  * - Additional packed-domain SSE2 investigations.
- * - Can we improve gather cost of Traditional Algorithm?
- * - Measure whether Traditional or Packed-Domain Algorithm is faster,
- *   independent of gather cost.
+ *   o Improve Exp101a gather construction
+ *
+ * - Can we improve gather cost of Traditional Algorithm? Traditional Arithmetic with smarter gather
+ *
+ * - AVX2 gather
+ * - AVX-512 version
+ *
+ * Unprioritized:
+ * - Consider alternative names for the Exp101 Algorithm, to distingish from BitCanvas16 PackedDomain and BitCanvas16 Adapted PackedDomain.
+ *   o PackedDomain(no), Adapted(no), Pair, Adjacent-Pair, Adjacent-Pixel-Pair, Pixel-Pair, Packed-Pair(yes), Pairwise(yes)
+ *   o "PackedDomain" is good for when the color channels are a "domain"
+ *   o "PackedPair" elicits a similarity to PackedDomain, but is distinct enough to clearly indicate "there is a difference"
+ *   o "Pairwise" while I like it, it loses the connection to PackedDomain, so I think that means we land on "PackedPair" and "Packed-Pair".
+ *
+ * - Encode the Algorithm names in the function names.
+ *
+ * - Crteate a BitCanvas term Glossary
+ *
+ *
+ * - Are there SSE2+ instructions that could improve the performance of BitCanvas8 Traditional Arithmetic?
+ *   o YES: The obvious one is _mm_mullo_epi32() (SSE4.1)
+ *   o Would it matter? For the widened Exp100-style arithmetic: Possibly. For Exp100b: No. (unless we reintroduce multiply)
+ *
+ * - Does adding the the multiply back make the Exp100 line slower when using 16bit lanes?
+ *   o Exactly why the previous point should not be rejected, at least not yet.
+ *   o Wait, was the multiply avoidance to introduced to avoid overflowing the 16bit lane? That may mean we had another reason that required avoiding multiply.
+ *     x Yes. That was the original motivation.
+ *
+ * - If we similarly avoid multiply in Exp101, is that faster?
+ *   o Misremembered, it's the other way. If we restore multiply, is it faster?
+ *
+ * - Could avoiding multiply produce faster Arithmetic in the various BitCanvas16 PackedDomain experiments? Same question for BitCanvas16 Traditional experiments.
+ * - If faster, does that flip BitCanvas16 AVX2 winner from Traditional to Adapted PackedDomain?
+ *
+ *
+ * Deferred Investigation
+ * ----------------------
+ * - Wider store / batched write revisit (POSTPONED pending a reason to explore).
+ * - Run a long-duration benchmark to resolve any remaining close races.
+ * - Alternative exact DECAY8 formulations (Interesting, but likely a time-sink)
+ * - Investigate SSSE3 PSHUFB-based gathers. "Design a PSHUFB gather prototype" Interesting, but Weak hypothesis. Probably DOA.
+ * - Prototype a register-rotated gather????? DOA
+ *   o Blur filters, interesting, and could make use of a register-rotated gather. (But this is an entirely different New Feature)
+ *   o Edge detection, I could use SIMD for beat detection? It's not slow, but may be incorrect, so might be a bad choice for optimization.
  *
  ****************************************************************************/
 
@@ -4170,6 +4513,8 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
  * Future Investigation
  * --------------------
  *
+ * - We avoided a multiply in `Exp100b_SSE2_MathKernel_WithCorrection16` and the PackedDomain Arithmetic is faster than the TradB Arithmetic.
+ *   Might it be worth revisiting BitCanvas16 PackedDomain and see if skipping multiply is faster?
  * - Additional AVX512 gather investigations.
  * - Additional AVX512 store-throughput experiments.
  * - BitCanvas8 SIMD investigation.
