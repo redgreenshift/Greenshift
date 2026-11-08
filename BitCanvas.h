@@ -859,11 +859,11 @@ protected:
 	void					DoDelta_SSE2_experiment100_BASELINE(const PIXELMAP* lpTransitionTable); // Reference
 	void					DoDelta_SSE2_experiment100a(const PIXELMAP* lpTransitionTable); // Approximate
 	void					DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable); // Exact
-	__forceinline __m128i	Exp100_SSE2_BuildSourceVector(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
+	__forceinline __m128i	Exp100_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
 	__forceinline void		Exp100_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
 	void					DoDelta_SSE2_experiment101a(const PIXELMAP* lpTransitionTable);
-	__forceinline __m128i	Exp101a_SSE2_Gather(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+	__forceinline __m128i	Exp101a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

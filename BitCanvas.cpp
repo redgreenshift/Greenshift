@@ -2375,7 +2375,7 @@ Relationship Summary
 // Uses 32-bit widening to preserve exact behavior
 // and serves as the correctness reference for the
 // alternative 16-bit formulations.
-__forceinline __m128i Exp100_SSE2_MathKernel_BASELINE_Wide32(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+__forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
 {
 	static const __m128i zero = _mm_setzero_si128();
 	static const __m128i decay = _mm_set1_epi32(127);
@@ -2465,7 +2465,7 @@ __forceinline __m128i Exp100_SSE2_MathKernel_BASELINE_Wide32(__m128i p1, __m128i
 //
 // Produces the correct result for 1019 of 1021
 // possible input sums.
-__forceinline __m128i Exp100a_SSE2_MathKernel_NoCorrection16(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+__forceinline __m128i Exp100a_SSE2_TraditionalMathKernel_NoCorrection16(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
 {
 	const __m128i decay = _mm_set1_epi16(127);
 
@@ -2488,7 +2488,7 @@ __forceinline __m128i Exp100a_SSE2_MathKernel_NoCorrection16(__m128i p1, __m128i
 //
 // A small branchless correction restores exact
 // equivalence with the widened reference kernel.
-__forceinline __m128i Exp100b_SSE2_MathKernel_WithCorrection16(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+__forceinline __m128i Exp100b_SSE2_TraditionalMathKernel_WithCorrection16(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
 {
 	const __m128i decay = _mm_set1_epi16(127);
 
@@ -2518,7 +2518,7 @@ __forceinline __m128i Exp100b_SSE2_MathKernel_WithCorrection16(__m128i p1, __m12
 // Operates directly on adjacent pixel pairs packed into
 // 16-bit words, reducing arithmetic complexity and avoiding
 // the widening required by the Traditional Arithmetic path.
-__forceinline __m128i Exp101a_SSE2_AdaptedMathKernel(__m128i top, __m128i bottom)
+__forceinline __m128i Exp101a_SSE2_PackedPairMathKernel(__m128i top, __m128i bottom)
 {
 	const __m128i lowMask = _mm_set1_epi16(0x00FF);
 	const __m128i decay = _mm_set1_epi16(127);
@@ -2565,7 +2565,7 @@ __forceinline __m128i Exp101a_SSE2_AdaptedMathKernel(__m128i top, __m128i bottom
 // gathers and PINSRW.
 //
 // Used by the Traditional Arithmetic experiments.
-__forceinline __m128i BitCanvas8::Exp100_SSE2_BuildSourceVector(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset)
+__forceinline __m128i BitCanvas8::Exp100_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset)
 {
 	const dword_t rowOffset = yOffset ? m_dwBufferWidth : 0;
 
@@ -2648,11 +2648,11 @@ void BitCanvas8::DoDelta_SSE2_experiment100_BASELINE(const PIXELMAP* lpTransitio
 	//
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
-		const __m128i p1 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 0);
-		const __m128i p2 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 0);
-		const __m128i p3 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 1);
-		const __m128i p4 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 1);
-		const __m128i result = Exp100_SSE2_MathKernel_BASELINE_Wide32(p1, p2, p3, p4);
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		const __m128i result = Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32(p1, p2, p3, p4);
 
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(
@@ -2681,11 +2681,11 @@ void BitCanvas8::DoDelta_SSE2_experiment100a(const PIXELMAP* lpTransitionTable)
 	//
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
-		const __m128i p1 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 0);
-		const __m128i p2 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 0);
-		const __m128i p3 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 1);
-		const __m128i p4 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 1);
-		const __m128i result = Exp100a_SSE2_MathKernel_NoCorrection16(p1, p2, p3, p4);
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		const __m128i result = Exp100a_SSE2_TraditionalMathKernel_NoCorrection16(p1, p2, p3, p4);
 
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(
@@ -2715,11 +2715,11 @@ void BitCanvas8::DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable)
 	//
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
-		const __m128i p1 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 0);
-		const __m128i p2 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 0);
-		const __m128i p3 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 0, 1);
-		const __m128i p4 = Exp100_SSE2_BuildSourceVector(lpTransitionTable, destPixelOffset, 1, 1);
-		const __m128i result = Exp100b_SSE2_MathKernel_WithCorrection16(p1, p2, p3, p4);
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		const __m128i result = Exp100b_SSE2_TraditionalMathKernel_WithCorrection16(p1, p2, p3, p4);
 
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(
@@ -2749,9 +2749,9 @@ void BitCanvas8::DoDelta_SSE2_experiment101a(const PIXELMAP* lpTransitionTable)
 	//
 	while (destPixelOffset + 7 < m_dwBufferLength)
 	{
-		const __m128i top = Exp101a_SSE2_Gather(lpTransitionTable, destPixelOffset, 0);
-		const __m128i bottom = Exp101a_SSE2_Gather(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
-		const __m128i result = Exp101a_SSE2_AdaptedMathKernel(top, bottom);
+		const __m128i top = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, 0);
+		const __m128i bottom = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m128i result = Exp101a_SSE2_PackedPairMathKernel(top, bottom);
 
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(

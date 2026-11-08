@@ -75,6 +75,8 @@ namespace GreenshiftUnitTest
 		void (BitCanvas16::*)(const PIXELMAP*);
 	using DoDeltaMethod32 =
 		void (BitCanvas32::*)(const PIXELMAP*);
+	using MathKernel128_2 = __m128i (*)(__m128i, __m128i);
+	using MathKernel128_4 = __m128i (*)(__m128i, __m128i, __m128i, __m128i);
 
 	TEST_CLASS(BitCanvasUT)
 	{
@@ -3182,7 +3184,39 @@ namespace GreenshiftUnitTest
 		}
 
 
-		TEST_METHOD(KernelMathBenchmark)
+		__m128i RunKernel(
+			MathKernel128_2 kernel,
+			size_t index,
+			const __m128i* src12,
+			const __m128i* src34,
+			const __m128i*,
+			const __m128i*)
+		{
+			return kernel(src12[index], src34[index]);
+		}
+
+		__m128i RunKernel(
+			MathKernel128_4 kernel,
+			size_t index,
+			const __m128i* src12,
+			const __m128i* src34,
+			const __m128i* src56,
+			const __m128i* src78)
+		{
+			return kernel(
+				src12[index],
+				src34[index],
+				src56[index],
+				src78[index]);
+		}
+
+
+		template<typename KernelA, typename KernelB>
+		void BenchmarkMathKernels128(
+			const char* nameA,
+			KernelA kernelA,
+			const char* nameB,
+			KernelB kernelB)
 		{
 			constexpr size_t kInputCount = 4096;
 #if GS_LONG_BENCHMARKS
@@ -3191,85 +3225,40 @@ namespace GreenshiftUnitTest
 			constexpr size_t kIterations = 1000000ULL;
 #endif
 
-			alignas(16) __m128i exp2A[kInputCount];
-			alignas(16) __m128i exp2B[kInputCount];
-			alignas(16) __m128i exp2C[kInputCount];
-			alignas(16) __m128i exp2D[kInputCount];
+			alignas(16) __m128i src12[kInputCount];
+			alignas(16) __m128i src34[kInputCount];
+			alignas(16) __m128i src56[kInputCount];
+			alignas(16) __m128i src78[kInputCount];
 
-			alignas(16) __m128i exp5Src12[kInputCount];
-			alignas(16) __m128i exp5Src34[kInputCount];
-
-			//
-			// Generate benchmark inputs outside the timed region.
-			//
 			MTRand rng(12345);
-
 			for (size_t i = 0; i < kInputCount; ++i)
 			{
-				exp2A[i] = _mm_set1_epi32(rng.randInt());
-				exp2B[i] = _mm_set1_epi32(rng.randInt());
-				exp2C[i] = _mm_set1_epi32(rng.randInt());
-				exp2D[i] = _mm_set1_epi32(rng.randInt());
-
-				exp5Src12[i] = _mm_set1_epi32(rng.randInt());
-				exp5Src34[i] = _mm_set1_epi32(rng.randInt());
+				src12[i] = _mm_set1_epi32(rng.randInt());
+				src34[i] = _mm_set1_epi32(rng.randInt());
+				src56[i] = _mm_set1_epi32(rng.randInt());
+				src78[i] = _mm_set1_epi32(rng.randInt());
 			}
 
 			__m128i accumulator = _mm_setzero_si128();
 
-			value_t exp2Time = 0;
-			value_t exp5Time = 0;
-			value_t exp5dShiftTime = 0;
-			value_t exp5dMaskTime = 0;
+			auto benchmark = [&](auto kernel)
+				{
+					timer.Start();
 
-#if 0
-			//
-			// Exp2 arithmetic benchmark.
-			//
-			timer.Start();
+					for (size_t i = 0; i < kIterations; ++i)
+					{
+						const size_t index = i & (kInputCount - 1);
+						const __m128i result = RunKernel(
+							kernel, index, src12, src34, src56, src78);
+						accumulator = _mm_add_epi16(accumulator, result);
+					}
 
-			for (size_t i = 0; i < kIterations; ++i)
-			{
-				const size_t index =
-					i & (kInputCount - 1);
+					timer.Stop();
+					return timer.StoppedMilliseconds();
+				};
 
-				const __m128i result =
-					Exp2a_SSE2_TraditionalMathKernel128(
-						exp2A[index],
-						exp2B[index],
-						exp2C[index],
-						exp2D[index]);
-
-				accumulator =
-					_mm_add_epi16(accumulator, result);
-			}
-
-			timer.Stop();
-
-			exp2Time = timer.StoppedMilliseconds();
-
-			//
-			// Exp5 arithmetic benchmark.
-			//
-			timer.Start();
-
-			for (size_t i = 0; i < kIterations; ++i)
-			{
-				const size_t index =
-					i & (kInputCount - 1);
-
-				const __m128i result =
-					Exp5a_SSE41_PackedDomainMathKernel64(
-						exp5Src12[index],
-						exp5Src34[index]);
-
-				accumulator =
-					_mm_add_epi16(accumulator, result);
-			}
-
-			timer.Stop();
-
-			exp5Time = timer.StoppedMilliseconds();
+			const value_t timeA = benchmark(kernelA);
+			const value_t timeB = benchmark(kernelB);
 
 			union
 			{
@@ -3279,84 +3268,50 @@ namespace GreenshiftUnitTest
 
 			_mm_store_si128(&sink.pixel128, accumulator);
 
-			std::string message =
-				std::format(
-					"Exp2: {} ms, Exp5: {} ms",
-					exp2Time,
-					exp5Time);
+			const std::string message = std::format(
+				"{}: {} ms, {}: {} ms\n",
+				nameA, timeA, nameB, timeB);
 
-#else // Other benchmark;
-
-			//
-			// Exp5d_Shift arithmetic benchmark.
-			//
-			timer.Start();
-
-			for (size_t i = 0; i < kIterations; ++i)
-			{
-				const size_t index =
-					i & (kInputCount - 1);
-
-				const __m128i result =
-					Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift(
-						exp5Src12[index],
-						exp5Src34[index]);
-
-				accumulator =
-					_mm_add_epi16(accumulator, result);
-			}
-
-			timer.Stop();
-
-			exp5dShiftTime = timer.StoppedMilliseconds();
-
-
-			//
-			// Exp5d_Mask arithmetic benchmark.
-			//
-			timer.Start();
-
-			for (size_t i = 0; i < kIterations; ++i)
-			{
-				const size_t index =
-					i & (kInputCount - 1);
-
-				const __m128i result =
-					Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask(
-						exp5Src12[index],
-						exp5Src34[index]);
-
-				accumulator =
-					_mm_add_epi16(accumulator, result);
-			}
-
-			timer.Stop();
-
-			exp5dMaskTime = timer.StoppedMilliseconds();
-
-			union
-			{
-				__m128i pixel128;
-				dword_t pixel32;
-			} sink;
-
-			_mm_store_si128(&sink.pixel128, accumulator);
-
-			std::string message =
-				std::format(
-					"Exp5d_Shift: {} ms, Exp5d_Mask: {} ms\n",
-					exp5dShiftTime,
-					exp5dMaskTime);
-
-#endif // Other Benchmark
-
-			//DumpToFile("C:\\temp\\MathBenchmark.txt", message.c_str(), "\n");
 			Logger::WriteMessage(message.c_str());
 
-			Assert::AreNotEqual(
-				0u,
-				sink.pixel32,
-				L"Prevent optimization");
+			Assert::AreNotEqual(0u, sink.pixel32, L"Prevent optimization");
+		}
+
+
+		TEST_METHOD(KernelMathBenchmark128_16bit_Trad_v_Packed)
+		{
+			BenchmarkMathKernels128(
+				"Exp2a_Traditional",
+				Exp2a_SSE2_TraditionalMathKernel128,
+				"Exp5a_PackedDomain",
+				Exp5a_SSE41_PackedDomainMathKernel64);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_16bit_Mask_v_Shift)
+		{
+			BenchmarkMathKernels128(
+				"Exp5d_Shift",
+				Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Shift,
+				"Exp5d_Mask",
+				Exp5d_SSSE3_AdaptedPackedDomainMathKernel64_Mask);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_8bit_Trad_v_TradB)
+		{
+			BenchmarkMathKernels128(
+				"Exp100_Wide32",
+				Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32,
+				"Exp100b_Trad",
+				Exp100b_SSE2_TraditionalMathKernel_WithCorrection16);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_8bit_TradB_v_Packed)
+		{
+			BenchmarkMathKernels128(
+				"Exp100b_Trad",
+				Exp100b_SSE2_TraditionalMathKernel_WithCorrection16,
+				"Exp101a_PackedDomain",
+				Exp101a_SSE2_PackedPairMathKernel);
 		}
 
 
