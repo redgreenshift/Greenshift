@@ -2585,7 +2585,7 @@ __forceinline __m128i BitCanvas8::Exp100_SSE2_TraditionalGather128(const PIXELMA
 // Each word contains two adjacent source pixels,
 // allowing the Packed-Domain arithmetic path to
 // process both pixels simultaneously.
-__forceinline __m128i BitCanvas8::Exp101a_SSE2_Gather(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset)
+__forceinline __m128i BitCanvas8::Exp101a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset)
 {
 	const dword_t p0 = lpTransitionTable[pixelOffset + 0] + rowOffset;
 	const dword_t p1 = lpTransitionTable[pixelOffset + 1] + rowOffset;
