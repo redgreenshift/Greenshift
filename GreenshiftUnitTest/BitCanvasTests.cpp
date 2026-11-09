@@ -1259,6 +1259,29 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100c_Interleaved)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100c(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp101a)
 		{
 			MTRand rng(c_seed);
@@ -1281,6 +1304,53 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSSE3Exp102a)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSSE3_experiment102a(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp102b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment102b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 
 		/// <summary>
 		/// Performs a drift analysis by simulating the lifetime of 5-bit and 6-bit values under repeated averaging, then logs the average lifetimes and their ratio.
@@ -2247,6 +2317,24 @@ namespace GreenshiftUnitTest
 				&BitCanvas8::DoDelta_SSE2_experiment100b); // Decay 127
 		}
 
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100c_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100c, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100c_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment100c); // Decay 127
+		}
+
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp101a_White)
 		{
 			VerifyEquivalence8(
@@ -2263,6 +2351,42 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
 				&BitCanvas8::DoDelta_SSE2_experiment101a); // Decay 127
+		}
+
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp102a_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSSE3_experiment102a, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp102a_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSSE3_experiment102a); // Decay 127
+		}
+
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp102b_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment102b, // Decay 127
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp102b_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
+				&BitCanvas8::DoDelta_SSE2_experiment102b); // Decay 127
 		}
 
 		/************************************
@@ -3310,10 +3434,36 @@ namespace GreenshiftUnitTest
 			BenchmarkMathKernels128(
 				"Exp100b_Trad",
 				Exp100b_SSE2_TraditionalMathKernel_WithCorrection16,
-				"Exp101a_PackedDomain",
+				"Exp101a_PackedPair",
 				Exp101a_SSE2_PackedPairMathKernel);
 		}
 
+		TEST_METHOD(KernelMathBenchmark128_8bit_Wide32Multiply_v_FastDecay8)
+		{
+			BenchmarkMathKernels128(
+				"Exp100_Wide32",
+				Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32,
+				"Exp100_FastDecay8",
+				Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32_FastDecay8);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_8bit_Trad16Multiply_v_FastDecay8Exact)
+		{
+			BenchmarkMathKernels128(
+				"Exp100_Trad16Bad",
+				Exp100_SSE2_TraditionalMathKernel_BAD_OVERFLOWS_16bitLanes,
+				"Exp100b_Trad16_FastDecay8_Exact",
+				Exp100b_SSE2_TraditionalMathKernel_WithCorrection16);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_8bit_Trad16Multiply_v_FastDecay8Approx)
+		{
+			BenchmarkMathKernels128(
+				"Exp100_Trad16Bad",
+				Exp100_SSE2_TraditionalMathKernel_BAD_OVERFLOWS_16bitLanes,
+				"Exp100b_Trad16_FastDecay8_Approx",
+				Exp100a_SSE2_TraditionalMathKernel_NoCorrection16);
+		}
 
 		/************************************
 		* VERIFY 32 BIT!

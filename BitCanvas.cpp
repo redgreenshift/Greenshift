@@ -2149,224 +2149,345 @@ Relationship Summary
 // Exp100a = 8-pixel SSE2 clever 16-bit decay formulation (APPROX without error correction)
 // Exp100b = 8-pixel SSE2 clever 16-bit decay formulation (EXACT  with branchless error correction)
 // Exp101a = 8-pixel SSE2 Packed-Domain investigation
+// Exp102a = 8-pixel SSE2 Packed-Domain investigation (horizontal-add)
+// Exp102b = 8-pixel SSE2 Packed-Domain investigation (_mm_mulhi_epu16)
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
 /****************************************************************************
- *
- * BitCanvas8::DoDelta SIMD Experiments and Benchmark Notes
- * =========================================================
- *
- * Motivation
- * ----------
- *
- * The goal of these experiments is to determine whether SIMD can
- * outperform the existing scalar implementation:
- *
- *     BitCanvas8::DoDelta_cpp_OPTIMIZED()
- *
- * while remaining bit-for-bit equivalent to the baseline algorithm.
- *
- *
- * Benchmark Results
- * -----------------
- *
- * 20,000 iteration benchmark:
- *
- * Scalar reference implementations:
- *
- *     CPP Baseline        ~ 8.1 - 9.1 sec
- *     CPP Optimized       ~ 5.7 - 6.1 sec
- *
- * SIMD experiments:
- *
- *     SSE2  Exp100_Base   ~10.9 - 11.5 sec
- *     SSE2  Exp100a_Apprx ~10.4 - 10.6 sec
- *     SSE2  Exp100b_Exact ~10.4 - 10.6 sec
- *     SSE2  Exp101a       ~ 4.9 -  5.1 sec
- *
- *
- * SIMD + Gatherer Experiments:
- *
- *
- * Experiment Summary
- * ------------------
- *
- * [HISTORICAL EXPERIMENTS]
- *
- * HistExp2000_BASELINE:
- *
- *     Intentionally, naively reading/writing 8bit pixel values
- *     to provide a baseline to measure experiments against.
- *
- * HistExp2000_D -- Trying a cheaper decay algorithm; unfinished.
- *
- *     Motivation:
- *         Eliminate multiply and divide.
- *
- *
- * [MODERN EXPERIMENTS]
- *
- * Exp100_BASELINE:
- *     SSE2 Traditional Arithmetic (reference)
- *     32-bit widened reference implementation to account for overflow errors when using 16bit math.
- *
- *    Result:
- *        Validation successful.
- *        Slower than CPP_BASELINE.
- *
- *     Observation:
- *         The obvious SIMD translation required
- *         32-bit widening due to DECAY8 overflow.
- *
- *         An exact 16-bit reformulation was discovered
- *         that is correct for the entire valid domain
- *         after applying a small correction term.
- *
- * Exp100a_Approximate:
- *     SSE2 Traditional Arithmetic;
- *     16-bit approximate decay formulation **NOT** using correction term.
- *     This experiment exists only for comparison to Exp100b to validate how expensive the correction code is to the algorithm.
- *
- *     Result:
- *         Faster than Exp100_BASELINE.
- *         Much slower than the C++ algorithms
- *
- *     Observation:
- *         No need to use this 16-bit decay approximation; correction cost appears negligible.
- *
- * Exp100b_Exact:
- *     SSE2 Traditional Arithmetic; 16-bit exact decay formulation using **BRANCHLESS** correction term
- *
- *     Result:
- *         Effectively identical to Exp100a (faster than Exp100_BASELINE; slower than C++ algorithms)
- *         The correction term appears effectively free.
- *
- * Observation:
- *    The DECAY8 operation caused an overflow, as it requires 17 bits of information to perform:
- *
- *       int exact = (sum * 127) >> 9;
- *
- *    We're working with 16bit lanes, but reformulate using only 16-bit arithmetic:
- *
- *        uint16_t approx = ((sum << 6) - (sum >> 1)) >> 8;
- *
- *    Initial approximation is exact for 1019 of
- *    1021 possible inputs.
- *
- *    A small correction term restores exact
- *    equivalence over the entire valid domain:
- *
- *        if (sum == 129 || sum == 641) --approx;
- *
- *     Which can be simplified:
- *
- *        if ((sum & 0x1FF) == 0x081) --approx;
- *
- * Exp101a:
- *     SSE2 Packed-Domain Arithmetic; read adjacent pixel pairs together.
- *
- *     Result:
- *         Faster than Exp100_BASELINE, Exp100a_Approximate, Exp100b_Exact,
- *         and cpp_OPTIMIZED.
- *
- *         Observation:
- *             The original packed-domain optimization
- *             translates extremely well to SSE2.
- *
- *
- * Key Findings
- * ------------
- *
- * - Exp100 arithmetic is not the primary bottleneck.
- *
- * - Assembly review shows the SIMD arithmetic is
- *   relatively compact, while source-vector
- *   construction requires large numbers of scalar
- *   loads and PINSRW instructions.
- *
- * - Gather construction appears expensive.
- *
- * - The original packed-domain optimization
- *   translates extremely well to SSE2.
- *
- * - Arithmetic-only benchmarking indicates that
- *   the Exp101a Packed-Domain arithmetic kernel
- *   is substantially faster than the Exp100
- *  Traditional Arithmetic kernel.
- *
- *   Therefore, Exp101a's performance advantage
- *   cannot be attributed solely to gather
- *   construction improvements.
- *
- * - Arithmetic-only benchmarking shows that
- *   Packed-Domain Arithmetic is faster than
- *   Traditional Arithmetic.
- *
- * - The full-algorithm performance difference
- *   is larger than the arithmetic-only difference,
- *   suggesting gather construction also contributes
- *   significantly to overall performance.
- *
- *
- * Current Assessment
- * ------------------
- *
- * Exp101a:
- *     - Best pure-SSE2 implementation.
- *
- *
- * Future Investigation
- * --------------------
- *
- * - Additional packed-domain SSE2 investigations.
- *   o Improve Exp101a gather construction
- *
- * - Can we improve gather cost of Traditional Algorithm? Traditional Arithmetic with smarter gather
- *
- * - AVX2 gather
- * - AVX-512 version
- *
- * Unprioritized:
- * - Consider alternative names for the Exp101 Algorithm, to distingish from BitCanvas16 PackedDomain and BitCanvas16 Adapted PackedDomain.
- *   o PackedDomain(no), Adapted(no), Pair, Adjacent-Pair, Adjacent-Pixel-Pair, Pixel-Pair, Packed-Pair(yes), Pairwise(yes)
- *   o "PackedDomain" is good for when the color channels are a "domain"
- *   o "PackedPair" elicits a similarity to PackedDomain, but is distinct enough to clearly indicate "there is a difference"
- *   o "Pairwise" while I like it, it loses the connection to PackedDomain, so I think that means we land on "PackedPair" and "Packed-Pair".
- *
- * - Encode the Algorithm names in the function names.
- *
- * - Crteate a BitCanvas term Glossary
- *
- *
- * - Are there SSE2+ instructions that could improve the performance of BitCanvas8 Traditional Arithmetic?
- *   o YES: The obvious one is _mm_mullo_epi32() (SSE4.1)
- *   o Would it matter? For the widened Exp100-style arithmetic: Possibly. For Exp100b: No. (unless we reintroduce multiply)
- *
- * - Does adding the the multiply back make the Exp100 line slower when using 16bit lanes?
- *   o Exactly why the previous point should not be rejected, at least not yet.
- *   o Wait, was the multiply avoidance to introduced to avoid overflowing the 16bit lane? That may mean we had another reason that required avoiding multiply.
- *     x Yes. That was the original motivation.
- *
- * - If we similarly avoid multiply in Exp101, is that faster?
- *   o Misremembered, it's the other way. If we restore multiply, is it faster?
- *
- * - Could avoiding multiply produce faster Arithmetic in the various BitCanvas16 PackedDomain experiments? Same question for BitCanvas16 Traditional experiments.
- * - If faster, does that flip BitCanvas16 AVX2 winner from Traditional to Adapted PackedDomain?
- *
- *
- * Deferred Investigation
- * ----------------------
- * - Wider store / batched write revisit (POSTPONED pending a reason to explore).
- * - Run a long-duration benchmark to resolve any remaining close races.
- * - Alternative exact DECAY8 formulations (Interesting, but likely a time-sink)
- * - Investigate SSSE3 PSHUFB-based gathers. "Design a PSHUFB gather prototype" Interesting, but Weak hypothesis. Probably DOA.
- * - Prototype a register-rotated gather????? DOA
- *   o Blur filters, interesting, and could make use of a register-rotated gather. (But this is an entirely different New Feature)
- *   o Edge detection, I could use SIMD for beat detection? It's not slow, but may be incorrect, so might be a bad choice for optimization.
- *
+
+BitCanvas8::DoDelta SIMD Experiments and Benchmark Notes
+=========================================================
+
+Motivation
+----------
+
+The goal of these experiments is to determine whether SIMD can
+outperform the existing scalar implementation:
+
+		BitCanvas8::DoDelta_cpp_OPTIMIZED()
+
+	while remaining bit-for-bit equivalent to the baseline algorithm.
+
+
+Benchmark Results
+-----------------
+
+20,000 iteration benchmark:
+
+Scalar reference implementations:
+
+		CPP Baseline        ~ 8.1 - 9.1 sec
+		CPP Optimized       ~ 5.7 - 6.1 sec
+
+	SIMD experiments:
+
+		SSE2  Exp100_Base   ~10.9 - 11.5 sec
+		SSE2  Exp100a_Apprx ~10.4 - 10.6 sec
+		SSE2  Exp100b_Exact ~10.4 - 10.6 sec
+		SSE2  Exp100c_Inter ~10.2 - 10.7 sec
+		SSSE3 Exp102a       ~ 5.5 - 6.0 sec
+		SSE2  Exp101a       ~ 4.9 -  5.1 sec
+		SSE2  Exp102b       ~ 4.7 -  4.8 sec
+
+
+SIMD + Gatherer Experiments:
+
+
+Experiment Summary
+------------------
+
+[HISTORICAL EXPERIMENTS]
+
+HistExp2000_BASELINE:
+
+		Intentionally, naively reading/writing 8bit pixel values
+		to provide a baseline to measure experiments against.
+
+HistExp2000_D -- Trying a cheaper decay algorithm; unfinished.
+
+		Motivation:
+			Eliminate multiply and divide.
+
+
+[MODERN EXPERIMENTS]
+
+Exp100_BASELINE:
+	SSE2 Traditional Arithmetic (reference)
+	32-bit widened reference implementation to account for overflow errors when using 16bit math.
+
+	Result:
+		Validation successful.
+		Slower than CPP_BASELINE.
+
+	Observation:
+		The obvious SIMD translation required
+		32-bit widening due to DECAY8 overflow.
+
+		An exact 16-bit reformulation was discovered
+		that is correct for the entire valid domain
+		after applying a small correction term.
+
+Exp100a_Approximate:
+	SSE2 Traditional Arithmetic;
+	16-bit approximate decay formulation **NOT** using correction term.
+	This experiment exists only for comparison to Exp100b to validate how expensive the correction code is to the algorithm.
+
+	Result:
+		Faster than Exp100_BASELINE.
+		Much slower than the C++ algorithms
+
+	Observation:
+		No need to use this 16-bit decay approximation; correction cost appears negligible.
+
+Exp100b_Exact:
+	SSE2 Traditional Arithmetic; 16-bit exact decay formulation using **BRANCHLESS** correction term
+
+	Result:
+		Effectively identical to Exp100a (faster than Exp100_BASELINE; slower than C++ algorithms)
+		The correction term appears effectively free.
+
+	Observation:
+		The DECAY8 operation caused an overflow, as it requires 17 bits of information to perform:
+
+			int exact = (sum * 127) >> 9;
+
+		We're working with 16bit lanes, but reformulate using only 16-bit arithmetic:
+
+			uint16_t approx = ((sum << 6) - (sum >> 1)) >> 8;
+
+		Initial approximation is exact for 1019 of
+		1021 possible inputs.
+
+		A small correction term restores exact
+		equivalence over the entire valid domain:
+
+			if (sum == 129 || sum == 641) --approx;
+
+		Which can be simplified:
+
+			if ((sum & 0x1FF) == 0x081) --approx;
+
+Exp100c_Interleaved:
+	SSE2 Traditional Arithmetic interleaved with the Gather vector steps, to see if reducing the live-time for the source vectors can reduce overall cost.
+
+	Result:
+		Comparable to Exp100b. Not a clear win. Compiler may already optimize.
+
+	Observation:
+		Explicit Gather/Arithmetic interleaving
+		produced no clear benefit.
+
+	Conclusion:
+		Interleaving does not currently appear
+		to justify the added complexity.
+
+
+Exp101a:
+		SSE2 Packed-Domain Arithmetic; read adjacent pixel pairs together.
+
+	Result:
+		Faster than Exp100_BASELINE, Exp100a_Approximate, Exp100b_Exact,
+		and cpp_OPTIMIZED.
+
+	Observation:
+		The original packed-domain optimization
+		translates extremely well to SSE2.
+
+Exp102a:
+	IDEA: Use horizontal-add `_mm_hadd_epi16` but that doesn't work as it adds adjacent 16-bit lanes, and PackedPair is 8bit lanes.
+	_mm_maddubs_epi16 is an alternative tha trequires SSSE3.
+
+	Result:
+		Slower than Exp101a.
+
+Exp102b:
+	PackedPair Arithmetic using _mm_mulhi_epu16() decay formulation (only SSE2)
+
+		// floor(sum * 127 / 512), using the high 16 bits of the product.
+		// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+		const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
+		const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
+
+	Result:
+		Faster than Exp101a.
+
+	Observation:
+		Hardware multiply outperformed the
+		previous FastDecay8 formulation.
+
+		Modern SIMD multiply appears cheaper
+		than the additional instructions
+		required to avoid multiplication.
+
+
+Key Findings
+------------
+
+  - Exp100 arithmetic is not the primary bottleneck.
+
+  - Assembly review shows the SIMD arithmetic is
+	relatively compact, while source-vector
+	construction requires large numbers of scalar
+	loads and PINSRW instructions.
+
+  - Gather construction appears expensive.
+
+  - The original packed-domain optimization
+	translates extremely well to SSE2.
+
+  - Arithmetic-only benchmarking indicates that
+	the Exp101a Packed-Domain arithmetic kernel
+	is substantially faster than the Exp100
+	Traditional Arithmetic kernel.
+
+	Therefore, Exp101a's performance advantage
+	cannot be attributed solely to gather
+	construction improvements.
+
+  - Arithmetic-only benchmarking shows that
+	Packed-Domain Arithmetic is faster than
+	Traditional Arithmetic.
+
+  - The full-algorithm performance difference
+	is larger than the arithmetic-only difference,
+	suggesting gather construction also contributes
+	significantly to overall performance.
+
+BitCanvas16 Traditional: Reads in 8 pixels 4 times, so 32 pixels. Writes 8 pixels.
+BitCanvas16 PackedDomain: Reads in 8 pixels 2 times, so 16 pixels. Writes 4 pixels.
+BitCanvas8 Traditional: Reads in 8 pixels 4 times, so 32 pixels. Writes 8 pixels.
+BitCanvas8 PackedDomain: Reads in 16 pixels 2 times, so 32 pixels. Writes 8 pixels.
+
+BitCanvas16 Traditional is the **ONLY** one of the four that utilizes the FULL width of the register for writes, so "maximum" potential throughput. This may be part of the reason it's faster than BitCanvas16 PackedDomain. Since both BitCanvas8 algorithms utilize half the register width, that could be part of the reason for the discrepancy.
+
+"BitCanvas8 Traditional is not a perfect analog of: BitCanvas16 Traditional" Yes, but it occurs to me that CHANNELED color (16bit and 32bit) have natural gaps to provide the space to widen merely by masking away other color channels.
+
+8bit is dense, as in there are no channels to mask away. It's fundamentally different, so there is no real analog. Either we Gather the data in a dense form and then recessarily WIDEN before performing math, or Gather the data in a wide format that does not utilize the full width.
+
+HOWEVER, "utilizes the FULL width of the register" is not the best measure, because:
+BitCanvas16 Dense Gather == BitCanvas16 Arithmetic representation
+BitCanvas8 Dense Gather != BitCanvas8 Arithmetic representation
+
+For BitCanvas8, 16bit lanes IS the most dense Arithmetic width we can use.
+A denser Gather necessarily means you must transform the data before useful arithmetic can occur.
+
+
+Current Assessment
+------------------
+
+ Exp102b:
+	- Best pure-SSE2 implementation.
+
+
+Future Investigation
+--------------------
+
+Open / Driving Questions:
+-------------------------
+- Does FastDecay matter beyond overflow avoidance?
+  o ANSWER: No. It's purely for correctness. FastDecay8 is not an optimization; it's slower than the Multiply.
+- Can Traditional ever catch PackedPair? (may not pay off until AVX2)
+  o Can we craft a 16bit Traditional Algorithm that is faster than PackedPair?
+  o Can we craft an 8bit Traditional Algorithm that is less than 2x the cost of PackedPair?
+- Can Dense Gather become viable?
+
+MathKernel/Arithmetic Experiments:
+----------------------------------
+- Traditional Arithmetic (32bit lanes vs 16bit lanes)
+  o DONE: Exp100b is faster than Exp100
+- Compare Exp100b and Exp101a math benchmark (is Traditional or PackedPair Arithmetic faster?)
+  o DONE: Exp101a is faster (Expectation: PackedPair will win all tiers _unless_ we can produce a faster Traditional MathKernel)
+- FastDecay8 vs Multiply (Traditional 32-bit)
+  o DONE: Multiply is faster than FastDecay8.
+  o These can inform the later dense experiments so we don't have to compare FastDecay8 vs Multiply going forward. Answer now which approach is faster, and we can likely eliminate the need to do the same for EVERY future experiment:
+	- FastDecay8 vs Multiply (Traditional 32-bit lane Arithmetic) DONE
+	- FastDecay8 vs Multiply (Traditional 16-bit lane Arithmetic) SKIPPED
+	- FastDecay8 vs Multiply (PackedPair) SKIPPED
+	- Consider revisiting after later investigations:
+		Maybe FastDecay8 is slower in 32-bit Arithmetic,
+		but faster in some special lower-register-pressure case.
+
+- Verify that HORIZONTAL ADD is always after vector add, so we can reduce two vector adds to one horizontal add.
+	o I'm pretty sure this is how I coded it, in all cases, but it's worth a quick check to make sure I didn't invert.
+
+Full Algorithm Experiments:
+--------------------------
+- Gather/Arithmetic interleaving (Traditional 16bit Gather + 16bit lane Arithmetic)
+	o Latgely uneventful. Maybe slightly better, but it could be noise, and the compiler could theoretically perform the same optimization.
+
+
+SSSE3 Technology Tier investigations:
+-------------------------------------
+- horizontal-add PackedPair Arithmetic, reduce one addition
+
+
+SSE4.1 investigations:
+---------------
+- Are there SSE2+ instructions that could improve the performance of BitCanvas8 Traditional Arithmetic?
+	o YES: The obvious one is _mm_mullo_epi32() (SSE4.1), and it could help 32bit MathKernel implementations.
+	o Would it matter? For the widened Exp100-style arithmetic: Possibly. For Exp100b: No. (unless we reintroduce multiply)
+
+
+Later Technology Tier investigations:
+-------------------------------------
+- AVX2 Gather
+  o Consider Dense Gather investigations.
+	-- DENSE Investigation Tree Postponed to AVX Gather
+	- Traditional 8bit lane MathKernel (proof of concept, 8bit Gather)
+	  o Compare widening vs masking approaches to be able to perform math in 16bit lanes.
+	  o NOTE: Expect this experiment to fail miserably, due to increased register pressure, but it's worthwhile to rule out.
+	  o However, it might still be interesting in the Interleaving set of experiments, if Interleaving can reduce register pressure to make this DENSE approach viable.
+	- Traditional 8bit Gather+16bit Arithmetic (winner from above widening/masking experiment) vs `Traditional 16bit Gather + 16bit Arithmetic`
+	  o want to answer if DENSE Arithmetic cost is less than 2x the cost of 16bit Arithmetic.
+	- Gather/Arithmetic interleaving (Traditional 16bit Gather + 32bit lane Arithmetic)
+	- Gather/Arithmetic interleaving (Traditional 8bit Gather + 16bit lane Arithmetic widened)
+	- Gather/Arithmetic interleaving (Traditional 8bit Gather + 16bit lane Arithmetic masked)
+	- Though I'll probably prune all the Dense Gather investigation, because BitCanvas8 Dense Gather != BitCanvas8 Arithmetic representation
+		you must transform the data before useful arithmetic can occur.
+- AVX-512 version
+
+
+Deferred: -- Deprioritized / Backlog / Low Priority / Deferred / Postponed / Time-sinks / Shelved / Back burner / Downgraded / Reprioritized (too general):
+---------
+- Isolate Gather Cost
+	o Compare Traditional 8bit lane Gather vs Traditional 16bit lane Gather
+	o Compare the best Traditional Gather to PackedPair 16bit lane Gather.
+- BitCanvas16 FastDecay investigations
+	o Large project of experiments, across all tiers.
+	o Postponed until after all the BitCanvas8 investigations.
+	o BitCanvas8 investigations found no evidence that FastDecay8 is faster than multiply.
+	o Future investigations should assume FastDecay8 is primarily a correctness technique unless proven otherwise.
+- Wider store / batched write revisit (POSTPONED pending a reason to explore).
+- Alternative exact DECAY8 formulations (Interesting, but likely a time-sink)
+- Run a long-duration benchmark to resolve any remaining close races.
+- Investigate SSSE3 PSHUFB-based gathers. "Design a PSHUFB gather prototype" Interesting, but Weak hypothesis. Probably DOA.
+- Prototype a register-rotated gather????? DOA
+	o Blur filters, interesting, and could make use of a register-rotated gather. (But this is an entirely different New Feature)
+	o Edge detection, I could use SIMD for beat detection? It's not slow, but may be incorrect, so might be a bad choice for optimization.
+
  ****************************************************************************/
 
+
+__forceinline __m128i SSE2_decay8_fast_exact16(__m128i sum)
+{
+	// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
+	__m128i sum_l6 = _mm_slli_epi16(sum, 6);
+	__m128i sum_r1 = _mm_srli_epi16(sum, 1);
+	__m128i sum_decay = _mm_sub_epi16(sum_l6, sum_r1);
+	__m128i avg_decay = _mm_srli_epi16(sum_decay, 8);
+
+	// Apply a correction to fix up the 2 values that end up wrong using the FastDecay8 algorithm
+	const __m128i mask9Bits = _mm_set1_epi16(0x01FF);
+	const __m128i pattern = _mm_set1_epi16(0x0081);
+	const __m128i one = _mm_set1_epi16(1);
+	__m128i correctionMask = _mm_and_si128(sum, mask9Bits);
+	correctionMask = _mm_cmpeq_epi16(correctionMask, pattern);
+	correctionMask = _mm_and_si128(correctionMask, one);
+	avg_decay = _mm_sub_epi16(avg_decay, correctionMask);
+
+	return avg_decay;
+}
 
 // Traditional Arithmetic kernel.
 //
@@ -2380,7 +2501,6 @@ __forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32(__m128i 
 	static const __m128i zero = _mm_setzero_si128();
 	static const __m128i decay = _mm_set1_epi32(127);
 
-	//
 	// Sum four source pixels.
 	// Range:
 	//     0 .. 1020
@@ -2390,37 +2510,27 @@ __forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32(__m128i 
 			_mm_add_epi16(p1, p2),
 			_mm_add_epi16(p3, p4));
 
-	//
 	// Expand:
 	// 8x uint16 -> 8x uint32
 	//
-	__m128i sumLo =
-		_mm_unpacklo_epi16(sum, zero);
+	__m128i sumLo = _mm_unpacklo_epi16(sum, zero);
+	__m128i sumHi = _mm_unpackhi_epi16(sum, zero);
 
-	__m128i sumHi =
-		_mm_unpackhi_epi16(sum, zero);
-
-	//
 	// SSE2 only has _mm_mul_epu32(),
 	// which multiplies lanes 0 and 2.
 	//
-	__m128i lo02 =
-		_mm_mul_epu32(sumLo, decay);
-
+	__m128i lo02 = _mm_mul_epu32(sumLo, decay);
 	__m128i lo13 =
 		_mm_mul_epu32(
 			_mm_srli_si128(sumLo, 4),
 			decay);
 
-	__m128i hi02 =
-		_mm_mul_epu32(sumHi, decay);
-
+	__m128i hi02 = _mm_mul_epu32(sumHi, decay);
 	__m128i hi13 =
 		_mm_mul_epu32(
 			_mm_srli_si128(sumHi, 4),
 			decay);
 
-	//
 	// Reassemble DWORD lanes.
 	//
 	__m128i prodLo =
@@ -2433,30 +2543,69 @@ __forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32(__m128i 
 			_mm_shuffle_epi32(hi02, _MM_SHUFFLE(0, 0, 2, 0)),
 			_mm_shuffle_epi32(hi13, _MM_SHUFFLE(0, 0, 2, 0)));
 
-	//
 	// DECAY8
 	//
-	prodLo =
-		_mm_srli_epi32(prodLo, 9);
+	prodLo = _mm_srli_epi32(prodLo, 9);
+	prodHi = _mm_srli_epi32(prodHi, 9);
 
-	prodHi =
-		_mm_srli_epi32(prodHi, 9);
-
-	//
 	// 8x uint32 -> 8x uint16
 	//
-	__m128i packed16 =
-		_mm_packs_epi32(
-			prodLo,
-			prodHi);
+	__m128i packed16 = _mm_packs_epi32(prodLo, prodHi);
 
-	//
 	// 8x uint16 -> 8x uint8
 	//
-	return _mm_packus_epi16(
-		packed16,
-		packed16);
+	return _mm_packus_epi16(packed16, packed16);
 }
+
+__forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32_FastDecay8(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+{
+	static const __m128i zero = _mm_setzero_si128();
+	static const __m128i decay = _mm_set1_epi32(127);
+
+	// Sum four source pixels.
+	// Range:
+	//     0 .. 1020
+	//
+	__m128i sum =
+		_mm_add_epi16(
+			_mm_add_epi16(p1, p2),
+			_mm_add_epi16(p3, p4));
+
+	// Expand:
+	// 8x uint16 -> 8x uint32
+	//
+	__m128i sumLo = _mm_unpacklo_epi16(sum, zero);
+	__m128i sumHi = _mm_unpackhi_epi16(sum, zero);
+
+	// FastDecay8
+	__m128i lo02 = SSE2_decay8_fast_exact32(sumLo);
+	__m128i lo13 = SSE2_decay8_fast_exact32(_mm_srli_si128(sumLo, 4));
+	__m128i hi02 = SSE2_decay8_fast_exact32(sumHi);
+	__m128i hi13 = SSE2_decay8_fast_exact32(_mm_srli_si128(sumHi, 4));
+
+	// Reassemble DWORD lanes.
+	//
+	__m128i prodLo =
+		_mm_unpacklo_epi32(
+			_mm_shuffle_epi32(lo02, _MM_SHUFFLE(0, 0, 2, 0)),
+			_mm_shuffle_epi32(lo13, _MM_SHUFFLE(0, 0, 2, 0)));
+
+	__m128i prodHi =
+		_mm_unpacklo_epi32(
+			_mm_shuffle_epi32(hi02, _MM_SHUFFLE(0, 0, 2, 0)),
+			_mm_shuffle_epi32(hi13, _MM_SHUFFLE(0, 0, 2, 0)));
+
+	// 8x uint32 -> 8x uint16
+	//
+	__m128i packed16 = _mm_packs_epi32(prodLo, prodHi);
+
+	// 8x uint16 -> 8x uint8
+	//
+	return _mm_packus_epi16(packed16, packed16);
+}
+
+
+
 
 // Traditional Arithmetic kernel. Approximation (1019/1021 correct)
 //
@@ -2495,20 +2644,7 @@ __forceinline __m128i Exp100b_SSE2_TraditionalMathKernel_WithCorrection16(__m128
 	__m128i sum = _mm_add_epi16(p1, p2);
 	sum = _mm_add_epi16(sum, p3);
 	sum = _mm_add_epi16(sum, p4);
-	// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
-	__m128i sum_l6 = _mm_slli_epi16(sum, 6);
-	__m128i sum_r1 = _mm_srli_epi16(sum, 1);
-	__m128i sum_decay = _mm_sub_epi16(sum_l6, sum_r1);
-	__m128i avg_decay = _mm_srli_epi16(sum_decay, 8);
-
-	// Apply a correction to fix up the 2 values that end up wrong using the FastDecay8 algorithm
-	const __m128i mask9Bits = _mm_set1_epi16(0x01FF);
-	const __m128i pattern = _mm_set1_epi16(0x0081);
-	const __m128i one = _mm_set1_epi16(1);
-	__m128i correctionMask = _mm_and_si128(sum, mask9Bits);
-	correctionMask = _mm_cmpeq_epi16(correctionMask, pattern);
-	correctionMask = _mm_and_si128(correctionMask, one);
-	avg_decay = _mm_sub_epi16(avg_decay, correctionMask);
+	__m128i avg_decay = SSE2_decay8_fast_exact16(sum);
 
 	return _mm_packus_epi16(avg_decay, avg_decay);
 }
@@ -2541,7 +2677,7 @@ __forceinline __m128i Exp101a_SSE2_PackedPairMathKernel(__m128i top, __m128i bot
 	//sum = _mm_mullo_epi16(sum, decay);
 	//sum = _mm_srli_epi16(sum, 9);
 
-		// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
+	// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
 	__m128i sum_l6 = _mm_slli_epi16(sum, 6);
 	__m128i sum_r1 = _mm_srli_epi16(sum, 1);
 	__m128i sum_decay = _mm_sub_epi16(sum_l6, sum_r1);
@@ -2556,6 +2692,51 @@ __forceinline __m128i Exp101a_SSE2_PackedPairMathKernel(__m128i top, __m128i bot
 	correctionMask = _mm_and_si128(correctionMask, one);
 	avg_decay = _mm_sub_epi16(avg_decay, correctionMask);
 
+
+	// 8 words -> 8 bytes
+	return _mm_packus_epi16(avg_decay, avg_decay);
+}
+
+// Packed-domain arithmetic kernel.
+//
+// Operates directly on adjacent pixel pairs packed into
+// 16-bit words, reducing arithmetic complexity and avoiding
+// the widening required by the Traditional Arithmetic path.
+//
+// HORIZONTAL ADD
+__forceinline __m128i Exp102a_SSSE3_PackedPairMathKernel(__m128i top, __m128i bottom)
+{
+	static const __m128i ones = _mm_set1_epi8(1);
+	__m128i topPairs = _mm_maddubs_epi16(top, ones); // requires SSSE3
+	__m128i bottomPairs = _mm_maddubs_epi16(bottom, ones); // requires SSSE3
+	__m128i sum = _mm_add_epi16(topPairs, bottomPairs);
+	__m128i avg_decay = SSE2_decay8_fast_exact16(sum);
+
+	// 8 words -> 8 bytes
+	return _mm_packus_epi16(avg_decay, avg_decay);
+}
+
+__forceinline __m128i Exp102b_SSE2_PackedPairMathKernel(__m128i top, __m128i bottom)
+{
+	const __m128i lowMask = _mm_set1_epi16(0x00FF);
+
+	// p1 + p3
+	const __m128i low = _mm_add_epi16(
+		_mm_and_si128(top, lowMask),
+		_mm_and_si128(bottom, lowMask));
+
+	// p2 + p4
+	const __m128i high = _mm_add_epi16(
+		_mm_srli_epi16(top, 8),
+		_mm_srli_epi16(bottom, 8));
+
+	// p1 + p2 + p3 + p4
+	const __m128i sum = _mm_add_epi16(low, high);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
 
 	// 8 words -> 8 bytes
 	return _mm_packus_epi16(avg_decay, avg_decay);
@@ -2735,6 +2916,49 @@ void BitCanvas8::DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable)
 	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
+//Traditional 16bit Gather
+//+
+//Traditional 16bit Arithmetic
+//+
+//Interleaving
+void BitCanvas8::DoDelta_SSE2_experiment100c(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		//const __m128i result = Exp100b_SSE2_TraditionalMathKernel_WithCorrection16(p1, p2, p3, p4);
+
+		const __m128i decay = _mm_set1_epi16(127);
+
+		__m128i sum = _mm_add_epi16(p1, p2);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		sum = _mm_add_epi16(sum, p3);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		sum = _mm_add_epi16(sum, p4);
+		__m128i avg_decay = SSE2_decay8_fast_exact16(sum);
+
+		const __m128i result = _mm_packus_epi16(avg_decay, avg_decay);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
 // Packed-Domain Arithmetic kernel.
 //
 // Operates on pairs of adjacent pixels packed into
@@ -2752,6 +2976,60 @@ void BitCanvas8::DoDelta_SSE2_experiment101a(const PIXELMAP* lpTransitionTable)
 		const __m128i top = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, 0);
 		const __m128i bottom = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
 		const __m128i result = Exp101a_SSE2_PackedPairMathKernel(top, bottom);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas8::DoDelta_SSSE3_experiment102a(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i top = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, 0);
+		const __m128i bottom = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m128i result = Exp102a_SSSE3_PackedPairMathKernel(top, bottom);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas8::DoDelta_SSE2_experiment102b(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i top = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, 0);
+		const __m128i bottom = Exp101a_SSE2_PackedPairGather128(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m128i result = Exp102b_SSE2_PackedPairMathKernel(top, bottom);
 
 		_mm_storel_epi64(
 			reinterpret_cast<__m128i*>(
