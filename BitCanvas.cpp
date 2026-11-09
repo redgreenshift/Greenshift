@@ -1703,7 +1703,7 @@ void BitCanvas8::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas8::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment101a(lpTransitionTable);
+	DoDelta_SSE2_experiment102b(lpTransitionTable);
 }
 
 void BitCanvas8::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
