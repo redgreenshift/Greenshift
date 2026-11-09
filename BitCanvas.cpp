@@ -2469,6 +2469,19 @@ Deferred: -- Deprioritized / Backlog / Low Priority / Deferred / Postponed / Tim
  ****************************************************************************/
 
 
+__forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BAD_OVERFLOWS_16bitLanes(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+{
+	const __m128i decay = _mm_set1_epi16(127);
+
+	__m128i sum = _mm_add_epi16(p1, p2);
+	sum = _mm_add_epi16(sum, p3);
+	sum = _mm_add_epi16(sum, p4);
+	__m128i avg = _mm_mullo_epi16(sum, decay);
+	avg = _mm_srli_epi16(avg, 9);
+
+	return _mm_packus_epi16(avg, avg);
+}
+
 __forceinline __m128i SSE2_decay8_fast_exact16(__m128i sum)
 {
 	// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
