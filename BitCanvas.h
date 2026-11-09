@@ -856,10 +856,13 @@ protected:
 	void					DoDelta_cpp_OPTIMIZED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_cpp_historicalExperiment(const PIXELMAP* lpTransitionTable);
 
-	void					DoDelta_SSE2_experiment100_BASELINE(const PIXELMAP* lpTransitionTable); // Reference
-	void					DoDelta_SSE2_experiment100a(const PIXELMAP* lpTransitionTable); // Approximate
-	void					DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable); // Exact
-	void					DoDelta_SSE2_experiment100c(const PIXELMAP* lpTransitionTable); // Interleaved
+	void					DoDelta_SSE2_experiment100_BASELINE(const PIXELMAP* lpTransitionTable); // Reference 32bit lanes
+	void					DoDelta_SSE2_experiment100a(const PIXELMAP* lpTransitionTable); // Approximate 16bit lanes
+	void					DoDelta_SSE2_experiment100b(const PIXELMAP* lpTransitionTable); // Exact 16bit lanes
+	void					DoDelta_SSE2_experiment100c(const PIXELMAP* lpTransitionTable); // Interleaved 16bit lanes
+	void					DoDelta_SSE2_experiment100d(const PIXELMAP* lpTransitionTable); // Multiply 16bit lanes
+	void					DoDelta_SSE2_experiment100e(const PIXELMAP* lpTransitionTable); // Interleaved Multiply 16bit lanes
+	void					DoDelta_SSE41_experiment100f(const PIXELMAP* lpTransitionTable); // Wide3bit lanes, SSE41 Multiply
 	__forceinline __m128i	Exp100_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
 	__forceinline void		Exp100_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
@@ -868,6 +871,11 @@ protected:
 
 	void					DoDelta_SSSE3_experiment102a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment102b(const PIXELMAP* lpTransitionTable);
+
+	void					DoDelta_AVX2_experiment103a(const PIXELMAP* lpTransitionTable);
+	__forceinline __m256i	Exp103a_AVX2_PackedPairScalarGather256(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+	void					DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable);
+	__forceinline __m256i	Exp103b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

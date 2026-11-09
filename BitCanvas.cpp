@@ -1706,14 +1706,14 @@ void BitCanvas8::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 	DoDelta_SSE2_experiment102b(lpTransitionTable);
 }
 
-void BitCanvas8::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
-{
-	DoDelta_SSE2_experiment101a(lpTransitionTable);
-}
-
 void BitCanvas8::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment101a(lpTransitionTable);
+	DoDelta_AVX2_experiment103b(lpTransitionTable);
+}
+
+void BitCanvas8::DoDelta_AVX512(const PIXELMAP* lpTransitionTable)
+{
+	DoDelta_AVX2_experiment103b(lpTransitionTable);
 }
 
 
@@ -2148,9 +2148,15 @@ Relationship Summary
 // Exp100 = 8-pixel SSE2 Traditional Arithmetic investigation (widened 32-bit reference)
 // Exp100a = 8-pixel SSE2 clever 16-bit decay formulation (APPROX without error correction)
 // Exp100b = 8-pixel SSE2 clever 16-bit decay formulation (EXACT  with branchless error correction)
+// Exp100c = 8-pixel SSE2 clever 16-bit decay formulation (EXACT Interleaved)
+// Exp100d = 8-pixel SSE2 alternate clever 16-bit decay formulation (Multiply via _mm_mulhi_epu16, no need for correction)
+// Exp100e = 8-pixel SSE2 alternate clever 16-bit decay formulation (Multiply via _mm_mulhi_epu16, Interleaved)
+// Exp100f = 8-pixel SSE2 Traditional Arithmetic investigation (widened 32-bit lanes, SSE4.1 multiply: _mm_mullo_epi32)
 // Exp101a = 8-pixel SSE2 Packed-Domain investigation
 // Exp102a = 8-pixel SSE2 Packed-Domain investigation (horizontal-add)
 // Exp102b = 8-pixel SSE2 Packed-Domain investigation (_mm_mulhi_epu16)
+// Exp103a = 16-pixel AVX2 Scalar Gather Packed-Domain
+// Exp103b = 16-pixel AVX2 Vector Gather Packed-Domain
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -2183,12 +2189,17 @@ Scalar reference implementations:
 	SIMD experiments:
 
 		SSE2  Exp100_Base   ~10.9 - 11.5 sec
+		SSE41 Exp100f       ~10.9 - 11.3 sec
 		SSE2  Exp100a_Apprx ~10.4 - 10.6 sec
 		SSE2  Exp100b_Exact ~10.4 - 10.6 sec
+		SSE2  Exp100d_Mult  ~10.3 - 10.6 sec
 		SSE2  Exp100c_Inter ~10.2 - 10.7 sec
-		SSSE3 Exp102a       ~ 5.5 - 6.0 sec
+		SSE2  Exp100e_MulInt~10.1 - 10.4 sec
+		SSSE3 Exp102a       ~ 5.5 -  6.0 sec
 		SSE2  Exp101a       ~ 4.9 -  5.1 sec
+		AVX2  Exp103a       ~ 4.9 -  5.0 sec
 		SSE2  Exp102b       ~ 4.7 -  4.8 sec
+		AVX2  Exp103b       ~ 2.8 sec
 
 
 SIMD + Gatherer Experiments:
@@ -2282,6 +2293,32 @@ Exp100c_Interleaved:
 		Interleaving does not currently appear
 		to justify the added complexity.
 
+Exp100d_Multiply:
+	SSE2 Traditional Arithmetic 16bit lanes, Multiply via _mm_mulhi_epu16, no need to widen to 32bit lanes, and no need for correction term
+
+	Result:
+		Slightly faster than Exp100b. Not a clear win.
+
+Exp100e_MultiplyInterleaved:
+	SSE2 Traditional Arithmetic interleaved with the Gather vector steps, to see if reducing the live-time for the source vectors can reduce overall cost.
+
+	Result:
+		Comparable to Exp100d_Multiply. Not a clear win. Compiler may already optimize.
+
+Exp100f:
+	SSE4.1 _mm_mullo_epi32() investigation.
+
+	Replaced SSE2 32-bit multiply sequences
+	with native SSE4.1 32-bit multiplication.
+
+	Result:
+		No meaningful improvement.
+
+	Conclusion:
+		The performance limitations of the
+		Wide32 Traditional Arithmetic path
+		do not appear to be caused primarily
+		by the SSE2 multiply implementation.
 
 Exp101a:
 		SSE2 Packed-Domain Arithmetic; read adjacent pixel pairs together.
@@ -2319,6 +2356,53 @@ Exp102b:
 		Modern SIMD multiply appears cheaper
 		than the additional instructions
 		required to avoid multiplication.
+
+Exp103a:
+	AVX2 PackedPair Scalar Gather (AVX2 baseline).
+
+	Doubles gather width and arithmetic width.
+
+	Result:
+		Comparable to Exp102b.
+
+	Conclusion:
+		Simply increasing SIMD width does not
+		materially reduce total execution time.
+
+		Remaining cost appears dominated by
+		scalar transition-table address generation
+		and source-pixel retrieval.
+
+Exp103b:
+	AVX2 PackedPair Vector Gather
+
+	Goal:
+		Replace scalar PackedPair source-pixel loads
+		with AVX2 vector gather instructions.
+
+	Approach:
+		Use _mm256_i32gather_epi32() to gather source
+		pixel pairs from the read buffer.
+
+		Narrow gathered DWORD values to WORDs using:
+
+			_mm256_packus_epi32()
+
+	Results:
+		Exp103a (AVX2 Scalar Gather)  ~5.0 sec
+		Exp103b (AVX2 Vector Gather)  ~2.8 sec
+
+		Approximate improvement:
+			5.0 / 2.8 = 1.79x faster
+
+	Conclusions:
+		Major win.
+
+		AVX2 Gather provides approximately 1.8x
+		improvement over the scalar Gather approach.
+
+		Gather optimization has a much larger impact
+		than widening Arithmetic alone.
 
 
 Key Findings
@@ -2376,8 +2460,13 @@ A denser Gather necessarily means you must transform the data before useful arit
 Current Assessment
 ------------------
 
- Exp102b:
+Exp102b:
 	- Best pure-SSE2 implementation.
+
+Exp103b:
+	- Current AVX2 front-runner.
+	- Best AVX Gather.
+	- Best overall implementation across all instruction sets.
 
 
 Future Investigation
@@ -2480,6 +2569,32 @@ __forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BAD_OVERFLOWS_16bitLanes
 	avg = _mm_srli_epi16(avg, 9);
 
 	return _mm_packus_epi16(avg, avg);
+}
+
+/*
+* ((sum * 127) >> 9)); overflows the 16bit SIMD lanes
+*
+* This is absurdly close to being correct for all 1020 potential values.
+* word_t result = ((sum << 6) - (sum >> 1)) >> 8;
+*
+* Why 1020? Well the maximum pixel value is 255.
+* 4 * 255 == 1020, therefore we only need an operation that produces correct values for the range 0..1020
+*
+* There are only TWO values that are off by one and require subtracting 1 to get the correct value:
+* 129 == 0x81 ==  0b000010000001
+* 641 == 0x281 == 0b001010000001
+*
+* We can test for these two numbers via two equality checks, or a bitmask and one equality check.
+*/
+byte_t decay8_fast_exact(dword_t sum)
+{
+	dword_t result =
+		((sum << 6) - (sum >> 1)) >> 8;
+
+	if ((sum & 0x1FF) == 0x081)
+		--result;
+
+	return (byte_t)result;
 }
 
 __forceinline __m128i SSE2_decay8_fast_exact16(__m128i sum)
@@ -2638,6 +2753,43 @@ __forceinline __m128i Exp100_SSE2_TraditionalMathKernel_BASELINE_Wide32_FastDeca
 	return _mm_packus_epi16(packed16, packed16);
 }
 
+// Better Multiply operation???? _mm_mullo_epi32
+__forceinline __m128i Exp100f_SSE41_TraditionalMathKernel_Wide32Mullo(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+{
+	static const __m128i zero = _mm_setzero_si128();
+	static const __m128i decay = _mm_set1_epi32(127);
+
+	// Sum four source pixels.
+	// Range:
+	//     0 .. 1020
+	//
+	__m128i sum =
+		_mm_add_epi16(
+			_mm_add_epi16(p1, p2),
+			_mm_add_epi16(p3, p4));
+
+	// Expand:
+	// 8x uint16 -> 8x uint32
+	//
+	__m128i sumLo = _mm_unpacklo_epi16(sum, zero);
+	__m128i sumHi = _mm_unpackhi_epi16(sum, zero);
+
+	__m128i prodLo = _mm_mullo_epi32(sumLo, decay);
+	__m128i prodHi = _mm_mullo_epi32(sumHi, decay);
+
+	// DECAY8
+	//
+	prodLo = _mm_srli_epi32(prodLo, 9);
+	prodHi = _mm_srli_epi32(prodHi, 9);
+
+	// 8x uint32 -> 8x uint16
+	//
+	__m128i packed16 = _mm_packs_epi32(prodLo, prodHi);
+
+	// 8x uint16 -> 8x uint8
+	//
+	return _mm_packus_epi16(packed16, packed16);
+}
 
 
 
@@ -2679,6 +2831,27 @@ __forceinline __m128i Exp100b_SSE2_TraditionalMathKernel_WithCorrection16(__m128
 	sum = _mm_add_epi16(sum, p3);
 	sum = _mm_add_epi16(sum, p4);
 	__m128i avg_decay = SSE2_decay8_fast_exact16(sum);
+
+	return _mm_packus_epi16(avg_decay, avg_decay);
+}
+
+// Traditional Arithmetic kernel. Alternative exact DECAY8 formulation
+//
+// Average the four source pixels and apply DECAY8
+// using an alternative instruction _mm_mulhi_epu16
+// which doesn't require a correction term
+__forceinline __m128i Exp100d_SSE2_TraditionalMathKernel_Multiply16(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+{
+	const __m128i decay = _mm_set1_epi16(127);
+
+	__m128i sum = _mm_add_epi16(p1, p2);
+	sum = _mm_add_epi16(sum, p3);
+	sum = _mm_add_epi16(sum, p4);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
 
 	return _mm_packus_epi16(avg_decay, avg_decay);
 }
@@ -2776,6 +2949,39 @@ __forceinline __m128i Exp102b_SSE2_PackedPairMathKernel(__m128i top, __m128i bot
 	return _mm_packus_epi16(avg_decay, avg_decay);
 }
 
+__forceinline __m128i Exp103a_AVX2_PackedPairMathKernel(__m256i top, __m256i bottom)
+{
+	const __m256i lowMask = _mm256_set1_epi16(0x00FF);
+
+	// p1 + p3
+	const __m256i low = _mm256_add_epi16(
+		_mm256_and_si256(top, lowMask),
+		_mm256_and_si256(bottom, lowMask));
+
+	// p2 + p4
+	const __m256i high = _mm256_add_epi16(
+		_mm256_srli_epi16(top, 8),
+		_mm256_srli_epi16(bottom, 8));
+
+	// p1 + p2 + p3 + p4
+	const __m256i sum = _mm256_add_epi16(low, high);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m256i decayScale = _mm256_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m256i avg_decay = _mm256_mulhi_epu16(sum, decayScale);
+
+	// 16 words -> 16 bytes
+	const __m256i result = _mm256_packus_epi16(avg_decay, avg_decay);
+
+	// result = {A, B, C, D, A, B, C, D, E, F, G, H, E, F, G, H}
+	//
+	// permute to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H}
+	__m256i resultPermuted = _mm256_permute4x64_epi64(result, _MM_SHUFFLE(3, 1, 2, 0));
+	__m128i finalPixels = _mm256_castsi256_si128(resultPermuted);
+	return finalPixels;
+}
+
 // Construct an 8-pixel SIMD source vector using scalar
 // gathers and PINSRW.
 //
@@ -2820,6 +3026,113 @@ __forceinline __m128i BitCanvas8::Exp101a_SSE2_PackedPairGather128(const PIXELMA
 		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p2]),
 		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p1]),
 		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p0]));
+}
+
+// Gather 16 packed 16-bit source values.
+//
+// Each word contains two adjacent source pixels,
+// allowing the Packed-Domain arithmetic path to
+// process both pixels simultaneously.
+__forceinline __m256i BitCanvas8::Exp103a_AVX2_PackedPairScalarGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset)
+{
+	const dword_t p0 = lpTransitionTable[destPixelOffset + 0] + rowOffset;
+	const dword_t p1 = lpTransitionTable[destPixelOffset + 1] + rowOffset;
+	const dword_t p2 = lpTransitionTable[destPixelOffset + 2] + rowOffset;
+	const dword_t p3 = lpTransitionTable[destPixelOffset + 3] + rowOffset;
+	const dword_t p4 = lpTransitionTable[destPixelOffset + 4] + rowOffset;
+	const dword_t p5 = lpTransitionTable[destPixelOffset + 5] + rowOffset;
+	const dword_t p6 = lpTransitionTable[destPixelOffset + 6] + rowOffset;
+	const dword_t p7 = lpTransitionTable[destPixelOffset + 7] + rowOffset;
+	const dword_t p8 = lpTransitionTable[destPixelOffset + 8] + rowOffset;
+	const dword_t p9 = lpTransitionTable[destPixelOffset + 9] + rowOffset;
+	const dword_t p10 = lpTransitionTable[destPixelOffset + 10] + rowOffset;
+	const dword_t p11 = lpTransitionTable[destPixelOffset + 11] + rowOffset;
+	const dword_t p12 = lpTransitionTable[destPixelOffset + 12] + rowOffset;
+	const dword_t p13 = lpTransitionTable[destPixelOffset + 13] + rowOffset;
+	const dword_t p14 = lpTransitionTable[destPixelOffset + 14] + rowOffset;
+	const dword_t p15 = lpTransitionTable[destPixelOffset + 15] + rowOffset;
+
+	return _mm256_set_epi16(
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p15]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p14]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p13]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p12]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p11]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p10]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p9]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p8]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p7]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p6]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p5]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p4]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p3]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p2]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p1]),
+		*reinterpret_cast<const word_t*>(&m_pReadBuffer8[p0]));
+}
+
+// Gather 16 packed 16-bit source values.
+//
+// Each word contains two adjacent source pixels,
+// allowing the Packed-Domain arithmetic path to
+// process both pixels simultaneously.
+__forceinline __m256i BitCanvas8::Exp103b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset)
+{
+	//
+	// Load 16 transition-table offsets.
+	//
+	__m256i byteOffsets0 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&lpTransitionTable[destPixelOffset]));
+	__m256i byteOffsets1 = _mm256_load_si256(reinterpret_cast<const __m256i*>(&lpTransitionTable[destPixelOffset + 8]));
+
+	if (rowOffset)
+	{
+		const __m256i row = _mm256_set1_epi32(rowOffset);
+		byteOffsets0 = _mm256_add_epi32(byteOffsets0, row);
+		byteOffsets1 = _mm256_add_epi32(byteOffsets1, row);
+	}
+
+	//
+	// Second stage:
+	// Gather packed WORDs from the read buffer.
+	// Unfortunately, 32bits is the smallest unit we can read.
+	//
+	// Gather 8 DWORDs at a time.
+	//
+	const int* readBuffer32 = reinterpret_cast<const int*>(m_pReadBuffer8);
+	__m256i gathered0 = _mm256_i32gather_epi32(readBuffer32, byteOffsets0, 1);
+	__m256i gathered1 = _mm256_i32gather_epi32(readBuffer32, byteOffsets1, 1);
+
+	//
+	// Need to keep only the low 16 bits
+	// from each gathered DWORD.
+	//
+	const __m256i low16Mask = _mm256_set1_epi32(0x0000FFFF);
+
+	gathered0 = _mm256_and_si256(gathered0, low16Mask);
+	gathered1 = _mm256_and_si256(gathered1, low16Mask);
+
+	//
+	// Third Stage, Convert:
+	//
+	//   8 dwords
+	//   +
+	//   8 dwords
+	//
+	// into:
+	//
+	//   16 packed words
+	//
+	// suitable for Exp103a_AVX2_PackedPairMathKernel().
+	//
+
+	__m256i packedWords = _mm256_packus_epi32(gathered0, gathered1);
+
+	//
+	// Fix lane ordering.
+	//
+	packedWords = _mm256_permute4x64_epi64(packedWords, 0xD8);
+
+	return packedWords;
 }
 
 // Scalar cleanup path.
@@ -2993,6 +3306,120 @@ void BitCanvas8::DoDelta_SSE2_experiment100c(const PIXELMAP* lpTransitionTable)
 	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
+// Alternative exact DECAY8 formulation.
+// Faster variant, arrives at the EXACTLY correct value.
+// Avoid widening the 16bit lanes using clever math to ensure no overflow/underflow.
+// Fortunately, we can use a single instruction to multiply and take the upper byte.
+// No need for "correction" anymore.
+void BitCanvas8::DoDelta_SSE2_experiment100d(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		const __m128i result = Exp100d_SSE2_TraditionalMathKernel_Multiply16(p1, p2, p3, p4);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Alternative exact DECAY8 formulation. Interleaved Gather and Arithmetic.
+// Faster variant, arrives at the EXACTLY correct value.
+// Avoid widening the 16bit lanes using clever math to ensure no overflow/underflow.
+// Fortunately, we can use a single instruction to multiply and take the upper byte.
+// No need for "correction" anymore.
+void BitCanvas8::DoDelta_SSE2_experiment100e(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		//const __m128i result = Exp100d_SSE2_TraditionalMathKernel_Multiply16(p1, p2, p3, p4);
+
+		const __m128i decay = _mm_set1_epi16(127);
+
+		__m128i sum = _mm_add_epi16(p1, p2);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		sum = _mm_add_epi16(sum, p3);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		sum = _mm_add_epi16(sum, p4);
+
+		// floor(sum * 127 / 512), using the high 16 bits of the product.
+		// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+		const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
+		const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
+
+		const __m128i result = _mm_packus_epi16(avg_decay, avg_decay);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Faster variant, arrives at the EXACTLY correct value.
+// Avoid widening the 16bit lanes using clever math to ensure no overflow/underflow.
+// Fortunately, we can use a single instruction to multiply and take the upper byte.
+// No need for "correction" anymore.
+void BitCanvas8::DoDelta_SSE41_experiment100f(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 8 BYTE lanes
+	//
+	while (destPixelOffset + 7 < m_dwBufferLength)
+	{
+		const __m128i p1 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 0);
+		const __m128i p2 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 0);
+		const __m128i p3 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 0, 1);
+		const __m128i p4 = Exp100_SSE2_TraditionalGather128(lpTransitionTable, destPixelOffset, 1, 1);
+		const __m128i result = Exp100f_SSE41_TraditionalMathKernel_Wide32Mullo(p1, p2, p3, p4);
+
+		_mm_storel_epi64(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
 // Packed-Domain Arithmetic kernel.
 //
 // Operates on pairs of adjacent pixels packed into
@@ -3071,6 +3498,62 @@ void BitCanvas8::DoDelta_SSE2_experiment102b(const PIXELMAP* lpTransitionTable)
 			result);
 
 		destPixelOffset += 8;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// AVX2 Baseline, regular gather, wider MathKernel
+void BitCanvas8::DoDelta_AVX2_experiment103a(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 16 BYTE lanes
+	//
+	while (destPixelOffset + 15 < m_dwBufferLength)
+	{
+		const __m256i top = Exp103a_AVX2_PackedPairScalarGather256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i bottom = Exp103a_AVX2_PackedPairScalarGather256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m128i result = Exp103a_AVX2_PackedPairMathKernel(top, bottom);
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// AVX2 Gather, wider MathKernel
+void BitCanvas8::DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 16 BYTE lanes
+	//
+	while (destPixelOffset + 15 < m_dwBufferLength)
+	{
+		const __m256i top = Exp103b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i bottom = Exp103b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m128i result = Exp103a_AVX2_PackedPairMathKernel(top, bottom);
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 16;
 	}
 
 	//
@@ -4151,7 +4634,7 @@ void    BitCanvas16::DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTI
 /****************************************************************************
  *
  * BitCanvas16::DoDelta SIMD Experiments and Benchmark Notes
- * ====================================
+ * ==========================================================
  *
  * Motivation
  * ----------
@@ -8854,6 +9337,50 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 
 
 
+/****************************************************************************
+
+BitCanvas32::DoDelta SIMD Experiments and Benchmark Notes
+=========================================================
+
+Motivation
+----------
+
+The goal of these experiments is to determine whether SIMD can
+outperform the existing MMX implementation:
+
+		BitCanvas32::DoDelta_MMX_Assembly()
+
+	while remaining bit-for-bit equivalent to the baseline algorithm.
+
+
+Benchmark Results
+-----------------
+
+20,000 iteration benchmark:
+
+Scalar reference implementations:
+
+Experiment Summary
+------------------
+
+
+Key Findings
+------------
+
+
+
+Current Assessment
+------------------
+
+ MMX:
+	- Best pure-MMX implementation.
+
+
+Future Investigation
+--------------------
+
+
+ ****************************************************************************/
 #ifndef ASM_DECAY
 #define ASM_DECAY(d) 0x##d##d##d##d
 #endif

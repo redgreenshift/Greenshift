@@ -77,6 +77,8 @@ namespace GreenshiftUnitTest
 		void (BitCanvas32::*)(const PIXELMAP*);
 	using MathKernel128_2 = __m128i (*)(__m128i, __m128i);
 	using MathKernel128_4 = __m128i (*)(__m128i, __m128i, __m128i, __m128i);
+	using MathKernel256_2 = __m256i (*)(__m256i, __m256i);
+	using MathKernel256_4 = __m256i (*)(__m256i, __m256i, __m256i, __m256i);
 
 	TEST_CLASS(BitCanvasUT)
 	{
@@ -1282,6 +1284,75 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100d_Multiply)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100d(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp100e_MultiplyInterleaved)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100e(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkSSE41Exp100f_Wide32Multiply)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit SSE41_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE41_experiment100f(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 		TEST_METHOD(TestBitCanvas8BenchmarkSSE2Exp101a)
 		{
 			MTRand rng(c_seed);
@@ -1347,6 +1418,52 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment102b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp103a)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103a(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp103b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103b(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2275,8 +2392,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"Optimized Grayscale",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_BASELINE, // Decay 127
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED); // Decay 127
+				&BitCanvas8::DoDelta_cpp_BASELINE,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED);
 		}
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100_White)
@@ -2284,8 +2401,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100_Varied)
@@ -2293,8 +2410,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100_BASELINE);
 		}
 
 		// No validation tests for DoDelta_SSE2_experiment100a, as it intentionally uses an Approximation: Exp100a_SSE2_MathKernel_NoCorrection16
@@ -2304,8 +2421,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100b, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100b,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100b_Varied)
@@ -2313,8 +2430,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100b); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100b);
 		}
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100c_White)
@@ -2322,8 +2439,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100c, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100c,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp100c_Varied)
@@ -2331,8 +2448,44 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment100c); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100c);
+		}
+
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100d_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100d,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE2_Exp100d_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment100d);
+		}
+
+		TEST_METHOD(TestBitCanvas8_SSE41_Exp100f_White)
+		{
+			VerifyEquivalence8(
+				L"SSE2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE41_experiment100f,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_SSE41_Exp100f_Varied)
+		{
+			VerifyEquivalence8(
+				L"SSE2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE41_experiment100f);
 		}
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp101a_White)
@@ -2340,8 +2493,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment101a, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment101a,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp101a_Varied)
@@ -2349,8 +2502,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment101a); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment101a);
 		}
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp102a_White)
@@ -2358,8 +2511,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSSE3_experiment102a, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSSE3_experiment102a,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp102a_Varied)
@@ -2367,8 +2520,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSSE3_experiment102a); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSSE3_experiment102a);
 		}
 
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp102b_White)
@@ -2376,8 +2529,8 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 White",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment102b, // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment102b,
 				true /*white*/);
 		}
 		TEST_METHOD(TestBitCanvas8_SSE2_Exp102b_Varied)
@@ -2385,8 +2538,44 @@ namespace GreenshiftUnitTest
 			VerifyEquivalence8(
 				L"SSE2 Varied",
 				SetGrayscalePalette,
-				&BitCanvas8::DoDelta_cpp_OPTIMIZED, // Decay 127
-				&BitCanvas8::DoDelta_SSE2_experiment102b); // Decay 127
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_SSE2_experiment102b);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103a_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103a,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103a_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103a);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103b_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103b,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103b_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103b);
 		}
 
 		/************************************
@@ -3334,6 +3523,32 @@ namespace GreenshiftUnitTest
 				src78[index]);
 		}
 
+		__m256i RunKernel256(
+			MathKernel256_2 kernel,
+			size_t index,
+			const __m256i* src12,
+			const __m256i* src34,
+			const __m256i*,
+			const __m256i*)
+		{
+			return kernel(src12[index], src34[index]);
+		}
+
+		__m256i RunKernel256(
+			MathKernel256_4 kernel,
+			size_t index,
+			const __m256i* src12,
+			const __m256i* src34,
+			const __m256i* src56,
+			const __m256i* src78)
+		{
+			return kernel(
+				src12[index],
+				src34[index],
+				src56[index],
+				src78[index]);
+		}
+
 
 		template<typename KernelA, typename KernelB>
 		void BenchmarkMathKernels128(
@@ -3463,6 +3678,15 @@ namespace GreenshiftUnitTest
 				Exp100_SSE2_TraditionalMathKernel_BAD_OVERFLOWS_16bitLanes,
 				"Exp100b_Trad16_FastDecay8_Approx",
 				Exp100a_SSE2_TraditionalMathKernel_NoCorrection16);
+		}
+
+		TEST_METHOD(KernelMathBenchmark128_8bit_Trad16Multiply_v_PackedPairMultiply)
+		{
+			BenchmarkMathKernels128(
+				"Exp100d_Trad16Multiply",
+				Exp100d_SSE2_TraditionalMathKernel_Multiply16,
+				"Exp102b_PackedPair_Multiply16",
+				Exp102b_SSE2_PackedPairMathKernel);
 		}
 
 		/************************************
