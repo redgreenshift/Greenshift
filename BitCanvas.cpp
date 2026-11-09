@@ -2489,6 +2489,27 @@ __forceinline __m128i SSE2_decay8_fast_exact16(__m128i sum)
 	return avg_decay;
 }
 
+__forceinline __m128i SSE2_decay8_fast_exact32(__m128i sum)
+{
+	// FastDecay8 (NOTE: this is correct for 1019/1021 values, so we need to apply a correction later)
+	__m128i sum_l6 = _mm_slli_epi32(sum, 6);
+	__m128i sum_r1 = _mm_srli_epi32(sum, 1);
+	__m128i sum_decay = _mm_sub_epi32(sum_l6, sum_r1);
+	__m128i avg_decay = _mm_srli_epi32(sum_decay, 8);
+
+	// Apply a correction to fix up the 2 values that end up wrong using the FastDecay8 algorithm
+	const __m128i mask9Bits = _mm_set1_epi32(0x01FF);
+	const __m128i pattern = _mm_set1_epi32(0x0081);
+	const __m128i one = _mm_set1_epi32(1);
+	__m128i correctionMask = _mm_and_si128(sum, mask9Bits);
+	correctionMask = _mm_cmpeq_epi32(correctionMask, pattern);
+	correctionMask = _mm_and_si128(correctionMask, one);
+	avg_decay = _mm_sub_epi32(avg_decay, correctionMask);
+
+	return avg_decay;
+}
+
+
 // Traditional Arithmetic kernel.
 //
 // Average the four source pixels and apply DECAY8.
