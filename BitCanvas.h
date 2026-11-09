@@ -848,8 +848,8 @@ protected:
 	virtual void			DoDelta_x86(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_SSE2( const PIXELMAP* lpTransitionTable ) override;
-	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
+	virtual void			DoDelta_AVX512(const PIXELMAP* lpTransitionTable) override;
 
 	// IMPLEMENTATIONS:
 	void					DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable); // Reference
