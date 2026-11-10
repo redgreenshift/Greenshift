@@ -877,6 +877,9 @@ protected:
 	void					DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable);
 	__forceinline __m256i	Exp103b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
 
+	void					DoDelta_AVX512_experiment104a(const PIXELMAP* lpTransitionTable);
+	__forceinline __m512i	Exp104a_AVX512_PackedPairVectorGather512(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;

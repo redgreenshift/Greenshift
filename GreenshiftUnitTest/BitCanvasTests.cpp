@@ -1468,6 +1468,29 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX512Exp104a)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX512_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104a(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 
 		/// <summary>
 		/// Performs a drift analysis by simulating the lifetime of 5-bit and 6-bit values under repeated averaging, then logs the average lifetimes and their ratio.
@@ -2576,6 +2599,24 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
 				&BitCanvas8::DoDelta_AVX2_experiment103b);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX512_Exp104a_White)
+		{
+			VerifyEquivalence8(
+				L"AVX512 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX512_experiment104a,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX512_Exp104a_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX512 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX512_experiment104a);
 		}
 
 		/************************************

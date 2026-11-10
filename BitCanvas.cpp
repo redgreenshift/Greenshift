@@ -2157,6 +2157,7 @@ Relationship Summary
 // Exp102b = 8-pixel SSE2 Packed-Domain investigation (_mm_mulhi_epu16)
 // Exp103a = 16-pixel AVX2 Scalar Gather Packed-Domain
 // Exp103b = 16-pixel AVX2 Vector Gather Packed-Domain
+// Exp104a = 32-pixel AVX512 Vector Gather Packed-Domain
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -2188,18 +2189,19 @@ Scalar reference implementations:
 
 	SIMD experiments:
 
-		SSE2  Exp100_Base   ~10.9 - 11.5 sec
-		SSE41 Exp100f       ~10.9 - 11.3 sec
-		SSE2  Exp100a_Apprx ~10.4 - 10.6 sec
-		SSE2  Exp100b_Exact ~10.4 - 10.6 sec
-		SSE2  Exp100d_Mult  ~10.3 - 10.6 sec
-		SSE2  Exp100c_Inter ~10.2 - 10.7 sec
-		SSE2  Exp100e_MulInt~10.1 - 10.4 sec
-		SSSE3 Exp102a       ~ 5.5 -  6.0 sec
-		SSE2  Exp101a       ~ 4.9 -  5.1 sec
-		AVX2  Exp103a       ~ 4.9 -  5.0 sec
-		SSE2  Exp102b       ~ 4.7 -  4.8 sec
-		AVX2  Exp103b       ~ 2.8 sec
+		SSE2   Exp100_Base   ~10.9 - 11.5 sec
+		SSE41  Exp100f       ~10.9 - 11.3 sec
+		SSE2   Exp100a_Apprx ~10.4 - 10.6 sec
+		SSE2   Exp100b_Exact ~10.4 - 10.6 sec
+		SSE2   Exp100d_Mult  ~10.3 - 10.6 sec
+		SSE2   Exp100c_Inter ~10.2 - 10.7 sec
+		SSE2   Exp100e_MulInt~10.1 - 10.4 sec
+		SSSE3  Exp102a       ~ 5.5 -  6.0 sec
+		SSE2   Exp101a       ~ 4.9 -  5.1 sec
+		AVX2   Exp103a       ~ 4.7 -  5.0 sec
+		SSE2   Exp102b       ~ 4.7 -  4.8 sec
+		AVX512 Exp104a       ~ 3.0 -  3.2 sec
+		AVX2   Exp103b       ~ 2.8 -  3.2 sec
 
 
 SIMD + Gatherer Experiments:
@@ -2403,6 +2405,12 @@ Exp103b:
 
 		Gather optimization has a much larger impact
 		than widening Arithmetic alone.
+
+Exp104a:
+	AVX512 Vector Gather Packed-Domain
+
+	Result:
+		Slightly slower than Exp103b.
 
 
 Key Findings
@@ -2982,6 +2990,35 @@ __forceinline __m128i Exp103a_AVX2_PackedPairMathKernel(__m256i top, __m256i bot
 	return finalPixels;
 }
 
+__forceinline __m256i Exp104a_AVX512_PackedPairMathKernel(__m512i top, __m512i bottom)
+{
+	const __m512i lowMask = _mm512_set1_epi16(0x00FF);
+
+	// p1 + p3
+	const __m512i low = _mm512_add_epi16(
+		_mm512_and_si512(top, lowMask),
+		_mm512_and_si512(bottom, lowMask));
+
+	// p2 + p4
+	const __m512i high = _mm512_add_epi16(
+		_mm512_srli_epi16(top, 8),
+		_mm512_srli_epi16(bottom, 8));
+
+	// p1 + p2 + p3 + p4
+	const __m512i sum = _mm512_add_epi16(low, high);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m512i decayScale = _mm512_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m512i avg_decay = _mm512_mulhi_epu16(sum, decayScale);
+
+	// 32 words -> 32 bytes
+	const __m512i result = _mm512_packus_epi16(avg_decay, avg_decay);
+
+	const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
+	return _mm512_castsi512_si256(_mm512_permutexvar_epi64(permute, result));
+}
+
 // Construct an 8-pixel SIMD source vector using scalar
 // gathers and PINSRW.
 //
@@ -3130,7 +3167,77 @@ __forceinline __m256i BitCanvas8::Exp103b_AVX2_PackedPairVectorGather256(const P
 	//
 	// Fix lane ordering.
 	//
+	// Convert:
+	// 0 1 2 3 | 8 9 A B | 4 5 6 7 | C D E F
+	//
+	// into:
+	// 0 1 2 3 | 4 5 6 7 | 8 9 A B | C D E F
 	packedWords = _mm256_permute4x64_epi64(packedWords, 0xD8);
+
+	return packedWords;
+}
+
+// Gather 32 packed 16-bit source values.
+//
+// Each word contains two adjacent source pixels,
+// allowing the Packed-Domain arithmetic path to
+// process both pixels simultaneously.
+__forceinline __m512i BitCanvas8::Exp104a_AVX512_PackedPairVectorGather512(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset)
+{
+	//
+	// Load 32 transition-table offsets.
+	//
+	__m512i byteOffsets0 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&lpTransitionTable[destPixelOffset]));
+	__m512i byteOffsets1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&lpTransitionTable[destPixelOffset + 16]));
+
+	if (rowOffset)
+	{
+		const __m512i row = _mm512_set1_epi32(rowOffset);
+		byteOffsets0 = _mm512_add_epi32(byteOffsets0, row);
+		byteOffsets1 = _mm512_add_epi32(byteOffsets1, row);
+	}
+
+	//
+	// Second stage:
+	// Gather packed WORDs from the read buffer.
+	// Unfortunately, 32bits is the smallest unit we can read.
+	//
+	// Gather 8 DWORDs at a time.
+	//
+	const int* readBuffer32 = reinterpret_cast<const int*>(m_pReadBuffer8);
+	__m512i gathered0 = _mm512_i32gather_epi32(byteOffsets0, readBuffer32, 1);
+	__m512i gathered1 = _mm512_i32gather_epi32(byteOffsets1, readBuffer32, 1);
+
+	//
+	// Need to keep only the low 16 bits
+	// from each gathered DWORD.
+	//
+	const __m512i low16Mask = _mm512_set1_epi32(0x0000FFFF);
+
+	gathered0 = _mm512_and_si512(gathered0, low16Mask);
+	gathered1 = _mm512_and_si512(gathered1, low16Mask);
+
+	//
+	// Third Stage, Convert:
+	//
+	//   8 dwords
+	//   +
+	//   8 dwords
+	//
+	// into:
+	//
+	//   16 packed words
+	//
+	// suitable for Exp103a_AVX2_PackedPairMathKernel().
+	//
+
+	__m512i packedWords = _mm512_packus_epi32(gathered0, gathered1);
+
+	//
+	// Fix lane ordering.
+	//
+	const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
+	packedWords = _mm512_permutexvar_epi64(permute, packedWords);
 
 	return packedWords;
 }
@@ -3554,6 +3661,34 @@ void BitCanvas8::DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable)
 			result);
 
 		destPixelOffset += 16;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// AVX512 Gather, wider MathKernel
+void BitCanvas8::DoDelta_AVX512_experiment104a(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 32 BYTE lanes
+	//
+	while (destPixelOffset + 31 < m_dwBufferLength)
+	{
+		const __m512i top = Exp104a_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, 0);
+		const __m512i bottom = Exp104a_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i result = Exp104a_AVX512_PackedPairMathKernel(top, bottom);
+
+		_mm256_store_si256(
+			reinterpret_cast<__m256i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 32;
 	}
 
 	//
