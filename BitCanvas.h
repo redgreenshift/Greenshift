@@ -867,18 +867,25 @@ protected:
 	__forceinline void		Exp100_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
 
 	void					DoDelta_SSE2_experiment101a(const PIXELMAP* lpTransitionTable);
-	__forceinline __m128i	Exp101a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+	__forceinline __m128i	Exp101a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
 
 	void					DoDelta_SSSE3_experiment102a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment102b(const PIXELMAP* lpTransitionTable);
 
 	void					DoDelta_AVX2_experiment103a(const PIXELMAP* lpTransitionTable);
-	__forceinline __m256i	Exp103a_AVX2_PackedPairScalarGather256(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+	__forceinline __m256i	Exp103a_AVX2_PackedPairScalarGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
 	void					DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable);
-	__forceinline __m256i	Exp103b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+	__forceinline __m256i	Exp103b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
 
 	void					DoDelta_AVX512_experiment104a(const PIXELMAP* lpTransitionTable);
 	__forceinline __m512i	Exp104a_AVX512_PackedPairVectorGather512(const PIXELMAP* lpTransitionTable, dword_t pixelOffset, dword_t rowOffset);
+
+							// AVX2 Gather, UNPACK hi/lo and HADD
+	__forceinline __m256i	Exp106a_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
+	void					DoDelta_AVX2_experiment106a(const PIXELMAP* lpTransitionTable);
+
+	__forceinline __m256i	Exp106b_AVX2_PackedPairVectorGather256(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
+	void					DoDelta_AVX2_experiment106b(const PIXELMAP* lpTransitionTable);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

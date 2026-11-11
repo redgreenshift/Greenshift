@@ -1491,6 +1491,51 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp106a)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106a(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp106b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
 
 		/// <summary>
 		/// Performs a drift analysis by simulating the lifetime of 5-bit and 6-bit values under repeated averaging, then logs the average lifetimes and their ratio.
@@ -2617,6 +2662,42 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
 				&BitCanvas8::DoDelta_AVX512_experiment104a);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106a_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106a,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106a_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106a);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106b_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106b,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106b_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106b);
 		}
 
 		/************************************
