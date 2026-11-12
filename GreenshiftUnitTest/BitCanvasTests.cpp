@@ -1491,6 +1491,29 @@ namespace GreenshiftUnitTest
 				});
 		}
 
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX512Exp104b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX512_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
 		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp106a)
 		{
 			MTRand rng(c_seed);
@@ -1533,6 +1556,29 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106b(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas8BenchmarkAVX2Exp106c)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas8;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"8bit AVX2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106c(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2646,6 +2692,24 @@ namespace GreenshiftUnitTest
 				&BitCanvas8::DoDelta_AVX2_experiment103b);
 		}
 
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103c_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103c,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp103c_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment103c);
+		}
+
 		TEST_METHOD(TestBitCanvas8_AVX512_Exp104a_White)
 		{
 			VerifyEquivalence8(
@@ -2662,6 +2726,24 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
 				&BitCanvas8::DoDelta_AVX512_experiment104a);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX512_Exp104b_White)
+		{
+			VerifyEquivalence8(
+				L"AVX512 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX512_experiment104b,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX512_Exp104b_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX512 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX512_experiment104b);
 		}
 
 		TEST_METHOD(TestBitCanvas8_AVX2_Exp106a_White)
@@ -2698,6 +2780,24 @@ namespace GreenshiftUnitTest
 				SetGrayscalePalette,
 				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
 				&BitCanvas8::DoDelta_AVX2_experiment106b);
+		}
+
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106c_White)
+		{
+			VerifyEquivalence8(
+				L"AVX2 White",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106c,
+				true /*white*/);
+		}
+		TEST_METHOD(TestBitCanvas8_AVX2_Exp106c_Varied)
+		{
+			VerifyEquivalence8(
+				L"AVX2 Varied",
+				SetGrayscalePalette,
+				&BitCanvas8::DoDelta_cpp_OPTIMIZED,
+				&BitCanvas8::DoDelta_AVX2_experiment106c);
 		}
 
 		/************************************
@@ -3728,6 +3828,72 @@ namespace GreenshiftUnitTest
 			} sink;
 
 			_mm_store_si128(&sink.pixel128, accumulator);
+
+			const std::string message = std::format(
+				"{}: {} ms, {}: {} ms\n",
+				nameA, timeA, nameB, timeB);
+
+			Logger::WriteMessage(message.c_str());
+
+			Assert::AreNotEqual(0u, sink.pixel32, L"Prevent optimization");
+		}
+
+		template<typename KernelA, typename KernelB>
+		void BenchmarkMathKernels256(
+			const char* nameA,
+			KernelA kernelA,
+			const char* nameB,
+			KernelB kernelB)
+		{
+			constexpr size_t kInputCount = 4096;
+#if GS_LONG_BENCHMARKS
+			constexpr size_t kIterations = 4000000000ULL;
+#else
+			constexpr size_t kIterations = 1000000ULL;
+#endif
+
+			alignas(32) __m256i src12[kInputCount];
+			alignas(32) __m256i src34[kInputCount];
+			alignas(32) __m256i src56[kInputCount];
+			alignas(32) __m256i src78[kInputCount];
+
+			MTRand rng(12345);
+			for (size_t i = 0; i < kInputCount; ++i)
+			{
+				src12[i] = _mm256_set1_epi32(rng.randInt());
+				src34[i] = _mm256_set1_epi32(rng.randInt());
+				src56[i] = _mm256_set1_epi32(rng.randInt());
+				src78[i] = _mm256_set1_epi32(rng.randInt());
+			}
+
+			__m256i accumulator = _mm256_setzero_si256();
+
+			auto benchmark = [&](auto kernel)
+				{
+					timer.Start();
+
+					for (size_t i = 0; i < kIterations; ++i)
+					{
+						const size_t index = i & (kInputCount - 1);
+						const __m256i result = RunKernel256(
+							kernel, index, src12, src34, src56, src78);
+						accumulator = _mm256_add_epi16(accumulator, result);
+					}
+
+					timer.Stop();
+					return timer.StoppedMilliseconds();
+				};
+
+			const value_t timeA = benchmark(kernelA);
+			const value_t timeB = benchmark(kernelB);
+
+			union
+			{
+				__m256i pixel256;
+				dword_t pixel32;
+			} sink;
+
+			_mm256_store_si256(&sink.pixel256, accumulator);
 
 			const std::string message = std::format(
 				"{}: {} ms, {}: {} ms\n",

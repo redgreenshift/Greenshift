@@ -1708,12 +1708,12 @@ void BitCanvas8::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas8::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment103b(lpTransitionTable);
+	DoDelta_AVX2_experiment106c(lpTransitionTable);
 }
 
 void BitCanvas8::DoDelta_AVX512(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_AVX2_experiment103b(lpTransitionTable);
+	DoDelta_AVX2(lpTransitionTable);
 }
 
 
@@ -2157,8 +2157,9 @@ Relationship Summary
 // Exp102b = 8-pixel SSE2 PackedPair investigation (_mm_mulhi_epu16)
 // Exp103a = 16-pixel AVX2 Scalar Gather PackedPair
 // Exp103b = 16-pixel AVX2 Vector Gather PackedPair (Mask + Shift + ADD)
+// Exp103c = 16-pixel AVX2 Vector Gather PackedPair (Mask + Shift + ADD) Permutation Elimination
 // Exp104a = 32-pixel AVX512 Vector Gather PackedPair
-// Exp104b: = 32-pixel AVX512 Vector Gather -> ByteReorder -> HADD Arithmetic
+// Exp104b = 32-pixel AVX512 Vector Gather NO PERMUTE -> Arithmetic Bytewise PERMUTE to finalResult (Requires AVX-512VBMI)
 // _mm256_shuffle_epi8 -- byte lane shuffle
 //_mm512_shuffle_epi8 -- byte lane shuffle
 //_mm512_permutexvar_epi8 -- byte lane permutation(same or different cost ? ? ) // Requires AVX-512VBMI
@@ -2168,6 +2169,11 @@ Relationship Summary
 //What does `_mm512_shuffle_epi8` do ? Can rearrange any bytes * within * each of the four 128bit lanes.
 //_mm512_permutexvar_epi8 allows full rearrangement.
 //
+// Skipped/Abandoned the Exp105 line (requires lower pixels per-iteration)
+// Exp105a = 8-pixel AVX2 Gather+permute to 0x0A0B0C0D'0E0F0G0H, HADD (_mm_hadd_epi16)
+// Exp105b = 16-pixel AVX2 Gather+permute to 0x0A0B0C0D'0E0F0G0H, HADD
+//
+// Exp 106 -- the Permutation Elimination investigation line
 // Exp106a = 16-pixel AVX2 Gather + two permutes, UNPACK hi/lo and HADD (one permute)
 // Exp106b = 16-pixel AVX2 Gather + zero permutes, UNPACK hi/lo and HADD (two permutes)
 // Exp106c = 16-pixel AVX2 Gather + zero permutes, UNPACK hi/lo and HADD (can we avoid the permutes?)
@@ -2216,10 +2222,13 @@ Scalar reference implementations:
 
 SIMD + Gatherer Experiments:
 
-		AVX512 Exp104a       ~ 3.0 -  3.2 sec
+		AVX512 Exp104a       ~ 2.9 -  3.2 sec
+		AVX512 Exp104b       ~ 2.9 -  3.2 sec
 		AVX2   Exp103b       ~ 2.8 -  3.2 sec
-		AVX2   Exp106a       ~ 2.7 -  3.0 sec
-		AVX2   Exp106b       ~ 2.7 -  2.9 sec
+		AVX2   Exp106a       ~ 2.7 -  3.2 sec
+		AVX2   Exp103c       ~ 2.8 -  3.0 sec
+		AVX2   Exp106b       ~ 2.7 -  3.0 sec
+		AVX2   Exp106c       ~ 2.7 -  3.0 sec
 
 
 Experiment Summary
@@ -2421,12 +2430,63 @@ Exp103b:
 		Gather optimization has a much larger impact
 		than widening Arithmetic alone.
 
+Exp103c:
+	Permutation Elimination -- Apply the Exp106c
+	permutation reduction technique to Exp103b,
+	to remove two Gather-stage permutes.
+
+	Result:
+		Performance remained comparable to Exp103b.
+
 Exp104a:
 	AVX512 Vector Gather PackedPair
 
 	Result:
 		Slightly slower than Exp103b.
 
+Exp104b: -- ARCHIVED
+	AVX512 one Arithmetic Bytewise-Permute, replacing PACKUS and Gather Permute(s)
+
+	Goal:
+		Investigate whether AVX512 byte-level permutation
+		can replace the existing output reordering
+		sequence.
+
+	Result:
+		Slightly slower than Exp103b.
+
+		No measurable performance improvement was
+		observed relative to Exp104a.
+
+		AVX512 implementations remain performance-
+		competitive with AVX2 but do not outperform
+		the current AVX2 leaders.
+
+	Notes:
+		Validation was not completed because the
+		correct AVX512 byte-permutation ordering
+		was not derived.
+
+		Benchmark measurements were nevertheless
+		collected because the incorrect permutation
+		occurs after the Arithmetic stage and should
+		not materially affect the amount of work
+		performed by the hot path.
+
+		If AVX512 investigation resumes in the future,
+		deriving the correct permutation would be
+		required before promoting the experiment.
+
+Exp105a: -- SKIPPED/ABANDONED
+	AVX2 Vector Gather PackedPair - HADD
+
+	Result:
+		Abandoned this line, because we investigated
+		horizontal add in another experiment, which
+		didn't require reordering the gathered pixels,
+		therefore this experiment would incur more runtime
+		cost, and necessarily lower pixel throughput
+		per-iteration, therefore less interesting to pursue.
 
 Exp106a:
 	AVX2 Unpacked Arithmetic
@@ -2468,6 +2528,34 @@ Exp106b:
 	Result:
 		Slightly faster than Exp106a.
 		Successfully traded 2 permute operations for 1 permute operation.
+
+Exp106c:
+	AVX2 Unpacked Arithmetic -- reduce the number of required permute operations
+
+	Goal:
+		Determine whether PackedPair permutations can
+		be postponed or eliminated.
+
+		Exp106a:
+			Replace mask/shift arithmetic with
+			unpack + horizontal-add arithmetic.
+
+		Exp106b:
+			Demonstrate that Gather-stage permutations
+			can be deferred.
+
+		Exp106c:
+			Demonstrate that Gather-stage permutations
+			can be eliminated entirely by replacing the
+			final pack/permute sequence with a single
+			permutevar operation.
+
+	Result:
+		Performance remained comparable to Exp106a and Exp106b.
+		Reduced permutation count.
+
+		The same technique could be applied to Exp103b.
+
 
 Key Findings
 ------------
@@ -2521,17 +2609,35 @@ For BitCanvas8, 16bit lanes IS the most dense Arithmetic width we can use.
 A denser Gather necessarily means you must transform the data before useful arithmetic can occur.
 
 
+------------------------------------------------------------------------------
 Performance Floor (a.k.a. what is the lowest bound for speed of 8bit mode vs 16bit mode?):
------------------
+------------------------------------------------------------------------------
 
-	Ideal BitCanvas8:
-		~50% of BitCanvas16
+	Ideal BitCanvas8 would be ~50% of BitCanvas16, reading half the data.
+
+		Given that GATHER costs dominate, then we can approximate the fastest
+		we could make BitCanvas8 relative to BitCanvas16 is probably around 50%.
 
 	Actual BitCanvas8:
 		>50%
 
-	because:
-		gather overhead w.r.t. discarded data -- AVX gather REQUIRES reading 32bit values, but we only use 16bit PackedPairs, therefore 50% of the read is "wasted"
+		because of gather overhead w.r.t. discarded data.
+
+		AVX Gather must fetch 32-bit values.
+
+		BitCanvas8 PackedPair consumes only 16 bits of each value.
+
+		Therefore BitCanvas8 inherently discards
+		approximately half of gathered data.
+
+		This places a lower bound on achievable
+		efficiency relative to BitCanvas16.
+
+		AVX Vector Gather **IS** faster than Scalar Gather,
+		therefore it's worth the extra overhead, because
+		it's still lower than the alternative gather strategy.
+		However, the higher bit depths don't have this extra overhead,
+		so 8-bit may never be able to outperform (relative) to the expected performance floor.
 
 	Current best:
 		2.8 sec versus 3.8 sec, which means BitCanvas8's best is currently ~73.68% of BitCanvas16's best.
@@ -2545,7 +2651,7 @@ Current Assessment
 Exp102b:
 	- Best pure-SSE2 implementation.
 
-Exp103b:
+Exp106c:
 	- Current AVX2 front-runner.
 	- Best AVX Gather.
 	- Best overall implementation across all instruction sets.
@@ -2623,8 +2729,12 @@ Later Technology Tier investigations:
 	- Gather/Arithmetic interleaving (Traditional 8bit Gather + 16bit lane Arithmetic masked)
 	- Though I'll probably prune all the Dense Gather investigation, because BitCanvas8 Dense Gather != BitCanvas8 Arithmetic representation
 		you must transform the data before useful arithmetic can occur.
-- AVX-512 version
 
+AVX-512 investigations:
+-----------------------
+
+- Why doesn't AVX-512 outperform AVX2?
+- Finish Exp104b with the correct permute value
 
 Deferred: -- Deprioritized / Backlog / Low Priority / Deferred / Postponed / Time-sinks / Shelved / Back burner / Downgraded / Reprioritized (too general):
 ---------
@@ -3071,6 +3181,35 @@ __forceinline __m128i Exp103a_AVX2_PackedPairMathKernel(__m256i top, __m256i bot
 	return finalPixels;
 }
 
+__forceinline __m256i Exp103c_AVX2_PackedPairMathKernel(__m256i top, __m256i bottom)
+{
+	const __m256i lowMask = _mm256_set1_epi16(0x00FF);
+
+	// p1 + p3
+	const __m256i low = _mm256_add_epi16(
+		_mm256_and_si256(top, lowMask),
+		_mm256_and_si256(bottom, lowMask));
+
+	// p2 + p4
+	const __m256i high = _mm256_add_epi16(
+		_mm256_srli_epi16(top, 8),
+		_mm256_srli_epi16(bottom, 8));
+
+	// p1 + p2 + p3 + p4
+	const __m256i sum = _mm256_add_epi16(low, high);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m256i decayScale = _mm256_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m256i avg_decay = _mm256_mulhi_epu16(sum, decayScale);
+
+	// 16 words -> 16 bytes
+	__m256i result = _mm256_packus_epi16(avg_decay, avg_decay);
+	const __m256i index = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+	result = _mm256_permutevar8x32_epi32(result, index);
+	return result;
+}
+
 __forceinline __m256i Exp104a_AVX512_PackedPairMathKernel(__m512i top, __m512i bottom)
 {
 	const __m512i lowMask = _mm512_set1_epi16(0x00FF);
@@ -3098,6 +3237,103 @@ __forceinline __m256i Exp104a_AVX512_PackedPairMathKernel(__m512i top, __m512i b
 
 	const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
 	return _mm512_castsi512_si256(_mm512_permutexvar_epi64(permute, result));
+}
+
+// 		Performance measured before
+//		the correct output permutation was derived.
+//
+//		Because the permutation does not affect
+//		the arithmetic workload, benchmark results
+//		should remain representative.
+__forceinline __m512i Exp104b_AVX512_PackedPairMathKernel(__m512i top, __m512i bottom)
+{
+	const __m512i lowMask = _mm512_set1_epi16(0x00FF);
+
+	// p1 + p3
+	const __m512i low = _mm512_add_epi16(
+		_mm512_and_si512(top, lowMask),
+		_mm512_and_si512(bottom, lowMask));
+
+	// p2 + p4
+	const __m512i high = _mm512_add_epi16(
+		_mm512_srli_epi16(top, 8),
+		_mm512_srli_epi16(bottom, 8));
+
+	// p1 + p2 + p3 + p4
+	const __m512i sum = _mm512_add_epi16(low, high);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m512i decayScale = _mm512_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m512i avg_decay = _mm512_mulhi_epu16(sum, decayScale);
+
+	// TODO: JRDV: Measure whether ONE bytewise permute would be faster than PACKUS/PERMUTE64
+	// _mm512_permutexvar_epi8
+	// There is no AVX2 equivalent.
+	// - Measure whether ONE bytewise permute is faster than PACKUS/PERMUTE64.
+
+
+	// 32 words -> 32 bytes
+	//const __m512i result = _mm512_packus_epi16(avg_decay, avg_decay);
+
+	//const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
+	//return _mm512_castsi512_si256(_mm512_permutexvar_epi64(permute, result));
+
+	__m512i result = avg_decay;
+	// NOTE: This permute value is wrong, but doesn't harm the benchmark results
+	// (i.e. the question we're trying to answer "does this approach improve AVX512?" No.)
+	__m512i indices = _mm512_set_epi8(
+		0, 2, 4, 6,
+		16, 18, 20, 22,
+		32, 34, 36, 38,
+		48, 50, 52, 54,
+		8, 10, 12, 14,
+		24, 26, 28, 30,
+		40, 42, 44, 46,
+		56, 58, 60, 62,
+		0, 2, 4, 6,
+		16, 18, 20, 22,
+		32, 34, 36, 38,
+		48, 50, 52, 54,
+		8, 10, 12, 14,
+		24, 26, 28, 30,
+		40, 42, 44, 46,
+		56, 58, 60, 62
+	);
+
+	result = _mm512_permutexvar_epi8(result, indices);
+	return result;
+
+	//__m512i indices = _mm512_set_epi16(
+	//	31, 29, 27, 25, 23, 21, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1, // Odds
+	//	30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0  // Evens
+	//);
+	//__m512i resultPermuted = _mm512_permutexvar_epi16(indices, result);
+	//__m256i finalPixels = _mm512_castsi512_si256(resultPermuted);
+	//return finalPixels;
+}
+
+// Input data should be arranged 0x0A0B0C0D'0E0F0G0H
+// so it's already formatted in a way that HADD can use
+// ABANDONED
+__forceinline __m256i Exp105a_AVX2_WideHaddMathKernel(__m256i top, __m256i bottom)
+{
+	__m256i sum = _mm256_add_epi16(top, bottom);
+	sum = _mm256_hadd_epi16(sum, sum);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m256i decayScale = _mm256_set1_epi16(0x3F80); // 16256 = 127 * 128
+	const __m256i avg_decay = _mm256_mulhi_epu16(sum, decayScale);
+
+	// 16 words -> 16 bytes
+	const __m256i result = _mm256_packus_epi16(avg_decay, avg_decay);
+
+	// result = {A, B, C, D, A, B, C, D, E, F, G, H, E, F, G, H}
+	//
+	// permute to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H}
+	__m256i resultPermuted = _mm256_permute4x64_epi64(result, _MM_SHUFFLE(3, 1, 2, 0));
+	return resultPermuted;
 }
 
 __forceinline __m256i Exp106a_AVX2_UnpackedMathKernel(__m256i top, __m256i bottom)
@@ -3150,6 +3386,47 @@ __forceinline __m256i Exp106b_AVX2_UnpackedMathKernel(__m256i top, __m256i botto
 	// permute to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H}
 	__m256i resultPermuted = _mm256_permute4x64_epi64(result, _MM_SHUFFLE(3, 1, 2, 0));
 	return resultPermuted;
+}
+
+// Slightly cheaper to move the two Gather permutes into a single permute in the Arithmetic
+// Can also remove more, so we ONLY have one permute.
+__forceinline __m256i Exp106c_AVX2_UnpackedMathKernel(__m256i top, __m256i bottom)
+{
+	const __m256i zero = _mm256_setzero_si256();
+
+	__m256i lo_sum = _mm256_add_epi16(_mm256_unpacklo_epi8(top, zero), _mm256_unpacklo_epi8(bottom, zero));
+	__m256i hi_sum = _mm256_add_epi16(_mm256_unpackhi_epi8(top, zero), _mm256_unpackhi_epi8(bottom, zero));
+	__m256i sum = _mm256_hadd_epi16(lo_sum, hi_sum);
+
+	// floor(sum * 127 / 512), using the high 16 bits of the product.
+	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
+	const __m256i decayScale = _mm256_set1_epi16(0x3F80); // 16256 = 127 * 128
+	__m256i avg_decay = _mm256_mulhi_epu16(sum, decayScale);
+
+	// How the original operations work:
+	// result16 = {A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P}
+	//
+	// permute to {A, B, C, D, I, J, K, L, E, F, G, H, M, N, O, P}
+	//
+	// result8 = packed to {A, B, C, D, I, J, K, L, A, B, C, D, I, J, K, L, | E, F, G, H, M, N, O, P, E, F, G, H, M, N, O, P}
+	//
+	// permute to {A, B, C, D, I, J, K, L, E, F, G, H, M, N, O, P, | A, B, C, D, I, J, K, L, E, F, G, H, M, N, O, P}
+
+	// result16 = {A, B, C, D, E, F, G, H, | I, J, K, L, M, N, O, P}
+	//
+	// result8 = packed to {A, B, C, D, E, F, G, H, A, B, C, D, E, F, G, H, | I, J, K, L, M, N, O, P, I, J, K, L, M, N, O, P}
+	//
+	// WHAT OPERATION to produce:
+	// {A, B, C, D, I, J, K, L, E, F, G, H, M, N, O, P, | A, B, C, D, I, J, K, L, E, F, G, H, M, N, O, P}
+	//
+	// PERMUTE32!
+	// 0, 4, 1, 5, 2, 6, 3, 7
+
+	// 16 words -> 16 bytes
+	__m256i result = _mm256_packus_epi16(avg_decay, avg_decay);
+	const __m256i index = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+	result = _mm256_permutevar8x32_epi32(result, index);
+	return result;
 }
 
 // Construct an 8-pixel SIMD source vector using scalar
@@ -3361,7 +3638,7 @@ __forceinline __m512i BitCanvas8::Exp104a_AVX512_PackedPairVectorGather512(const
 	//
 	//   16 packed words
 	//
-	// suitable for Exp103a_AVX2_PackedPairMathKernel().
+	// suitable for Exp104a_AVX512_PackedPairMathKernel().
 	//
 
 	__m512i packedWords = _mm512_packus_epi32(gathered0, gathered1);
@@ -3372,6 +3649,71 @@ __forceinline __m512i BitCanvas8::Exp104a_AVX512_PackedPairVectorGather512(const
 	const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
 	packedWords = _mm512_permutexvar_epi64(permute, packedWords);
 
+	return packedWords;
+}
+
+// Gather 32 packed 16-bit source values.
+//
+// Each word contains two adjacent source pixels,
+// allowing the Packed-Domain arithmetic path to
+// process both pixels simultaneously.
+// NO PERMUTE
+__forceinline __m512i BitCanvas8::Exp104b_AVX512_PackedPairVectorGather512(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset)
+{
+	//
+	// Load 32 transition-table offsets.
+	//
+	__m512i byteOffsets0 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&lpTransitionTable[destPixelOffset]));
+	__m512i byteOffsets1 = _mm512_load_si512(reinterpret_cast<const __m512i*>(&lpTransitionTable[destPixelOffset + 16]));
+
+	if (rowOffset)
+	{
+		const __m512i row = _mm512_set1_epi32(rowOffset);
+		byteOffsets0 = _mm512_add_epi32(byteOffsets0, row);
+		byteOffsets1 = _mm512_add_epi32(byteOffsets1, row);
+	}
+
+	//
+	// Second stage:
+	// Gather packed WORDs from the read buffer.
+	// Unfortunately, 32bits is the smallest unit we can read.
+	//
+	// Gather 8 DWORDs at a time.
+	//
+	const int* readBuffer32 = reinterpret_cast<const int*>(m_pReadBuffer8);
+	__m512i gathered0 = _mm512_i32gather_epi32(byteOffsets0, readBuffer32, 1);
+	__m512i gathered1 = _mm512_i32gather_epi32(byteOffsets1, readBuffer32, 1);
+
+	//
+	// Need to keep only the low 16 bits
+	// from each gathered DWORD.
+	//
+	const __m512i low16Mask = _mm512_set1_epi32(0x0000FFFF);
+
+	gathered0 = _mm512_and_si512(gathered0, low16Mask);
+	gathered1 = _mm512_and_si512(gathered1, low16Mask);
+
+	//
+	// Third Stage, Convert:
+	//
+	//   8 dwords
+	//   +
+	//   8 dwords
+	//
+	// into:
+	//
+	//   16 packed words
+	//
+	// suitable for Exp104b_AVX512_PackedPairMathKernel().
+	//
+
+	__m512i packedWords = _mm512_packus_epi32(gathered0, gathered1);
+
+	//
+	// Fix lane ordering.
+	//
+	//const __m512i permute = _mm512_set_epi64(7, 5, 3, 1, 6, 4, 2, 0);
+	//packedWords = _mm512_permutexvar_epi64(permute, packedWords);
 	return packedWords;
 }
 
@@ -3861,6 +4203,34 @@ void BitCanvas8::DoDelta_AVX2_experiment103b(const PIXELMAP* lpTransitionTable)
 	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
+// AVX2 Gather, wider MathKernel Apply learning from Exp106c
+void BitCanvas8::DoDelta_AVX2_experiment103c(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 16 BYTE lanes
+	//
+	while (destPixelOffset + 15 < m_dwBufferLength)
+	{
+		const __m256i top = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i bottom = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i result = Exp103c_AVX2_PackedPairMathKernel(top, bottom);
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			_mm256_castsi256_si128(result));
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
 // AVX512 Gather, wider MathKernel
 void BitCanvas8::DoDelta_AVX512_experiment104a(const PIXELMAP* lpTransitionTable)
 {
@@ -3874,6 +4244,44 @@ void BitCanvas8::DoDelta_AVX512_experiment104a(const PIXELMAP* lpTransitionTable
 		const __m512i top = Exp104a_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, 0);
 		const __m512i bottom = Exp104a_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
 		const __m256i result = Exp104a_AVX512_PackedPairMathKernel(top, bottom);
+
+		_mm256_store_si256(
+			reinterpret_cast<__m256i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			result);
+
+		destPixelOffset += 32;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Eliminate permute in Gather stage
+// NOTE: The PERMUTE IS WRONG in the Arithmetic stage
+//
+//Performance measured before
+//the correct output permutation was derived.
+//
+//Because the permutation does not affect
+//the arithmetic workload, benchmark results
+//should remain representative.
+//
+// This still lost to Exp103c/Exp106c, therefore I'm shelving the AVX512 investigation for now
+void BitCanvas8::DoDelta_AVX512_experiment104b(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 32 BYTE lanes
+	//
+	while (destPixelOffset + 31 < m_dwBufferLength)
+	{
+		const __m512i top = Exp104b_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, 0);
+		const __m512i bottom = Exp104b_AVX512_PackedPairVectorGather512(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i result = _mm512_castsi512_si256(Exp104b_AVX512_PackedPairMathKernel(top, bottom));
 
 		_mm256_store_si256(
 			reinterpret_cast<__m256i*>(
@@ -3930,6 +4338,33 @@ void BitCanvas8::DoDelta_AVX2_experiment106b(const PIXELMAP* lpTransitionTable)
 		const __m256i top = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, 0);
 		const __m256i bottom = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
 		const __m256i result = Exp106b_AVX2_UnpackedMathKernel(top, bottom);
+
+		_mm_store_si128(
+			reinterpret_cast<__m128i*>(
+				&m_pWriteBuffer8[destPixelOffset]),
+			_mm256_castsi256_si128(result));
+
+		destPixelOffset += 16;
+	}
+
+	//
+	// Existing scalar tail loop.
+	//
+	Exp100_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas8::DoDelta_AVX2_experiment106c(const PIXELMAP* lpTransitionTable)
+{
+	dword_t destPixelOffset = 0;
+
+	//
+	// Process 16 BYTE lanes
+	//
+	while (destPixelOffset + 15 < m_dwBufferLength)
+	{
+		const __m256i top = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, 0);
+		const __m256i bottom = Exp106b_AVX2_PackedPairVectorGather256(lpTransitionTable, destPixelOffset, m_dwBufferWidth);
+		const __m256i result = Exp106c_AVX2_UnpackedMathKernel(top, bottom);
 
 		_mm_store_si128(
 			reinterpret_cast<__m128i*>(
@@ -9078,8 +9513,9 @@ __forceinline __m512i simulate_avx512_hadd_epi16(__m512i a)
 	// This aligns the 'high' word of each pair with the 'low' word
 	__m512i shifted = _mm512_alignr_epi8(a, a, 2);
 
-	// 2. Perform the vertical addition
+	// 2. Perform a standard vertical addition
 	// This produces: [low0+high0, high0+low1, low1+high1, high1+low2, ...]
+	// This adds: (element 0 + element 1), (element 1 + element 2), etc.
 	__m512i summed = _mm512_add_epi16(a, shifted);
 
 	return summed;
