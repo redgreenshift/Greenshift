@@ -1038,8 +1038,30 @@ protected:
 #ifdef USE_MMX_ASSEMBLY
 	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
 #endif
-	void					DoDelta_SSE2_experiment0_FIXED(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_SSE2_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0ai_FIXED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0h_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
+
+	__forceinline __m128i	Exp200_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
+	__forceinline __m128i	Exp201a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
+	__forceinline __m128i	Exp201b_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
+	__forceinline void		Exp200_ScalarTail(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset);
+
+	void					DoDelta_SSE2_experiment200a_BASELINE(const PIXELMAP* lpTransitionTable); // Reference 32bit lanes
+	void					DoDelta_SSE2_experiment201a(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment201b(const PIXELMAP* lpTransitionTable);
+
+	__forceinline __m128i	Exp202a_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t xOffset, dword_t yOffset); // AI Assisted
+	void					DoDelta_SSE2_experiment202a(const PIXELMAP* lpTransitionTable);
+
+	__forceinline __m128i	Exp203a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset); // AI Assisted
+	void					DoDelta_SSE2_experiment203a(const PIXELMAP* lpTransitionTable);
+	__forceinline __m128i	Exp203b_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset); // AI Assisted
+	void					DoDelta_SSE2_experiment203b(const PIXELMAP* lpTransitionTable);
+	__forceinline __m128i	Exp203c_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset); // AI Assisted
+	void					DoDelta_SSE2_experiment203c(const PIXELMAP* lpTransitionTable);
+
+	void					DoDelta_SSE2_experiment203d(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203e(const PIXELMAP* lpTransitionTable); // Inline
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
