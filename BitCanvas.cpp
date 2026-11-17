@@ -10235,8 +10235,8 @@ Scalar reference implementations:
 		SSE2   Exp203f_d_loc_p ~ 6.5 -  6.7 sec
 		SSE2   Exp203f_e_loc_p ~ 6.3 -  6.6 sec
 		SSE2   Exp203f_e_loc_p2~ 6.5 -  6.8 sec
+		SSE2   Exp203f_e_local ~ 6.5 -  6.8 sec
 		SSE2   Exp203f_d_local ~ 6.3 -  6.7 sec
-		SSE2   Exp203f_e_local ~ 6.5 -  6.6 sec
 		SSE2   Exp0_Human      ~ 6.3 -  6.8 sec
 		SSE2   Exp203f_e_loc_p4~ 6.0 -  6.2 sec
 		SSE2   Exp203f_d_loc_p3~ 5.9 -  6.2 sec
@@ -11652,7 +11652,7 @@ void BitCanvas32::DoDelta_SSE2_experiment203f_e(const PIXELMAP* lpTransitionTabl
 
 	while (destPixelOffset + 1 < m_dwBufferLength)
 	{
-		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t aTop = lpTransitionTable[destPixelOffset];
 		const dword_t aBottom = aTop + m_dwBufferWidth;
 
 		//
@@ -11680,7 +11680,7 @@ void BitCanvas32::DoDelta_SSE2_experiment203f_e(const PIXELMAP* lpTransitionTabl
 		m_pWriteBuffer32[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
 		++destPixelOffset;
 
-		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t bTop = lpTransitionTable[destPixelOffset];
 		const dword_t bBottom = bTop + m_dwBufferWidth;
 		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bTop]));
 		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bBottom]));
@@ -11777,7 +11777,7 @@ void BitCanvas32::DoDelta_SSE2_experiment203f_e_local(const PIXELMAP* lpTransiti
 
 	while (destPixelOffset + 1 < bufferLength)
 	{
-		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t aTop = lpTransitionTable[destPixelOffset];
 		const dword_t aBottom = aTop + widthPixels;
 
 		//
@@ -11805,7 +11805,7 @@ void BitCanvas32::DoDelta_SSE2_experiment203f_e_local(const PIXELMAP* lpTransiti
 		writeBase[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
 		++destPixelOffset;
 
-		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t bTop = lpTransitionTable[destPixelOffset];
 		const dword_t bBottom = bTop + widthPixels;
 		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
 		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));

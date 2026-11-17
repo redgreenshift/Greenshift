@@ -5042,47 +5042,89 @@ namespace GreenshiftUnitTest
 				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
 		}
 
-		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_White)
-		//{
-		//	VerifyEquivalence32(
-		//		L"SSE2_exp White",
-		//		SetGrayscalePalette,
-		//		&BitCanvas32::DoDelta_MMX_Assembly,
-		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e,
-		//		true /*solidWhite*/);
-		//}
-		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_Grayscale)
-		//{
-		//	VerifyEquivalence32(
-		//		L"SSE2_exp Grayscale",
-		//		SetGrayscalePalette,
-		//		&BitCanvas32::DoDelta_MMX_Assembly,
-		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		//}
-		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_DistinctChannels)
-		//{
-		//	VerifyEquivalence32(
-		//		L"SSE2_exp DistinctChannels",
-		//		SetDistinctChannelPalette,
-		//		&BitCanvas32::DoDelta_MMX_Assembly,
-		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		//}
-		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_PrimaryColorCycle)
-		//{
-		//	VerifyEquivalence32(
-		//		L"SSE2_exp PrimaryColorCycle",
-		//		SetPrimaryColorCyclePalette,
-		//		&BitCanvas32::DoDelta_MMX_Assembly,
-		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		//}
-		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_BitBoundary)
-		//{
-		//	VerifyEquivalence32(
-		//		L"SSE2_exp BitBoundary",
-		//		SetBitBoundaryPalette,
-		//		&BitCanvas32::DoDelta_MMX_Assembly,
-		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		//}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_White)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_loc_p3_White)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_loc_p3_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_loc_p3_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_loc_p3_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_loc_p3_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3);
+		}
 	};
 
 	BitCanvas* BitCanvasUT::m_pBitCanvas32 = nullptr;
