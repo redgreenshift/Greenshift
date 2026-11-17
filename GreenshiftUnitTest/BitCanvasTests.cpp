@@ -509,7 +509,29 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0h_Intrinsics_FIXED(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human_Intrinsics_FIXED(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp0human2_int)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human2(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -717,6 +739,236 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203e(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_d)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_d_local)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_local(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e_local)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_local(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_d_loc_p)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e_loc_p)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e_loc_p2)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p2(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_d_loc_p3)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p3(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e_loc_p3)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p3(pPixelMap.get());
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkSSE2Exp203f_e_loc_p4)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit SSE2_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p4(pPixelMap.get());
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -4292,7 +4544,7 @@ namespace GreenshiftUnitTest
 				L"SSE2_Int White",
 				SetGrayscalePalette,
 				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED, // Decay 63
 				true /*solidWhite*/);
 		}
 		TEST_METHOD(TestBitCanvas32_SSE2_Exp0h_Intrinsics_Grayscale)
@@ -4301,7 +4553,7 @@ namespace GreenshiftUnitTest
 				L"SSE2_Int Grayscale",
 				SetGrayscalePalette,
 				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED); // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED); // Decay 63
 		}
 		TEST_METHOD(TestBitCanvas32_SSE2_Exp0h_Intrinsics_DistinctChannels)
 		{
@@ -4309,7 +4561,7 @@ namespace GreenshiftUnitTest
 				L"SSE2_Int DistinctChannels",
 				SetDistinctChannelPalette,
 				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED); // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED); // Decay 63
 		}
 		TEST_METHOD(TestBitCanvas32_SSE2_Exp0h_Intrinsics_PrimaryColorCycle)
 		{
@@ -4317,7 +4569,7 @@ namespace GreenshiftUnitTest
 				L"SSE2_Int PrimaryColorCycle",
 				SetPrimaryColorCyclePalette,
 				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED); // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED); // Decay 63
 		}
 		TEST_METHOD(TestBitCanvas32_SSE2_Exp0h_Intrinsics_BitBoundary)
 		{
@@ -4325,7 +4577,49 @@ namespace GreenshiftUnitTest
 				L"SSE2_Int BitBoundary",
 				SetBitBoundaryPalette,
 				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED); // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED); // Decay 63
+		}
+
+		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_White)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human2, // Decay 63
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_Int BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
 		}
 
 		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_White)
@@ -4706,6 +5000,89 @@ namespace GreenshiftUnitTest
 				&BitCanvas32::DoDelta_SSE2_experiment203e);
 		}
 
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_d_White)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_d,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_d_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_d_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_d_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_d_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
+		}
+
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_White)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
+		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"SSE2_exp BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		}
 	};
 
 	BitCanvas* BitCanvasUT::m_pBitCanvas32 = nullptr;

@@ -1039,7 +1039,8 @@ protected:
 	void					DoDelta_MMX_Assembly(const PIXELMAP* lpTransitionTable);
 #endif
 	void					DoDelta_SSE2_experiment0ai_FIXED(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_SSE2_experiment0h_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0human_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTable);
 
 	__forceinline __m128i	Exp200_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
 	__forceinline __m128i	Exp201a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
@@ -1062,6 +1063,16 @@ protected:
 
 	void					DoDelta_SSE2_experiment203d(const PIXELMAP* lpTransitionTable); // Inline
 	void					DoDelta_SSE2_experiment203e(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_d(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_d_local(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e_local(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_d_loc_p(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e_loc_p(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e_loc_p2(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_d_loc_p3(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e_loc_p3(const PIXELMAP* lpTransitionTable); // Inline
+	void					DoDelta_SSE2_experiment203f_e_loc_p4(const PIXELMAP* lpTransitionTable); // Inline
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

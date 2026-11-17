@@ -10161,6 +10161,7 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 //
 // Exp0_AI = 1-pixel SSE2 PackedPair reference, proof-of-concept (AI Assisted)
 // Exp0_H  = 1-pixel SSE2 PackedPair reference, human generated, simplified (Human Generated)
+// Exp0_H2 = 2-pixel SSE2 PackedPair, human generated, applying learnings from the Exp203 line
 //
 // -- Newer Experiments AFTER investigating BitCanvas16 and BitCanvas8:
 //
@@ -10176,6 +10177,17 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 // Exp203c = 2-pixel SSE2 PackedPair, load via two 64-bit Vector memory reads (_mm_loadl_epi64/_mm_or_si128/_mm_slli_si128)
 // Exp203d = 2-pixel SSE2 PackedPair, load PackedPairs inline so no Gather packing overhead, gather/arithmetic fusion (_mm_loadl_epi64)
 // Exp203e = 2-pixel SSE2 PackedPair, arithmetic reordering, Exp203d but with each pixelA completed before processing pixelB
+//
+// Exp203f_d = 2-pixel SSE2 Exp203d with TWO 32bit memory writes
+// Exp203f_e = 2-pixel SSE2 Exp203e with TWO 32bit memory writes
+// Exp203f_d_local = 2-pixel SSE2 Exp203f_d with ALL member variable accesses cached in local variables (competitive with Exp0_H)
+// Exp203f_e_local = 2-pixel SSE2 Exp203f_e with ALL member variable accesses cached in local variables (competitive with Exp0_H)
+// Exp203f_d_loc_p = 2-pixel SSE2 Exp203f_d_local + Pointer-Based Iteration (competitive with Exp0_H)
+// Exp203f_e_loc_p = 2-pixel SSE2 Exp203f_e_local + Pointer-Based Iteration (competitive with Exp0_H)
+// Exp203f_e_loc_p2= 1-pixel SSE2 variant of Exp203f_e_loc_p (competitive with Exp0_H)
+// Exp203f_d_loc_p3= 2-pixel SSE2 Exp203f_d_loc_p + FULL Pointer-Based Iteration (BETTER than Exp0_H)
+// Exp203f_e_loc_p3= 2-pixel SSE2 Exp203f_e_loc_p + FULL Pointer-Based Iteration (BETTER than Exp0_H)
+// Exp203f_e_loc_p4= 1-pixel SSE2 variant of Exp203f_e_loc_p3 (better than Exp0_H; slower than Exp203f_e_loc_p3)
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -10202,25 +10214,35 @@ Benchmark Results
 
 Scalar reference implementations:
 
-		CPP Baseline        ~22.1 - 22.2 sec
+		CPP Baseline           ~22.1 - 22.2 sec
 
 	SIMD experiments:
 
-		MMX Intrinsics      ~11.4 - 11.6 sec
-		SSE2  Exp202a       ~10.3 - 10.3 sec
-		SSE2  Exp201a       ~ 9.1 -  9.4 sec
-		MMX Assembly        ~ 8.8 -  9.2 sec
-		SSE2  Exp203a       ~ 8.7 -  8.9 sec
-		SSE2  Exp203c       ~ 8.4 -  8.7 sec
-		SSE2  Exp0_AI_GEN   ~ 8.1 -  9.0 sec
-		SSE2  Exp203b       ~ 8.0 -  8.6 sec
-		SSE2  Exp201b       ~ 8.0 -  8.4 sec
-		SSE2  Exp203e       ~ 7.6 -  8.4 sec
-		SSE2  Exp203d       ~ 7.5 -  8.1 sec
-		SSE2  Exp0_Human    ~ 6.3 -  6.8 sec
+		MMX Intrinsics         ~11.4 - 11.6 sec
+		SSE2   Exp202a         ~10.3 - 10.3 sec
+		SSE2   Exp201a         ~ 9.1 -  9.4 sec
+		MMX Assembly           ~ 8.8 -  9.2 sec
+		SSE2   Exp203a         ~ 8.7 -  8.9 sec
+		SSE2   Exp203c         ~ 8.4 -  8.7 sec
+		SSE2   Exp0_AI_GEN     ~ 8.1 -  9.0 sec
+		SSE2   Exp203b         ~ 8.0 -  8.6 sec
+		SSE2   Exp201b         ~ 8.0 -  8.4 sec
+		SSE2   Exp203f_e       ~ 7.7 -  8.2 sec
+		SSE2   Exp203e         ~ 7.6 -  8.4 sec
+		SSE2   Exp203d         ~ 7.5 -  8.1 sec
+		SSE2   Exp203f_d       ~ 6.9 -  7.1 sec
 
+		SSE2   Exp203f_d_loc_p ~ 6.5 -  6.7 sec
+		SSE2   Exp203f_e_loc_p ~ 6.3 -  6.6 sec
+		SSE2   Exp203f_e_loc_p2~ 6.5 -  6.8 sec
+		SSE2   Exp203f_d_local ~ 6.3 -  6.7 sec
+		SSE2   Exp203f_e_local ~ 6.5 -  6.6 sec
+		SSE2   Exp0_Human      ~ 6.3 -  6.8 sec
+		SSE2   Exp203f_e_loc_p4~ 6.0 -  6.2 sec
+		SSE2   Exp203f_d_loc_p3~ 5.9 -  6.2 sec
+		SSE2   Exp203f_e_loc_p3~ 5.9 -  6.0 sec
 
-SIMD + Gatherer Experiments:
+	SIMD + Gatherer Experiments:
 
 
 Experiment Summary
@@ -10338,7 +10360,7 @@ Exp203d:
 		Arithmetic directly on loaded PackedPairs.
 
 	Result:
-		Clear improvement over Exp203b; Current Exp203 lineage leader.
+		Clear improvement over Exp203b.
 
 Exp203e:
 		Arithmetic Reordering -- Reorganize pixelA
@@ -10348,6 +10370,100 @@ Exp203e:
 	Result:
 		No clear improvement over Exp203d.
 
+Exp203f_d:
+		Separate Stores -- Replace the combined
+		64-bit output path with two independent
+		32-bit stores.
+
+	Result:
+		Significant improvement over Exp203d.
+
+Exp203f_d_local:
+		Cached Locals + Separate Stores --
+		Cache frequently-used member variables
+		in local variables.
+
+	Result:
+		Further improvement over Exp203f_d.
+		Performance became competitive
+		with Exp0_Human.
+
+Exp203f_e:
+		Separate Stores + Arithmetic Reordering --
+		Apply independent pixel stores to the
+		Exp203e lineage.
+
+	Result:
+		No improvement observed.
+		Slower than Exp203f_d.
+
+Exp203f_e_local:
+		Cached Locals + Arithmetic Reordering --
+		Cache all frequently-used member variables
+		in local variables.
+
+	Result:
+		Large improvement over Exp203f_e.
+		Performance became competitive
+		with Exp0_Human.
+
+Exp203f_d_loc_p:
+		Pointer-Based Iteration -- Replace index-
+		based loop control with pointer increments
+		while retaining Exp203f_d structure.
+
+	Result:
+		Performance remained comparable
+		to Exp203f_d_local.
+
+Exp203f_e_loc_p:
+		Pointer-Based Iteration + Arithmetic
+		Reordering -- Apply pointer-based loop
+		control to the Exp203f_e_local lineage.
+
+	Result:
+		Performance remained comparable
+		to Exp203f_e_local.
+
+Exp203f_e_loc_p2:
+		Single-Pixel Pointer Variant -- Apply
+		pointer-based loop control while processing
+		a single output pixel per iteration.
+
+	Result:
+		No measurable advantage observed.
+		Performance remained comparable
+		to Exp203f_e_local.
+
+Exp203f_d_loc_p3:
+		Full Pointer Conversion -- Replace index-
+		based loop control and offset calculations
+		with direct pointer iteration.
+
+	Result:
+		Clear improvement over previous
+		Exp203f_d variants.
+		Slightly outperformed Exp0_Human.
+
+Exp203f_e_loc_p3:
+		Full Pointer Conversion + Arithmetic
+		Reordering -- Apply direct pointer
+		iteration to the Exp203f_e lineage.
+
+	Result:
+		Clear improvement over previous
+		Exp203f_e variants.
+		Current Exp203 lineage leader.
+
+Exp203f_e_loc_p4:
+		Single-Pixel Full Pointer Variant --
+		Combine direct pointer iteration with
+		single-pixel processing.
+
+	Result:
+		Performance remained competitive,
+		but no advantage over p3 variants
+		was observed.
 
 Key Findings
 ------------
@@ -10366,13 +10482,36 @@ Key Findings
 	remains substantially faster than the
 	newer fully-parallel PackedPair designs.
 
+	- Caching frequently-used member variables
+	in local variables produced a measurable
+	performance improvement in the Exp203
+	lineage.
+
+	- The cost of combining two completed
+	pixels into a single 64-bit output value
+	was also measurable.
+
+	- Independent 32-bit stores and local
+	variable caching reduced the performance
+	gap between Exp203 and Exp0_Human to
+	near-noise levels.
+
+	- Replacing index-based loop control and
+	address calculations with direct pointer
+	iteration produced a measurable
+	performance improvement.
+
+	- Pointer-based variants became competitive
+	with, and consistently outperformed,
+	Exp0_Human.
+
 Current Assessment
 ------------------
 
  MMX_Assembly:
 	- Best pure-MMX implementation.
 
-Exp0human:
+Exp203f_e_loc_p3:
 	- Best SSE2 implementation.
 	- Current overall SSE2 leader.
 
@@ -10385,6 +10524,13 @@ Open / Driving Questions:
 - Compare Exp0_Human and Exp203d assembly
   to determine why the simpler algorithm
   remains significantly faster.
+	o Caching frequently-used member variables in local variables produced a substantial improvement in the Exp203 lineage.
+	o Replacing the combined 64-bit output path with independent 32-bit stores further reduced overhead.
+- revisit all the winners for each tier (across all BitCanvas) and see if this "cache in locals" makes a difference there too.
+	o Parameterize the member access in Gather stages.
+- review all the winners at each tier (across all BitCanvas) to determine if it's maxed out using the full register width during the main Arithmetic operations, or if it's using MORE. (I suppose "more" could theoretically have better thoughput AS LONG AS doing so doesn't spill... but I'm curious about how this hypothesis/principle compares to what we measured as the best.... and if we're not already following that principle, does changing that provide any improvements in the other BitCanvas implementations?).
+	o BitCanvas8 is oversaturated (w.r.t. the max out SIMD width principle). It's worth revisiting to see if the UNPACKED width matching the SIMD width results in higher throughput, even if it involves smaller stores.
+	o BitCanvas16...
 
  ****************************************************************************/
 #ifndef ASM_DECAY
@@ -10656,7 +10802,7 @@ void BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED(const PIXELMAP* lpTransitionT
 
 // Human implementation, Human found and FIXED the problems!
 // PackedPair
-void BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable)
 {
 	const __m128i    m_zero = _mm_setzero_si128();
 	const __m128i    decay_factor = _mm_set1_epi16(0x3F);
@@ -10709,6 +10855,87 @@ void BitCanvas32::DoDelta_SSE2_experiment0h_Intrinsics_FIXED(const PIXELMAP* lpT
 
 		pixelOffset++;
 	} while (pixelOffset < bufferLength);
+}
+
+// Scratch space to apply the learnings from the Exp203 line to the Exp0Human line.
+void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i    m_zero = _mm_setzero_si128();
+	const __m128i    decay_factor = _mm_set1_epi16(0x3F);
+	__m128i    pixels_12;
+	__m128i    pixels_34;
+	__m128i    pixel_sum_13_24;
+	__m128i    px12;
+	__m128i    px34;
+	__m128i    high_bits_sum_13;
+	__m128i    low_bits_sum_24;
+	__m128i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 2);
+
+	do
+	{
+		const dword_t  pixel = *pTransition++;
+		const dword_t  pixel3 = pixel + widthPixels;
+
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3]))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm_srli_si128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+
+		final_pixel = _mm_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
+
+		const dword_t  pixelB1 = *pTransition++;
+		const dword_t  pixelB3 = pixel + widthPixels;
+
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1])));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm_srli_si128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+
+		final_pixel = _mm_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
+	} while (pWrite < pWriteEnd);
 }
 
 // Construct a 4-pixel SIMD source vector using scalar
@@ -11354,6 +11581,587 @@ void BitCanvas32::DoDelta_SSE2_experiment203e(const PIXELMAP* lpTransitionTable)
 	}
 
 	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_d(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < m_dwBufferLength)
+	{
+		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t aBottom = aTop + m_dwBufferWidth;
+		const dword_t bBottom = bTop + m_dwBufferWidth;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[aTop]));
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bTop]));
+
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[aBottom]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		pixelB = _mm_packus_epi16(pixelB, zero);
+
+		m_pWriteBuffer32[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		m_pWriteBuffer32[destPixelOffset+1] = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+
+		destPixelOffset += 2;
+	}
+
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < m_dwBufferLength)
+	{
+		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t aBottom = aTop + m_dwBufferWidth;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		m_pWriteBuffer32[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		++destPixelOffset;
+
+		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t bBottom = bTop + m_dwBufferWidth;
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bTop]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&m_pReadBuffer32[bBottom]));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelB = _mm_packus_epi16(pixelB, zero);
+		m_pWriteBuffer32[destPixelOffset] = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+		++destPixelOffset;
+	}
+
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_d_local(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < bufferLength)
+	{
+		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t aBottom = aTop + widthPixels;
+		const dword_t bBottom = bTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		pixelB = _mm_packus_epi16(pixelB, zero);
+
+		writeBase[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		writeBase[destPixelOffset+1] = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+
+		destPixelOffset += 2;
+	}
+
+	//Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e_local(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < bufferLength)
+	{
+		const dword_t aTop = lpTransitionTable[destPixelOffset + 0];
+		const dword_t aBottom = aTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		writeBase[destPixelOffset] = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		++destPixelOffset;
+
+		const dword_t bTop = lpTransitionTable[destPixelOffset + 1];
+		const dword_t bBottom = bTop + widthPixels;
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelB = _mm_packus_epi16(pixelB, zero);
+		writeBase[destPixelOffset] = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+		++destPixelOffset;
+	}
+
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_d_loc_p(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < bufferLength)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t bTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+		const dword_t bBottom = bTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		pixelB = _mm_packus_epi16(pixelB, zero);
+
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		*pWrite++ = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+
+		destPixelOffset += 2;
+	}
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset + 1 < bufferLength)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		++destPixelOffset;
+
+		const dword_t bTop = *pTransition++;
+		const dword_t bBottom = bTop + widthPixels;
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelB = _mm_packus_epi16(pixelB, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+		++destPixelOffset;
+	}
+
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p2(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t destPixelOffset = 0;
+
+	while (destPixelOffset < bufferLength)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		++destPixelOffset;
+	}
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_d_loc_p3(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength;
+
+	while (pWrite < pWriteEnd)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t bTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+		const dword_t bBottom = bTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		pixelB = _mm_packus_epi16(pixelB, zero);
+
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+		*pWrite++ = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+	}
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p3(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength;
+
+	while (pWrite < pWriteEnd)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+
+		const dword_t bTop = *pTransition++;
+		const dword_t bBottom = bTop + widthPixels;
+		__m128i bTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bTop]));
+		__m128i bBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[bBottom]));
+		__m128i b = _mm_add_epi16(_mm_unpacklo_epi8(bTopPair, zero), _mm_unpacklo_epi8(bBottomPair, zero));
+		__m128i bHi = _mm_srli_si128(b, 8);
+		__m128i bLo = _mm_move_epi64(b);
+		__m128i pixelB = _mm_add_epi16(bHi, bLo);
+
+		pixelB = _mm_mullo_epi16(pixelB, decay63);
+		pixelB = _mm_srli_epi16(pixelB, DECAY_SHIFT + 2);
+
+		pixelB = _mm_packus_epi16(pixelB, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelB); // take the low 32bits
+	}
+
+	//Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+void BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p4(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i zero = _mm_setzero_si128();
+	const __m128i decay63 = _mm_set1_epi16(63);
+
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength;
+
+	while (pWrite < pWriteEnd)
+	{
+		const dword_t aTop = *pTransition++;
+		const dword_t aBottom = aTop + widthPixels;
+
+		//
+		// Load PackedPairs directly.
+		//
+		__m128i aTopPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aTop]));
+		__m128i aBottomPair = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&readBase[aBottom]));
+
+		//
+		// Operate immediately.
+		//
+		__m128i a = _mm_add_epi16(_mm_unpacklo_epi8(aTopPair, zero), _mm_unpacklo_epi8(aBottomPair, zero));
+
+		//
+		// Reduce pixel13 + pixel24.
+		//
+		__m128i aHi = _mm_srli_si128(a, 8);
+		__m128i aLo = _mm_move_epi64(a);
+		__m128i pixelA = _mm_add_epi16(aHi, aLo);
+
+		pixelA = _mm_mullo_epi16(pixelA, decay63);
+		pixelA = _mm_srli_epi16(pixelA, DECAY_SHIFT + 2);
+
+		pixelA = _mm_packus_epi16(pixelA, zero);
+		*pWrite++ = _mm_cvtsi128_si32(pixelA); // take the low 32bits
+	}
 }
 
 /****************************************************************************
