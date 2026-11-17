@@ -10098,17 +10098,17 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 void BitCanvas32::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
 	//DoDelta_SSE2_experiment1_FIXED(lpTransitionTable);
-	DoDelta_SSE2_experiment0h_Intrinsics_FIXED(lpTransitionTable);
+	DoDelta_SSE2_experiment0human2(lpTransitionTable);
 }
 
 void BitCanvas32::DoDelta_SSE41(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment0h_Intrinsics_FIXED(lpTransitionTable);
+	DoDelta_SSE2_experiment0human2(lpTransitionTable);
 }
 
 void BitCanvas32::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
 {
-	DoDelta_SSE2_experiment0h_Intrinsics_FIXED(lpTransitionTable);
+	DoDelta_SSE2_experiment0human2(lpTransitionTable);
 }
 
 

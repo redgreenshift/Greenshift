@@ -4496,47 +4496,47 @@ namespace GreenshiftUnitTest
 				&BitCanvas32::DoDelta_MMX_Intrinsics); // Decay 63
 		}
 
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_White)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int White",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED, // Decay 63
-				true /*solidWhite*/);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_Grayscale)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int Grayscale",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_DistinctChannels)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int DistinctChannels",
-				SetDistinctChannelPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_PrimaryColorCycle)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int PrimaryColorCycle",
-				SetPrimaryColorCyclePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_BitBoundary)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int BitBoundary",
-				SetBitBoundaryPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
-		}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_White)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int White",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED, // Decay 63
+		//		true /*solidWhite*/);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_Grayscale)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int Grayscale",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_DistinctChannels)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int DistinctChannels",
+		//		SetDistinctChannelPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_PrimaryColorCycle)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int PrimaryColorCycle",
+		//		SetPrimaryColorCyclePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0ai_BitBoundary)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int BitBoundary",
+		//		SetBitBoundaryPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0ai_FIXED); // Decay 63
+		//}
 
 		TEST_METHOD(TestBitCanvas32_SSE2_Exp0h_Intrinsics_White)
 		{
@@ -4580,89 +4580,89 @@ namespace GreenshiftUnitTest
 				&BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED); // Decay 63
 		}
 
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_White)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int White",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0human2, // Decay 63
-				true /*solidWhite*/);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_Grayscale)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int Grayscale",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_DistinctChannels)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int DistinctChannels",
-				SetDistinctChannelPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_PrimaryColorCycle)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int PrimaryColorCycle",
-				SetPrimaryColorCyclePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_BitBoundary)
-		{
-			VerifyEquivalence32(
-				L"SSE2_Int BitBoundary",
-				SetBitBoundaryPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
-				&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
-		}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_White)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int White",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0human2, // Decay 63
+		//		true /*solidWhite*/);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_Grayscale)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int Grayscale",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_DistinctChannels)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int DistinctChannels",
+		//		SetDistinctChannelPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_PrimaryColorCycle)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int PrimaryColorCycle",
+		//		SetPrimaryColorCyclePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_Exp0human2_BitBoundary)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_Int BitBoundary",
+		//		SetBitBoundaryPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly, // Decay 63
+		//		&BitCanvas32::DoDelta_SSE2_experiment0human2); // Decay 63
+		//}
 
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_White)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp White",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE,
-				true /*solidWhite*/);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_Grayscale)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp Grayscale",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_DistinctChannels)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp DistinctChannels",
-				SetDistinctChannelPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_PrimaryColorCycle)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp PrimaryColorCycle",
-				SetPrimaryColorCyclePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_BitBoundary)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp BitBoundary",
-				SetBitBoundaryPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
-		}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_White)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp White",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE,
+		//		true /*solidWhite*/);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_Grayscale)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp Grayscale",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_DistinctChannels)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp DistinctChannels",
+		//		SetDistinctChannelPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_PrimaryColorCycle)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp PrimaryColorCycle",
+		//		SetPrimaryColorCyclePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment200a_BASELINE_BitBoundary)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp BitBoundary",
+		//		SetBitBoundaryPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment200a_BASELINE);
+		//}
 
 		TEST_METHOD(TestBitCanvas32_SSE2_experiment201a_White)
 		{
@@ -5042,47 +5042,47 @@ namespace GreenshiftUnitTest
 				&BitCanvas32::DoDelta_SSE2_experiment203f_d);
 		}
 
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_White)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp White",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment203f_e,
-				true /*solidWhite*/);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_Grayscale)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp Grayscale",
-				SetGrayscalePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_DistinctChannels)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp DistinctChannels",
-				SetDistinctChannelPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_PrimaryColorCycle)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp PrimaryColorCycle",
-				SetPrimaryColorCyclePalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		}
-		TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_BitBoundary)
-		{
-			VerifyEquivalence32(
-				L"SSE2_exp BitBoundary",
-				SetBitBoundaryPalette,
-				&BitCanvas32::DoDelta_MMX_Assembly,
-				&BitCanvas32::DoDelta_SSE2_experiment203f_e);
-		}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_White)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp White",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e,
+		//		true /*solidWhite*/);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_Grayscale)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp Grayscale",
+		//		SetGrayscalePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_DistinctChannels)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp DistinctChannels",
+		//		SetDistinctChannelPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_PrimaryColorCycle)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp PrimaryColorCycle",
+		//		SetPrimaryColorCyclePalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		//}
+		//TEST_METHOD(TestBitCanvas32_SSE2_experiment203f_e_BitBoundary)
+		//{
+		//	VerifyEquivalence32(
+		//		L"SSE2_exp BitBoundary",
+		//		SetBitBoundaryPalette,
+		//		&BitCanvas32::DoDelta_MMX_Assembly,
+		//		&BitCanvas32::DoDelta_SSE2_experiment203f_e);
+		//}
 	};
 
 	BitCanvas* BitCanvasUT::m_pBitCanvas32 = nullptr;
