@@ -10084,6 +10084,7 @@ void BitCanvas32::DoDelta_cpp(const PIXELMAP* lpTransitionTable)
 #ifdef USE_MMX_INTRINSICS
 void BitCanvas32::DoDelta_x86(const PIXELMAP* lpTransitionTable)
 {
+	// Leaving this in the "wrong" layer because MMX is virtually guaranteed for x86 today
 	DoDelta_MMX_Intrinsics(lpTransitionTable);
 }
 #endif
@@ -10162,6 +10163,7 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 // Exp0_AI = 1-pixel SSE2 PackedPair reference, proof-of-concept (AI Assisted)
 // Exp0_H  = 1-pixel SSE2 PackedPair reference, human generated, simplified (Human Generated)
 // Exp0_H2 = 2-pixel SSE2 PackedPair, human generated, applying learnings from the Exp203 line
+// Take what I learned from the Exp203 line, especially Exp203f_e_loc_p3, and apply it to the Exp0_Human line.
 //
 // -- Newer Experiments AFTER investigating BitCanvas16 and BitCanvas8:
 //
@@ -10240,7 +10242,8 @@ Scalar reference implementations:
 		SSE2   Exp0_Human      ~ 6.3 -  6.8 sec
 		SSE2   Exp203f_e_loc_p4~ 6.0 -  6.2 sec
 		SSE2   Exp203f_d_loc_p3~ 5.9 -  6.2 sec
-		SSE2   Exp203f_e_loc_p3~ 5.9 -  6.0 sec
+		SSE2   Exp203f_e_loc_p3~ 5.8 -  6.3 sec
+		SSE2   Exp0_Human2     ~ 5.7 -  6.0 sec
 
 	SIMD + Gatherer Experiments:
 
@@ -10286,6 +10289,33 @@ Exp0_Human:
 
 	Result:
 		Significantly faster than Exp0ai.
+
+Exp0_Human2:
+		Optimized PackedPair SSE2 Port --
+		Revisit Exp0_Human and apply lessons
+		learned from the Exp203 lineage, including
+		cached locals, pointer-based iteration,
+		reduced bookkeeping, improved variable
+		lifetime management, and loop duplication.
+
+	Result:
+		Significant improvement over Exp0_Human.
+		Slightly faster faster than Exp203f_e_loc_p3.
+
+		Demonstrated that scalar code
+		generation can have a measurable
+		impact on SIMD performance even
+		when the SIMD Arithmetic itself
+		remains largely unchanged.
+
+	Lessons learned:
+		1. PackedPair remains effective at 32-bit.
+		2. 64-bit reads matter.
+		3. Separate stores beat combining results.
+		4. Cached locals matter.
+		5. Pointer iteration matters.
+		6. Scalar register pressure/codegen matters.
+		7. Validation tests matter.
 
 Exp200_BASELINE:
 		SSE2 Traditional Arithmetic (reference)
@@ -10465,45 +10495,69 @@ Exp203f_e_loc_p4:
 		but no advantage over p3 variants
 		was observed.
 
+
 Key Findings
 ------------
 
-	- PackedPair remains competitive at 32-bit
-	color depth.
+	- Wider reads are generally beneficial,
+	  but not if register pressure causes
+	  spilling or excessive bookkeeping.
 
-	- 64-bit Gather construction provided a
-	significant improvement.
+	- Combining completed values into larger
+	  outputs is not always beneficial.
 
-	- The original human-written SSE2 port
-	remains the performance leader and
-	warrants assembly investigation.
+		o Separate stores can outperform
+		  wider stores when they reduce
+		  register pressure.
 
-	- The simplest human-written SSE2 port
-	remains substantially faster than the
-	newer fully-parallel PackedPair designs.
+		o The optimal write size may be
+		  related to utilizing roughly one
+		  SIMD register width for the
+		  unpacked Arithmetic working set.
+		  See Working Hypothesis.
 
-	- Caching frequently-used member variables
-	in local variables produced a measurable
-	performance improvement in the Exp203
-	lineage.
+	- Scalar register pressure can have a
+	  measurable impact on SIMD performance.
 
-	- The cost of combining two completed
-	pixels into a single 64-bit output value
-	was also measurable.
+		o Cached local-variables can outperform
+		  repeated member-variable access.
 
-	- Independent 32-bit stores and local
-	variable caching reduced the performance
-	gap between Exp203 and Exp0_Human to
-	near-noise levels.
+		o Direct pointer iteration can
+		  outperform index-based loop control
+		  and address generation.
 
-	- Replacing index-based loop control and
-	address calculations with direct pointer
-	iteration produced a measurable
-	performance improvement.
+		o Variable lifetime can significantly
+		  impact generated code quality.
 
-	- Pointer-based variants became competitive
-	with, and consistently outperformed,
-	Exp0_Human.
+		o Improving scalar code generation
+		  can produce substantial performance
+		  gains even when SIMD Arithmetic
+		  remains unchanged.
+
+	- SIMD register utilization is not the
+	  only form of register pressure worth
+	  monitoring.
+
+	- Loop duplication can sometimes improve
+	  throughput, provided it doesn't increase
+	  register pressure excessively.
+
+
+Working Hypothesis
+------------------
+	Winning implementations tend to
+	expand data until the unpacked
+	working set comfortably occupies
+	approximately one SIMD register.
+
+	Expanding substantially beyond this
+	point may increase bookkeeping
+	overhead faster than useful work.
+
+	Observed across BitCanvas8,
+	BitCanvas16, and BitCanvas32, but
+	not yet rigorously established.
+
 
 Current Assessment
 ------------------
@@ -10511,7 +10565,7 @@ Current Assessment
  MMX_Assembly:
 	- Best pure-MMX implementation.
 
-Exp203f_e_loc_p3:
+Exp0_Human2:
 	- Best SSE2 implementation.
 	- Current overall SSE2 leader.
 
@@ -10531,6 +10585,301 @@ Open / Driving Questions:
 - review all the winners at each tier (across all BitCanvas) to determine if it's maxed out using the full register width during the main Arithmetic operations, or if it's using MORE. (I suppose "more" could theoretically have better thoughput AS LONG AS doing so doesn't spill... but I'm curious about how this hypothesis/principle compares to what we measured as the best.... and if we're not already following that principle, does changing that provide any improvements in the other BitCanvas implementations?).
 	o BitCanvas8 is oversaturated (w.r.t. the max out SIMD width principle). It's worth revisiting to see if the UNPACKED width matching the SIMD width results in higher throughput, even if it involves smaller stores.
 	o BitCanvas16...
+
+Arithmetic Strategy by Bit Depth (brainstorming)
+------------------------------------------------
+
+BitCanvas8:
+ - widen from 8bit to 16bit to provide enough room for calculations, as 8bit lanes are too narrow.
+
+BitCanvas16:
+ - mask and process pixels for each color channel in parallel; colors are processed in series. No widening necessary, as 16bit lanes are plenty.
+
+BitCanvas32:
+ - widen and process all 3 color channels simultaneously.
+
+BitCanvas24:
+ - 24-bit pixels are naturally hostile to SIMD, because 3-bytes doesn't divide evenly
+   except for AVX512 (64bytes), **EXCEPT** that those 3 bytes unpacked to 6 bytes
+   for working set means it again doesn't divide evenly at the width that is necessary to perform Arithmetic.
+ - The best BitCanvas24 strategy may not resemble BitCanvas8, 16, or 32.
+ - Even using a mask strategy leaves the data a little wider than necessary,
+   so extra processing may be necessary regardless of strategy/approach.
+ - Need to think about how to efficiently pack/unpack/transform 3 byte pixels
+   to/from 2 byte lanes for processing.
+
+Arithmetic Strategy by Bit Depth
+--------------------------------
+
+	BitCanvas8:
+		Widen from 8-bit to 16-bit to provide
+		sufficient room for Arithmetic.
+
+	BitCanvas16:
+		Mask and process color channels in
+		parallel. Colors are processed in
+		series. No widening required; 16-bit
+		lanes already provide ideal room.
+
+	BitCanvas32:
+		Widen and process all color channels
+		simultaneously.
+
+				o Similar in spirit to
+				  BitCanvas8, but the data
+				  layout prevents HADD-based
+				  reductions.
+
+				o Unlike BitCanvas16, color
+				  channels do not need to be
+				  masked, separated, and
+				  recombined.
+
+	Observation:
+		Each BitCanvas bit depth favors a
+		different Arithmetic strategy due to
+		data layout.
+
+		The optimal SIMD strategy appears to be
+		heavily influenced by how naturally the
+		pixel layout maps onto SIMD lane
+		structure.
+
+		BitCanvas8:
+				Widen and accumulate.
+
+		BitCanvas16:
+				Separate color channels and
+				process colors in series.
+
+		BitCanvas32:
+				Widen and process all color
+				channels simultaneously.
+
+		This suggests a hypothetical
+		BitCanvas24 may require yet another
+		strategy rather than being a simple
+		variation of BitCanvas8, 16, or 32.
+
+BitCanvas24 (Future Investigation):
+		24-bit pixels reduce memory bandwidth
+		requirements by 25% relative to
+		BitCanvas32.
+
+		However, 24-bit pixels are naturally
+		hostile to SIMD. 24-bit data does not
+		align naturally to SIMD register widths
+		below 512-bits, and widening breaks
+		that possible layout.
+
+		BitCanvas24 may require a very different
+		Arithmetic strategy rather than a variant
+		of BitCanvas8, BitCanvas16, or BitCanvas32.
+
+		Need to think about how to efficiently
+		pack/unpack/transform 3 byte pixels
+		to/from 2 byte lanes for processing.
+
+	Brainstorming 24-bit Strategies:
+		o BitCanvas8 variant: Bitwise permute? I think this is DOA. I can't bitwise permute to 3 different SIMD registers. (Or could I mean 3 "ranges" within 1 register? NO! That's equivalent to NovelVariant2)
+		o BitCanvas16 variant: masking/shifting? The problem is that I would need to shift bits at different points by different values, so I think this is likely DOA.
+		o BitCanvas32 variant: leave 1 byte unused (just like BitCanvas32). That way we could use the natural pack/unpack operations... 128bits. 16 bytes, 8 bytes which means using 6 of the 8 bytes.... the same as BitCanvas32
+		o RGB Planes: RRRR GGGG BBBB (AHA! AI had an idea that was equivalent to my original BitCanvas8 variant)
+		o Novel variant? Bitwise Permute, but leave the color channels interleaved
+		(though given permute, we COULD reorder AT ZERO ADDITIONAL COST so that HADD is an option),
+		then in either case, using 60 of the 64 bytes of AVX512 registers
+		we can process 10 whole source pixels per vector
+		which means 5 output pixels throughput per iteration,
+		when original BitCanvas32 will have 8 source pixels, 4 output pixels.
+		This sounds best so far (less reading, more throughput),
+		of course I'll have to run the experiment to find out...
+		but I think we almost have to use permute to transform from
+		3-byte "conceptual lanes" to 2-byte "real lanes" for Arithmetic,
+		anything else will involve repeated masking/shifting,
+		which means whatever shuffling we do for the "BitCanvas32 variant strategy"
+		will necessarily have lower throughput, since it would process
+		1 fewer output pixel in the same number of SIMD instructions.
+		Even if I'm wrong, this is just brainstorming for ideas long in the future.
+
+BitCanvas24 Observation:
+
+		RGB24 may not realize the expected
+		memory-bandwidth advantage because
+		Gather operations naturally read
+		32-bit elements.
+
+		This shifts the focus from storage
+		efficiency toward Arithmetic density
+		and SIMD lane utilization.
+
+		Many proposed BitCanvas24 Arithmetic
+		strategies may therefore be directly
+		applicable to BitCanvas32 AVX512
+		experiments.
+
+		If Gather fundamentally operates on
+		32-bit elements, BitCanvas24 may not
+		realize the expected 25% memory-
+		bandwidth reduction.
+
+		This reduces the value of creating a
+		separate BitCanvas24 implementation,
+		since many candidate Arithmetic
+		strategies can be investigated directly
+		within BitCanvas32 using the existing
+		32-bit storage format.
+
+		Therefore the BitCanvas24 Future
+		Investigation has been demoted to
+		a series of Arithmetic experiments
+		in BitCanvas32.
+
+BitCanvas24 / BitCanvas32 Arithmetic Strategy Ideas
+===================================================
+
+Status Legend:
+	Viable      = Worth experimenting with.
+	Weak        = Plausible, but unlikely contender.
+	Historic    = Investigated previously; unlikely.
+	Obsolete    = Superseded by newer understanding.
+
+1. BitCanvas8 Variant / RGB Planes (Weak)
+2. BitCanvas16 Variant (Weak)
+3. BitCanvas32 Variant (Viable)
+4. Permanent RGB Planes (Historic)
+5. SIMD-Width-Native Working Set
+   o Novel Variant 1 (Viable)
+   o Novel Variant 2 (Viable)
+6. Dedicated BitCanvas24 (Obsolete)
+
+1. BitCanvas8-inspired Variant -- RGB Planes
+   Status: Weak
+
+		Reorder RGB data into temporary
+		RGB planes (separate vectors) and
+		process similarly to BitCanvas8.
+
+			RRRRRRRR...
+			GGGGGGGG...
+			BBBBBBBB...
+
+		Advantages:
+				Very clean Arithmetic.
+				HADD-friendly.
+
+		Concerns:
+				High Gather cost.
+				High register pressure.
+				Requires substantial data
+				rearrangement before Arithmetic.
+				Reduced Arithmetic density.
+				Much larger working set.
+
+
+2. BitCanvas16-inspired Variant
+   Status: Weak
+
+		Gather RGB data, then use masking
+		and shifting to isolate color
+		channels for Arithmetic.
+
+		Concern:
+				Repeated mask/shift operations
+				likely make this inferior to a
+				permute-based approach.
+
+
+3. BitCanvas32-inspired Variant
+   Status: Viable (but identical to the current BitCanvas32 Arithmetic stage)
+
+		Load RGB as XRGB.
+
+		Ignore Alpha lanes during Arithmetic.
+
+		Essentially the current BitCanvas32
+		strategy.
+
+
+4. Permanent RGB Planes
+   Status: Historic
+
+		Internal buffer stored as:
+
+				RRRR...
+				GGGG...
+				BBBB...
+
+		instead of interleaved RGB.
+
+		Previous investigations suggested costs
+		lost to locality outweighed benefits.
+
+
+5. SIMD-Width-Native Working Set
+   Status: Viable (Leading Idea)
+
+		Choose Gather size so that the
+		unpacked Arithmetic working set
+		nearly fills a SIMD register.
+
+		Use bytewise permute operations to
+		transform gathered RGB data into an
+		Arithmetic-friendly layout whose
+		widened form nearly fills the SIMD
+		register width.
+
+		Sub-strategies:
+
+				A. Interleaved: RGBRGB...
+					Uses more of the SIMD width.
+
+				B. Grouped: RRGGBB...
+					Enables HADD-style reductions.
+
+		Example AVX512 concept:
+
+				10 RGB pixels
+				= 30 useful bytes
+
+				Widen
+
+				= 60 working bytes
+
+				leaving only 4 unused bytes
+				in a 64-byte AVX512 register.
+
+		Expected advantages:
+				Higher Arithmetic density.
+				Higher output pixel throughput.
+
+
+6. Dedicated BitCanvas24
+   Status: Obsolete
+
+		Original motivation:
+
+				25% smaller pixels
+				25% less storage
+				-> less memory traffic
+
+		Current concern:
+
+				AVX Gather operations naturally
+				require reading 32-bit elements.
+
+		Therefore RGB24 may provide little
+		or no Gather advantage over RGB32.
+
+		Most interesting Arithmetic ideas
+		can be explored directly within
+		BitCanvas32 without creating a
+		separate BitCanvas24 implementation.
+
+		Therefore BitCanvas24 is Obsolete unless
+		we find a novel Algorithm or data format
+		that aligns with AVX Gather or otherwise
+		has substantial benefits that offset the
+		expected required costs.
 
  ****************************************************************************/
 #ifndef ASM_DECAY
@@ -10860,8 +11209,8 @@ void BitCanvas32::DoDelta_SSE2_experiment0human_Intrinsics_FIXED(const PIXELMAP*
 // Scratch space to apply the learnings from the Exp203 line to the Exp0Human line.
 void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTable)
 {
-	const __m128i    m_zero = _mm_setzero_si128();
-	const __m128i    decay_factor = _mm_set1_epi16(0x3F);
+	const __m128i m_zero = _mm_setzero_si128();
+	const __m128i decay_factor = _mm_set1_epi16(63);
 	__m128i    pixels_12;
 	__m128i    pixels_34;
 	__m128i    pixel_sum_13_24;
@@ -10880,8 +11229,8 @@ void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTab
 
 	do
 	{
-		const dword_t  pixel = *pTransition++;
-		const dword_t  pixel3 = pixel + widthPixels;
+		const dword_t pixel = *pTransition++;
+		const dword_t pixel3 = pixel + widthPixels;
 
 		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));  /* read in pixels 1 & 2 using a single memory read operation */
 		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3]))); /* read in pixels 3 & 4 using a single memory read operation */
@@ -10909,7 +11258,7 @@ void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTab
 		*pWrite++ = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
 
 		const dword_t  pixelB1 = *pTransition++;
-		const dword_t  pixelB3 = pixel + widthPixels;
+		const dword_t  pixelB3 = pixelB1 + widthPixels;
 
 		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1])));  /* read in pixels 1 & 2 using a single memory read operation */
 		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))); /* read in pixels 3 & 4 using a single memory read operation */
