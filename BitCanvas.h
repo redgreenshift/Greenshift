@@ -1074,6 +1074,8 @@ protected:
 	void					DoDelta_SSE2_experiment203f_e_loc_p3(const PIXELMAP* lpTransitionTable); // Inline
 	void					DoDelta_SSE2_experiment203f_e_loc_p4(const PIXELMAP* lpTransitionTable); // Inline
 
+	void					DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable);
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo24(void* lpSurface, const dword_t nDeadSpace) override;

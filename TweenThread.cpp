@@ -111,7 +111,7 @@ error_t    TweenThread::Initialize(void* pObject1)
 
 	err = m_transitionTableStorage.Allocate(
 		dwNumPages,
-		dwPageSize,
+		dwPageSize + 64, // Add padding to the end, so AVX Gather can read past the end of the buffer without an extra bounds check
 		dwBytesToAlign);
 
 	//int ret = snprintf( strTmp, _countof(strTmp), "%d", m_dwFrameSize );

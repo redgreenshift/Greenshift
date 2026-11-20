@@ -275,6 +275,11 @@ private:
 		if (*outMemory == nullptr)
 			return ERR_MALLOC;
 
+		// zero the memory so that reads "past the end"
+		// but within the total allocated space,
+		// have a deterministic value
+		memset(*outMemory, 0, nTotal_Allocation_Size);
+
 		/*
 		 * setup the page table
 		 */
