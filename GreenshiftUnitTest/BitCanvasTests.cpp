@@ -318,20 +318,29 @@ namespace GreenshiftUnitTest
 			Assert::AreEqual(RGB32(255 - 128, 128, ((255 - 128) + 127) % 256), *(rgb32_t*)pPixelData);
 		}
 
-		std::unique_ptr<PIXELMAP[]> CreateTransitionTable(size_t width, size_t height)
+		void FillTransitionTable(PIXELMAP* pTransitionTable, size_t width, size_t height)
 		{
 			size_t cPixelMap = width * height;
-			auto spTransitionTable =
-				std::make_unique<PIXELMAP[]>(cPixelMap + 64);
-
-			memset(spTransitionTable.get(), 0, cPixelMap + 64);
 
 			for (dword_t c = 0; c < cPixelMap; ++c)
 			{
-				spTransitionTable[c] = (c + width + 1) % cPixelMap;
+				pTransitionTable[c] = (c + width + 1) % cPixelMap;
 			}
+		}
 
-			return spTransitionTable;
+		ContiguousAlignedMemory CreateAlignedTransitionTable(size_t width, size_t height)
+		{
+			ContiguousAlignedMemory m_transitionTableStorage;
+			size_t cPixelMap = width * height;
+
+			m_transitionTableStorage.Allocate(
+				1 /*dwNumPages*/,
+				sizeof(PIXELMAP) * cPixelMap + 64, // Add padding to the end, so we can read past the end of the buffer
+				MemoryAlignment::Bytes64);
+
+			FillTransitionTable((PIXELMAP*)m_transitionTableStorage.Page(0), width, height);
+
+			return m_transitionTableStorage;
 		}
 
 		void BenchmarkDoDelta(
@@ -407,7 +416,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -419,7 +428,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_cpp_BASELINE(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_cpp_BASELINE((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -430,7 +439,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -442,7 +451,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Intrinsics(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Intrinsics((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -453,7 +462,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -465,7 +474,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Assembly(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_MMX_Assembly((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -476,7 +485,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -488,7 +497,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0ai_FIXED(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0ai_FIXED((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -499,7 +508,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -511,7 +520,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human_Intrinsics_FIXED(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human_Intrinsics_FIXED((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -522,7 +531,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -534,7 +543,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human2(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment0human2((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -545,7 +554,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -557,7 +566,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment200a_BASELINE(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment200a_BASELINE((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -568,7 +577,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -580,7 +589,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment201a(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment201a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -591,7 +600,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -603,7 +612,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment201b(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment201b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -614,7 +623,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -626,7 +635,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment202a(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment202a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -637,7 +646,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -649,7 +658,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203a(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -660,7 +669,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -672,7 +681,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203b(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -683,7 +692,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -695,7 +704,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203c(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -706,7 +715,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -718,7 +727,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203d(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203d((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -729,7 +738,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -741,7 +750,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203e(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203e((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -752,7 +761,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -764,7 +773,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -775,7 +784,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -787,7 +796,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -798,7 +807,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -810,7 +819,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_local(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_local((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -821,7 +830,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -833,7 +842,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_local(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_local((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -844,7 +853,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -856,7 +865,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -867,7 +876,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -879,7 +888,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -890,7 +899,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -902,7 +911,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p2(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p2((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -913,7 +922,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -925,7 +934,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p3(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_d_loc_p3((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -936,7 +945,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -948,7 +957,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p3(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p3((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -959,7 +968,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -971,7 +980,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p4(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_SSE2_experiment203f_e_loc_p4((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -982,7 +991,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -994,7 +1003,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX2_experiment204a(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX2_experiment204a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1005,7 +1014,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas32;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1017,7 +1026,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX2_experiment204b(pPixelMap.get());
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX2_experiment204b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1032,7 +1041,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1044,7 +1053,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_BASELINE_WITH_DECAY_63(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_BASELINE_WITH_DECAY_63((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1055,7 +1064,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1067,7 +1076,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1078,7 +1087,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1090,7 +1099,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED_WITH_DECAY_63_AND_GREENSHIFT_CORRECTION((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1102,7 +1111,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1114,7 +1123,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment1(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment1((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1125,7 +1134,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1137,7 +1146,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment2(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment2((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1148,7 +1157,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1160,7 +1169,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment4(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment4((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1171,7 +1180,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1183,7 +1192,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment5(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment5((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1194,7 +1203,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1206,7 +1215,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment5b(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE2_experiment5b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1217,7 +1226,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1229,7 +1238,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment5c(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment5c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1240,7 +1249,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1252,7 +1261,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Shift(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Shift((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1263,7 +1272,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1275,7 +1284,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Mask(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment5d_Mask((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1286,7 +1295,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1298,7 +1307,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment6(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSE41_experiment6((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1309,7 +1318,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1321,7 +1330,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment6b_Mask(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment6b_Mask((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1332,7 +1341,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1344,7 +1353,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment6b_Shift(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_SSSE3_experiment6b_Shift((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1355,7 +1364,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1367,7 +1376,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7a(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1378,7 +1387,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1390,7 +1399,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bA(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bA((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1401,7 +1410,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1413,7 +1422,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB1(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB1((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1424,7 +1433,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1436,7 +1445,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB2(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7bB2((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1447,7 +1456,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1459,7 +1468,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7c(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1470,7 +1479,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1482,7 +1491,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Mask(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Mask((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1493,7 +1502,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1505,7 +1514,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Shift(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment7d_Shift((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1516,7 +1525,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1528,7 +1537,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8a(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1539,7 +1548,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1551,7 +1560,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8b(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1562,7 +1571,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1574,7 +1583,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8c(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX2_experiment8c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1586,7 +1595,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1598,7 +1607,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment10a(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment10a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1609,7 +1618,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1621,7 +1630,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment11a_Mask(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment11a_Mask((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1632,7 +1641,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1644,7 +1653,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment11a_Shift(pPixelMap.get());
+					static_cast<BitCanvas16*>(pBitCanvas)->DoDelta_AVX512_experiment11a_Shift((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1660,7 +1669,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1672,7 +1681,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers(); // Swap the read and write buffers
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_BASELINE(pPixelMap.get()); // Read from ReadBuffer
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_BASELINE((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1683,7 +1692,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1695,7 +1704,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_OPTIMIZED((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1706,7 +1715,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1718,7 +1727,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_historicalExperiment(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_cpp_historicalExperiment((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1729,7 +1738,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1741,7 +1750,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100_BASELINE(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100_BASELINE((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1752,7 +1761,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1764,7 +1773,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1775,7 +1784,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1787,7 +1796,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100b(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1798,7 +1807,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1810,7 +1819,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100c(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1821,7 +1830,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1833,7 +1842,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100d(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100d((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1844,7 +1853,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1856,7 +1865,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100e(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment100e((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1867,7 +1876,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1879,7 +1888,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE41_experiment100f(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE41_experiment100f((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1890,7 +1899,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1902,7 +1911,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment101a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment101a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1913,7 +1922,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1925,7 +1934,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSSE3_experiment102a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSSE3_experiment102a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1936,7 +1945,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1948,7 +1957,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment102b(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_SSE2_experiment102b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1959,7 +1968,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1971,7 +1980,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -1982,7 +1991,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -1994,7 +2003,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103b(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment103b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2005,7 +2014,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -2017,7 +2026,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2028,7 +2037,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -2040,7 +2049,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104b(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX512_experiment104b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2051,7 +2060,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -2063,7 +2072,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106a(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106a((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2074,7 +2083,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -2086,7 +2095,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106b(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2097,7 +2106,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas8;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			ResetBenchmarkCanvas(pBitCanvas, rng);
 
@@ -2109,7 +2118,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->FlipBuffers();
 
 					pBitCanvas->PrepareForDoDelta();
-					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106c(pPixelMap.get());
+					static_cast<BitCanvas8*>(pBitCanvas)->DoDelta_AVX2_experiment106c((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -2225,7 +2234,7 @@ namespace GreenshiftUnitTest
 			BitCanvas* pBitCanvas = m_pBitCanvas16Drift;
 			size_t dwWidth = pBitCanvas->BufferWidth();
 			size_t dwHeight = pBitCanvas->BufferHeight();
-			std::unique_ptr<PIXELMAP[]> pPixelMap = CreateTransitionTable(dwWidth, dwHeight);
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
 
 			SetGrayscalePalette(pBitCanvas);
 
@@ -2248,7 +2257,7 @@ namespace GreenshiftUnitTest
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas16*>(pBitCanvas)
 						->DoDelta_cpp_BASELINE_WITH_DECAY_63(
-							pPixelMap.get());
+							(PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 
@@ -2378,8 +2387,8 @@ namespace GreenshiftUnitTest
 			pBitCanvas->FlipBuffers();
 			FillCanvas(pBitCanvas, 255);
 
-			auto pTransitionTable =
-				CreateTransitionTable(c_width, c_height);
+			ContiguousAlignedMemory transitionTable =
+				CreateAlignedTransitionTable(c_width, c_height);
 
 			double totalIntensity = 0.0;
 
@@ -2402,7 +2411,7 @@ namespace GreenshiftUnitTest
 				pBitCanvas->PrepareForDoDelta();
 				static_cast<BitCanvas8*>(pBitCanvas)
 					->DoDelta_cpp_BASELINE(
-						pTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pBitCanvas->FinalizeDoDelta();
 
 				if ((frame % SAMPLE_INTERVAL) == 0)
@@ -2483,8 +2492,8 @@ namespace GreenshiftUnitTest
 
 			FillCanvas(pCanvas, 255);
 
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
+			auto transitionTable =
+				CreateAlignedTransitionTable(c_width, c_height);
 
 			std::wstring s =
 				std::wstring(pName) +
@@ -2495,7 +2504,7 @@ namespace GreenshiftUnitTest
 				pCanvas->PrepareForDoDelta();
 
 				pCanvas->DoDelta_cpp_BASELINE_WITH_DECAY(
-					spTransitionTable.get(),
+					(PIXELMAP*)transitionTable.Page(0),
 					decayNumerator,
 					decayDenominator
 				);
@@ -2843,21 +2852,21 @@ namespace GreenshiftUnitTest
 			pBaselineCanvas->FlipBuffers();
 			pOptimizedCanvas->FlipBuffers();
 
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
+			ContiguousAlignedMemory transitionTable =
+				CreateAlignedTransitionTable(c_width, c_height);
 
 			for (size_t frame = 0; frame < c_frames; ++frame)
 			{
 				pBaselineCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas8*>(pBaselineCanvas)
 					->*pfnBaseline)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pBaselineCanvas->FinalizeDoDelta();
 
 				pOptimizedCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas8*>(pOptimizedCanvas)
 					->*pfnOptimized)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pOptimizedCanvas->FinalizeDoDelta();
 
 				CompareCanvases8(
@@ -2920,21 +2929,21 @@ namespace GreenshiftUnitTest
 			pBaselineCanvas->FlipBuffers();
 			pOptimizedCanvas->FlipBuffers();
 
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
+			ContiguousAlignedMemory transitionTable =
+				CreateAlignedTransitionTable(c_width, c_height);
 
 			for (size_t frame = 0; frame < c_frames; ++frame)
 			{
 				pBaselineCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas16*>(pBaselineCanvas)
 					->*pfnBaseline)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pBaselineCanvas->FinalizeDoDelta();
 
 				pOptimizedCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas16*>(pOptimizedCanvas)
 					->*pfnOptimized)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pOptimizedCanvas->FinalizeDoDelta();
 
 				CompareCanvases16(
@@ -2997,21 +3006,21 @@ namespace GreenshiftUnitTest
 			pBaselineCanvas->FlipBuffers();
 			pOptimizedCanvas->FlipBuffers();
 
-			auto spTransitionTable =
-				CreateTransitionTable(c_width, c_height);
+			ContiguousAlignedMemory transitionTable =
+				CreateAlignedTransitionTable(c_width, c_height);
 
 			for (size_t frame = 0; frame < c_frames; ++frame)
 			{
 				pBaselineCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas32*>(pBaselineCanvas)
 					->*pfnBaseline)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pBaselineCanvas->FinalizeDoDelta();
 
 				pOptimizedCanvas->PrepareForDoDelta();
 				(static_cast<BitCanvas32*>(pOptimizedCanvas)
 					->*pfnOptimized)(
-						spTransitionTable.get());
+						(PIXELMAP*)transitionTable.Page(0));
 				pOptimizedCanvas->FinalizeDoDelta();
 
 				CompareCanvases32(
