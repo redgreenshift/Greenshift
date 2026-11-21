@@ -10194,6 +10194,7 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 // Exp204a = 2-pixel AVX2 PackedPair, Exp0_H2 but with AVX Vector Gather, widened to use the full Arithmetic width
 // Exp204b = 4-pixel AVX2 PackedPair, Exp204a but using the full Gather width, and then shuffle registers to perform Arithmetic twice
 //
+// Exp205a = 5-pixel AVX512 PackedPair MaddVariant (competitive with Exp0_H)
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
 /****************************************************************************
@@ -10219,38 +10220,39 @@ Benchmark Results
 
 Scalar reference implementations:
 
-		CPP Baseline           ~22.1 - 22.2 sec
+		CPP Baseline           ~20.7 - 24.3 sec
 
 	SIMD experiments:
 
-		MMX Intrinsics         ~11.4 - 11.6 sec
-		SSE2   Exp202a         ~10.3 - 10.3 sec
-		SSE2   Exp201a         ~ 9.1 -  9.4 sec
-		MMX Assembly           ~ 8.8 -  9.2 sec
-		SSE2   Exp203a         ~ 8.7 -  8.9 sec
-		SSE2   Exp203c         ~ 8.4 -  8.7 sec
-		SSE2   Exp0_AI_GEN     ~ 8.1 -  9.0 sec
-		SSE2   Exp203b         ~ 8.0 -  8.6 sec
-		SSE2   Exp201b         ~ 8.0 -  8.4 sec
-		SSE2   Exp203f_e       ~ 7.7 -  8.2 sec
-		SSE2   Exp203e         ~ 7.6 -  8.4 sec
-		SSE2   Exp203d         ~ 7.5 -  8.1 sec
-		SSE2   Exp203f_d       ~ 6.9 -  7.1 sec
+		MMX Intrinsics         ~11.1 - 11.3 sec
+		SSE2   Exp202a         ~ 9.6 -  9.8 sec
+		SSE2   Exp201a         ~ 8.6 -  8.9 sec
+		MMX Assembly           ~ 8.5 -  8.7 sec
+		SSE2   Exp203a         ~ 8.2 -  8.4 sec
+		SSE2   Exp203c         ~ 7.7 -  7.9 sec
+		SSE2   Exp0_AI_GEN     ~ 7.6 -  7.9 sec
+		SSE2   Exp203b         ~ 7.4 -  7.7 sec
+		SSE2   Exp201b         ~ 7.6 -  7.9 sec
+		SSE2   Exp203f_e       ~ 7.5 -  7.7 sec
+		SSE2   Exp203e         ~ 7.0 -  7.2 sec
+		SSE2   Exp203d         ~ 6.9 -  7.2 sec
+		SSE2   Exp203f_d       ~ 6.3 -  6.6 sec
 
-		SSE2   Exp203f_d_loc_p ~ 6.5 -  6.7 sec
-		SSE2   Exp203f_e_loc_p ~ 6.3 -  6.6 sec
-		SSE2   Exp203f_e_loc_p2~ 6.5 -  6.8 sec
-		SSE2   Exp203f_e_local ~ 6.5 -  6.8 sec
-		SSE2   Exp203f_d_local ~ 6.3 -  6.7 sec
-		SSE2   Exp0_Human      ~ 6.3 -  6.8 sec
-		SSE2   Exp203f_e_loc_p4~ 6.0 -  6.2 sec
-		SSE2   Exp203f_d_loc_p3~ 5.9 -  6.2 sec
-		SSE2   Exp203f_e_loc_p3~ 5.8 -  6.3 sec
-		SSE2   Exp0_Human2     ~ 5.6 -  6.0 sec
+		SSE2   Exp203f_d_loc_p ~ 6.1 -  6.2 sec
+		SSE2   Exp203f_e_loc_p ~ 6.1 -  6.4 sec
+		SSE2   Exp203f_e_loc_p2~ 6.2 -  6.5 sec
+		SSE2   Exp203f_e_local ~ 5.9 -  6.1 sec
+		SSE2   Exp203f_d_local ~ 5.7 -  5.8 sec
+		SSE2   Exp0_Human      ~ 5.7 -  6.2 sec
+		SSE2   Exp203f_e_loc_p4~ 5.5 -  5.9 sec
+		SSE2   Exp203f_d_loc_p3~ 5.5 -  5.6 sec
+		SSE2   Exp203f_e_loc_p3~ 5.4 -  5.7 sec
+		SSE2   Exp0_Human2     ~ 5.0 -  5.6 sec
 
 	SIMD + Gatherer Experiments:
-		AVX2   Exp204a         ~ 6.4 -  6.6 sec
-		AVX2   Exp204b         ~ 5.6 -  5.9 sec
+		AVX2   Exp204a         ~ 6.1 -  6.6 sec
+		AVX2   Exp204b         ~ 5.2 -  5.9 sec
+		AVX512 Exp205a         ~ 5.1 -  5.7 sec
 
 
 Experiment Summary
@@ -10535,6 +10537,35 @@ Exp204b:
 
 		Recovered nearly all lost performance from Exp204a.
 
+Exp205a:
+		AVX512 MaddVariant --
+		Use AVX512 Bytewise Permute to
+		transform gathered pixel data
+		directly into Arithmetic lanes.
+
+		Process 20 source pixels
+		(10 pixels per source vector)
+		producing 5 output pixels.
+
+		Gather eight PackedPairs and use
+		only the first five. The remaining
+		three PackedPairs are discarded.
+
+		Uses Bytewise Permute to construct
+		the Arithmetic working set directly,
+		eliminating the separate unpacking
+		stage used by previous experiments.
+
+		Uses _mm512_madd_epi16() for
+		horizontal reduction.
+
+	Result:
+		Achieved performance parity with Exp204b.
+
+		Remained slightly slower than
+		Exp0_Human2 despite	discarding 3/8
+		of gathered PackedPairs.
+
 
 Key Findings
 ------------
@@ -10582,6 +10613,10 @@ Key Findings
 	  throughput, provided it doesn't increase
 	  register pressure excessively.
 
+	- Aligned transition-table data produced
+	measurable improvements across the entire
+	benchmark suite.
+
 
 Working Hypothesis
 ------------------
@@ -10612,6 +10647,20 @@ Exp0_Human2:
 
 Future Investigation
 --------------------
+
+	- Sliding-window Gather strategy.
+
+		Reuse excess PackedPairs from
+		previous iterations to reduce
+		Gather waste and increase Gather
+		utilization from 62.5% toward
+		93.75%.
+
+	- Alternative reduction strategies
+	  (ADD, HADD, MADD).
+
+	- Decay implementation using
+	  _mm512_mulhi_epu16().
 
 Open / Driving Questions:
 -------------------------
@@ -10721,11 +10770,11 @@ BitCanvas24 (Future Investigation):
 		to/from 2 byte lanes for processing.
 
 	Brainstorming 24-bit Strategies:
-		o BitCanvas8 variant: Bitwise permute? I think this is DOA. I can't bitwise permute to 3 different SIMD registers. (Or could I mean 3 "ranges" within 1 register? NO! That's equivalent to NovelVariant2)
+		o BitCanvas8 variant: Bytewise permute? I think this is DOA. I can't bytewise permute to 3 different SIMD registers. (Or could I mean 3 "ranges" within 1 register? NO! That's equivalent to NovelVariant2)
 		o BitCanvas16 variant: masking/shifting? The problem is that I would need to shift bits at different points by different values, so I think this is likely DOA.
 		o BitCanvas32 variant: leave 1 byte unused (just like BitCanvas32). That way we could use the natural pack/unpack operations... 128bits. 16 bytes, 8 bytes which means using 6 of the 8 bytes.... the same as BitCanvas32
 		o RGB Planes: RRRR GGGG BBBB (AHA! AI had an idea that was equivalent to my original BitCanvas8 variant)
-		o Novel variant? Bitwise Permute, but leave the color channels interleaved
+		o Novel variant? Bytewise Permute, but leave the color channels interleaved
 		(though given permute, we COULD reorder AT ZERO ADDITIONAL COST so that HADD is an option),
 		then in either case, using 60 of the 64 bytes of AVX512 registers
 		we can process 10 whole source pixels per vector
@@ -12696,6 +12745,114 @@ void BitCanvas32::DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable)
 		_mm_storeu_si128(reinterpret_cast<__m128i*>(pWrite), result8);
 
 		pWrite += 4;
+
+	} while (pWrite < pWriteEnd);
+}
+
+//
+// @brief First AVX512 dense-Arithmetic experiment.
+//
+//     Gather eight PackedPairs (16 source pixels),
+//     directly permute the first five PackedPairs
+//     into the Arithmetic format, and produce
+//     five output pixels per iteration.
+//
+//     Uses AVX512 Bytewise Permute to construct
+//     16-bit Arithmetic lanes directly from the
+//     gathered source data, eliminating the
+//     unpack/widen stage used by previous SSE2
+//     and AVX2 experiments.
+//
+//     Arithmetic layout:
+//
+//         R0 0 R1 0 G0 0 G1 0 B0 0 B1 0
+//         R2 0 R3 0 G2 0 G3 0 B2 0 B3 0
+//         ...
+//
+//     Horizontal reduction uses
+//     _mm512_madd_epi16().
+//
+//     Three of the eight gathered PackedPairs
+//     are intentionally discarded. Future
+//     experiments may reuse these values via
+//     a sliding-window Gather strategy to
+//     increase Gather utilization.
+void BitCanvas32::DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* pWrite = m_pWriteBuffer32;
+	dword_t* pWriteEnd = pWrite + bufferLength;
+
+	const __m512i decay63 = _mm512_set1_epi16(63);
+
+		// Permute directly into Arithmetic lanes:
+		//
+		// R0 A0 R1 A0 G0 A0 G1 A0 B0 A0 B1 A0
+		// R2 A0 R3 A0 G2 A0 G3 A0 B2 A0 B3 A0
+		// R4 A0 R5 A0 G4 A0 G5 A0 B4 A0 B5 A0
+		// R6 A0 R7 A0 G6 A0 G7 A0 B6 A0 B7 A0
+		// R8 A0 R9 A0 G8 A0 G9 A0 B8 A0 B9 A0
+		// A0 A0 A0 A0
+	const __m512i permuteIndices =
+		_mm512_set_epi8(
+			3, 3, 3, 3,  // XX-XX
+			3, 36, 3, 32, 3, 37, 3, 33, 3, 38, 3, 34, // P9-P8
+			3, 28, 3, 24, 3, 29, 3, 25, 3, 30, 3, 26, // P7-P6
+			3, 20, 3, 16, 3, 21, 3, 17, 3, 22, 3, 18, // P5-P4
+			3, 12, 3, 8, 3, 13, 3, 9, 3, 14, 3, 10, // P3-P2
+			3, 4, 3, 0, 3, 5, 3, 1, 3, 6, 3, 2 // P1-P0
+		);
+
+	const __m512i permuteStoreIndices =
+		_mm512_set_epi8(
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			48, 52, 56, 1, 36, 40, 44, 1, 24, 28, 32, 1, 12, 16, 20, 1, 0, 4, 8
+		);
+
+	do
+	{
+		//
+		// Gather 8 PackedPairs.
+		// Use only first 5.
+		//
+		const __m256i transitionIndices32 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lpTransitionTable));
+
+		lpTransitionTable += 5;
+
+		const __m512i transitionIndices64 = _mm512_cvtepu32_epi64(transitionIndices32);
+		const __m512i bottomIndices64 = _mm512_add_epi64(transitionIndices64, _mm512_set1_epi64(widthPixels));
+
+		__m512i pixels_12 = _mm512_i64gather_epi64(transitionIndices64, readBase, 4);
+		__m512i pixels_34 = _mm512_i64gather_epi64(bottomIndices64, readBase, 4);
+
+		//
+		// Convert directly to Arithmetic lanes.
+		//
+		const __m512i pixels_12_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_12); /* unpack pixels 12 */
+		const __m512i pixels_34_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_34); /* unpack pixels 34 */
+
+		//
+		// Sum all 4 source pixels.
+		//
+		__m512i pixel_sum_13_24 = _mm512_add_epi16(pixels_12_unpacked, pixels_34_unpacked);
+		const __m512i ones = _mm512_set1_epi16(1);
+		__m512i final_pixel = _mm512_madd_epi16(pixel_sum_13_24, ones);
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		final_pixel = _mm512_mullo_epi16(final_pixel, decay63);
+		final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+
+		const __m512i result8 = _mm512_permutexvar_epi8(permuteStoreIndices, final_pixel);
+
+		//
+		// Five output pixels.
+		//
+		memcpy(pWrite, &result8, 20);
+		pWrite += 5;
 
 	} while (pWrite < pWriteEnd);
 }
