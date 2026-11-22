@@ -1077,6 +1077,7 @@ protected:
 	void					DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable);
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
