@@ -12942,8 +12942,9 @@ __forceinline void Process5PackedPairs(__m512i pixels_12, __m512i pixels_34, dwo
 
     using a repeating 3-stage cycle.
 */
-void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable)
+void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* foo)
 {
+	const PIXELMAP* lpTransitionTable = foo;
 	const dword_t widthPixels = m_dwBufferWidth;
 	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
 
@@ -13064,7 +13065,14 @@ void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTabl
 		const __m512i workingBottom2 = _mm512_permutexvar_epi64(stage2Indices, carryBottom);
 
 		Process5PackedPairs(workingTop2, workingBottom2, pWrite);
-	} while (pWrite < pWriteEnd);
+	} while (pWrite + 14 < pWriteEnd);
+
+	dword_t destPixelOffset = bufferLength - (bufferLength % 15);
+	if (pWrite < pWriteEnd && destPixelOffset  > 0 && bufferLength % 15 != 0)
+	{
+		//throw new std::exception("boo");
+		Exp200_ScalarTail(foo, destPixelOffset);
+	}
 }
 
 /****************************************************************************
