@@ -12857,6 +12857,216 @@ void BitCanvas32::DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTabl
 	} while (pWrite < pWriteEnd);
 }
 
+__forceinline void Process5PackedPairs(__m512i pixels_12, __m512i pixels_34, dword_t* &pWrite)
+{
+	const __m512i decay63 = _mm512_set1_epi16(63);
+
+	// Permute directly into Arithmetic lanes:
+	//
+	// R0 A0 R1 A0 G0 A0 G1 A0 B0 A0 B1 A0
+	// R2 A0 R3 A0 G2 A0 G3 A0 B2 A0 B3 A0
+	// R4 A0 R5 A0 G4 A0 G5 A0 B4 A0 B5 A0
+	// R6 A0 R7 A0 G6 A0 G7 A0 B6 A0 B7 A0
+	// R8 A0 R9 A0 G8 A0 G9 A0 B8 A0 B9 A0
+	// A0 A0 A0 A0
+//const __m512i permuteIndices =
+//	_mm512_set_epi8(
+//		2, 3, 6, 3, 1, 3, 5, 3, 0, 3, 4, 3, // P0-P1
+//		10, 3, 14, 3, 9, 3, 13, 3, 8, 3, 12, 3, // P2-P3
+//		18, 3, 22, 3, 17, 3, 21, 3, 16, 3, 20, 3, // P4-P5
+//		26, 3, 30, 3, 25, 3, 29, 3, 24, 3, 28, 3, // P6-P7
+//		34, 3, 38, 3, 33, 3, 37, 3, 32, 3, 36, 3, // P8-P9
+//		3, 3, 3, 3 // XX-XX
+//	);
+	const __m512i permuteIndices =
+		_mm512_set_epi8(
+			3, 3, 3, 3,  // XX-XX
+			3, 36, 3, 32, 3, 37, 3, 33, 3, 38, 3, 34, // P9-P8
+			3, 28, 3, 24, 3, 29, 3, 25, 3, 30, 3, 26, // P7-P6
+			3, 20, 3, 16, 3, 21, 3, 17, 3, 22, 3, 18, // P5-P4
+			3, 12, 3, 8, 3, 13, 3, 9, 3, 14, 3, 10, // P3-P2
+			3, 4, 3, 0, 3, 5, 3, 1, 3, 6, 3, 2 // P1-P0
+		);
+
+	//const __m512i permuteStoreIndices =
+	//	_mm512_set_epi8(
+	//		8, 4, 0, 1, 20, 16, 12, 1, 32, 28, 24, 1, 44, 40, 36, 1, 56, 52, 48, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+	//	);
+	const __m512i permuteStoreIndices =
+		_mm512_set_epi8(
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			48, 52, 56, 1, 36, 40, 44, 1, 24, 28, 32, 1, 12, 16, 20, 1, 0, 4, 8
+		);
+
+	const __m512i pixels_12_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_12); /* unpack pixels 12 */
+	const __m512i pixels_34_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_34); /* unpack pixels 34 */
+
+	//
+	// Sum all 4 source pixels.
+	//
+	__m512i pixel_sum_13_24 = _mm512_add_epi16(pixels_12_unpacked, pixels_34_unpacked);
+	const __m512i ones = _mm512_set1_epi16(1);
+	__m512i final_pixel = _mm512_madd_epi16(pixel_sum_13_24, ones);
+
+	/* decay the buffer (ie: make it slightly darker than the average) */
+	final_pixel = _mm512_mullo_epi16(final_pixel, decay63);
+	final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+
+	const __m512i result8 = _mm512_permutexvar_epi8(permuteStoreIndices, final_pixel);
+
+	//
+	// Five output pixels.
+	//
+	memcpy(pWrite, &result8, 20);
+	pWrite += 5;
+}
+
+//Gather 8, use 5, save 3.
+//Gather 8, use 2 + 3, save 6.
+//Gather 0, use 5, discard the remaining 1 pixel.
+//REPEAT. (15 pixel cycle)
+
+/** @brief AVX512 PackedPair SlidingWindow3StageVariant
+
+    Reuse excess PackedPairs across
+    iterations to increase Gather
+    utilization.
+
+    Gather utilization improves from:
+
+        62.5%
+
+    to:
+
+        93.75%
+
+    using a repeating 3-stage cycle.
+*/
+void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable)
+{
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* pWrite = m_pWriteBuffer32;
+	dword_t* pWriteEnd = pWrite + bufferLength;
+
+	//
+	// Carries are stored as raw PackedPairs.
+	//
+	__m512i carryTop;
+	__m512i carryBottom;
+
+	//
+	// lane indices used with _mm512_permutex2var_epi64()
+	//
+	const __m512i stage1Indices =
+		_mm512_set_epi64(
+			0, 0, 0,
+			9, 8,      // gather PP9 PP8
+			7, 6, 5    // carry PP7 PP6 PP5
+		);
+
+	do
+	{
+		//
+		// ============================================================
+		// Stage 0
+		//
+		// Gather 8
+		// Use    5
+		// Save   3
+		// ============================================================
+		//
+
+		const __m256i indices32_stage0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lpTransitionTable));
+		const __m512i indices64_stage0 = _mm512_cvtepu32_epi64(indices32_stage0);
+		const __m512i bottomIndices64_stage0 = _mm512_add_epi64(indices64_stage0, _mm512_set1_epi64(widthPixels));
+
+		const __m512i gatherTop0 = _mm512_i64gather_epi64(indices64_stage0, readBase, 4);
+		const __m512i gatherBottom0 = _mm512_i64gather_epi64(bottomIndices64_stage0, readBase, 4);
+
+		lpTransitionTable += 8;
+
+		//
+		// PP0 PP1 PP2 PP3 PP4
+		//
+		Process5PackedPairs(gatherTop0, gatherBottom0, pWrite);
+
+		//
+		// Save:
+		// PP5 PP6 PP7
+		//
+		carryTop = gatherTop0;
+		carryBottom = gatherBottom0;
+
+
+		//
+		// ============================================================
+		// Stage 1
+		//
+		// Saved 3 + Gathered 2
+		// Use    5
+		// Save   6
+		// ============================================================
+		//
+
+		const __m256i indices32_stage1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lpTransitionTable));
+		const __m512i indices64_stage1 = _mm512_cvtepu32_epi64(indices32_stage1);
+		const __m512i bottomIndices64_stage1 = _mm512_add_epi64(indices64_stage1, _mm512_set1_epi64(widthPixels));
+		const __m512i gatherTop1 = _mm512_i64gather_epi64(indices64_stage1, readBase, 4);
+		const __m512i gatherBottom1 = _mm512_i64gather_epi64(bottomIndices64_stage1, readBase, 4);
+
+		lpTransitionTable += 7;
+
+		//
+		// Build:
+		//
+		// PP5 PP6 PP7 PP8 PP9
+		//
+		const __m512i workingTop1 = _mm512_permutex2var_epi64(carryTop, stage1Indices, gatherTop1);
+		const __m512i workingBottom1 = _mm512_permutex2var_epi64(carryBottom, stage1Indices, gatherBottom1);
+
+		Process5PackedPairs(workingTop1, workingBottom1, pWrite);
+
+		//
+		// Save gatherTop1/gatherBottom1
+		// for Stage 2.
+		//
+		carryTop = gatherTop1;
+		carryBottom = gatherBottom1;
+
+
+		//
+		// ============================================================
+		// Stage 2
+		//
+		// Use    PP10 PP11 PP12 PP13 PP14
+		// Discard PP15
+		// ============================================================
+		//
+		// Assumes gatherTop1 contained:
+		//
+		// PP8 PP9 PP10 PP11 PP12 PP13 PP14 PP15
+		//
+		// Need:
+		//
+		// PP10 PP11 PP12 PP13 PP14
+		//
+
+		const __m512i stage2Indices =
+			_mm512_set_epi64(
+				0, 0, 0,
+				6, 5, 4, 3, 2);
+
+		const __m512i workingTop2 = _mm512_permutexvar_epi64(stage2Indices, carryTop);
+		const __m512i workingBottom2 = _mm512_permutexvar_epi64(stage2Indices, carryBottom);
+
+		Process5PackedPairs(workingTop2, workingBottom2, pWrite);
+	} while (pWrite < pWriteEnd);
+}
+
 /****************************************************************************
  *
  * CopyTo8

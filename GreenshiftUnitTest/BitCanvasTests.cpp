@@ -333,10 +333,12 @@ namespace GreenshiftUnitTest
 			ContiguousAlignedMemory m_transitionTableStorage;
 			size_t cPixelMap = width * height;
 
-			m_transitionTableStorage.Allocate(
+			error_t err = m_transitionTableStorage.Allocate(
 				1 /*dwNumPages*/,
 				sizeof(PIXELMAP) * cPixelMap + 64, // Add padding to the end, so we can read past the end of the buffer
 				MemoryAlignment::Bytes64);
+
+			Assert::IsTrue(err == SUCCESS, L"Error allocating memory!");
 
 			FillTransitionTable((PIXELMAP*)m_transitionTableStorage.Page(0), width, height);
 
@@ -1050,6 +1052,29 @@ namespace GreenshiftUnitTest
 
 					pBitCanvas->PrepareForDoDelta();
 					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX512_experiment205a((PIXELMAP*)transitionTable.Page(0));
+					pBitCanvas->FinalizeDoDelta();
+				});
+		}
+
+		TEST_METHOD(TestBitCanvas32BenchmarkAVX512Exp205b)
+		{
+			MTRand rng(c_seed);
+			BitCanvas* pBitCanvas = m_pBitCanvas32;
+			size_t dwWidth = pBitCanvas->BufferWidth();
+			size_t dwHeight = pBitCanvas->BufferHeight();
+			auto transitionTable = CreateAlignedTransitionTable(dwWidth, dwHeight);
+
+			ResetBenchmarkCanvas(pBitCanvas, rng);
+
+			BenchmarkDoDelta(
+				L"32bit AVX512_INTRINSICS",
+				[&]()
+				{
+					DrawRandomPixels(pBitCanvas, rng);
+					pBitCanvas->FlipBuffers();
+
+					pBitCanvas->PrepareForDoDelta();
+					static_cast<BitCanvas32*>(pBitCanvas)->DoDelta_AVX512_experiment205b((PIXELMAP*)transitionTable.Page(0));
 					pBitCanvas->FinalizeDoDelta();
 				});
 		}
@@ -5331,6 +5356,48 @@ namespace GreenshiftUnitTest
 				SetBitBoundaryPalette,
 				&BitCanvas32::DoDelta_MMX_Assembly,
 				&BitCanvas32::DoDelta_AVX512_experiment205a);
+		}
+
+		TEST_METHOD(TestBitCanvas32_AVX512_experiment205b_White)
+		{
+			VerifyEquivalence32(
+				L"AVX512_exp White",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_AVX512_experiment205b,
+				true /*solidWhite*/);
+		}
+		TEST_METHOD(TestBitCanvas32_AVX512_experiment205b_Grayscale)
+		{
+			VerifyEquivalence32(
+				L"AVX512_exp Grayscale",
+				SetGrayscalePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_AVX512_experiment205b);
+		}
+		TEST_METHOD(TestBitCanvas32_AVX512_experiment205b_DistinctChannels)
+		{
+			VerifyEquivalence32(
+				L"AVX512_exp DistinctChannels",
+				SetDistinctChannelPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_AVX512_experiment205b);
+		}
+		TEST_METHOD(TestBitCanvas32_AVX512_experiment205b_PrimaryColorCycle)
+		{
+			VerifyEquivalence32(
+				L"AVX512_exp PrimaryColorCycle",
+				SetPrimaryColorCyclePalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_AVX512_experiment205b);
+		}
+		TEST_METHOD(TestBitCanvas32_AVX512_experiment205b_BitBoundary)
+		{
+			VerifyEquivalence32(
+				L"AVX512_exp BitBoundary",
+				SetBitBoundaryPalette,
+				&BitCanvas32::DoDelta_MMX_Assembly,
+				&BitCanvas32::DoDelta_AVX512_experiment205b);
 		}
 	};
 
