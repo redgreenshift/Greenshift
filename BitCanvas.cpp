@@ -12942,9 +12942,9 @@ __forceinline void Process5PackedPairs(__m512i pixels_12, __m512i pixels_34, dwo
 
     using a repeating 3-stage cycle.
 */
-void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* foo)
+void BitCanvas32::DoDelta_AVX512_experiment206a(const PIXELMAP* lpTransitionTable)
 {
-	const PIXELMAP* lpTransitionTable = foo;
+	const PIXELMAP* pTransition = lpTransitionTable;
 	const dword_t widthPixels = m_dwBufferWidth;
 	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
 
@@ -12981,14 +12981,14 @@ void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* foo)
 		// ============================================================
 		//
 
-		const __m256i indices32_stage0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lpTransitionTable));
+		const __m256i indices32_stage0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
 		const __m512i indices64_stage0 = _mm512_cvtepu32_epi64(indices32_stage0);
 		const __m512i bottomIndices64_stage0 = _mm512_add_epi64(indices64_stage0, _mm512_set1_epi64(widthPixels));
 
 		const __m512i gatherTop0 = _mm512_i64gather_epi64(indices64_stage0, readBase, 4);
 		const __m512i gatherBottom0 = _mm512_i64gather_epi64(bottomIndices64_stage0, readBase, 4);
 
-		lpTransitionTable += 8;
+		pTransition += 8;
 
 		//
 		// PP0 PP1 PP2 PP3 PP4
@@ -13013,13 +13013,13 @@ void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* foo)
 		// ============================================================
 		//
 
-		const __m256i indices32_stage1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(lpTransitionTable));
+		const __m256i indices32_stage1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
 		const __m512i indices64_stage1 = _mm512_cvtepu32_epi64(indices32_stage1);
 		const __m512i bottomIndices64_stage1 = _mm512_add_epi64(indices64_stage1, _mm512_set1_epi64(widthPixels));
 		const __m512i gatherTop1 = _mm512_i64gather_epi64(indices64_stage1, readBase, 4);
 		const __m512i gatherBottom1 = _mm512_i64gather_epi64(bottomIndices64_stage1, readBase, 4);
 
-		lpTransitionTable += 7;
+		pTransition += 7;
 
 		//
 		// Build:
@@ -13068,11 +13068,7 @@ void BitCanvas32::DoDelta_AVX512_experiment205b(const PIXELMAP* foo)
 	} while (pWrite + 14 < pWriteEnd);
 
 	dword_t destPixelOffset = bufferLength - (bufferLength % 15);
-	if (pWrite < pWriteEnd && destPixelOffset  > 0 && bufferLength % 15 != 0)
-	{
-		//throw new std::exception("boo");
-		Exp200_ScalarTail(foo, destPixelOffset);
-	}
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
 /****************************************************************************
