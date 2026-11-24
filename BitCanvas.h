@@ -1026,7 +1026,6 @@ protected:
 	virtual void			DoDelta_MMX(const PIXELMAP* lpTransitionTable) override;
 #endif
 	virtual void			DoDelta_SSE2(const PIXELMAP* lpTransitionTable) override;
-	virtual void			DoDelta_SSE41(const PIXELMAP* lpTransitionTable) override;
 	virtual void			DoDelta_AVX2(const PIXELMAP* lpTransitionTable) override;
 
 
@@ -1077,7 +1076,11 @@ protected:
 	void					DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable); // SKIPPED/promoted to Exp206a
+	void					DoDelta_AVX512_experiment206a(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant
+	void					DoDelta_AVX512_experiment207a(const PIXELMAP* lpTransitionTable); // SlidingWindow2StageVariant adapt AVX512_Exp206a
+	void					DoDelta_AVX512_experiment207b(const PIXELMAP* lpTransitionTable); // SlidingWindow2StageVariant Widen AVX2_Exp204b
+	void					DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTable); // SlidingWindow8StageVariant
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
