@@ -1040,6 +1040,7 @@ protected:
 	void					DoDelta_SSE2_experiment0ai_FIXED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment0human_Intrinsics_FIXED(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_SSE2_experiment0human3(const PIXELMAP* lpTransitionTable);
 
 	__forceinline __m128i	Exp200_SSE2_TraditionalGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, const dword_t xOffset, const dword_t yOffset);
 	__forceinline __m128i	Exp201a_SSE2_PackedPairGather128(const PIXELMAP* lpTransitionTable, dword_t destPixelOffset, dword_t rowOffset);
@@ -1078,9 +1079,17 @@ protected:
 	void					DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable); // SKIPPED/promoted to Exp206a
 	void					DoDelta_AVX512_experiment206a(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant
+	void					DoDelta_AVX512_experiment206b(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant (Bytewise-Permute UNIQUE INDEX; test to see if this is the high-variance cause)
+																							  // Bytewise-Permute-with-many-repeated-indices
+	void					DoDelta_AVX512_experiment206c(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant (Bytewise-Permute DUPLICATE ZERO INDEX; test to see if this is the high-variance cause)
+																							  // Bytewise-Permute-with-many-repeated-indices (avoids the AND-mask)
 	void					DoDelta_AVX512_experiment207a(const PIXELMAP* lpTransitionTable); // SlidingWindow2StageVariant adapt AVX512_Exp206a
 	void					DoDelta_AVX512_experiment207b(const PIXELMAP* lpTransitionTable); // SlidingWindow2StageVariant Widen AVX2_Exp204b
 	void					DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTable); // SlidingWindow8StageVariant
+
+							// Consistent again!
+	void					DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human2
+	void					DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human2
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

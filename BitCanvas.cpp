@@ -3142,7 +3142,7 @@ __forceinline __m128i Exp102b_SSE2_PackedPairMathKernel(__m128i top, __m128i bot
 	// floor(sum * 127 / 512), using the high 16 bits of the product.
 	// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
 	const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
-	const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
+	const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale); // Free divide by 256
 
 	// 8 words -> 8 bytes
 	return _mm_packus_epi16(avg_decay, avg_decay);
@@ -4010,7 +4010,7 @@ void BitCanvas8::DoDelta_SSE2_experiment100e(const PIXELMAP* lpTransitionTable)
 		// floor(sum * 127 / 512), using the high 16 bits of the product.
 		// multiplying by 128 (and take the hi byte) instead of dividing by 512 means we get a "free division" by 4
 		const __m128i decayScale = _mm_set1_epi16(0x3F80); // 16256 = 127 * 128
-		const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale);
+		const __m128i avg_decay = _mm_mulhi_epu16(sum, decayScale); // Free divide by 256
 
 		const __m128i result = _mm_packus_epi16(avg_decay, avg_decay);
 
@@ -10098,8 +10098,7 @@ void BitCanvas32::DoDelta_MMX(const PIXELMAP* lpTransitionTable)
 
 void BitCanvas32::DoDelta_SSE2(const PIXELMAP* lpTransitionTable)
 {
-	//DoDelta_SSE2_experiment1_FIXED(lpTransitionTable);
-	DoDelta_SSE2_experiment0human2(lpTransitionTable);
+	DoDelta_SSE2_experiment0human3(lpTransitionTable);
 }
 
 void BitCanvas32::DoDelta_AVX2(const PIXELMAP* lpTransitionTable)
@@ -10155,10 +10154,11 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 //
 // -- Initial experiments before deciding on a numbering scheme:
 //
-// Exp0_AI = 1-pixel SSE2 PackedPair reference, proof-of-concept (AI Assisted)
-// Exp0_H  = 1-pixel SSE2 PackedPair reference, human generated, simplified (Human Generated)
-// Exp0_H2 = 2-pixel SSE2 PackedPair, human generated, applying learnings from the Exp203 line
+// Exp0_AI     = 1-pixel SSE2 PackedPair reference, proof-of-concept (AI Assisted)
+// Exp0_Human  = 1-pixel SSE2 PackedPair reference, human generated, simplified (Human Generated)
+// Exp0_Human2 = 2-pixel SSE2 PackedPair, human generated, applying learnings from the Exp203 line
 // Take what I learned from the Exp203 line, especially Exp203f_e_loc_p3, and apply it to the Exp0_Human line.
+// Exp0_Human3 = 2-pixel SSE2 PackedPair, human generated, found code we didn't need to execute.
 //
 // -- Newer Experiments AFTER investigating BitCanvas16 and BitCanvas8:
 //
@@ -10213,11 +10213,18 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 // 4-pixels per stage allows us to save the carry in ONE register. (experiment with/without packing into one register)
 // The cost is lower Arithmetic utilization
 //
+// Exp207b = 4-pixel AVX512 PackedPair SlidingWindow2StageVariant,
+// alternate created by widening DoDelta_AVX2_experiment204b
+//
 // Exp208a = 5-pixel AVX512 PackedPair SlidingWindow8StageVariant (unrolled 40-pixels per iteration; 5 per stage)
 // Gather Utilization: 100% (40/40)
 // 5-pixels per stage allows us to maximize Arithmetic utilization
 // The 8 stages allows us to achieve 100% Gather Utilization at the same time.
 // The only cost is increased instruction count.
+//
+// -- Scalar Gather experiments -- Is AVX Gather the source of the high-variance??? --
+// Exp209a = 2-pixel AVX2 PackedPair, human generated, naive straightforward widening of Exp0_Human3
+// Exp210a = 2-pixel AVX512 PackedPair, human generated, naive straightforward widening of Exp0_Human3
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -10255,28 +10262,70 @@ Scalar reference implementations:
 		SSE2   Exp203a         ~ 8.2 -  8.4 sec
 		SSE2   Exp203c         ~ 7.7 -  7.9 sec
 		SSE2   Exp0_AI_GEN     ~ 7.6 -  7.9 sec
-		SSE2   Exp203b         ~ 7.4 -  7.7 sec
 		SSE2   Exp201b         ~ 7.6 -  7.9 sec
+		SSE2   Exp203b         ~ 7.4 -  7.7 sec
 		SSE2   Exp203f_e       ~ 7.5 -  7.7 sec
 		SSE2   Exp203e         ~ 7.0 -  7.2 sec
 		SSE2   Exp203d         ~ 6.9 -  7.2 sec
+		AVX512 Exp210a         ~ 6.5 -  6.6 sec
 		SSE2   Exp203f_d       ~ 6.3 -  6.6 sec
 
-		SSE2   Exp203f_d_loc_p ~ 6.1 -  6.2 sec
-		SSE2   Exp203f_e_loc_p ~ 6.1 -  6.4 sec
 		SSE2   Exp203f_e_loc_p2~ 6.2 -  6.5 sec
+		SSE2   Exp203f_e_loc_p ~ 6.1 -  6.4 sec
+		SSE2   Exp203f_d_loc_p ~ 6.1 -  6.2 sec
 		SSE2   Exp203f_e_local ~ 5.9 -  6.1 sec
 		SSE2   Exp203f_d_local ~ 5.7 -  5.8 sec
 		SSE2   Exp0_Human      ~ 5.7 -  6.2 sec
 		SSE2   Exp203f_e_loc_p4~ 5.5 -  5.9 sec
 		SSE2   Exp203f_d_loc_p3~ 5.5 -  5.6 sec
 		SSE2   Exp203f_e_loc_p3~ 5.4 -  5.7 sec
-		SSE2   Exp0_Human2     ~ 5.0 -  5.6 sec
+		AVX2   Exp209a         ~ 5.1 -  5.4 sec
+		SSE2   Exp0_Human2     ~ 4.9 -  5.6 sec
+		SSE2   Exp0_Human3     ~ 4.4 -  4.6 sec
 
-	SIMD + Gatherer Experiments:
+	SIMD + Vector Gatherer Experiments:
 		AVX2   Exp204a         ~ 6.1 -  6.6 sec
+		AVX512 Exp207b         ~ 5.8 -  6.2 sec (outliers excluded)
+		AVX512 Exp206b         ~ 5.7 -  6.1 sec (outliers excluded)
+		AVX512 Exp207a         ~ 5.7 -  6.1 sec (outliers excluded)
+		AVX512 Exp205a         ~ 5.5 -  6.1 sec (outliers excluded)
+		AVX512 Exp206a         ~ 5.5 -  5.9 sec (outliers excluded) (was Exp205b)
+		AVX512 Exp206c         ~ 5.4 -  5.9 sec (outliers excluded)
+		AVX512 Exp208a         ~ 5.4 -  5.8 sec (outliers excluded)
 		AVX2   Exp204b         ~ 5.2 -  5.9 sec
-		AVX512 Exp205a         ~ 5.1 -  5.7 sec
+
+	Unexplained HIGH-VARIANCE Experiments (FULL OBSERVED RANGE):
+		AVX512 Exp205a         ~ 4.8 -  6.1 sec
+		AVX512 Exp207a         ~ 4.7 -  6.1 sec
+		AVX512 Exp207b         ~ 4.6 -  6.2 sec
+		AVX512 Exp208a         ~ 4.4 -  5.8 sec
+		AVX512 Exp206b         ~ 4.5 -  6.1 sec
+		AVX512 Exp206c         ~ 4.3 -  5.9 sec
+		AVX512 Exp206a         ~ 4.0 -  5.9 sec (was Exp205b)
+
+		NOTE:
+			Several AVX512 experiments exhibit
+			unusually high run-to-run variation.
+
+			The benchmark ranges shown in the
+			main SIMD + Vector Gather section
+			exclude unusually fast outlier runs
+			and are intended to represent
+			typical observed performance.
+
+			The Full Observed Range section
+			preserves the complete benchmark
+			distribution, including unusually
+			fast results.
+
+			At present, the cause of this
+			volatility is unknown.
+
+		What do they share?
+			AVX512 Vector Gather 8 PackedPair (yes)
+			PackedPair Gather (yes)
+			5-pixel Arithmetic layout (no)
+			Bytewise Permute (no)
 
 
 Experiment Summary
@@ -10347,6 +10396,23 @@ Exp0_Human2:
 		5. Pointer iteration matters.
 		6. Scalar register pressure/codegen matters.
 		7. Validation tests matter.
+
+Exp0_Human3:
+	When attempting to port Exp0_Human2 to
+	AVX2/AVX512 for Exp209a and Exp210a,
+	I discovered operations that were
+	unnecessary or could be performed
+	more efficiently.
+
+	- Removed unnecessary _mm_move_epi64.
+	- Replaced decay multiply/shift with
+	  _mm_mulhi_epu16.
+
+	Both changes were independently
+	validated before being combined.
+
+	Result:
+		Clear improvement over Exp0_Human2.
 
 Exp200_BASELINE:
 		SSE2 Traditional Arithmetic (reference)
@@ -10561,7 +10627,7 @@ Exp204b:
 
 		Recovered nearly all lost performance from Exp204a.
 
-Exp205a:
+Exp205a: hi-variance
 		AVX512 MaddVariant --
 		Use AVX512 Bytewise Permute to
 		transform gathered pixel data
@@ -10589,6 +10655,131 @@ Exp205a:
 		Remained slightly slower than
 		Exp0_Human2 despite	discarding 3/8
 		of gathered PackedPairs.
+
+Exp206a: hi-variance (was Exp205b)
+	SlidingWindow3StageVariant.
+
+	Increase Gather utilization from
+	62.5% (5/8) to 93.75% (15/16)
+	using a repeating 3-stage cycle.
+
+	Result:
+		Competitive with Exp205a.
+		Usually slower than Exp0_Human2.
+
+		No obvious register-spill disaster
+		observed in generated assembly.
+
+Exp206b: hi-variance
+	Investigate whether AVX512
+	Bytewise Permute exhibits unusual
+	performance when the same source
+	byte is referenced many times.
+
+	Replace repeated indices with
+	unique indices and use an AND-mask
+	to force unwanted bytes to zero.
+
+	Result:
+		No meaningful change in the
+		observed volatility.
+
+		Slightly slower as expected due
+		to the additional AND operation.
+
+Exp206c: hi-variance
+	Follow-up to Exp206b.
+
+	Distribute known-zero source bytes
+	across unused output positions to
+	avoid both repeated index usage and
+	the additional AND-mask operation.
+
+	Index reuse is limited to 2 or fewer
+	to match BitCanvas8 Exp104b (which
+	does not exhibit the high-variance issue).
+
+	Result:
+		No meaningful change in the
+		observed volatility.
+
+		Similar performance to Exp206a.
+
+Exp207a: hi-variance
+	SlidingWindow2StageVariant.
+
+	Gather 8 PackedPairs and process
+	them in two 4-PackedPair stages.
+
+	Achieves 100% Gather utilization
+	while reducing Arithmetic
+	utilization and carry complexity.
+
+	Result:
+		Performance similar to the
+		other SlidingWindow variants.
+
+Exp207b: hi-variance
+	SlidingWindow2StageVariant
+
+	Alternative implementation of
+	Exp207a.
+
+	Derived by widening the Exp204b
+	Arithmetic approach rather than
+	adapting the Exp206a pipeline.
+
+	Result:
+		Performance similar to
+		Exp207a.
+
+Exp208a: hi-variance
+	SlidingWindow8StageVariant.
+
+	Extend the Exp206a concept to a
+	complete 40-pixel repeating cycle.
+
+	Achieves both:
+		100% Gather utilization
+		100% PackedPair utilization
+
+	by eliminating all discarded
+	Gather data.
+
+	Result:
+		Performance similar to
+		Exp206a despite additional
+		bookkeeping.
+
+Exp209a:
+	Investigate AVX2 instructions
+	without AVX Vector Gather.
+
+	Retain Scalar Gather and the
+	Exp0_Human2 processing model while
+	replacing SSE2 Arithmetic with AVX2
+	equivalents.
+
+	Result:
+		Consistent benchmark behavior (NOT hi-variance).
+
+		Faster than Exp204a but slower
+		than Exp0_Human2/3.
+
+Exp210a:
+	Investigate AVX512 instructions
+	without AVX Vector Gather.
+
+	Retain Scalar Gather and the
+	Exp0_Human2 processing model while
+	replacing SSE2 Arithmetic with AVX512
+	equivalents.
+
+	Result:
+		Consistent benchmark behavior (NOT hi-variance).
+
+		Slower than the current Human
+		lineage implementations.
 
 
 Key Findings
@@ -10664,7 +10855,7 @@ Current Assessment
  MMX_Assembly:
 	- Best pure-MMX implementation.
 
-Exp0_Human2:
+Exp0_Human3:
 	- Best SSE2 implementation.
 	- Current overall SSE2 leader.
 
@@ -11400,6 +11591,86 @@ void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTab
 	} while (pWrite < pWriteEnd);
 }
 
+// Remove unnecessary _mm_move_epi64; add _mm_mulhi_epu16
+void BitCanvas32::DoDelta_SSE2_experiment0human3(const PIXELMAP* lpTransitionTable)
+{
+	const __m128i m_zero = _mm_setzero_si128();
+	const __m128i decay_factor = _mm_set1_epi16(63);
+	__m128i    pixels_12;
+	__m128i    pixels_34;
+	__m128i    pixel_sum_13_24;
+	__m128i    px12;
+	__m128i    px34;
+	__m128i    high_bits_sum_13;
+	__m128i    low_bits_sum_24;
+	__m128i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 2);
+
+	do
+	{
+		const dword_t pixel = *pTransition++;
+		const dword_t pixel3 = pixel + widthPixels;
+
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel])));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3]))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm_srli_si128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = pixel_sum_13_24;
+
+		final_pixel = _mm_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		const __m128i decay_scale = _mm_set1_epi16(16128); // 16128 = 63 * 256
+		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // Free divide by 256
+
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
+
+		const dword_t  pixelB1 = *pTransition++;
+		const dword_t  pixelB3 = pixelB1 + widthPixels;
+
+		pixels_12 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1])));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm_srli_si128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = pixel_sum_13_24;
+
+		final_pixel = _mm_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // Free divide by 256
+
+		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm_cvtsi128_si32(final_pixel); // take the low 32bits
+	} while (pWrite < pWriteEnd);
+}
+
 // Construct a 4-pixel SIMD source vector using scalar
 // gathers and PINSRW.
 //
@@ -11449,7 +11720,7 @@ __forceinline __m128i BitCanvas32::Exp201b_SSE2_PackedPairGather128(const PIXELM
 	return _mm_set_epi64x(pairB, pairA);
 }
 
-__m128i Exp200_SSE2_TraditionalMathKernel_BASELINE(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
+__forceinline __m128i Exp200_SSE2_TraditionalMathKernel_BASELINE(__m128i p1, __m128i p2, __m128i p3, __m128i p4)
 {
 	const __m128i zero = _mm_setzero_si128(); // 128-bit zero value
 	const __m128i decay63 = _mm_set1_epi16(0x003f);
@@ -11491,7 +11762,7 @@ __m128i Exp200_SSE2_TraditionalMathKernel_BASELINE(__m128i p1, __m128i p2, __m12
 	return _mm_or_si128(final_pixelAB, final_pixelCD);
 }
 
-__m128i Exp201a_SSE2_PackedPairMathKernel(__m128i top, __m128i bottom)
+__forceinline __m128i Exp201a_SSE2_PackedPairMathKernel(__m128i top, __m128i bottom)
 {
 	const __m128i zero = _mm_setzero_si128(); // 128-bit zero value
 	const __m128i decay63 = _mm_set1_epi16(0x003f);
@@ -12626,6 +12897,7 @@ void BitCanvas32::DoDelta_SSE2_experiment203f_e_loc_p4(const PIXELMAP* lpTransit
 	}
 }
 
+// Exp204a
 void BitCanvas32::DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i decay63 = _mm256_set1_epi16(63);
@@ -12694,6 +12966,7 @@ void BitCanvas32::DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable)
 	} while (pWrite < pWriteEnd);
 }
 
+// Exp204b
 void BitCanvas32::DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i decay63 = _mm256_set1_epi16(63);
@@ -13089,6 +13362,412 @@ void BitCanvas32::DoDelta_AVX512_experiment206a(const PIXELMAP* lpTransitionTabl
 		const __m512i workingBottom2 = _mm512_permutexvar_epi64(stage2Indices, carryBottom);
 
 		Process5PackedPairs(workingTop2, workingBottom2, pWrite);
+	} while (pWrite + 14 < pWriteEnd);
+
+	dword_t destPixelOffset = bufferLength - (bufferLength % 15);
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+
+// Exp206b : Test to determine if the cause of teh high-variance is reusing the same INDEX value MANY times in the same Bytewise-Permute
+__forceinline void Process5PackedPairs_UNIQUE_INDEX_MASKED_ZEROS(__m512i pixels_12, __m512i pixels_34, dword_t*& pWrite)
+{
+	const __m512i decay63 = _mm512_set1_epi16(63);
+
+	// Permute directly into Arithmetic lanes:
+	//
+	// R0 A0 R1 A0 G0 A0 G1 A0 B0 A0 B1 A0
+	// R2 A0 R3 A0 G2 A0 G3 A0 B2 A0 B3 A0
+	// R4 A0 R5 A0 G4 A0 G5 A0 B4 A0 B5 A0
+	// R6 A0 R7 A0 G6 A0 G7 A0 B6 A0 B7 A0
+	// R8 A0 R9 A0 G8 A0 G9 A0 B8 A0 B9 A0
+	// A0 A0 A0 A0
+	//const __m512i permuteIndices =
+	//	_mm512_set_epi8(
+	//		3, 3, 3, 3,  // XX-XX
+	//		3, 36, 3, 32, 3, 37, 3, 33, 3, 38, 3, 34, // P9-P8
+	//		3, 28, 3, 24, 3, 29, 3, 25, 3, 30, 3, 26, // P7-P6
+	//		3, 20, 3, 16, 3, 21, 3, 17, 3, 22, 3, 18, // P5-P4
+	//		3, 12, 3, 8, 3, 13, 3, 9, 3, 14, 3, 10, // P3-P2
+	//		3, 4, 3, 0, 3, 5, 3, 1, 3, 6, 3, 2 // P1-P0
+	//	);
+	// The zeros: 3, 7, 11, 15, 19, 23, 27, 31, 35, 39, ... 43, 47, 51, 55, 59, 63
+	// There are 5*6 slots that we needs zeros.
+	// YES Tactic1: EVENLY DISTRIBUTE the remaining indexes, and "AND-mask" the values to ZERO.
+	// NO Tactic2: EVENLY DISTRIBUTE the 16 actual zero values across the 30 slots (no more than 2 instances index; EQUIVALENT TO BitCanvas8).
+	const __m512i permuteIndices =
+		_mm512_set_epi8(
+			40, 41, 42, 44,  // XX-XX (discarded, so do not matter, can be anything, but 40, 41, 42, 44 are unused)
+			45, 36, 62, 32, 61, 37, 60, 33, 58, 38, 57, 34, // P9-P8
+			56, 28, 54, 24, 53, 29, 52, 25, 50, 30, 49, 26, // P7-P6
+			48, 20, 46, 16, 63, 21, 59, 17, 55, 22, 51, 18, // P5-P4
+			47, 12, 43, 8, 39, 13, 35, 9, 31, 14, 27, 10, // P3-P2
+			23, 4, 19, 0, 15, 5, 11, 1, 7, 6, 3, 2 // P1-P0
+		);
+
+	//const __m512i permuteStoreIndices =
+	//	_mm512_set_epi8(
+	//		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	//		48, 52, 56, 1, 36, 40, 44, 1, 24, 28, 32, 1, 12, 16, 20, 1, 0, 4, 8
+	//	);
+	// Pick ANY other values for the 1's, as those are DISCARDED anyway!
+	const __m512i permuteStoreIndices =
+		_mm512_set_epi8(
+			63, 62, 61, 60, 59, 58, 57, 55, 54, 53, 51, 50, 49, 47, 46, 45, 43, 42, 41, 39, 38, 37, 35, 34, 33, 31, 30, 29, 27, 26, 25, 23, 22, 21, 19, 18, 17, 15, 14, 13, 11, 10, 9, 7, 6,
+			48, 52, 56, 5, 36, 40, 44, 3, 24, 28, 32, 2, 12, 16, 20, 1, 0, 4, 8
+		);
+
+	const __m512i zero_mask = _mm512_set1_epi16(0x00FF);
+	const __m512i pixels_12_unpacked = _mm512_and_si512(_mm512_permutexvar_epi8(permuteIndices, pixels_12), zero_mask); /* unpack pixels 12 */
+	const __m512i pixels_34_unpacked = _mm512_and_si512(_mm512_permutexvar_epi8(permuteIndices, pixels_34), zero_mask); /* unpack pixels 34 */
+
+
+	//
+	// Sum all 4 source pixels.
+	//
+	__m512i pixel_sum_13_24 = _mm512_add_epi16(pixels_12_unpacked, pixels_34_unpacked);
+	const __m512i ones = _mm512_set1_epi16(1);
+	__m512i final_pixel = _mm512_madd_epi16(pixel_sum_13_24, ones);
+
+	/* decay the buffer (ie: make it slightly darker than the average) */
+	final_pixel = _mm512_mullo_epi16(final_pixel, decay63);
+	final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+
+	const __m512i result8 = _mm512_permutexvar_epi8(permuteStoreIndices, final_pixel);
+
+	//
+	// Five output pixels.
+	//
+	memcpy(pWrite, &result8, 20);
+	pWrite += 5;
+}
+
+// Exp206c : Test to determine if the cause of teh high-variance is reusing the same INDEX value MANY times in the same Bytewise-Permute
+// AVOID THE EXTRA AND-MASK STEP
+__forceinline void Process5PackedPairs_DUPLICATED_ZERO_INDEX(__m512i pixels_12, __m512i pixels_34, dword_t*& pWrite)
+{
+	const __m512i decay63 = _mm512_set1_epi16(63);
+
+	// Permute directly into Arithmetic lanes:
+	//
+	// R0 A0 R1 A0 G0 A0 G1 A0 B0 A0 B1 A0
+	// R2 A0 R3 A0 G2 A0 G3 A0 B2 A0 B3 A0
+	// R4 A0 R5 A0 G4 A0 G5 A0 B4 A0 B5 A0
+	// R6 A0 R7 A0 G6 A0 G7 A0 B6 A0 B7 A0
+	// R8 A0 R9 A0 G8 A0 G9 A0 B8 A0 B9 A0
+	// A0 A0 A0 A0
+	//const __m512i permuteIndices =
+	//	_mm512_set_epi8(
+	//		3, 3, 3, 3,  // XX-XX
+	//		3, 36, 3, 32, 3, 37, 3, 33, 3, 38, 3, 34, // P9-P8
+	//		3, 28, 3, 24, 3, 29, 3, 25, 3, 30, 3, 26, // P7-P6
+	//		3, 20, 3, 16, 3, 21, 3, 17, 3, 22, 3, 18, // P5-P4
+	//		3, 12, 3, 8, 3, 13, 3, 9, 3, 14, 3, 10, // P3-P2
+	//		3, 4, 3, 0, 3, 5, 3, 1, 3, 6, 3, 2 // P1-P0
+	//	);
+	// The zeros: 3, 7, 11, 15, 19, 23, 27, 31, 35, 39, ... 43, 47, 51, 55, 59, 63
+	// There are 5*6 slots that we needs zeros.
+	// NO Tactic1: EVENLY DISTRIBUTE the remaining indexes, and "AND-mask" the values to ZERO.
+	// YES Tactic2: EVENLY DISTRIBUTE the 16 actual zero values across the 30 slots (no more than 2 instances index; EQUIVALENT TO BitCanvas8).
+	const __m512i permuteIndices =
+		_mm512_set_epi8(
+			40, 41, 42, 44,  // XX-XX (discarded, so do not matter, can be anything, but 40, 41, 42, 44 are unused)
+			55, 36, 51, 32, 47, 37, 43, 33, 39, 38, 35, 34, // P9-P8
+			31, 28, 27, 24, 23, 29, 19, 25, 15, 30, 11, 26, // P7-P6
+			7, 20, 3, 16, 63, 21, 59, 17, 55, 22, 51, 18, // P5-P4
+			47, 12, 43, 8, 39, 13, 35, 9, 31, 14, 27, 10, // P3-P2
+			23, 4, 19, 0, 15, 5, 11, 1, 7, 6, 3, 2 // P1-P0
+		);
+
+	//const __m512i permuteStoreIndices =
+	//	_mm512_set_epi8(
+	//		1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	//		48, 52, 56, 1, 36, 40, 44, 1, 24, 28, 32, 1, 12, 16, 20, 1, 0, 4, 8
+	//	);
+	// Pick ANY other values for the 1's, as those are DISCARDED anyway!
+	const __m512i permuteStoreIndices =
+		_mm512_set_epi8(
+			63, 62, 61, 60, 59, 58, 57, 55, 54, 53, 51, 50, 49, 47, 46, 45, 43, 42, 41, 39, 38, 37, 35, 34, 33, 31, 30, 29, 27, 26, 25, 23, 22, 21, 19, 18, 17, 15, 14, 13, 11, 10, 9, 7, 6,
+			48, 52, 56, 5, 36, 40, 44, 3, 24, 28, 32, 2, 12, 16, 20, 1, 0, 4, 8
+		);
+
+	const __m512i pixels_12_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_12); /* unpack pixels 12 */
+	const __m512i pixels_34_unpacked = _mm512_permutexvar_epi8(permuteIndices, pixels_34); /* unpack pixels 34 */
+
+	//
+	// Sum all 4 source pixels.
+	//
+	__m512i pixel_sum_13_24 = _mm512_add_epi16(pixels_12_unpacked, pixels_34_unpacked);
+	const __m512i ones = _mm512_set1_epi16(1);
+	__m512i final_pixel = _mm512_madd_epi16(pixel_sum_13_24, ones);
+
+	/* decay the buffer (ie: make it slightly darker than the average) */
+	final_pixel = _mm512_mullo_epi16(final_pixel, decay63);
+	final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2);
+
+	const __m512i result8 = _mm512_permutexvar_epi8(permuteStoreIndices, final_pixel);
+
+	//
+	// Five output pixels.
+	//
+	memcpy(pWrite, &result8, 20);
+	pWrite += 5;
+}
+
+// Exp206b : Test to determine if the cause of teh high-variance is reusing the same INDEX value MANY times in the same Bytewise-Permute
+void BitCanvas32::DoDelta_AVX512_experiment206b(const PIXELMAP* lpTransitionTable)
+{
+	const PIXELMAP* pTransition = lpTransitionTable;
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* pWrite = m_pWriteBuffer32;
+	dword_t* pWriteEnd = pWrite + bufferLength - 0;
+
+	//
+	// Carries are stored as raw PackedPairs.
+	//
+	__m512i carryTop;
+	__m512i carryBottom;
+
+	//
+	// lane indices used with _mm512_permutex2var_epi64()
+	//
+	const __m512i stage1Indices =
+		_mm512_set_epi64(
+			0, 0, 0,
+			9, 8,      // gather PP9 PP8
+			7, 6, 5    // carry PP7 PP6 PP5
+		);
+
+	do
+	{
+		//
+		// ============================================================
+		// Stage 0
+		//
+		// Gather 8
+		// Use    5
+		// Save   3
+		// ============================================================
+		//
+
+		const __m256i indices32_stage0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
+		const __m512i indices64_stage0 = _mm512_cvtepu32_epi64(indices32_stage0);
+		const __m512i bottomIndices64_stage0 = _mm512_add_epi64(indices64_stage0, _mm512_set1_epi64(widthPixels));
+
+		const __m512i gatherTop0 = _mm512_i64gather_epi64(indices64_stage0, readBase, 4);
+		const __m512i gatherBottom0 = _mm512_i64gather_epi64(bottomIndices64_stage0, readBase, 4);
+
+		pTransition += 8;
+
+		//
+		// PP0 PP1 PP2 PP3 PP4
+		//
+		Process5PackedPairs_UNIQUE_INDEX_MASKED_ZEROS(gatherTop0, gatherBottom0, pWrite);
+
+		//
+		// Save:
+		// PP5 PP6 PP7
+		//
+		carryTop = gatherTop0;
+		carryBottom = gatherBottom0;
+
+
+		//
+		// ============================================================
+		// Stage 1
+		//
+		// Saved 3 + Gathered 2
+		// Use    5
+		// Save   6
+		// ============================================================
+		//
+
+		const __m256i indices32_stage1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
+		const __m512i indices64_stage1 = _mm512_cvtepu32_epi64(indices32_stage1);
+		const __m512i bottomIndices64_stage1 = _mm512_add_epi64(indices64_stage1, _mm512_set1_epi64(widthPixels));
+		const __m512i gatherTop1 = _mm512_i64gather_epi64(indices64_stage1, readBase, 4);
+		const __m512i gatherBottom1 = _mm512_i64gather_epi64(bottomIndices64_stage1, readBase, 4);
+
+		pTransition += 7;
+
+		//
+		// Build:
+		//
+		// PP5 PP6 PP7 PP8 PP9
+		//
+		const __m512i workingTop1 = _mm512_permutex2var_epi64(carryTop, stage1Indices, gatherTop1);
+		const __m512i workingBottom1 = _mm512_permutex2var_epi64(carryBottom, stage1Indices, gatherBottom1);
+
+		Process5PackedPairs_UNIQUE_INDEX_MASKED_ZEROS(workingTop1, workingBottom1, pWrite);
+
+		//
+		// Save gatherTop1/gatherBottom1
+		// for Stage 2.
+		//
+		carryTop = gatherTop1;
+		carryBottom = gatherBottom1;
+
+
+		//
+		// ============================================================
+		// Stage 2
+		//
+		// Use    PP10 PP11 PP12 PP13 PP14
+		// Discard PP15
+		// ============================================================
+		//
+		// Assumes gatherTop1 contained:
+		//
+		// PP8 PP9 PP10 PP11 PP12 PP13 PP14 PP15
+		//
+		// Need:
+		//
+		// PP10 PP11 PP12 PP13 PP14
+		//
+
+		const __m512i stage2Indices =
+			_mm512_set_epi64(
+				0, 0, 0,
+				6, 5, 4, 3, 2);
+
+		const __m512i workingTop2 = _mm512_permutexvar_epi64(stage2Indices, carryTop);
+		const __m512i workingBottom2 = _mm512_permutexvar_epi64(stage2Indices, carryBottom);
+
+		Process5PackedPairs_UNIQUE_INDEX_MASKED_ZEROS(workingTop2, workingBottom2, pWrite);
+	} while (pWrite + 14 < pWriteEnd);
+
+	dword_t destPixelOffset = bufferLength - (bufferLength % 15);
+	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Exp206c : Test to determine if the cause of teh high-variance is reusing the same INDEX value MANY times in the same Bytewise-Permute
+void BitCanvas32::DoDelta_AVX512_experiment206c(const PIXELMAP* lpTransitionTable)
+{
+	const PIXELMAP* pTransition = lpTransitionTable;
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* pWrite = m_pWriteBuffer32;
+	dword_t* pWriteEnd = pWrite + bufferLength - 0;
+
+	//
+	// Carries are stored as raw PackedPairs.
+	//
+	__m512i carryTop;
+	__m512i carryBottom;
+
+	//
+	// lane indices used with _mm512_permutex2var_epi64()
+	//
+	const __m512i stage1Indices =
+		_mm512_set_epi64(
+			0, 0, 0,
+			9, 8,      // gather PP9 PP8
+			7, 6, 5    // carry PP7 PP6 PP5
+		);
+
+	do
+	{
+		//
+		// ============================================================
+		// Stage 0
+		//
+		// Gather 8
+		// Use    5
+		// Save   3
+		// ============================================================
+		//
+
+		const __m256i indices32_stage0 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
+		const __m512i indices64_stage0 = _mm512_cvtepu32_epi64(indices32_stage0);
+		const __m512i bottomIndices64_stage0 = _mm512_add_epi64(indices64_stage0, _mm512_set1_epi64(widthPixels));
+
+		const __m512i gatherTop0 = _mm512_i64gather_epi64(indices64_stage0, readBase, 4);
+		const __m512i gatherBottom0 = _mm512_i64gather_epi64(bottomIndices64_stage0, readBase, 4);
+
+		pTransition += 8;
+
+		//
+		// PP0 PP1 PP2 PP3 PP4
+		//
+		Process5PackedPairs_DUPLICATED_ZERO_INDEX(gatherTop0, gatherBottom0, pWrite);
+
+		//
+		// Save:
+		// PP5 PP6 PP7
+		//
+		carryTop = gatherTop0;
+		carryBottom = gatherBottom0;
+
+
+		//
+		// ============================================================
+		// Stage 1
+		//
+		// Saved 3 + Gathered 2
+		// Use    5
+		// Save   6
+		// ============================================================
+		//
+
+		const __m256i indices32_stage1 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(pTransition));
+		const __m512i indices64_stage1 = _mm512_cvtepu32_epi64(indices32_stage1);
+		const __m512i bottomIndices64_stage1 = _mm512_add_epi64(indices64_stage1, _mm512_set1_epi64(widthPixels));
+		const __m512i gatherTop1 = _mm512_i64gather_epi64(indices64_stage1, readBase, 4);
+		const __m512i gatherBottom1 = _mm512_i64gather_epi64(bottomIndices64_stage1, readBase, 4);
+
+		pTransition += 7;
+
+		//
+		// Build:
+		//
+		// PP5 PP6 PP7 PP8 PP9
+		//
+		const __m512i workingTop1 = _mm512_permutex2var_epi64(carryTop, stage1Indices, gatherTop1);
+		const __m512i workingBottom1 = _mm512_permutex2var_epi64(carryBottom, stage1Indices, gatherBottom1);
+
+		Process5PackedPairs_DUPLICATED_ZERO_INDEX(workingTop1, workingBottom1, pWrite);
+
+		//
+		// Save gatherTop1/gatherBottom1
+		// for Stage 2.
+		//
+		carryTop = gatherTop1;
+		carryBottom = gatherBottom1;
+
+
+		//
+		// ============================================================
+		// Stage 2
+		//
+		// Use    PP10 PP11 PP12 PP13 PP14
+		// Discard PP15
+		// ============================================================
+		//
+		// Assumes gatherTop1 contained:
+		//
+		// PP8 PP9 PP10 PP11 PP12 PP13 PP14 PP15
+		//
+		// Need:
+		//
+		// PP10 PP11 PP12 PP13 PP14
+		//
+
+		const __m512i stage2Indices =
+			_mm512_set_epi64(
+				0, 0, 0,
+				6, 5, 4, 3, 2);
+
+		const __m512i workingTop2 = _mm512_permutexvar_epi64(stage2Indices, carryTop);
+		const __m512i workingBottom2 = _mm512_permutexvar_epi64(stage2Indices, carryBottom);
+
+		Process5PackedPairs_DUPLICATED_ZERO_INDEX(workingTop2, workingBottom2, pWrite);
 	} while (pWrite + 14 < pWriteEnd);
 
 	dword_t destPixelOffset = bufferLength - (bufferLength % 15);
@@ -13659,6 +14338,172 @@ void BitCanvas32::DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTabl
 
 	dword_t destPixelOffset = bufferLength - (bufferLength % 40);
 	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
+}
+
+// Scalar Gather, widen Exp0_Human2
+void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
+{
+	const __m256i m_zero = _mm256_setzero_si256();
+	const __m256i decay_factor = _mm256_set1_epi16(63);
+	__m256i    pixels_12;
+	__m256i    pixels_34;
+	__m256i    pixel_sum_13_24;
+	__m256i    px12;
+	__m256i    px34;
+	__m256i    high_bits_sum_13;
+	__m256i    low_bits_sum_24;
+	__m256i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 2);
+
+	do
+	{
+		const dword_t pixel = *pTransition++;
+		const dword_t pixel3 = pixel + widthPixels;
+
+		pixels_12 = _mm256_zextsi128_si256(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel]))));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm256_zextsi128_si256(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3])))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm256_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm256_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm256_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm256_srli_si256(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+		low_bits_sum_24 = (pixel_sum_13_24);
+
+		final_pixel = _mm256_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm256_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm256_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm256_cvtsi256_si32(final_pixel); // take the low 32bits
+
+		const dword_t  pixelB1 = *pTransition++;
+		const dword_t  pixelB3 = pixelB1 + widthPixels;
+
+		pixels_12 = _mm256_zextsi128_si256(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1]))));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm256_zextsi128_si256(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3])))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm256_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm256_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm256_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm256_srli_si256(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+		low_bits_sum_24 = (pixel_sum_13_24);
+
+		final_pixel = _mm256_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm256_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm256_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm256_cvtsi256_si32(final_pixel); // take the low 32bits
+	} while (pWrite < pWriteEnd);
+}
+
+// Scalar Gather, widen Exp0_Human2
+void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable)
+{
+	const __m512i m_zero = _mm512_setzero_si512();
+	const __m512i decay_factor = _mm512_set1_epi16(63);
+	__m512i    pixels_12;
+	__m512i    pixels_34;
+	__m512i    pixel_sum_13_24;
+	__m512i    px12;
+	__m512i    px34;
+	__m512i    high_bits_sum_13;
+	__m512i    low_bits_sum_24;
+	__m512i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 2);
+
+	do
+	{
+		const dword_t pixel = *pTransition++;
+		const dword_t pixel3 = pixel + widthPixels;
+
+		pixels_12 = _mm512_zextsi128_si512(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel]))));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm512_zextsi128_si512(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixel3])))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm512_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm512_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm512_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm512_bsrli_epi128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+		low_bits_sum_24 = (pixel_sum_13_24);
+
+		final_pixel = _mm512_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm512_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm512_cvtsi512_si32(final_pixel); // take the low 32bits
+
+		const dword_t  pixelB1 = *pTransition++;
+		const dword_t  pixelB3 = pixelB1 + widthPixels;
+
+		pixels_12 = _mm512_zextsi128_si512(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1]))));  /* read in pixels 1 & 2 using a single memory read operation */
+		pixels_34 = _mm512_zextsi128_si512(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3])))); /* read in pixels 3 & 4 using a single memory read operation */
+
+		px12 = _mm512_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm512_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm512_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm512_bsrli_epi128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
+		low_bits_sum_24 = (pixel_sum_13_24);
+
+		final_pixel = _mm512_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
+		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
+		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
+		final_pixel = _mm512_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
+		final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+
+		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		*pWrite++ = _mm512_cvtsi512_si32(final_pixel); // take the low 32bits
+	} while (pWrite < pWriteEnd);
 }
 
 
