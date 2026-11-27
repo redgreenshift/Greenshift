@@ -1076,8 +1076,11 @@ protected:
 
 	void					DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable);
+	void					DoDelta_AVX2_experiment204c(const PIXELMAP* lpTransitionTable); // port Exp0_Human3 improvements
+
+							// Bytewise-Permute experiments (inconsistent, high-variance volatility)
 	void					DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable);
-	void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable); // SKIPPED/promoted to Exp206a
+	//void					DoDelta_AVX512_experiment205b(const PIXELMAP* lpTransitionTable); // SKIPPED/promoted to Exp206a
 	void					DoDelta_AVX512_experiment206a(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant
 	void					DoDelta_AVX512_experiment206b(const PIXELMAP* lpTransitionTable); // SlidingWindow3StageVariant (Bytewise-Permute UNIQUE INDEX; test to see if this is the high-variance cause)
 																							  // Bytewise-Permute-with-many-repeated-indices
@@ -1089,6 +1092,7 @@ protected:
 
 							// Consistent again!
 	void					DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human3
+	void					DoDelta_AVX2_experiment209b(const PIXELMAP* lpTransitionTable); // Scalar Gather, increase Arithmetic utilization
 	void					DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human3
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
