@@ -1088,8 +1088,8 @@ protected:
 	void					DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTable); // SlidingWindow8StageVariant
 
 							// Consistent again!
-	void					DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human2
-	void					DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human2
+	void					DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human3
+	void					DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human3
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;
