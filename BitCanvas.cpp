@@ -10267,7 +10267,7 @@ Scalar reference implementations:
 		SSE2   Exp203f_e       ~ 7.5 -  7.7 sec
 		SSE2   Exp203e         ~ 7.0 -  7.2 sec
 		SSE2   Exp203d         ~ 6.9 -  7.2 sec
-		AVX512 Exp210a         ~ 6.5 -  6.6 sec
+		AVX512 Exp210a         ~ 6.4 -  6.9 sec
 		SSE2   Exp203f_d       ~ 6.3 -  6.6 sec
 
 		SSE2   Exp203f_e_loc_p2~ 6.2 -  6.5 sec
@@ -10279,9 +10279,9 @@ Scalar reference implementations:
 		SSE2   Exp203f_e_loc_p4~ 5.5 -  5.9 sec
 		SSE2   Exp203f_d_loc_p3~ 5.5 -  5.6 sec
 		SSE2   Exp203f_e_loc_p3~ 5.4 -  5.7 sec
-		AVX2   Exp209a         ~ 5.1 -  5.4 sec
+		AVX2   Exp209a         ~ 5.0 -  5.8 sec
 		SSE2   Exp0_Human2     ~ 4.9 -  5.6 sec
-		SSE2   Exp0_Human3     ~ 4.4 -  4.6 sec
+		SSE2   Exp0_Human3     ~ 4.4 -  5.1 sec
 
 	SIMD + Vector Gatherer Experiments:
 		AVX2   Exp204a         ~ 6.1 -  6.6 sec
@@ -10756,7 +10756,7 @@ Exp209a:
 	without AVX Vector Gather.
 
 	Retain Scalar Gather and the
-	Exp0_Human2 processing model while
+	Exp0_Human3 processing model while
 	replacing SSE2 Arithmetic with AVX2
 	equivalents.
 
@@ -10764,14 +10764,14 @@ Exp209a:
 		Consistent benchmark behavior (NOT hi-variance).
 
 		Faster than Exp204a but slower
-		than Exp0_Human2/3.
+		than Exp0_Human2/Exp0_Human3.
 
 Exp210a:
 	Investigate AVX512 instructions
 	without AVX Vector Gather.
 
 	Retain Scalar Gather and the
-	Exp0_Human2 processing model while
+	Exp0_Human3 processing model while
 	replacing SSE2 Arithmetic with AVX512
 	equivalents.
 
@@ -11595,7 +11595,6 @@ void BitCanvas32::DoDelta_SSE2_experiment0human2(const PIXELMAP* lpTransitionTab
 void BitCanvas32::DoDelta_SSE2_experiment0human3(const PIXELMAP* lpTransitionTable)
 {
 	const __m128i m_zero = _mm_setzero_si128();
-	const __m128i decay_factor = _mm_set1_epi16(63);
 	__m128i    pixels_12;
 	__m128i    pixels_34;
 	__m128i    pixel_sum_13_24;
@@ -11636,7 +11635,7 @@ void BitCanvas32::DoDelta_SSE2_experiment0human3(const PIXELMAP* lpTransitionTab
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
 		const __m128i decay_scale = _mm_set1_epi16(16128); // 16128 = 63 * 256
-		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // Free divide by 256
+		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
@@ -11663,7 +11662,7 @@ void BitCanvas32::DoDelta_SSE2_experiment0human3(const PIXELMAP* lpTransitionTab
 		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
-		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // Free divide by 256
+		final_pixel = _mm_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
@@ -14340,11 +14339,10 @@ void BitCanvas32::DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTabl
 	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
-// Scalar Gather, widen Exp0_Human2
+// Scalar Gather, widen Exp0_Human3
 void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i m_zero = _mm256_setzero_si256();
-	const __m256i decay_factor = _mm256_set1_epi16(63);
 	__m256i    pixels_12;
 	__m256i    pixels_34;
 	__m256i    pixel_sum_13_24;
@@ -14385,8 +14383,8 @@ void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
-		final_pixel = _mm256_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
-		final_pixel = _mm256_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+		const __m256i decay_scale = _mm256_set1_epi16(16128); // 16128 = 63 * 256
+		final_pixel = _mm256_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
@@ -14405,7 +14403,6 @@ void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
 		// More accurate to sum BEFORE decay step
 		high_bits_sum_13 = _mm256_srli_si256(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
-		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
 		low_bits_sum_24 = (pixel_sum_13_24);
 
 		final_pixel = _mm256_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
@@ -14414,8 +14411,7 @@ void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
-		final_pixel = _mm256_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
-		final_pixel = _mm256_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+		final_pixel = _mm256_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
@@ -14423,11 +14419,10 @@ void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 	} while (pWrite < pWriteEnd);
 }
 
-// Scalar Gather, widen Exp0_Human2
+// Scalar Gather, widen Exp0_Human3
 void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable)
 {
 	const __m512i m_zero = _mm512_setzero_si512();
-	const __m512i decay_factor = _mm512_set1_epi16(63);
 	__m512i    pixels_12;
 	__m512i    pixels_34;
 	__m512i    pixel_sum_13_24;
@@ -14468,8 +14463,8 @@ void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTabl
 		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
-		final_pixel = _mm512_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
-		final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+		const __m512i decay_scale = _mm512_set1_epi16(16128); // 16128 = 63 * 256
+		final_pixel = _mm512_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
@@ -14488,7 +14483,6 @@ void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTabl
 		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
 		// More accurate to sum BEFORE decay step
 		high_bits_sum_13 = _mm512_bsrli_epi128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
-		//low_bits_sum_24 = _mm_move_epi64(pixel_sum_13_24); // take the low 64bits
 		low_bits_sum_24 = (pixel_sum_13_24);
 
 		final_pixel = _mm512_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
@@ -14497,8 +14491,7 @@ void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTabl
 		// The basic idea is that "decay" is to take 63/64 of the final value of the pixel.
 		// Since we already added 4 pixels, we *also* need to divide by 4 as well.
 		// We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time.
-		final_pixel = _mm512_mullo_epi16(final_pixel, decay_factor);   // multiply by decay_factor
-		final_pixel = _mm512_srli_epi16(final_pixel, DECAY_SHIFT + 2); // shift right (DECAY_SHIFT + 2) bits
+		final_pixel = _mm512_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
 
 		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
