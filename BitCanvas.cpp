@@ -10948,6 +10948,17 @@ Exp210b:
 		current leading implementations
 		like Exp0_Human3.
 
+Exp210cx3:
+Transition-table read:
+	No compelling evidence yet.
+
+PackedPair read:
+	Surprisingly promising in AVX512.
+	Needs more testing.
+
+Pixel unpacking:
+	Appears consistently worse.
+	Probably abandon.
 
 Key Findings
 ------------
@@ -15220,6 +15231,201 @@ void BitCanvas32::DoDelta_AVX512_experiment210b(const PIXELMAP* lpTransitionTabl
 	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 4));
 }
 
+// Exp210cx3: testing 3 micro-optimizations
+// The logical parallel to Exp209cx3
+// I have three ideas to test, but I don't want to create 8 experiments, so I'll use conditional compiling and compare each to Exp210b
+// TT read: two scalar 32bit reads vs one scalar 64bit read vs SIMD read
+// PP read: C++ 64bit PackedPair read vs SIMD PackedPair read
+// Pixel unpacking: TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+void BitCanvas32::DoDelta_AVX512_experiment210cx3(const PIXELMAP* lpTransitionTable)
+{
+	const __m512i m_zero = _mm512_setzero_si512();
+	const __m512i decay_scale = _mm512_set1_epi16(16128); // 16128 = 63 * 256
+	__m512i pixels_12;
+	__m512i pixels_34;
+	__m512i pixel_sum_13_24;
+	__m512i px12;
+	__m512i px34;
+	__m512i high_bits_sum_13;
+	__m512i low_bits_sum_24;
+	__m512i final_pixel;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+
+	dword_t* pWrite = writeBase;
+
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 4);
+
+	// two scalar 32bit reads vs one scalar 64bit read vs SIMD read
+	// TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+	// C++ 64bit PackedPair read vs SIMD PackedPair read
+
+	//const uint64_t widthPixels2 = uint64_t(widthPixels) + uint64_t(widthPixels) << 32;
+
+	// _mm256_castsi256_si128, _mm256_cvtsi256_si32
+	do
+	{
+#if 0 // two SIMD 64bit reads // TODO: JRDV: Actually implement SIMD read
+		const uint64_t pixelAB = *reinterpret_cast<const uint64_t*>(pTransition);
+		pTransition += 2;
+		const uint64_t pixelCD = *reinterpret_cast<const uint64_t*>(pTransition);
+		pTransition += 2;
+		//const dword_t pixelA = pixelAB & 0xFFFFFFFF;
+		//const dword_t pixelB = pixelAB >> 32;
+
+		//const uint64_t pixelAB3 = pixelAB + widthPixels2;
+		//const dword_t pixelA3 = pixelAB3 & 0xFFFFFFFF;
+		//const dword_t pixelB3 = pixelAB3 >> 32;
+
+		const dword_t pixelA1 = pixelAB & 0xFFFFFFFF;
+		const dword_t pixelB1 = pixelAB >> 32;
+
+		const dword_t pixelA3 = pixelA1 + widthPixels;
+		const dword_t pixelB3 = pixelB1 + widthPixels;
+
+		const dword_t pixelC1 = pixelCD & 0xFFFFFFFF;
+		const dword_t pixelD1 = pixelCD >> 32;
+
+		const dword_t pixelC3 = pixelC1 + widthPixels;
+		const dword_t pixelD3 = pixelD1 + widthPixels;
+
+#else // four scalar 32bit reads
+		const dword_t pixelA1 = *pTransition++;
+		const dword_t pixelB1 = *pTransition++;
+		const dword_t pixelC1 = *pTransition++;
+		const dword_t pixelD1 = *pTransition++;
+		const dword_t pixelA3 = pixelA1 + widthPixels;
+		const dword_t pixelB3 = pixelB1 + widthPixels;
+		const dword_t pixelC3 = pixelC1 + widthPixels;
+		const dword_t pixelD3 = pixelD1 + widthPixels;
+#endif
+		//
+		// Read eight PackedPairs.
+		//
+
+#if 1 // TWO calls to _mm256_set_epi64x
+
+#if 1 // SIMD PackedPair read
+		//__m256i lo = _mm256_set_m128i(lane1, lane0);
+		//__m256i hi = _mm256_set_m128i(lane3, lane2);
+
+		//pixels_12 = _mm512_inserti64x4(_mm512_zextsi256_si512(lo), hi, 1);
+		pixels_12 = _mm512_inserti64x4(_mm512_zextsi256_si512(
+			_mm256_set_m128i(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1]))),
+				_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA1]))))),
+			_mm256_set_m128i(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelD1]))),
+				_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelC1])))), 1);
+
+		//pixels_12 = _mm512_set_m128i(
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelD1]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelC1]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB1]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA1]))));
+
+		pixels_34 = _mm512_inserti64x4(_mm512_zextsi256_si512(
+			_mm256_set_m128i(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))),
+				_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA3]))))),
+			_mm256_set_m128i(_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelD3]))),
+				_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelC3])))), 1);
+		//pixels_34 = _mm512_set_m128i(
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelD3]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelC3]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))),
+		//	_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA3]))));
+#else // C++ 64bit PackedPair read
+		pixels_12 = _mm512_set_epi64(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelD1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelC1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA1]));
+
+		pixels_34 = _mm512_set_epi64(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelD3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelC3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA3]));
+#endif
+
+		//pixels_34 = _mm256_set_epi64x(1, 3, 5, 7);
+
+		px12 = _mm512_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm512_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+
+#else // use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+
+#if 0 // SIMD PackedPair read
+		static_assert(false, "SIMD PackedPair read + _mm256_set_epi64x are difficult to mix");
+		pixels_12 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA]))));
+
+		pixels_34 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA3]))));
+#else // C++ 64bit PackedPair read
+		__m512i pixels_1234 = _mm512_set_epi64(
+			*reinterpret_cast<const long long*>(&readBase[pixelD3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelD1]),
+			*reinterpret_cast<const long long*>(&readBase[pixelC3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelC1]),
+			*reinterpret_cast<const long long*>(&readBase[pixelB3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelB1]),
+			*reinterpret_cast<const long long*>(&readBase[pixelA3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelA1]));
+#endif
+
+		//pixels_34 = _mm256_set_epi64x(1, 3, 5, 7);
+
+		px12 = _mm512_unpacklo_epi8(pixels_1234, m_zero); /* unpack pixels 12 */
+		px34 = _mm512_unpackhi_epi8(pixels_1234, m_zero); /* unpack pixels 34 */
+#endif
+
+		pixel_sum_13_24 = _mm512_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		//
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		//
+		high_bits_sum_13 = _mm512_bsrli_epi128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = pixel_sum_13_24;
+
+		final_pixel = _mm512_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		/* The basic idea is that "decay" is to take 63/64 of the final value of the pixel. */
+		/* Since we already added 4 pixels, we *also* need to divide by 4 as well. */
+		/* We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time. */
+		final_pixel = _mm512_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
+
+		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		__m512i indices = _mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+		final_pixel = _mm512_permutexvar_epi32(indices, final_pixel);
+		//
+		// Four output pixels.
+		//
+		_mm_storeu_si128(reinterpret_cast<__m128i*>(pWrite), _mm512_castsi512_si128(final_pixel));
+
+		pWrite += 4;
+
+	} while (pWrite < pWriteEnd);
+
+	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 4));
+}
 
 /****************************************************************************
  *
