@@ -1097,6 +1097,7 @@ protected:
 	void					DoDelta_AVX2_experiment209b(const PIXELMAP* lpTransitionTable); // Scalar Gather, increase Arithmetic utilization
 	void					DoDelta_AVX2_experiment209cx3(const PIXELMAP* lpTransitionTable); // testing 3 micro-optimizations
 	void					DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable); // Scalar Gather, widen Exp0_Human3
+	void					DoDelta_AVX512_experiment210b(const PIXELMAP* lpTransitionTable); // Scalar Gather, increase Arithmetic utilization
 
 	virtual void			CopyTo8(void* lpSurface, const dword_t nDeadSpace) override;
 	virtual void			CopyTo16(void* lpSurface, const dword_t nDeadSpace) override;

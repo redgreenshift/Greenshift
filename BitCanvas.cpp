@@ -10232,6 +10232,7 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 //		PP read: C++ 64bit PackedPair read vs SIMD PackedPair read
 //		Pixel unpacking: TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
 // Exp210a = 2-pixel AVX512 PackedPair, human generated, naive straightforward widening of Exp0_Human3
+// Exp210b = 2-pixel AVX512 PackedPair, human generated, increase Arithmetic utilization
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
 
@@ -10291,6 +10292,7 @@ Scalar reference implementations:
 		SSE2   Exp203f_e_loc_p4~ 5.5 -  5.9 sec
 		SSE2   Exp203f_d_loc_p3~ 5.5 -  5.6 sec
 		SSE2   Exp203f_e_loc_p3~ 5.4 -  5.7 sec
+		AVX512 Exp210b         ~ 5.3 -  6.2 sec
 		AVX2   Exp209a         ~ 5.0 -  5.8 sec
 		SSE2   Exp0_Human2     ~ 4.9 -  5.6 sec
 		AVX2   Exp209cx3       ~ 4.7 -  5.5 sec (three micro optimizations)
@@ -10922,6 +10924,29 @@ Exp210a:
 
 		Slower than the current Human
 		lineage implementations.
+
+Exp210b:
+	Increase Arithmetic utilization.
+
+	Retain the Exp210a Scalar Gather
+	approach while processing four
+	Exp0_Human3 Arithmetic operations in
+	parallel using a single AVX512
+	Arithmetic pipeline.
+
+	Result:
+		Clear improvement over Exp210a.
+
+		Demonstrates that increased
+		Arithmetic utilization improves
+		performance in the AVX512 Scalar
+		Gather line, consistent with the
+		results observed in Exp209b.
+
+		Competitive with Exp0_Human, but
+		not yet competitive with the
+		current leading implementations
+		like Exp0_Human3.
 
 
 Key Findings
@@ -13248,7 +13273,7 @@ void BitCanvas32::DoDelta_AVX2_experiment204c(const PIXELMAP* lpTransitionTable)
 		// the first two qwords of each register.
 		//
 		__m256i result16 = _mm256_packus_epi16(resultLo, resultHi); /* pack the average back into 32bit pixel format */
-		__m256i indices = _mm256_setr_epi32(0, 4, 2, 6, 1, 5, 3, 7);
+		const __m256i indices = _mm256_setr_epi32(0, 4, 2, 6, 1, 5, 3, 7);
 		result16 = _mm256_permutevar8x32_epi32(result16, indices);
 
 		// Write FOUR output pixels.
@@ -13325,7 +13350,7 @@ void BitCanvas32::DoDelta_AVX2_experiment204d(const PIXELMAP* lpTransitionTable)
 
 		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
-		__m256i indices = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+		const __m256i indices = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
 		final_pixel = _mm256_permutevar8x32_epi32(final_pixel, indices);
 		//
 		// Two output pixels.
@@ -13400,7 +13425,7 @@ void BitCanvas32::DoDelta_AVX2_experiment204e(const PIXELMAP* lpTransitionTable)
 
 		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
 
-		__m256i indices = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+		const __m256i indices = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
 		final_pixel = _mm256_permutevar8x32_epi32(final_pixel, indices);
 		//
 		// Two output pixels.
@@ -14709,7 +14734,7 @@ void BitCanvas32::DoDelta_AVX512_experiment208a(const PIXELMAP* lpTransitionTabl
 	Exp200_ScalarTail(lpTransitionTable, destPixelOffset);
 }
 
-// Scalar Gather, widen Exp0_Human3
+// Exp209a: Scalar Gather, widen Exp0_Human3
 void BitCanvas32::DoDelta_AVX2_experiment209a(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i m_zero = _mm256_setzero_si256();
@@ -14866,9 +14891,10 @@ void BitCanvas32::DoDelta_AVX2_experiment209b(const PIXELMAP* lpTransitionTable)
 	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 2));
 }
 
-// Exp209cx3: Scalar Gather, increase Arithmetic utilization (AGHAIN? Haven't done it yet)
-// I think this was also another half baked idea, before coming to the concludion of trying Exp204d
-// TODO: JRDV: Exp209c, see if we can load this faster/wider (<---- this was the idea!)
+// Exp209cx3: testing 3 micro-optimizations
+// I think this was also another half baked idea about increase Arithmetic utilization again,
+// before coming to the concludion of trying Exp204d
+// TODO: Exp209cx3, see if we can load this faster/wider (<---- this was the idea!)
 // More accurately I have three ideas to test, but I don't want to create 8 experiments, so I'll use conditional compiling and compare each to Exp209b
 // TT read: two scalar 32bit reads vs one scalar 64bit read vs SIMD read
 // PP read: C++ 64bit PackedPair read vs SIMD PackedPair read
@@ -15027,7 +15053,7 @@ void BitCanvas32::DoDelta_AVX2_experiment209cx3(const PIXELMAP* lpTransitionTabl
 	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 2));
 }
 
-// Scalar Gather, widen Exp0_Human3
+// Exp210a: Scalar Gather, widen Exp0_Human3
 void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTable)
 {
 	const __m512i m_zero = _mm512_setzero_si512();
@@ -15105,6 +15131,93 @@ void BitCanvas32::DoDelta_AVX512_experiment210a(const PIXELMAP* lpTransitionTabl
 
 		*pWrite++ = _mm512_cvtsi512_si32(final_pixel); // take the low 32bits
 	} while (pWrite < pWriteEnd);
+}
+
+// Exp210b: Scalar Gather, widen Exp0_Human3
+void BitCanvas32::DoDelta_AVX512_experiment210b(const PIXELMAP* lpTransitionTable)
+{
+	const __m512i m_zero = _mm512_setzero_si512();
+	__m512i    pixels_12;
+	__m512i    pixels_34;
+	__m512i    pixel_sum_13_24;
+	__m512i    px12;
+	__m512i    px34;
+	__m512i    high_bits_sum_13;
+	__m512i    low_bits_sum_24;
+	__m512i    final_pixel;
+	const dword_t* readBase = m_pReadBuffer32;
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+	dword_t* pWrite = writeBase;
+	const   dword_t    widthPixels = m_dwBufferWidth;
+	const dword_t    bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 4);
+
+	do
+	{
+		const dword_t pixelA1 = *pTransition++;
+		const dword_t pixelB1 = *pTransition++;
+		const dword_t pixelC1 = *pTransition++;
+		const dword_t pixelD1 = *pTransition++;
+		const dword_t pixelA3 = pixelA1 + widthPixels;
+		const dword_t pixelB3 = pixelB1 + widthPixels;
+		const dword_t pixelC3 = pixelC1 + widthPixels;
+		const dword_t pixelD3 = pixelD1 + widthPixels;
+
+		//
+		// Read eight PackedPairs.
+		//
+		pixels_12 = _mm512_set_epi64(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelD1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelC1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB1]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA1]));
+
+		pixels_34 = _mm512_set_epi64(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelD3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelC3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA3]));
+
+		px12 = _mm512_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm512_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+		pixel_sum_13_24 = _mm512_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		high_bits_sum_13 = _mm512_bsrli_epi128(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = pixel_sum_13_24;
+
+		final_pixel = _mm512_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		/* The basic idea is that "decay" is to take 63/64 of the final value of the pixel. */
+		/* Since we already added 4 pixels, we *also* need to divide by 4 as well. */
+		/* We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time. */
+		const __m512i decay_scale = _mm512_set1_epi16(16128); // 16128 = 63 * 256
+		final_pixel = _mm512_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
+
+		final_pixel = _mm512_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		const __m512i indices = _mm512_setr_epi32(0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15);
+		final_pixel = _mm512_permutexvar_epi32(indices, final_pixel);
+		//
+		// Four output pixels.
+		//
+		_mm_storeu_si128(reinterpret_cast<__m128i*>(pWrite), _mm512_castsi512_si128(final_pixel));
+
+		pWrite += 4;
+	} while (pWrite < pWriteEnd);
+
+	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 4));
 }
 
 
