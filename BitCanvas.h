@@ -1077,6 +1077,8 @@ protected:
 	void					DoDelta_AVX2_experiment204a(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment204b(const PIXELMAP* lpTransitionTable);
 	void					DoDelta_AVX2_experiment204c(const PIXELMAP* lpTransitionTable); // port Exp0_Human3 improvements
+	void					DoDelta_AVX2_experiment204d(const PIXELMAP* lpTransitionTable); // Combine the best of Exp204(Vector Gather)/ Exp209(Dense Arithmetic)/ Exp0_Human3(Immediate consumption, less work)
+	void					DoDelta_AVX2_experiment204e(const PIXELMAP* lpTransitionTable); // Combine the best of Exp204(Vector Gather)/ Exp209(Dense Arithmetic)/ Exp0_Human3(Immediate consumption, less work)
 
 							// Bytewise-Permute experiments (inconsistent, high-variance volatility)
 	void					DoDelta_AVX512_experiment205a(const PIXELMAP* lpTransitionTable);
