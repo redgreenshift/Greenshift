@@ -10227,6 +10227,10 @@ void BitCanvas32::DoDelta_cpp_BASELINE(const PIXELMAP* lpTransitionTable)
 // -- Scalar Gather experiments -- Is AVX Gather the source of the high-variance??? --
 // Exp209a = 2-pixel AVX2 PackedPair, human generated, naive straightforward widening of Exp0_Human3
 // Exp209b = 2-pixel AVX2 PackedPair, human generated, increase Arithmetic utilization
+// Exp209cx3 = 2-pixel AVX2 PackedPair, human generated, comparing 3 micro optimizations:
+//		TT read: two scalar 32bit reads vs one scalar 64bit read vs SIMD read
+//		PP read: C++ 64bit PackedPair read vs SIMD PackedPair read
+//		Pixel unpacking: TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
 // Exp210a = 2-pixel AVX512 PackedPair, human generated, naive straightforward widening of Exp0_Human3
 //
 // NOTE: The pixel number is always the OUTPUT or THROUGHPUT
@@ -10289,7 +10293,8 @@ Scalar reference implementations:
 		SSE2   Exp203f_e_loc_p3~ 5.4 -  5.7 sec
 		AVX2   Exp209a         ~ 5.0 -  5.8 sec
 		SSE2   Exp0_Human2     ~ 4.9 -  5.6 sec
-		AVX2   Exp209b         ~ 4.6 -  5.2 sec
+		AVX2   Exp209cx3       ~ 4.7 -  5.5 sec (three micro optimizations)
+		AVX2   Exp209b         ~ 4.5 -  5.2 sec
 		SSE2   Exp0_Human3     ~ 4.4 -  5.6 sec
 
 	SIMD + Vector Gatherer Experiments:
@@ -10867,6 +10872,41 @@ Exp209b:
 		Demonstrates that increased
 		Arithmetic utilization can offset
 		the additional Gather cost.
+
+Exp209cx3:
+	Test several micro-optimization ideas
+	on top of Exp209b.
+
+	Investigated:
+
+		- Transition-table read:
+		  two scalar 32-bit reads vs
+		  one SIMD 64-bit read.
+
+		- PackedPair read:
+		  C++ 64-bit reads vs
+		  SIMD PackedPair loads.
+
+		- Pixel unpacking:
+		  two _mm256_set_epi64x calls vs
+		  one _mm256_set_epi64x followed by
+		  _mm256_unpacklo_epi8 /
+		  _mm256_unpackhi_epi8.
+
+	Result:
+		No clear winner emerged.
+
+		Some variants occasionally
+		benchmarked faster, but none
+		produced a consistent or
+		compelling improvement.
+
+		The simpler Exp209b
+		implementation remains the
+		preferred baseline.
+
+		The tested ideas were retained
+		for possible future investigation.
 
 Exp210a:
 	Investigate AVX512 instructions
@@ -13228,8 +13268,6 @@ void BitCanvas32::DoDelta_AVX2_experiment204d(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i m_zero = _mm256_setzero_si256();
 	const __m256i decay_scale = _mm256_set1_epi16(16128); // 16128 = 63 * 256
-	__m256i pixels_12;
-	__m256i pixels_34;
 	__m256i pixel_sum_13_24;
 	__m256i px12;
 	__m256i px34;
@@ -13309,8 +13347,6 @@ void BitCanvas32::DoDelta_AVX2_experiment204e(const PIXELMAP* lpTransitionTable)
 {
 	const __m256i m_zero = _mm256_setzero_si256();
 	const __m256i decay_scale = _mm256_set1_epi16(16128); // 16128 = 63 * 256
-	__m256i pixels_12;
-	__m256i pixels_34;
 	__m256i pixel_sum_13_24;
 	__m256i px12;
 	__m256i px34;
@@ -14823,6 +14859,167 @@ void BitCanvas32::DoDelta_AVX2_experiment209b(const PIXELMAP* lpTransitionTable)
 		//
 		_mm_storeu_si64(reinterpret_cast<__m128i*>(pWrite), _mm256_castsi256_si128(final_pixel));
 
+		pWrite += 2;
+
+	} while (pWrite < pWriteEnd);
+
+	Exp200_ScalarTail(lpTransitionTable, bufferLength - (bufferLength % 2));
+}
+
+// Exp209cx3: Scalar Gather, increase Arithmetic utilization (AGHAIN? Haven't done it yet)
+// I think this was also another half baked idea, before coming to the concludion of trying Exp204d
+// TODO: JRDV: Exp209c, see if we can load this faster/wider (<---- this was the idea!)
+// More accurately I have three ideas to test, but I don't want to create 8 experiments, so I'll use conditional compiling and compare each to Exp209b
+// TT read: two scalar 32bit reads vs one scalar 64bit read vs SIMD read
+// PP read: C++ 64bit PackedPair read vs SIMD PackedPair read
+// Pixel unpacking: TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+void BitCanvas32::DoDelta_AVX2_experiment209cx3(const PIXELMAP* lpTransitionTable)
+{
+	const __m256i m_zero = _mm256_setzero_si256();
+	const __m256i decay_scale = _mm256_set1_epi16(16128); // 16128 = 63 * 256
+	__m256i pixels_12;
+	__m256i pixels_34;
+	__m256i pixel_sum_13_24;
+	__m256i px12;
+	__m256i px34;
+	__m256i high_bits_sum_13;
+	__m256i low_bits_sum_24;
+	__m256i final_pixel;
+
+	const dword_t* readBase = m_pReadBuffer32;
+
+	dword_t* writeBase = m_pWriteBuffer32;
+	const PIXELMAP* pTransition = lpTransitionTable;
+
+	dword_t* pWrite = writeBase;
+
+	const dword_t widthPixels = m_dwBufferWidth;
+	const dword_t bufferLength = m_dwBufferWidth * m_dwBufferHeight;
+
+	//dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 4);
+	dword_t* pWriteEnd = writeBase + bufferLength - (bufferLength % 2);
+
+	// two scalar 32bit reads vs one scalar 64bit read vs SIMD read
+	// TWO calls to _mm256_set_epi64x, vs use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+	// C++ 64bit PackedPair read vs SIMD PackedPair read
+
+	//const uint64_t widthPixels2 = uint64_t(widthPixels) + uint64_t(widthPixels) << 32;
+
+	// _mm256_castsi256_si128, _mm256_cvtsi256_si32
+	do
+	{
+#if 1 // one SIMD 64bit read
+		const uint64_t pixelAB = *reinterpret_cast<const uint64_t*>(pTransition);
+		pTransition += 2;
+		//const dword_t pixelA = pixelAB & 0xFFFFFFFF;
+		//const dword_t pixelB = pixelAB >> 32;
+
+		//const uint64_t pixelAB3 = pixelAB + widthPixels2;
+		//const dword_t pixelA3 = pixelAB3 & 0xFFFFFFFF;
+		//const dword_t pixelB3 = pixelAB3 >> 32;
+
+		const dword_t pixelA = pixelAB & 0xFFFFFFFF;
+		const dword_t pixelB = pixelAB >> 32;
+
+		const dword_t pixelA3 = pixelA + widthPixels;
+		const dword_t pixelB3 = pixelB + widthPixels;
+#else // two scalar 32bit reads
+		const dword_t pixelA = *pTransition++;
+		const dword_t pixelB = *pTransition++;
+
+		const dword_t pixelA3 = pixelA + widthPixels;
+		const dword_t pixelB3 = pixelB + widthPixels;
+#endif
+		//
+		// Read four PackedPairs.
+		//
+
+#if 1 // TWO calls to _mm256_set_epi64x
+
+#if 1 // SIMD PackedPair read
+		pixels_12 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA]))));
+
+		pixels_34 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA3]))));
+#else // C++ 64bit PackedPair read
+		pixels_12 = _mm256_set_epi64x(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA]));
+
+		pixels_34 = _mm256_set_epi64x(
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelB3]),
+			0,
+			*reinterpret_cast<const long long*>(&readBase[pixelA3]));
+#endif
+
+		//pixels_34 = _mm256_set_epi64x(1, 3, 5, 7);
+
+		px12 = _mm256_unpacklo_epi8(pixels_12, m_zero); /* unpack pixels 12 */
+		px34 = _mm256_unpacklo_epi8(pixels_34, m_zero); /* unpack pixels 34 */
+
+#else // use _mm256_set_epi64x once, and _mm256_unpacklo_epi8/_mm256_unpackhi_epi8
+
+#if 0 // SIMD PackedPair read
+		static_assert(false, "SIMD PackedPair read + _mm256_set_epi64x are difficult to mix");
+		pixels_12 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA]))));
+
+		pixels_34 = _mm256_set_m128i(
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelB3]))),
+			_mm_loadl_epi64(reinterpret_cast<const __m128i*>(&(readBase[pixelA3]))));
+#else // C++ 64bit PackedPair read
+		__m256i pixels_1234 = _mm256_set_epi64x(
+			*reinterpret_cast<const long long*>(&readBase[pixelB3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelB]),
+			*reinterpret_cast<const long long*>(&readBase[pixelA3]),
+			*reinterpret_cast<const long long*>(&readBase[pixelA]));
+#endif
+
+		//pixels_34 = _mm256_set_epi64x(1, 3, 5, 7);
+
+		px12 = _mm256_unpacklo_epi8(pixels_1234, m_zero); /* unpack pixels 12 */
+		px34 = _mm256_unpackhi_epi8(pixels_1234, m_zero); /* unpack pixels 34 */
+#endif
+
+		pixel_sum_13_24 = _mm256_add_epi16(px12, px34); /* sum pixel rows (1+3, and 2+4) */
+
+		//
+		// Now we need to sum the high/low 64bits of the 128bit pixel_sum_13_24
+		// More accurate to sum BEFORE decay step
+		//
+		high_bits_sum_13 = _mm256_srli_si256(pixel_sum_13_24, 8); // take the high 64bits (shift right 8 bytes)
+		low_bits_sum_24 = pixel_sum_13_24;
+
+		final_pixel = _mm256_add_epi16(high_bits_sum_13, low_bits_sum_24); /* sum the 2 sums */
+
+		/* decay the buffer (ie: make it slightly darker than the average) */
+		/* The basic idea is that "decay" is to take 63/64 of the final value of the pixel. */
+		/* Since we already added 4 pixels, we *also* need to divide by 4 as well. */
+		/* We can do this by multiplying by 63 and dividing by 256 to do both divisions at the same time. */
+		final_pixel = _mm256_mulhi_epu16(final_pixel, decay_scale); // multiply by decay_factor (shift right (DECAY_SHIFT + 2) bits)
+
+		final_pixel = _mm256_packus_epi16(final_pixel, m_zero); /* pack the average back into 32bit pixel format */
+
+		//__m256i indices = _mm256_setr_epi32(7, 3, 6, 2, 5, 1, 4, 0);
+		__m256i indices = _mm256_setr_epi32(0, 4, 1, 5, 2, 6, 3, 7);
+		final_pixel = _mm256_permutevar8x32_epi32(final_pixel, indices);
+		//
+		// Four output pixels.
+		//
+		//_mm_storeu_si128(reinterpret_cast<__m128i*>(pWrite), _mm256_castsi256_si128(final_pixel));
+		//
+		// Two output pixels.
+		//
+		_mm_storeu_si64(reinterpret_cast<__m128i*>(pWrite), _mm256_castsi256_si128(final_pixel));
+
+		//pWrite += 4;
 		pWrite += 2;
 
 	} while (pWrite < pWriteEnd);
